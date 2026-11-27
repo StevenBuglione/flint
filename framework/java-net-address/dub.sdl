@@ -1,0 +1,20 @@
+name "java-net-address"
+description "Java SE Internet Protocol addresses"
+license "GPL-2.0-only WITH Classpath-exception-2.0"
+targetType "library"
+sourcePaths "source"
+importPaths "source"
+dflags "-preview=dip1000"
+dependency "flint:engine-aot" version="*"
+dependency "flint:java" version="*"
+dependency "flint:java-net-exceptions" version="*"
+
+configuration "library" {
+    targetType "library"
+}
+configuration "unittest" {
+    targetType "library"
+    sourcePaths "source" "tests"
+    importPaths "source" "tests"
+    stringImportPaths "tests"
+}

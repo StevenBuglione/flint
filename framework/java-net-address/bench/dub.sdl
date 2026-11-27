@@ -1,0 +1,5 @@
+name "probe-java-net-address"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"
+dependency "flint:java-net-address" path="../../.."

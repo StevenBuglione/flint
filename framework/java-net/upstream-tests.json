@@ -349,144 +349,174 @@
       "status": "deferred"
     },
     "java/net/Inet4Address/PingThis.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "InetAddress.isReachable needs ICMP echo or a TCP probe through the Flint network engines."
     },
     "java/net/Inet4Address/isSiteLocalAddress.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Its RFC 1918 boundary addresses are Temurin oracle rows (sitelocal-*) with every address predicate.",
+      "covered_by": "framework/java-net-address/tests/literalresolution_test.d"
     },
     "java/net/Inet4Address/textToNumericFormat.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Its good and bad IPv4 literals are rows of the Temurin oracle (ttnf-*) in the original Flint test.",
+      "covered_by": "framework/java-net-address/tests/literalresolution_test.d"
     },
     "java/net/Inet6Address/B4923906.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Needs NetworkInterface, which waits for the network engines."
     },
     "java/net/Inet6Address/B6206527.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Binds or connects java.net sockets, which are not ported."
     },
     "java/net/Inet6Address/B6558853.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Binds or connects java.net sockets, which are not ported."
     },
     "java/net/Inet6Address/IPv6AddressTypes.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Its link-local and site-local addresses are Temurin oracle rows (ipv6types-*) with every address predicate.",
+      "covered_by": "framework/java-net-address/tests/literalresolution_test.d"
     },
     "java/net/Inet6Address/IPv6Numeric.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. getByName(\":\") is the v6-lone-colon Temurin oracle row.",
+      "covered_by": "framework/java-net-address/tests/literalresolution_test.d"
     },
     "java/net/Inet6Address/PreferIPv6AddressesTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Needs host-name or reverse resolution; no engine host-name resolver yet (D-JDK-8)."
     },
     "java/net/Inet6Address/Scoping.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Binds or connects java.net sockets, which are not ported."
     },
     "java/net/Inet6Address/StringScope.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Needs NetworkInterface, which waits for the network engines."
     },
     "java/net/Inet6Address/serialize/Inet6AddressSerTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "jvm-platform: Java serialization (ObjectInputStream) is excluded, and InetAddress does not implement Serializable."
     },
     "java/net/Inet6Address/serialize/Inet6AddressSerializationTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "jvm-platform: Java serialization (ObjectInputStream) is excluded, and InetAddress does not implement Serializable."
     },
     "java/net/Inet6Address/serialize/Serialize.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "jvm-platform: Java serialization (ObjectInputStream) is excluded, and InetAddress does not implement Serializable."
     },
     "java/net/InetAddress/B5087907.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Needs host-name or reverse resolution; no engine host-name resolver yet (D-JDK-8)."
     },
     "java/net/InetAddress/B6246242.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. An original test checks that a failed lookup names the host once.",
+      "covered_by": "framework/java-net-address/tests/literalresolution_test.d"
     },
     "java/net/InetAddress/B6296240.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Its malformed literal is the malformed-dots oracle row.",
+      "covered_by": "framework/java-net-address/tests/literalresolution_test.d"
     },
     "java/net/InetAddress/BadDottedIPAddress.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Its inputs are rows of the Temurin oracle (baddotted-*) in the original Flint test.",
+      "covered_by": "framework/java-net-address/tests/literalresolution_test.d"
     },
     "java/net/InetAddress/CachedUnknownHostName.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Needs host-name or reverse resolution; no engine host-name resolver yet (D-JDK-8)."
     },
     "java/net/InetAddress/CheckJNI.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "jvm-platform: it runs the JVM's -Xcheck:jni mode, which has no D counterpart."
     },
     "java/net/InetAddress/GetLocalHostWithSM.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "jvm-platform: java.lang.SecurityManager is excluded."
     },
     "java/net/InetAddress/GetLoopbackAddress.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Java returns one shared loopback instance; Flint's getLoopbackAddress returns a new equal instance on each call. The null and empty host cases are covered by literalresolution_test.d."
     },
     "java/net/InetAddress/HashSpread.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. An original test hashes 10,000 generated IPv6 literals and checks the same spread.",
+      "covered_by": "framework/java-net-address/tests/literalresolution_test.d"
     },
     "java/net/InetAddress/HostsFileOrderingTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Needs host-name or reverse resolution; no engine host-name resolver yet (D-JDK-8)."
     },
     "java/net/InetAddress/IPv4Formats.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Its 1- to 4-part IPv4 literals are rows of the Temurin oracle (ipv4formats-*) in the original Flint test.",
+      "covered_by": "framework/java-net-address/tests/literalresolution_test.d"
     },
     "java/net/InetAddress/InternalNameServiceTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Needs host-name or reverse resolution; no engine host-name resolver yet (D-JDK-8)."
     },
     "java/net/InetAddress/InternalNameServiceWithHostsFileTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Needs host-name or reverse resolution; no engine host-name resolver yet (D-JDK-8)."
     },
     "java/net/InetAddress/InternalNameServiceWithNoHostsFileTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Needs host-name or reverse resolution; no engine host-name resolver yet (D-JDK-8)."
     },
     "java/net/InetAddress/IsHostReachableBug.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "InetAddress.isReachable needs ICMP echo or a TCP probe through the Flint network engines."
     },
     "java/net/InetAddress/IsReachable.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "InetAddress.isReachable needs ICMP echo or a TCP probe through the Flint network engines."
     },
     "java/net/InetAddress/IsReachableViaLoopbackTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "InetAddress.isReachable needs ICMP echo or a TCP probe through the Flint network engines."
     },
     "java/net/InetAddress/NullCharInHostnameDriver.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. It runs NullCharInHostname, whose getByName half is the nulchar oracle row; its other half calls the JDK-internal Inet6AddressImpl, which Flint does not have.",
+      "covered_by": "framework/java-net-address/tests/literalresolution_test.d"
     },
     "java/net/InetAddress/WhiteSpaceHostTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Its host names are rows of the Temurin oracle (whitespace-*) in the original Flint test; they reach the name service, which fails under D-JDK-8 as Temurin's resolver does.",
+      "covered_by": "framework/java-net-address/tests/literalresolution_test.d"
     },
     "java/net/InetAddress/getOriginalHostName.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Needs host-name or reverse resolution; no engine host-name resolver yet (D-JDK-8)."
     },
     "java/net/InetAddress/ptr/Lookup.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Needs host-name or reverse resolution; no engine host-name resolver yet (D-JDK-8)."
     },
     "java/net/InetSocketAddress/B4849451.java": {
       "phase": "2",

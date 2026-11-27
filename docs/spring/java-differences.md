@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,749 | 513 | 0 | 1,905 | 14,254 |
+| framework | openjdk@21.0.13 | 1,792 | 523 | 0 | 1,905 | 14,201 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2301,6 +2301,16 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.net.Inet4Address` | `flint.java.net.inetaddress.Inet4Address` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.inetaddress : Inet4Address. Final class without Serializable. |
+| `java.net.Inet4Address#equals(Object)` | `flint.java.net.inetaddress.Inet4Address.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.net.Inet6Address` | `flint.java.net.inetaddress.Inet6Address` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.inetaddress : Inet6Address. Final class without Serializable; scoped interfaces are pending. |
+| `java.net.Inet6Address#equals(Object)` | `flint.java.net.inetaddress.Inet6Address.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.net.Inet6Address#getByAddress(String,byte[],int)` | `flint.java.net.inetaddress.Inet6Address.getByAddress` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | Accepts string or Nullable!string host; an absent host differs from the empty string. A null address slice counts as empty and raises UnknownHostException, as Java's null does. |
+| `java.net.InetAddress` | `flint.java.net.inetaddress.InetAddress` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) | Leaf import: flint.java.net.inetaddress : InetAddress. Java's sealed class permits only Inet4Address and Inet6Address; the D class is abstract with a package constructor, and both subclasses are final. Implements JavaObject without Serializable. |
+| `java.net.InetAddress#equals(Object)` | `flint.java.net.inetaddress.InetAddress.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.net.InetAddress#getAllByName(String)` | `flint.java.net.inetaddress.InetAddress.getAllByName` | [D-JDK-8](api-mapping.md#deviations) | Address literals resolve as in Java; host names other than localhost throw UnknownHostException until an engine host-name resolver exists. Returns a new array on every call. |
+| `java.net.InetAddress#getByAddress(String,byte[])` | `flint.java.net.inetaddress.InetAddress.getByAddress` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | Accepts string or Nullable!string host; an absent host differs from the empty string. A null address slice counts as empty and raises UnknownHostException, as Java's null does. |
+| `java.net.InetAddress#getByName(String)` | `flint.java.net.inetaddress.InetAddress.getByName` | [D-JDK-8](api-mapping.md#deviations) | Address literals resolve as in Java; host names other than localhost throw UnknownHostException until an engine host-name resolver exists. A null host string is the empty host, which Java also maps to the loopback address. |
 | `java.net.ProtocolFamily` | `flint.java.net.protocolfamily.ProtocolFamily` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.protocolfamily : ProtocolFamily. |
 | `java.net.SocketAddress` | `flint.java.net.socketaddress.SocketAddress` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.socketaddress : SocketAddress. Abstract socket address base without Java Serializable. |
 | `java.net.StandardProtocolFamily` | `flint.java.net.standardprotocolfamily.StandardProtocolFamily` | [R1](api-mapping.md#r1-packages-and-names), [R18](api-mapping.md#r18-enums-that-implement-an-interface) | Leaf import: flint.java.net.standardprotocolfamily : StandardProtocolFamily. D enum implementing ProtocolFamily via R18; call family.name() via R20 UFCS. |
@@ -10818,7 +10828,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
-| java.net | 766 | 0 |
+| java.net | 713 | 0 |
 | java.net.spi | 0 | 19 |
 | java.nio | 24 | 0 |
 | java.nio.channels | 0 | 264 |
@@ -11893,6 +11903,14 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.lang.annotation.IncompleteAnnotationException#<init>(Class,String)` | 2 | Waits on IncompleteAnnotationException. |
 | framework | `java.lang.annotation.IncompleteAnnotationException#annotationType()` | 2 | Waits on IncompleteAnnotationException. |
 | framework | `java.lang.annotation.IncompleteAnnotationException#elementName()` | 2 | Waits on IncompleteAnnotationException. |
+| framework | `java.net.Inet6Address#getByAddress(String,byte[],NetworkInterface)` | 2 | Requires NetworkInterface and its address enumeration to derive the numeric scope. |
+| framework | `java.net.Inet6Address#getScopedInterface()` | 2 | Requires NetworkInterface. Addresses built by this leaf never carry a scoped interface. |
+| framework | `java.net.InetAddress#getCanonicalHostName()` | 2 | Always performs a reverse lookup. Name resolution through the Flint engines (java.net.spi InetAddressResolver) is pending; this leaf builds addresses from raw bytes only. |
+| framework | `java.net.InetAddress#getHostName()` | 2 | An address created without a host name performs a reverse lookup. Name resolution through the Flint engines (java.net.spi InetAddressResolver) is pending; this leaf builds addresses from raw bytes only. |
+| framework | `java.net.InetAddress#getLocalHost()` | 2 | Requires the local host name and name resolution through the Flint engines (java.net.spi InetAddressResolver) is pending; this leaf builds addresses from raw bytes only. |
+| framework | `java.net.InetAddress#getLoopbackAddress()` | 2 | Java returns one shared loopback instance; this leaf returns a new equal Inet4Address on each call until the compile-time constant instance (framework-core constantInstance) lands. |
+| framework | `java.net.InetAddress#isReachable(NetworkInterface,int,int)` | 2 | Requires NetworkInterface and ICMP echo or a TCP probe through the Flint network engines. |
+| framework | `java.net.InetAddress#isReachable(int)` | 2 | Requires ICMP echo or a TCP probe through the Flint network engines. |
 | framework | `java.net.ProtocolException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
 | framework | `java.net.ProtocolException#<init>(String)` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
 | framework | `java.net.SocketTimeoutException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |

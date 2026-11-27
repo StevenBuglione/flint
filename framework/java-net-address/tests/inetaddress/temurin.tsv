@@ -1,0 +1,91 @@
+v4-loopback	Inet4Address	/127.0.0.1	127.0.0.1	7f000001	2130706433	0010000000
+v4-loopback-other	Inet4Address	/127.10.11.12	127.10.11.12	7f0a0b0c	2131364620	0010000000
+v4-any	Inet4Address	/0.0.0.0	0.0.0.0	00000000	0	0100000000
+v4-broadcast	Inet4Address	/255.255.255.255	255.255.255.255	ffffffff	-1	0000000000
+v4-link-local	Inet4Address	/169.254.1.2	169.254.1.2	a9fe0102	-1442971390	0001000000
+v4-site-10	Inet4Address	/10.0.0.1	10.0.0.1	0a000001	167772161	0000100000
+v4-site-172-16	Inet4Address	/172.16.0.1	172.16.0.1	ac100001	-1408237567	0000100000
+v4-site-172-31	Inet4Address	/172.31.255.255	172.31.255.255	ac1fffff	-1407188993	0000100000
+v4-not-site-172-32	Inet4Address	/172.32.0.1	172.32.0.1	ac200001	-1407188991	0000000000
+v4-site-192-168	Inet4Address	/192.168.1.1	192.168.1.1	c0a80101	-1062731519	0000100000
+v4-mc-link	Inet4Address	/224.0.0.251	224.0.0.251	e00000fb	-536870661	1000000100
+v4-mc-global-low	Inet4Address	/224.0.1.0	224.0.1.0	e0000100	-536870656	1000010000
+v4-mc-global-high	Inet4Address	/238.255.255.255	238.255.255.255	eeffffff	-285212673	1000010000
+v4-mc-site	Inet4Address	/239.255.250.1	239.255.250.1	effffa01	-268436991	1000000010
+v4-mc-org	Inet4Address	/239.192.0.1	239.192.0.1	efc00001	-272629759	1000000001
+v4-mc-org-high	Inet4Address	/239.195.255.255	239.195.255.255	efc3ffff	-272367617	1000000001
+v4-public	Inet4Address	/93.184.216.34	93.184.216.34	5db8d822	1572395042	0000000000
+v4-host	Inet4Address	example.test/93.184.216.34	93.184.216.34	5db8d822	1572395042	0000000000
+v4-empty-host	Inet4Address	/10.0.0.1	10.0.0.1	0a000001	167772161	0000100000
+v4-bracket-host	Inet4Address	example.test/10.0.0.1	10.0.0.1	0a000001	167772161	0000100000
+v4-open-bracket	Inet4Address	[abc/10.0.0.1	10.0.0.1	0a000001	167772161	0000100000
+v4-single-bracket	Inet4Address	[/10.0.0.1	10.0.0.1	0a000001	167772161	0000100000
+v4-empty-brackets	Inet4Address	/10.0.0.1	10.0.0.1	0a000001	167772161	0000100000
+v4-null-host	Inet4Address	/10.0.0.1	10.0.0.1	0a000001	167772161	0000100000
+v6-loopback	Inet6Address	/0:0:0:0:0:0:0:1	0:0:0:0:0:0:0:1	00000000000000000000000000000001	1	0010000000	0	1
+v6-any	Inet6Address	/0:0:0:0:0:0:0:0	0:0:0:0:0:0:0:0	00000000000000000000000000000000	0	0100000000	0	1
+v6-doc	Inet6Address	/2001:db8:0:0:0:0:0:1	2001:db8:0:0:0:0:0:1	20010db8000000000000000000000001	536939705	0000000000	0	0
+v6-link-local	Inet6Address	/fe80:0:0:0:0:0:0:1	fe80:0:0:0:0:0:0:1	fe800000000000000000000000000001	-41943039	0001000000	0	0
+v6-link-local-febf	Inet6Address	/febf:0:0:0:0:0:0:1	febf:0:0:0:0:0:0:1	febf0000000000000000000000000001	-37814271	0001000000	0	0
+v6-site-local	Inet6Address	/fec0:0:0:0:0:0:0:1	fec0:0:0:0:0:0:0:1	fec00000000000000000000000000001	-37748735	0000100000	0	0
+v6-mc-node	Inet6Address	/ff01:0:0:0:0:0:0:1	ff01:0:0:0:0:0:0:1	ff010000000000000000000000000001	-16711679	1000001000	0	0
+v6-mc-link	Inet6Address	/ff02:0:0:0:0:0:0:1	ff02:0:0:0:0:0:0:1	ff020000000000000000000000000001	-16646143	1000000100	0	0
+v6-mc-site	Inet6Address	/ff05:0:0:0:0:0:0:2	ff05:0:0:0:0:0:0:2	ff050000000000000000000000000002	-16449534	1000000010	0	0
+v6-mc-org	Inet6Address	/ff08:0:0:0:0:0:0:2	ff08:0:0:0:0:0:0:2	ff080000000000000000000000000002	-16252926	1000000001	0	0
+v6-mc-global	Inet6Address	/ff0e:0:0:0:0:0:0:101	ff0e:0:0:0:0:0:0:101	ff0e0000000000000000000000000101	-15859455	1000010000	0	0
+v6-mc-flags	Inet6Address	/ff1e:0:0:0:0:0:0:101	ff1e:0:0:0:0:0:0:101	ff1e0000000000000000000000000101	-14810879	1000010000	0	0
+v6-compat	Inet6Address	/0:0:0:0:0:0:c0a8:101	0:0:0:0:0:0:c0a8:101	000000000000000000000000c0a80101	-1079508735	0000000000	0	1
+v6-high-bytes	Inet6Address	/ffee:ddcc:bbaa:9988:7766:5544:3322:1100	ffee:ddcc:bbaa:9988:7766:5544:3322:1100	ffeeddccbbaa99887766554433221100	1679809432	1000010000	0	0
+v6-mapped	Inet4Address	/192.168.1.1	192.168.1.1	c0a80101	-1062731519	0000100000
+v6-mapped-host	Inet4Address	mapped.test/127.0.0.1	127.0.0.1	7f000001	2130706433	0010000000
+v6-near-mapped	Inet6Address	/0:0:0:0:1:ffff:c0a8:101	0:0:0:0:1:ffff:c0a8:101	00000000000000000001ffffc0a80101	-1079443456	0000000000	0	0
+v6-host	Inet6Address	v6.test/2001:db8:0:0:0:0:0:1	2001:db8:0:0:0:0:0:1	20010db8000000000000000000000001	536939705	0000000000	0	0
+v6-scope-0	Inet6Address	/fe80:0:0:0:0:0:0:1%0	fe80:0:0:0:0:0:0:1%0	fe800000000000000000000000000001	-41943039	0001000000	0	0
+v6-scope-5	Inet6Address	link.test/fe80:0:0:0:0:0:0:1%5	fe80:0:0:0:0:0:0:1%5	fe800000000000000000000000000001	-41943039	0001000000	5	0
+v6-scope-neg	Inet6Address	link.test/fe80:0:0:0:0:0:0:1	fe80:0:0:0:0:0:0:1	fe800000000000000000000000000001	-41943039	0001000000	0	0
+v6-scope-max	Inet6Address	/fe80:0:0:0:0:0:0:1%2147483647	fe80:0:0:0:0:0:0:1%2147483647	fe800000000000000000000000000001	-41943039	0001000000	2147483647	0
+v6-scoped-mapped	Inet6Address	/0:0:0:0:0:ffff:c0a8:101%3	0:0:0:0:0:ffff:c0a8:101%3	00000000000000000000ffffc0a80101	-1079508992	0000000000	3	0
+bad-empty	UnknownHostException	addr is of illegal length
+bad-3	UnknownHostException	addr is of illegal length
+bad-5	UnknownHostException	addr is of illegal length
+bad-15	UnknownHostException	addr is of illegal length
+bad-17	UnknownHostException	addr is of illegal length
+bad-scoped-4	UnknownHostException	addr is of illegal length
+loopback	Inet4Address	localhost/127.0.0.1	127.0.0.1	7f000001	2130706433	0010000000
+equal	v4-loopback	v6-mapped-host	symmetric
+equal	v4-loopback	loopback	symmetric
+equal	v4-site-10	v4-empty-host	symmetric
+equal	v4-site-10	v4-bracket-host	symmetric
+equal	v4-site-10	v4-open-bracket	symmetric
+equal	v4-site-10	v4-single-bracket	symmetric
+equal	v4-site-10	v4-empty-brackets	symmetric
+equal	v4-site-10	v4-null-host	symmetric
+equal	v4-site-192-168	v6-mapped	symmetric
+equal	v4-public	v4-host	symmetric
+equal	v4-empty-host	v4-bracket-host	symmetric
+equal	v4-empty-host	v4-open-bracket	symmetric
+equal	v4-empty-host	v4-single-bracket	symmetric
+equal	v4-empty-host	v4-empty-brackets	symmetric
+equal	v4-empty-host	v4-null-host	symmetric
+equal	v4-bracket-host	v4-open-bracket	symmetric
+equal	v4-bracket-host	v4-single-bracket	symmetric
+equal	v4-bracket-host	v4-empty-brackets	symmetric
+equal	v4-bracket-host	v4-null-host	symmetric
+equal	v4-open-bracket	v4-single-bracket	symmetric
+equal	v4-open-bracket	v4-empty-brackets	symmetric
+equal	v4-open-bracket	v4-null-host	symmetric
+equal	v4-single-bracket	v4-empty-brackets	symmetric
+equal	v4-single-bracket	v4-null-host	symmetric
+equal	v4-empty-brackets	v4-null-host	symmetric
+equal	v6-doc	v6-host	symmetric
+equal	v6-link-local	v6-scope-0	symmetric
+equal	v6-link-local	v6-scope-5	symmetric
+equal	v6-link-local	v6-scope-neg	symmetric
+equal	v6-link-local	v6-scope-max	symmetric
+equal	v6-mapped-host	loopback	symmetric
+equal	v6-scope-0	v6-scope-5	symmetric
+equal	v6-scope-0	v6-scope-neg	symmetric
+equal	v6-scope-0	v6-scope-max	symmetric
+equal	v6-scope-5	v6-scope-neg	symmetric
+equal	v6-scope-5	v6-scope-max	symmetric
+equal	v6-scope-neg	v6-scope-max	symmetric

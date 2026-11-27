@@ -1,0 +1,192 @@
+v4-dotted	ok	1	Inet4Address|/1.2.3.4|-|0000000000
+v4-loopback	ok	1	Inet4Address|/127.0.0.1|-|0010000000
+v4-zero	ok	1	Inet4Address|/0.0.0.0|-|0100000000
+v4-one-part	ok	1	Inet4Address|/0.0.0.1|-|0000000000
+v4-one-part-max	ok	1	Inet4Address|/255.255.255.255|-|0000000000
+v4-one-part-over	ex	UnknownHostException	4294967296: Name or service not known	-
+v4-two-part	ok	1	Inet4Address|/1.0.0.2|-|0000000000
+v4-two-part-max	ok	1	Inet4Address|/1.255.255.255|-|0000000000
+v4-two-part-over	ex	UnknownHostException	1.16777216: Name or service not known	-
+v4-three-part	ok	1	Inet4Address|/1.2.255.255|-|0000000000
+v4-three-part-over	ex	UnknownHostException	1.2.65536: Name or service not known	-
+v4-three-short	ok	1	Inet4Address|/1.2.0.3|-|0000000000
+v4-broadcast	ok	1	Inet4Address|/255.255.255.255|-|0000000000
+v4-octet-over	ex	UnknownHostException	256.1.1.1: Name or service not known	-
+v4-leading-zero	ok	1	Inet4Address|/1.2.3.4|-|0000000000
+v4-zero-pad-8	ok	1	Inet4Address|/1.2.3.8|-|0000000000
+v4-15-digits	ex	UnknownHostException	123456789012345: Name or service not known	-
+v4-16-digits	ex	UnknownHostException	1234567890123456: Name or service not known	-
+v4-15-chars	ok	1	Inet4Address|/100.100.100.100|-|0000000000
+v4-16-chars	ex	UnknownHostException	100.100.100.1000: Name or service not known	-
+bsd-hex-first	ex	UnknownHostException	0x1.2.3.4	IllegalArgumentException: Invalid IP address literal: 0x1.2.3.4
+bsd-hex-whole	ex	UnknownHostException	0x7f000001	IllegalArgumentException: Invalid IP address literal: 0x7f000001
+bsd-hex-upper	ex	UnknownHostException	0X7F.1	IllegalArgumentException: Invalid IP address literal: 0X7F.1
+bsd-octal-whole	ex	UnknownHostException	017700000001	IllegalArgumentException: Invalid IP address literal: 017700000001
+bsd-octal-part	ok	1	Inet4Address|/1.2.3.10|-|0000000000
+bsd-hex-last	ex	UnknownHostException	1.2.3.0x8	IllegalArgumentException: Invalid IP address literal: 1.2.3.0x8
+bsd-octal-bad	ok	1	Inet4Address|/1.2.3.9|-|0000000000
+bsd-hex-letter-end	ex	UnknownHostException	1.2.3.0xa	IllegalArgumentException: Invalid IP address literal: 1.2.3.0xa
+bsd-hex-empty	ex	UnknownHostException	1.0x.2: Name or service not known	-
+bsd-octal-big	ex	UnknownHostException	0400.1.1.1: Name or service not known	-
+bsd-hex-big	ex	UnknownHostException	0x100.1.1.1: Name or service not known	-
+bsd-two-part-hex	ex	UnknownHostException	10.0xffffff	IllegalArgumentException: Invalid IP address literal: 10.0xffffff
+bsd-two-part-over	ex	UnknownHostException	10.0x1000000: Name or service not known	-
+v4-trailing-dot	ex	UnknownHostException	1.2.3.4.: Name or service not known	-
+v4-double-dot	ex	UnknownHostException	1..2.3: Name or service not known	-
+v4-five-parts	ex	UnknownHostException	1.2.3.4.5: Name or service not known	-
+v4-space	ex	UnknownHostException	1.2.3.4 : Name or service not known	-
+v4-exp	ex	UnknownHostException	1e1: Name or service not known	-
+v4-scoped	ex	UnknownHostException	1.2.3.4%1: Name or service not known	-
+v4-nul	ex	UnknownHostException	NUL character not allowed in hostname	-
+v4-in-brackets	ex	UnknownHostException	[1.2.3.4]: invalid IPv6 address literal	-
+v4-fullwidth	ex	UnknownHostException	１.2.3.4: Name or service not known	-
+v4-arabic-digits	ex	UnknownHostException	١.٢.٣.٤: Name or service not known	-
+v6-loopback	ok	1	Inet6Address|/0:0:0:0:0:0:0:1|0|0010000000
+v6-any	ok	1	Inet6Address|/0:0:0:0:0:0:0:0|0|0100000000
+v6-bracketed	ok	1	Inet6Address|/0:0:0:0:0:0:0:1|0|0010000000
+v6-open-bracket	ex	UnknownHostException	[::1: invalid IPv6 address literal	-
+v6-close-bracket	ex	UnknownHostException	::1]: invalid IPv6 address literal	-
+v6-empty-brackets	ex	UnknownHostException	[]: invalid IPv6 address literal	-
+v6-lone-bracket	ex	UnknownHostException	[: invalid IPv6 address literal	-
+v6-bracket-hex-word	ex	UnknownHostException	[a]: invalid IPv6 address literal	-
+v6-bracket-name	ex	UnknownHostException	[x]: invalid IPv6 address literal	-
+v6-bracket-nul	ex	UnknownHostException	NUL character not allowed in hostname	-
+v6-mapped	ok	1	Inet4Address|/1.2.3.4|-|0000000000
+v6-mapped-bracketed	ok	1	Inet4Address|/1.2.3.4|-|0000000000
+v6-mapped-zero	ok	1	Inet4Address|/0.0.0.0|-|0100000000
+v6-mapped-scope	ex	UnknownHostException	::ffff:1.2.3.4%1: invalid IPv4-mapped address	-
+v6-mapped-ifname	ex	UnknownHostException	::ffff:1.2.3.4%eth0: invalid IPv4-mapped address	-
+v6-compatible	ok	1	Inet6Address|/0:0:0:0:0:0:102:304|0|0000000000
+v6-scope-1	ok	1	Inet6Address|/fe80:0:0:0:0:0:0:1%1|1|0001000000
+v6-scope-0	ok	1	Inet6Address|/fe80:0:0:0:0:0:0:1%0|0|0001000000
+v6-scope-max	ok	1	Inet6Address|/fe80:0:0:0:0:0:0:1%2147483647|2147483647|0001000000
+v6-scope-over	ex	UnknownHostException	no such interface 2147483648	-
+v6-ifname-absent	ex	UnknownHostException	no such interface nosuchif0	-
+v6-scope-empty	ex	UnknownHostException	fe80::1%: invalid IPv6 address literal	-
+v6-double-percent	ex	UnknownHostException	no such interface %1	-
+v6-bracket-scope	ok	1	Inet6Address|/fe80:0:0:0:0:0:0:1%2|2|0001000000
+v6-full	ok	1	Inet6Address|/1:2:3:4:5:6:7:8|0|0000000000
+v6-nine-groups	ex	UnknownHostException	1:2:3:4:5:6:7:8:9: invalid IPv6 address literal	-
+v6-two-compressions	ex	UnknownHostException	1::2::3: invalid IPv6 address literal	-
+v6-big-group	ex	UnknownHostException	12345::: invalid IPv6 address literal	-
+v6-embedded-v4	ok	1	Inet6Address|/1:2:3:4:5:6:102:304|0|0000000000
+v6-embedded-v4-late	ex	UnknownHostException	1:2:3:4:5:6:7:1.2.3.4: invalid IPv6 address literal	-
+v6-short-v4	ex	UnknownHostException	::1.2.3: invalid IPv6 address literal	-
+v6-v4-octet-over	ex	UnknownHostException	::1.2.3.256: invalid IPv6 address literal	-
+v6-v4-leading-zero	ok	1	Inet6Address|/0:0:0:0:0:0:102:304|0|0000000000
+v6-upper	ok	1	Inet6Address|/ffff:0:0:0:0:0:0:0|0|1000000000
+v6-mixed-case	ok	1	Inet6Address|/ffff:0:0:0:0:0:0:ffff|0|1000000000
+v6-trailing-colon	ex	UnknownHostException	1:: invalid IPv6 address literal	-
+v6-leading-colon	ex	UnknownHostException	:1: invalid IPv6 address literal	-
+v6-triple-colon	ex	UnknownHostException	:::: invalid IPv6 address literal	-
+v6-trailing-compression	ok	1	Inet6Address|/1:0:0:0:0:0:0:0|0|0000000000
+v6-trailing-single	ex	UnknownHostException	::1:: invalid IPv6 address literal	-
+v6-all-zero	ok	1	Inet6Address|/0:0:0:0:0:0:0:0|0|0100000000
+v6-full-compressed	ok	1	Inet6Address|/1:2:3:4:5:6:7:0|0|0000000000
+v6-eight-with-compression	ex	UnknownHostException	1:2:3:4::5:6:7:8: invalid IPv6 address literal	-
+v6-hex-name	ex	UnknownHostException	deadbeef: Name or service not known	-
+v6-lone-colon	ex	UnknownHostException	:: invalid IPv6 address literal	-
+v6-multicast	ok	1	Inet6Address|/ff02:0:0:0:0:0:0:1|0|1000000100
+v6-link-local-bracket-v4	ex	UnknownHostException	::ffff:1.2.3.4%1: invalid IPv4-mapped address	-
+v6-v4-with-dots	ex	UnknownHostException	::1.2.3.4.5: invalid IPv6 address literal	-
+empty	ok	1	Inet4Address|localhost/127.0.0.1|-|0010000000
+null	ok	1	Inet4Address|localhost/127.0.0.1|-|0010000000
+one-v4	ok	1	Inet4Address|/10.0.0.1|-|0000100000
+one-v6	ok	1	Inet6Address|/fe80:0:0:0:0:0:0:abcd%7|7|0001000000
+one-localhost	ok	1	Inet4Address|localhost/127.0.0.1|-|0010000000
+one-localhost-long-s	ok	1	Inet4Address|localhost/127.0.0.1|-|0010000000
+lookup-invalid	ex	UnknownHostException	abc.invalid: Name or service not known	-
+lookup-dotted-five	ex	UnknownHostException	1.2.3.4.5	-
+lookup-leading-dot	ex	UnknownHostException	.1.2.3: Name or service not known	-
+lookup-hex-name	ex	UnknownHostException	deadbeef.invalid: Name or service not known	-
+lookup-fullwidth	ex	UnknownHostException	１.2.3.4	-
+lookup-scoped-v4	ex	UnknownHostException	1.2.3.4%1	-
+sock-v4	ok	/1.2.3.4:80	false	1.2.3.4	16909140	Inet4Address|/1.2.3.4|-|0000000000
+sock-v6	ok	/[0:0:0:0:0:0:0:1]:443	false	0:0:0:0:0:0:0:1	444	Inet6Address|/0:0:0:0:0:0:0:1|0|0010000000
+sock-v6-bracketed	ok	/[0:0:0:0:0:0:0:1]:443	false	0:0:0:0:0:0:0:1	444	Inet6Address|/0:0:0:0:0:0:0:1|0|0010000000
+sock-empty	ok	localhost/127.0.0.1:8080	false	localhost	2130714513	Inet4Address|localhost/127.0.0.1|-|0010000000
+sock-localhost	ok	localhost/127.0.0.1:1	false	localhost	2130706434	Inet4Address|localhost/127.0.0.1|-|0010000000
+sock-invalid	ok	abc.invalid/<unresolved>:80	true	abc.invalid	1686239419	-
+sock-bsd	ok	0x1.2.3.4/<unresolved>:80	true	0x1.2.3.4	-272080248	-
+sock-ifname	ok	fe80::1%nosuchif0/<unresolved>:1	true	fe80::1%nosuchif0	182731969	-
+sock-mapped	ok	/10.0.0.1:22	false	10.0.0.1	167772183	Inet4Address|/10.0.0.1|-|0000100000
+sock-scoped	ok	/[fe80:0:0:0:0:0:0:1%3]:22	false	fe80:0:0:0:0:0:0:1%3	-41943017	Inet6Address|/fe80:0:0:0:0:0:0:1%3|3|0001000000
+sock-bad-literal	ok	[::1/<unresolved>:80	true	[::1	2768646	-
+sock-port-neg	ex	IllegalArgumentException	port out of range:-1	-
+sock-port-over	ex	IllegalArgumentException	port out of range:65536	-
+sock-port-neg-unresolved	ex	IllegalArgumentException	port out of range:-1	-
+sock-port-max	ok	/0.0.0.0:65535	false	0.0.0.0	65535	Inet4Address|/0.0.0.0|-|0100000000
+sock-null	ex	IllegalArgumentException	hostname can't be null	-
+ttnf-good-0	ok	1	Inet4Address|/224.0.1.0|-|1000010000
+ttnf-good-1	ok	1	Inet4Address|/238.255.255.255|-|1000010000
+ttnf-good-2	ok	1	Inet4Address|/239.255.255.255|-|1000000010
+ttnf-good-3	ok	1	Inet4Address|/239.255.255.255|-|1000000010
+ttnf-good-4	ok	1	Inet4Address|/239.255.255.255|-|1000000010
+ttnf-good-5	ok	1	Inet4Address|/255.255.255.255|-|0000000000
+ttnf-bad-0	ex	UnknownHostException	238.255.255.2550: Name or service not known	-
+ttnf-bad-1	ex	UnknownHostException	256.255.255.255: Name or service not known	-
+ttnf-bad-2	ex	UnknownHostException	238.255.2550.255: Name or service not known	-
+ttnf-bad-3	ex	UnknownHostException	238.2550.255.255: Name or service not known	-
+ttnf-bad-4	ex	UnknownHostException	2380.255.255.255: Name or service not known	-
+ttnf-bad-5	ex	UnknownHostException	239.255.65536: Name or service not known	-
+ttnf-bad-6	ex	UnknownHostException	239.16777216: Name or service not known	-
+ttnf-bad-7	ex	UnknownHostException	4294967296	-
+ttnf-bad-8	ex	UnknownHostException	.1.1.1: Name or service not known	-
+ttnf-bad-9	ex	UnknownHostException	1..1.1: Name or service not known	-
+ttnf-bad-10	ex	UnknownHostException	1.1.1.: Name or service not known	-
+ttnf-bad-11	ex	UnknownHostException	...: Name or service not known	-
+ipv4formats-0	ok	1	Inet4Address|/0.0.0.0|-|0100000000
+ipv4formats-1	ok	1	Inet4Address|/126.0.0.1|-|0000000000
+ipv4formats-2	ok	1	Inet4Address|/128.50.255.254|-|0000000000
+ipv4formats-3	ok	1	Inet4Address|/192.168.1.2|-|0000100000
+ipv4formats-4	ex	UnknownHostException	invalidhost.invalid: Name or service not known	-
+ipv4formats-5	ex	UnknownHostException	1024.1.2.3: Name or service not known	-
+ipv4formats-6	ex	UnknownHostException	128.14.66000: Name or service not known	-
+baddotted-0	ex	UnknownHostException	999.999.999.999: Name or service not known	-
+baddotted-1	ex	UnknownHostException	[]: invalid IPv6 address literal	-
+baddotted-2	ex	UnknownHostException	[127.0.0.1]: invalid IPv6 address literal	-
+baddotted-3	ex	UnknownHostException	[localhost]: invalid IPv6 address literal	-
+whitespace-0	ex	UnknownHostException	        localhost: Name or service not known	-
+whitespace-1	ok	1	Inet4Address|localhost/127.0.0.1|-|0010000000
+whitespace-2	ex	UnknownHostException	 localhost: Name or service not known	-
+whitespace-3	ex	UnknownHostException	localhost1: Name or service not known	-
+whitespace-4	ex	UnknownHostException	 localhost1: Name or service not known	-
+whitespace-5	ex	UnknownHostException	 bogus.mil: Name or service not known	-
+whitespace-6	ex	UnknownHostException	localhost: Name or service not known	-
+nulchar	ex	UnknownHostException	NUL character not allowed in hostname	-
+sitelocal-0	ok	1	Inet4Address|/9.255.255.255|-|0000000000
+sitelocal-1	ok	1	Inet4Address|/10.0.0.0|-|0000100000
+sitelocal-2	ok	1	Inet4Address|/10.255.255.255|-|0000100000
+sitelocal-3	ok	1	Inet4Address|/11.0.0.0|-|0000000000
+sitelocal-4	ok	1	Inet4Address|/172.15.255.255|-|0000000000
+sitelocal-5	ok	1	Inet4Address|/172.16.0.0|-|0000100000
+sitelocal-6	ok	1	Inet4Address|/172.30.1.2|-|0000100000
+sitelocal-7	ok	1	Inet4Address|/172.31.255.255|-|0000100000
+sitelocal-8	ok	1	Inet4Address|/172.32.0.0|-|0000000000
+sitelocal-9	ok	1	Inet4Address|/192.167.255.255|-|0000000000
+sitelocal-10	ok	1	Inet4Address|/192.168.0.0|-|0000100000
+sitelocal-11	ok	1	Inet4Address|/192.168.255.255|-|0000100000
+sitelocal-12	ok	1	Inet4Address|/192.169.0.0|-|0000000000
+ipv6types-0	ok	1	Inet6Address|/fe80:0:0:0:a00:20ff:feae:45c9|0|0001000000
+ipv6types-1	ok	1	Inet6Address|/fe80:0:0:0:0:0:0:0|0|0001000000
+ipv6types-2	ok	1	Inet6Address|/feb0:0:0:0:0:0:0:0|0|0001000000
+ipv6types-3	ok	1	Inet6Address|/fec0:0:0:0:0:0:0:0|0|0000100000
+ipv6types-4	ok	1	Inet6Address|/fe70:0:0:0:0:0:0:0|0|0000000000
+ipv6types-5	ok	1	Inet6Address|/ff00:0:0:0:0:0:0:0|0|1000000000
+ipv6types-6	ok	1	Inet6Address|/fec0:0:0:0:a00:20ff:feae:45c9|0|0000100000
+ipv6types-7	ok	1	Inet6Address|/feff:0:0:0:0:0:0:0|0|0000100000
+ipv6types-8	ok	1	Inet6Address|/fe00:0:0:0:0:0:0:0|0|0000000000
+ipv6types-9	ok	1	Inet6Address|/ffc0:0:0:0:0:0:0:0|0|1000000000
+malformed-dots	ex	UnknownHostException	192.168.1.220...: Name or service not known	-
+tostring-0	ok	/[0:0:0:0:0:0:0:1]:80	false	0:0:0:0:0:0:0:1	81	Inet6Address|/0:0:0:0:0:0:0:1|0|0010000000
+tostring-1	ok	/[fedc:ba98:7654:3210:fedc:ba98:7654:3210]:80	false	fedc:ba98:7654:3210:fedc:ba98:7654:3210	-396372064	Inet6Address|/fedc:ba98:7654:3210:fedc:ba98:7654:3210|0|0000100000
+tostring-2	ok	/[0:0:0:0:0:0:c009:505]:80	false	0:0:0:0:0:0:c009:505	-1073150635	Inet6Address|/0:0:0:0:0:0:c009:505|0|0000000000
+tostring-3	ok	/127.0.0.1:80	false	127.0.0.1	2130706513	Inet4Address|/127.0.0.1|-|0010000000
+tostring-4	ok	/192.0.2.128:80	false	192.0.2.128	-1073741104	Inet4Address|/192.0.2.128|-|0000000000
+tostring-5	ok	/0.0.0.0:80	false	0.0.0.0	80	Inet4Address|/0.0.0.0|-|0100000000
+tostring-6	ok	:/<unresolved>:80	true	:	138	-
+tostring-7	ok	:1/<unresolved>:80	true	:1	1927	-
+tostring-8	ok	unresolved/<unresolved>:12345	true	unresolved	1184911818	-
+tostring-9	ok	/192.168.1.1:12345	false	192.168.1.1	-1062719174	Inet4Address|/192.168.1.1|-|0000100000
+tostring-10	ok	localhost/127.0.0.1:12345	false	localhost	2130718778	Inet4Address|localhost/127.0.0.1|-|0010000000
+tostring-11	ok	/225.225.225.0:80	false	225.225.225.0	-505290416	Inet4Address|/225.225.225.0|-|1000010000

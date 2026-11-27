@@ -1,0 +1,11 @@
+{
+  "source": "closure/inet_address.d",
+  "leaves": [
+    "flint.java.io",
+    "flint.java.lang",
+    "flint.java.lang.javaobject",
+    "flint.java.net.internal.ipaddressutil",
+    "flint.java.net.unknownhostexception"
+  ],
+  "data": []
+}

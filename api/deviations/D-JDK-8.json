@@ -1,0 +1,5 @@
+{
+ "id": "D-JDK-8",
+ "deviation": "`InetAddress.getByName` and `InetAddress.getAllByName` resolve IPv4 and IPv6 address literals as Java does, but no host name: the name service finds nothing, so a host name throws `UnknownHostException` with the host name as its message. Java's own fallback still applies, so `localhost` in any case gives the loopback address `localhost/127.0.0.1`. An IPv6 literal with an interface-name scope (`fe80::1%eth0`) throws `UnknownHostException(\"no such interface ...\")`, because no network interface is known.",
+ "reason": "`getaddrinfo` blocks, so calling it from a fiber would stall the reactor thread. Host-name resolution needs an engine resolve API, run off the fiber, that the engine owner and integration owner agree on (framework-core, 2026-11-27; routed to web-http). `NetworkInterface` waits for the network engines. java.net binds to the resolver through `java.net.spi.InetAddressResolverProvider` when it exists. The coordinator approved this deviation on 2026-11-27; it is removed when java.net's binding to an `InetAddressResolverProvider` lands."
+}

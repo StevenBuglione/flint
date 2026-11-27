@@ -1,0 +1,54 @@
+v4-loopback	addr	<null>	7f000001	0
+v4-loopback-other	addr	<null>	7f0a0b0c	0
+v4-any	addr	<null>	00000000	0
+v4-broadcast	addr	<null>	ffffffff	0
+v4-link-local	addr	<null>	a9fe0102	0
+v4-site-10	addr	<null>	0a000001	0
+v4-site-172-16	addr	<null>	ac100001	0
+v4-site-172-31	addr	<null>	ac1fffff	0
+v4-not-site-172-32	addr	<null>	ac200001	0
+v4-site-192-168	addr	<null>	c0a80101	0
+v4-mc-link	addr	<null>	e00000fb	0
+v4-mc-global-low	addr	<null>	e0000100	0
+v4-mc-global-high	addr	<null>	eeffffff	0
+v4-mc-site	addr	<null>	effffa01	0
+v4-mc-org	addr	<null>	efc00001	0
+v4-mc-org-high	addr	<null>	efc3ffff	0
+v4-public	addr	<null>	5db8d822	0
+v4-host	host	example.test	5db8d822	0
+v4-empty-host	host		0a000001	0
+v4-bracket-host	host	[example.test]	0a000001	0
+v4-open-bracket	host	[abc	0a000001	0
+v4-single-bracket	host	[	0a000001	0
+v4-empty-brackets	host	[]	0a000001	0
+v4-null-host	host	<null>	0a000001	0
+v6-loopback	addr	<null>	00000000000000000000000000000001	0
+v6-any	addr	<null>	00000000000000000000000000000000	0
+v6-doc	addr	<null>	20010db8000000000000000000000001	0
+v6-link-local	addr	<null>	fe800000000000000000000000000001	0
+v6-link-local-febf	addr	<null>	febf0000000000000000000000000001	0
+v6-site-local	addr	<null>	fec00000000000000000000000000001	0
+v6-mc-node	addr	<null>	ff010000000000000000000000000001	0
+v6-mc-link	addr	<null>	ff020000000000000000000000000001	0
+v6-mc-site	addr	<null>	ff050000000000000000000000000002	0
+v6-mc-org	addr	<null>	ff080000000000000000000000000002	0
+v6-mc-global	addr	<null>	ff0e0000000000000000000000000101	0
+v6-mc-flags	addr	<null>	ff1e0000000000000000000000000101	0
+v6-compat	addr	<null>	000000000000000000000000c0a80101	0
+v6-high-bytes	addr	<null>	ffeeddccbbaa99887766554433221100	0
+v6-mapped	addr	<null>	00000000000000000000ffffc0a80101	0
+v6-mapped-host	host	[mapped.test]	00000000000000000000ffff7f000001	0
+v6-near-mapped	addr	<null>	00000000000000000001ffffc0a80101	0
+v6-host	host	[v6.test]	20010db8000000000000000000000001	0
+v6-scope-0	scoped	<null>	fe800000000000000000000000000001	0
+v6-scope-5	scoped	link.test	fe800000000000000000000000000001	5
+v6-scope-neg	scoped	[link.test]	fe800000000000000000000000000001	-1
+v6-scope-max	scoped		fe800000000000000000000000000001	2147483647
+v6-scoped-mapped	scoped	<null>	00000000000000000000ffffc0a80101	3
+bad-empty	addr	<null>		0
+bad-3	addr	<null>	010203	0
+bad-5	host	x	0102030405	0
+bad-15	addr	<null>	000102030405060708090a0b0c0d0e	0
+bad-17	addr	<null>	000102030405060708090a0b0c0d0e0f10	0
+bad-scoped-4	scoped	x	7f000001	1
+loopback	loopback	<null>		0
