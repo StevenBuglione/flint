@@ -8384,6 +8384,7 @@
 "java.util.Iterator#hasNext()":{"d":"flint.java.util.Iterator.hasNext","status":"ported"},
 "java.util.Iterator#next()":{"d":"flint.java.util.Iterator.next","status":"ported"},
 "java.util.Iterator#remove()":{"d":"flint.java.util.Iterator.remove","status":"ported"},
+"java.util.Iterator#forEachRemaining(java.util.function.Consumer)":{"d":"flint.java.util.Iterator.forEachRemaining","status":"ported","rules":["R3"]},
 "java.util.LinkedHashMap":{"d":"flint.java.util.LinkedHashMap","status":"ported"},
 "java.util.LinkedHashMap#<init>()":{"d":"flint.java.util.LinkedHashMap.this","status":"ported"},
 "java.util.LinkedHashMap#<init>(Map)":{"d":"flint.java.util.LinkedHashMap.this","status":"ported"},
