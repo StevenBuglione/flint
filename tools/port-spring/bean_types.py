@@ -333,7 +333,8 @@ def with_imports(text, module):
     for symbol, home in IMPORTS.items():
         if not re.search(rf'\b{symbol}\b', text):
             continue
-        if re.search(rf'\bimport\s+[^;]*\b{symbol}\b', module) or re.search(rf'\bimport\s+{re.escape(home)}\s*;', module):
+        if re.search(rf'^(?:public\s+|private\s+|static\s+)*import\s[^;]*\b{symbol}\b', module, re.M) \
+                or re.search(rf'^(?:public\s+|private\s+|static\s+)*import\s+{re.escape(home)}\s*;', module, re.M):
             continue
         lines.append(f'import {home} : {symbol};\n')
     return ''.join(lines) + text
