@@ -229,3 +229,33 @@ unittest
             FixedRoundingMode.halfUp));
     assert(output[0 .. required] == "0.063");
 }
+
+@("Binary64 directed modes round by sign and expose UNNECESSARY status")
+unittest
+{
+    import flint.java.text.internal.decimaldigitlist : FixedRoundingMode, FixedRoundingStatus;
+
+    DecimalFixedPattern pattern;
+    assert(compileFixedDecimalPattern("0", pattern) == DecimalCompileStatus.accepted);
+    DecimalSymbolData symbols;
+    char[8] output;
+    output[] = 'x';
+    size_t required;
+    FixedRoundingStatus status;
+
+    assert(tryRenderDecimalDouble(0x3fd0_0000_0000_0000, pattern, symbols, output[], required,
+            FixedRoundingMode.up, status));
+    assert(status == FixedRoundingStatus.complete && output[0 .. required] == "1");
+    assert(tryRenderDecimalDouble(0xbfd0_0000_0000_0000, pattern, symbols, output[], required,
+            FixedRoundingMode.ceiling, status));
+    assert(status == FixedRoundingStatus.complete && output[0 .. required] == "-0");
+    assert(tryRenderDecimalDouble(0xbfd0_0000_0000_0000, pattern, symbols, output[], required,
+            FixedRoundingMode.floor, status));
+    assert(status == FixedRoundingStatus.complete && output[0 .. required] == "-1");
+
+    output[] = 'x';
+    assert(tryRenderDecimalDouble(0x3fd0_0000_0000_0000, pattern, symbols, output[], required,
+            FixedRoundingMode.unnecessary, status));
+    assert(status == FixedRoundingStatus.inexact);
+    assert(required == 0 && output[] == "xxxxxxxx");
+}
