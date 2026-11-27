@@ -877,7 +877,50 @@ unittest
         assert(got == expected, row[0] ~ " '" ~ row[1] ~ "': " ~ got ~ " != " ~ expected);
         ++count;
     }
-    assert(count == 952);
+    assert(count == 957);
+}
+
+// One operation of epoch_day.tsv: the result's toString, or `!`, the exception's class name, `: ` and its message.
+private string epochDayResult(string kind, string input, long arg)
+{
+    LocalDateTime dateTime() => LocalDate.parse(input).atTime(10, 15, 30);
+
+    try
+    {
+        const string delegate() @safe[string] table = [
+            "ofEpochDay": () => LocalDate.ofEpochDay(arg).toString(),
+            "plusDays": () => LocalDate.parse(input).plusDays(arg).toString(),
+            "minusDays": () => LocalDate.parse(input).minusDays(arg).toString(),
+            "plusWeeks": () => LocalDate.parse(input).plusWeeks(arg).toString(),
+            "minusWeeks": () => LocalDate.parse(input).minusWeeks(arg).toString(),
+            "dateTimePlusDays": () => dateTime().plusDays(arg).toString(),
+            "dateTimeMinusDays": () => dateTime().minusDays(arg).toString(),
+            "dateTimePlusWeeks": () => dateTime().plusWeeks(arg).toString(),
+            "ofEpochSecondUTC": () => LocalDateTime.ofEpochSecond(arg, 0, ZoneOffset.UTC)
+                .toString(),
+            "ofEpochSecondPlus2": () => LocalDateTime.ofEpochSecond(arg, 0, ZoneOffset.ofHours(2)).toString(),
+        ];
+        return table[kind]();
+    }
+    catch (DateTimeException e)
+        return "!DateTimeException: " ~ e.msg;
+    catch (ArithmeticException e)
+        return "!ArithmeticException: " ~ e.msg;
+}
+
+@("LocalDate epoch-day and day and week arithmetic report EpochDay, Year and overflow like JDK 21 (epoch_day.tsv)")
+unittest
+{
+    import std.conv : to;
+
+    size_t count;
+    foreach (row; rows(import("epoch_day.tsv")))
+    {
+        const got = epochDayResult(row[0], row[1], row[2].to!long);
+        assert(got == row[3], row[0] ~ " '" ~ row[1] ~ "' " ~ row[2] ~ ": " ~ got ~ " != " ~ row[3]);
+        ++count;
+    }
+    assert(count == 3243);
 }
 
 @("a STRICT year-of-era pattern does not resolve a date without an era, as in JDK 21")
