@@ -25,6 +25,24 @@ unittest
     static assert(Long.MIN_VALUE == long.min && Long.MAX_VALUE == long.max && Long.SIZE == 64 && Long.BYTES == 8);
 }
 
+@("flint.java.lang re-exports the leaves with the attributes its callers rely on")
+unittest
+{
+    import lang = flint.java.lang;
+
+    static assert(is(lang.Integer == Integer) && is(lang.Long == Long));
+    // Request code parses and formats header numbers through these, so the attributes are part of the contract.
+    static assert(is(typeof(() pure nothrow => Integer.toString(1) ~ Long.toString(1L))));
+    static assert(is(typeof(() pure nothrow @nogc => Integer.compare(1, 2) + Long.compare(1, 2) + Long.hashCode(3))));
+    static assert(is(typeof(() pure nothrow @nogc {
+                import flint.java.internal.integers : parseJavaInt, parseJavaLong;
+
+                int i;
+                long l;
+                return parseJavaInt("1", 10, i) == parseJavaLong("1", 10, l);
+            })));
+}
+
 @("parseInt and parseLong accept Java's forms, including Unicode digits")
 unittest
 {
