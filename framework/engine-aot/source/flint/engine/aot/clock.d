@@ -4,7 +4,7 @@ that asks for the time (ADR-030 section 5).
 +/
 module flint.engine.aot.clock;
 
-import flint.engine.aot.sys.clock : epochMillis, epochTicks, localOffsetSeconds;
+import flint.engine.aot.sys.clock : epochMillis, epochTicks, localOffsetSeconds, monotonicNanos;
 
 @safe:
 
@@ -12,6 +12,13 @@ import flint.engine.aot.sys.clock : epochMillis, epochTicks, localOffsetSeconds;
 long currentTimeMillis() nothrow @nogc
 {
     return epochMillis();
+}
+
+/// Monotonic nanoseconds from an arbitrary origin, as `System.nanoTime()`: only differences between reads are
+/// meaningful; 0 if the monotonic clock is unavailable.
+long nanoTime() nothrow @nogc
+{
+    return monotonicNanos();
 }
 
 /++
@@ -49,4 +56,6 @@ unittest
     // 2026-01-01T00:00Z: any working clock reads later.
     assert(currentTimeMillis() > 1_767_225_600_000);
     assert(currentTimeTicks() > 17_672_256_000_000_000);
+    const first = nanoTime();
+    assert(first != 0 && nanoTime() >= first);
 }
