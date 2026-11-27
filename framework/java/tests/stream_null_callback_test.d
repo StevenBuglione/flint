@@ -1,11 +1,12 @@
 module stream_null_callback_test;
 
 import flint.java.lang : IllegalStateException, NullPointerException;
+import flint.java.util : Comparator;
 import flint.java.util.stream : Stream;
 
 @safe:
 
-// Temurin 21.0.13+9 (StageNullOracle, MatchOracle, FlatMapNullMapperOracle): a null stage or terminal callback
+// Temurin 21.0.13+9 (StageNullOracle, MatchOracle, FlatMapNullMapperOracle, ReduceNullOracle): a null stage or terminal callback
 // throws NullPointerException before the source is taken, so a fresh source stays usable and a spent source
 // reports the null callback rather than its reuse.
 
@@ -53,6 +54,41 @@ unittest
     assertEagerNull("anyMatch", (Stream!int source) { source.anyMatch(predicate); });
     assertEagerNull("allMatch", (Stream!int source) { source.allMatch(predicate); });
     assertEagerNull("noneMatch", (Stream!int source) { source.noneMatch(predicate); });
+}
+
+unittest
+{
+    // Both reduce overloads, and min and max through BinaryOperator.minBy/maxBy, reject null before the take.
+    int delegate(int, int) @safe accumulator;
+    Comparator!int comparator;
+    assertEagerNull("reduce identity", (Stream!int source) { source.reduce(0, accumulator); });
+    assertEagerNull("reduce", (Stream!int source) { source.reduce(accumulator); });
+    assertEagerNull("min", (Stream!int source) { source.min(comparator); });
+    assertEagerNull("max", (Stream!int source) { source.max(comparator); });
+
+    assert(Stream!int.of(13, 8, 21).reduce(7, (int a, int b) => a + b) == 49);
+    assert(Stream!int.of(13, 8, 21).reduce((int a, int b) => a + b).get() == 42);
+}
+
+unittest
+{
+    // Optional.of on the selected or folded reference: a null result throws instead of reading as empty.
+    static final class Box
+    {
+    }
+
+    auto box = new Box;
+    Box nothing;
+    auto nullsFirst = Comparator!Box.of((Box a, Box b) => (a !is null) - (b !is null));
+    assert(run(() { Stream!Box.of(nothing).reduce((Box a, Box b) => a is null ? a : b); }) == Outcome.nullPointer);
+    assert(run(() { Stream!Box.of(box, box).reduce((Box a, Box b) => a is b ? null : a); }) == Outcome.nullPointer);
+    assert(run(() { Stream!Box.of(box, nothing).min(nullsFirst); }) == Outcome.nullPointer);
+    assert(run(() { Stream!Box.of(nothing, box).max(nullsFirst.reversed()); }) == Outcome.nullPointer);
+    assert(run(() { Stream!Box.of(nothing, box).findFirst(); }) == Outcome.nullPointer);
+    assert(run(() { Stream!Box.of(nothing).findAny(); }) == Outcome.nullPointer);
+    assert(Stream!Box.of(box, nothing).findFirst().get() is box);
+    assert(Stream!Box.of(box, nothing).max(nullsFirst).get() is box);
+    assert(Stream!Box.empty().findFirst().isEmpty());
 }
 
 unittest
