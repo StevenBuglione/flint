@@ -668,6 +668,7 @@ def configuration_properties(helper, cache, summary, report):
         'accepted': hand, 'reproduced': totals['exact'], 'diverged': totals['fields'] - totals['exact'],
         'rate': round(totals['exact'] / hand, 4) if hand else 0.0}
     report['configurationProperties'] = first
+    report['configurationPropertiesYield'] = beans.yield_report(str(helper), str(cache))['totals']
     return failures
 
 

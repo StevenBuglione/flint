@@ -29,8 +29,9 @@ UPSTREAM = 'spring-boot-v4.2.0'
 
 # Java value types and their D spelling. Text-like JDK types are bound from their string form (R6 erasure, as in
 # boot's hand spec: a Charset, Locale or Class<?> property holds the configured name).
-SCALARS = {'boolean': 'bool', 'int': 'int', 'long': 'long', 'String': 'string', 'Duration': 'Duration'}
-BOXED = {'Boolean': 'bool', 'Integer': 'int', 'Long': 'long'}
+SCALARS = {'boolean': 'bool', 'int': 'int', 'long': 'long', 'float': 'float', 'double': 'double', 'String': 'string',
+           'Duration': 'Duration'}
+BOXED = {'Boolean': 'bool', 'Integer': 'int', 'Long': 'long', 'Float': 'float', 'Double': 'double'}
 TEXT = {'Charset', 'Locale', 'TimeZone', 'InetAddress', 'Class'}
 # Types with no Flint counterpart yet: the field is left to the lane.
 UNSUPPORTED = {'DataSize', 'MediaType', 'Resource', 'File', 'ClassLoader', 'Character'}
@@ -178,6 +179,8 @@ def value_of(text, ctx, dtype):
         return text
     if NUMBER.fullmatch(text):
         return text.replace('_', '').rstrip('lL')
+    if re.fullmatch(r'-?[0-9]+\.[0-9]+[dDfF]?', text):
+        return text.rstrip('dD')
     if text == 'Integer.MAX_VALUE':
         return 'int.max'
     literal = string_literal(text)
@@ -271,7 +274,7 @@ def derive_class(decl, outer_ctx=None, external_enums=()):
                 value = d['value']
                 default = None
                 if value is None:
-                    default = {'bool': 'false', 'int': '0', 'long': '0'}.get(dtype)
+                    default = {'bool': 'false', 'int': '0', 'long': '0', 'float': '0', 'double': '0'}.get(dtype)
                 elif ro and NEW_OBJECT.fullmatch(value) and NEW_OBJECT.fullmatch(value).group(1) == dtype:
                     default = f'new {dtype}'
                 elif NEW_OBJECT.fullmatch(value) and NEW_OBJECT.fullmatch(value).group(1) == dtype:
@@ -462,6 +465,39 @@ def compare(helper, cache, reverse=False):
     return {'upstream': UPSTREAM, 'totals': totals, 'classes': report}
 
 
+def yield_report(helper, cache):
+    """Yield: every @ConfigurationProperties class of the pinned upstream, and how much of it the rules derive."""
+    totals = {'files': 0, 'classes': 0, 'fields': 0, 'unsupported': 0, 'customSetters': 0, 'failed': 0}
+    reasons = {}
+
+    def count(derived):
+        totals['classes'] += 1
+        totals['fields'] += len(derived.cls.fields)
+        totals['unsupported'] += len(derived.unsupported)
+        totals['customSetters'] += len(derived.custom_setters)
+        for reason in derived.unsupported.values():
+            key = re.sub(r' \S+$', '', reason) if reason.startswith('unsupported initializer') else reason
+            reasons[key] = reasons.get(key, 0) + 1
+        for child in derived.children.values():
+            count(child)
+    marker = f'{os.sep}src{os.sep}main{os.sep}java{os.sep}'
+    for name, paths in sorted(source_index(cache)[0].items()):
+        for path in paths:
+            with open(path, encoding='utf-8') as source:
+                if marker not in path or not re.search(r'^@ConfigurationProperties\b', source.read(), re.M):
+                    continue
+            totals['files'] += 1
+            try:
+                tree = describe(helper, path)
+                count(derive_class(tree['type'], external_enums=imported_enums(cache, tree)))
+            except Unsupported as error:
+                totals['failed'] += 1
+                key = 'class: ' + str(error).replace(cache, '<cache>')
+                reasons[key] = reasons.get(key, 0) + 1
+    return {'upstream': UPSTREAM, 'totals': totals,
+            'reasons': dict(sorted(reasons.items(), key=lambda item: (-item[1], item[0])))}
+
+
 def summary(result):
     t = result['totals']
     hand_fields = t['fields'] + t['unsupported'] + t['handOnly']
@@ -491,6 +527,8 @@ def main(argv=None):
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument('--compare', action='store_true', help="derive boot's hand-spec classes and compare")
     mode.add_argument('--render', metavar='CLASS', help='print the D class derived for a Java class')
+    mode.add_argument('--yield', dest='yield_', action='store_true',
+                      help='count what the rules derive over every @ConfigurationProperties class upstream')
     parser.add_argument('--json', help='write the comparison report here')
     args = parser.parse_args(argv)
     if args.render:
@@ -502,6 +540,20 @@ def main(argv=None):
         print(cp.render_class(derived.cls))
         for name, reason in sorted(derived.unsupported.items()):
             print(f'// port: {name} left to the lane: {reason}')
+        return 0
+    if args.yield_:
+        result = yield_report(args.helper, args.cache)
+        t = result['totals']
+        print(f'yield ({UPSTREAM}): {t["files"]} @ConfigurationProperties files, {t["classes"]} classes; '
+              f'{t["fields"]} properties derived, {t["unsupported"]} left to lanes, {t["customSetters"]} custom '
+              f'setters (lane bodies), {t["failed"]} classes not derived')
+        for reason, n in list(result['reasons'].items())[:15]:
+            print(f'  {n:4d} {reason}')
+        if args.json:
+            os.makedirs(os.path.dirname(os.path.abspath(args.json)), exist_ok=True)
+            with open(args.json, 'w', encoding='utf-8') as out:
+                json.dump(result, out, indent=2, sort_keys=True)
+                out.write('\n')
         return 0
     result = compare(args.helper, args.cache)
     if args.json:
