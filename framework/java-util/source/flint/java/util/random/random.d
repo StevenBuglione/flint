@@ -51,6 +51,30 @@ class Random
         return next(32);
     }
 
+    /// Return the next signed 64-bit value built from two virtual `next(32)` draws.
+    long nextLong()
+    {
+        return (cast(long) next(32) << 32) + next(32);
+    }
+
+    /// Return the next boolean from one virtual `next(1)` bit.
+    bool nextBoolean()
+    {
+        return next(1) != 0;
+    }
+
+    /// Return the next float in `[0.0f, 1.0f)` from `next(24)`.
+    float nextFloat()
+    {
+        return cast(float) next(24) * 0x1.0p-24f;
+    }
+
+    /// Return the next double in `[0.0, 1.0)` from `next(26)` and `next(27)`.
+    double nextDouble()
+    {
+        return cast(double)((cast(long) next(26) << 27) + next(27)) * 0x1.0p-53;
+    }
+
     /// Fill the slice using the low bytes of successive virtual nextInt calls.
     void nextBytes(scope byte[] bytes)
     {
