@@ -74,5 +74,9 @@
   "flint.java.util.function_.unaryoperator": {
     "incremental_linked_bytes": 1127,
     "template_instances": 48
+  },
+  "flint.java.util.stream.collector": {
+    "incremental_linked_bytes": 41404,
+    "template_instances": 746
   }
 }
