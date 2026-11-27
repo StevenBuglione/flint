@@ -61,7 +61,15 @@
 "kind": "class",
 "module": "flint.security.authentication",
 "d": "AnonymousAuthenticationToken",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.security.authentication.AuthenticationCredentialsNotFoundException": {
 "kind": "class",
@@ -157,7 +165,14 @@
 "kind": "class",
 "module": "flint.security.authentication",
 "d": "ProviderManager",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"setter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.security.authentication.ProviderNotFoundException": {
 "kind": "class",
@@ -193,7 +208,14 @@
 "kind": "abstract class",
 "module": "flint.security.authentication.event",
 "d": "AbstractAuthenticationFailureEvent",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent": {
 "kind": "class",
@@ -283,7 +305,14 @@
 "kind": "class",
 "module": "flint.security.authorization",
 "d": "AuthorizationDeniedException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.security.authorization.AuthorizationResult": {
 "kind": "interface",
@@ -406,7 +435,14 @@
 "kind": "abstract class",
 "module": "flint.security.core",
 "d": "AuthenticationException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.security.core.CredentialsContainer": {
 "kind": "interface",

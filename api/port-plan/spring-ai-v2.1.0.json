@@ -203,7 +203,15 @@
 "kind": "final class",
 "module": "flint.ai.document",
 "d": "DefaultContentFormatter",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.ai.document.Document": {
 "kind": "class",
@@ -326,7 +334,20 @@
 "kind": "class",
 "module": "flint.ai.image",
 "d": "Image",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+],
+"setter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.ai.image.ImageGeneration": {
 "kind": "class",
@@ -353,7 +374,14 @@
 "status": "adapted",
 "rules": [
 "R12"
+],
+"accessors": {
+"getter": [
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "org.springframework.ai.model.ApiKey": {
 "kind": "interface",

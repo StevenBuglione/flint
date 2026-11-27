@@ -54,7 +54,13 @@
 "status": "adapted",
 "rules": [
 "R11"
+],
+"accessors": {
+"getter": [
+"nothrow",
+"@nogc"
 ]
+}
 },
 "io.micrometer.core.instrument.LongTaskTimer": {
 "kind": "interface",
@@ -66,7 +72,14 @@
 "kind": "class",
 "module": "flint.micrometer.core.instrument",
 "d": "Measurement",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"nothrow",
+"@nogc"
+]
+}
 },
 "io.micrometer.core.instrument.Meter": {
 "kind": "interface",
@@ -87,7 +100,13 @@
 "kind": "class",
 "module": "flint.micrometer.core.instrument",
 "d": "MockClock",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"nothrow",
+"@nogc"
+]
+}
 },
 "io.micrometer.core.instrument.Statistic": {
 "kind": "struct",
@@ -143,7 +162,14 @@
 "status": "adapted",
 "rules": [
 "R1"
+],
+"accessors": {
+"getter": [
+"const",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "io.micrometer.core.instrument.distribution.DistributionStatisticConfig": {
 "kind": "class",
@@ -164,7 +190,14 @@
 "status": "adapted",
 "rules": [
 "R1"
+],
+"accessors": {
+"getter": [
+"const",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "io.micrometer.core.instrument.distribution.HistogramSupport": {
 "kind": "interface",
@@ -194,7 +227,14 @@
 "status": "adapted",
 "rules": [
 "R1"
+],
+"accessors": {
+"getter": [
+"const",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "io.micrometer.core.instrument.noop.NoopCounter": {
 "kind": "class",

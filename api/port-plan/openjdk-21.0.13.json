@@ -263,7 +263,15 @@
 "kind": "class",
 "module": "flint.java.math",
 "d": "BigInteger",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "java.math.RoundingMode": {
 "kind": "enum",
@@ -278,7 +286,15 @@
 "status": "adapted",
 "rules": [
 "R11"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.net.URLDecoder": {
 "kind": "struct",
@@ -309,7 +325,15 @@
 "status": "adapted",
 "rules": [
 "R1"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.nio.BufferOverflowException": {
 "kind": "class",
@@ -347,7 +371,15 @@
 "rules": [
 "R1",
 "R15"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.nio.CharBuffer": {
 "kind": "class",
@@ -469,7 +501,15 @@
 "rules": [
 "R1",
 "R15"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.nio.charset.IllegalCharsetNameException": {
 "kind": "class",
@@ -493,7 +533,15 @@
 "kind": "class",
 "module": "flint.java.nio.file",
 "d": "InvalidPathException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "java.nio.file.Path": {
 "kind": "interface",
@@ -667,13 +715,34 @@
 "kind": "class",
 "module": "flint.java.text",
 "d": "ParseException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "java.text.ParsePosition": {
 "kind": "class",
 "module": "flint.java.text",
 "d": "ParsePosition",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+],
+"setter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "java.time.DateTimeException": {
 "kind": "class",
@@ -704,7 +773,15 @@
 "rules": [
 "R1",
 "R11"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.time.Period": {
 "kind": "struct",
@@ -714,7 +791,15 @@
 "rules": [
 "R1",
 "R11"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.time.Year": {
 "kind": "struct",
@@ -724,7 +809,15 @@
 "rules": [
 "R1",
 "R11"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.time.YearMonth": {
 "kind": "struct",
@@ -734,7 +827,15 @@
 "rules": [
 "R1",
 "R11"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.time.format.DateTimeParseException": {
 "kind": "class",
@@ -743,7 +844,15 @@
 "status": "adapted",
 "rules": [
 "R26"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.time.format.SignStyle": {
 "kind": "enum",
@@ -779,7 +888,15 @@
 "rules": [
 "R1",
 "R11"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.time.zone.ZoneOffsetTransition": {
 "kind": "struct",
@@ -789,7 +906,15 @@
 "rules": [
 "R1",
 "R11"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.time.zone.ZoneOffsetTransitionRule": {
 "kind": "struct",
@@ -799,7 +924,15 @@
 "rules": [
 "R1",
 "R11"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.time.zone.ZoneRules": {
 "kind": "struct",
@@ -830,7 +963,20 @@
 "kind": "abstract class",
 "module": "flint.java.util",
 "d": "Calendar",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+],
+"setter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "java.util.Collections": {
 "kind": "struct",
@@ -863,7 +1009,15 @@
 "status": "adapted",
 "rules": [
 "R1"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.util.IllegalFormatConversionException": {
 "kind": "class",
@@ -899,7 +1053,15 @@
 "status": "adapted",
 "rules": [
 "R1"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.util.NoSuchElementException": {
 "kind": "class",
@@ -923,7 +1085,14 @@
 "kind": "class",
 "module": "flint.java.util",
 "d": "SimpleTimeZone",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"setter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "java.util.StringJoiner": {
 "kind": "final class",
@@ -938,7 +1107,15 @@
 "kind": "abstract class",
 "module": "flint.java.util",
 "d": "TimeZone",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "java.util.UUID": {
 "kind": "final class",
@@ -947,7 +1124,15 @@
 "status": "adapted",
 "rules": [
 "R1"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.util.UnknownFormatConversionException": {
 "kind": "class",
@@ -956,7 +1141,15 @@
 "status": "adapted",
 "rules": [
 "R1"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.util.concurrent.BrokenBarrierException": {
 "kind": "class",
@@ -1033,7 +1226,13 @@
 "rules": [
 "R1",
 "R3"
+],
+"accessors": {
+"getter": [
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.util.concurrent.atomic.AtomicLong": {
 "kind": "final class",
@@ -1043,7 +1242,13 @@
 "rules": [
 "R1",
 "R3"
+],
+"accessors": {
+"getter": [
+"nothrow",
+"@nogc"
 ]
+}
 },
 "java.util.concurrent.locks.Condition": {
 "kind": "interface",
@@ -1127,13 +1332,29 @@
 "kind": "final class",
 "module": "flint.java.util.regex",
 "d": "Pattern",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "java.util.regex.PatternSyntaxException": {
 "kind": "class",
 "module": "flint.java.util.regex",
 "d": "PatternSyntaxException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "java.util.stream.Collectors": {
 "kind": "struct",

@@ -2,26 +2,19 @@
  "schema": "flint.porter-baseline/1",
  "about": "Shrink-only list of accepted-but-divergent porter outputs, and the reproduced count per shape, which only grows. tools/porter_gate.py; docs/spring/phase2/porter-plan.md.",
  "reproduced": {
-  "annotation-r2": 124,
+  "annotation-r2": 126,
   "configuration-properties-field": 117,
   "constant-holder-r1": 1,
   "enum-constants": 24,
   "enum-method-r20": 1,
   "exception-r8": 1,
-  "marker-interface-r3": 1
+  "marker-interface-r3": 1,
+  "r6-accessor": 386
  },
  "blocked": {
   ":security-core/dmd": "security-crypto BCrypt needs the pinned crypt-blowfish native provider, which the gate's tree doesn't link (2 modules fail on main without it)."
  },
  "divergences": {
-  "jakarta.persistence.MapKeyTemporal": {
-   "kind": "api",
-   "reason": "Hand port omits Java's @Deprecated(since=\"3.2\"); R2 makes it D deprecated on the struct, which the porter emits. Fix sent to sol-jpa, 2026-11-27."
-  },
-  "jakarta.persistence.Temporal": {
-   "kind": "api",
-   "reason": "Hand port omits Java's @Deprecated(since=\"3.2\"); R2 makes it D deprecated on the struct, which the porter emits. Fix sent to sol-jpa, 2026-11-27."
-  },
   "org.springframework.beans.factory.annotation.Qualifier": {
    "kind": "mapping+api",
    "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27. D API: a Java default of \"\" is D null in the hand port (== equal, `is null` differs); the porter writes \"\" as the other annotations do. Asked the owner, 2026-11-27."
@@ -41,6 +34,780 @@
   "org.springframework.transaction.annotation.RollbackOn": {
    "kind": "mapping",
    "reason": "Hand mapping rows: #ALL_EXCEPTIONS and #RUNTIME_EXCEPTIONS are still deferred though the D enum declares both. Fix sent to data-access, 2026-11-27."
+  }
+ },
+ "accessorDivergences": {
+  "io.micrometer.core.instrument.MeterRegistry#config()": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: argument `Timer function(Id) @safe` has no visibility | the derived body does not compile against the hand class: dmd: does not compile: Error: argument `Timer function(Id) @safe` has no visibility"
+  },
+  "io.micrometer.core.instrument.distribution.HistogramSnapshot#histogramCounts()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R5'], porter ported []"
+  },
+  "io.micrometer.core.instrument.distribution.HistogramSnapshot#percentileValues()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R5'], porter ported []"
+  },
+  "jakarta.servlet.GenericFilter#getFilterConfig()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R1', 'R10'], porter ported []"
+  },
+  "jakarta.servlet.GenericServlet#getServletConfig()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R1', 'R10'], porter ported []"
+  },
+  "jakarta.servlet.http.Cookie#getName()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R1', 'R10'], porter ported []"
+  },
+  "jakarta.servlet.http.Cookie#getValue()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R1', 'R10'], porter ported []"
+  },
+  "java.net.URI#getScheme()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R5'], porter ported []"
+  },
+  "java.nio.ByteOrder#toString()": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: `assert(0)` failed | the derived body does not compile against the hand class: dmd: does not compile: Error: no property `name` for `this` of type `const(flint.java.nio.byteorder.ByteOrder)`"
+  },
+  "java.nio.charset.CodingErrorAction#toString()": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: `assert(0)` failed | the derived body does not compile against the hand class: dmd: does not compile: Error: no property `name` for `this` of type `const(flint.java.nio.charset.codingerroraction.CodingErrorAction)`"
+  },
+  "java.time.zone.ZoneOffsetTransitionRule#getDayOfWeek()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `` porter `ZoneOffsetTransitionRule.getDayOfWeek#0 public const pure nothrow @nogc @safe DayOfWeek() const pure nothrow @nogc @safe` | row: hand adapted ['R5'], porter ported []"
+  },
+  "java.util.Calendar#setLenient(boolean)": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `Calendar.setLenient#0 public pure nothrow @nogc @safe void(bool value) pure nothrow @nogc @safe virtual` porter `Calendar.setLenient#0 public pure nothrow @nogc @safe void(bool lenient) pure nothrow @nogc @safe virtual`"
+  },
+  "java.util.HexFormat#delimiter()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R5'], porter ported []"
+  },
+  "java.util.HexFormat#prefix()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R5'], porter ported []"
+  },
+  "java.util.HexFormat#suffix()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R5'], porter ported []"
+  },
+  "java.util.SimpleTimeZone#useDaylightTime()": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: function `@safe bool flint.java.util.timezone.SimpleTimeZone.useDaylightTime()` does not override any function | the derived body does not compile against the hand class: dmd: does not compile: Error: function `@safe bool flint.java.util.timezone.SimpleTimeZone.useDayli"
+  },
+  "java.util.regex.Pattern#pattern()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R5'], porter ported []"
+  },
+  "java.util.regex.Pattern#toString()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: cannot implicitly override base class method `object.Object.toString` with `flint.java.util.regex.pattern.Pattern.toString`; add `override` attribute | the derived body does not compile against the hand class: dmd: does not compile: Error: cannot implicitly override bas"
+  },
+  "org.slf4j.event.DefaultLoggingEvent#getKeyValuePairs()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `List!KeyValuePair` template `List` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `List!KeyValuePair` template `List` is not defined | row: hand ported [], porter adapted ['R1"
+  },
+  "org.slf4j.event.DefaultLoggingEvent#getMarkers()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `List!Marker` template `List` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `List!Marker` template `List` is not defined | row: hand ported [], porter adapted ['R10']"
+  },
+  "org.slf4j.helpers.FormattingTuple#getArgArray()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R23']"
+  },
+  "org.slf4j.helpers.NormalizedParameters#getArguments()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.ai.chat.messages.AbstractMessage#getMessageType()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R15'], porter ported []"
+  },
+  "org.springframework.ai.chat.messages.AbstractMessage#getText()": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined"
+  },
+  "org.springframework.ai.chat.prompt.DefaultChatOptions#getStopSequences()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R5', 'R10'], porter adapted ['R10']"
+  },
+  "org.springframework.ai.document.Document#getId()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `Document.getId#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` porter `Document.getId#0 public @safe string() @safe virtual`"
+  },
+  "org.springframework.ai.document.Document#getText()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `Document.getText#0 public const pure nothrow @nogc @safe Nullable!string() const pure nothrow @nogc @safe virtual` porter `Document.getText#0 public @safe Nullable!string() @safe virtual`"
+  },
+  "org.springframework.ai.evaluation.EvaluationRequest#getResponseContent()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `EvaluationRequest.getResponseContent#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` porter `EvaluationRequest.getResponseContent#0 public @safe string() @safe virtual`"
+  },
+  "org.springframework.ai.evaluation.EvaluationRequest#getUserText()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `EvaluationRequest.getUserText#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` porter `EvaluationRequest.getUserText#0 public @safe string() @safe virtual`"
+  },
+  "org.springframework.ai.evaluation.EvaluationResponse#getFeedback()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `EvaluationResponse.getFeedback#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` porter `EvaluationResponse.getFeedback#0 public @safe string() @safe virtual`"
+  },
+  "org.springframework.ai.evaluation.EvaluationResponse#getScore()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `EvaluationResponse.getScore#0 public const pure nothrow @nogc @safe float() const pure nothrow @nogc @safe virtual` porter `EvaluationResponse.getScore#0 public @safe float() @safe virtual`"
+  },
+  "org.springframework.ai.evaluation.EvaluationResponse#isPass()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `EvaluationResponse.isPass#0 public const pure nothrow @nogc @safe bool() const pure nothrow @nogc @safe virtual` porter `EvaluationResponse.isPass#0 public @safe bool() @safe virtual`"
+  },
+  "org.springframework.ai.image.Image#setB64Json(String)": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `Image.setB64Json#0 public pure nothrow @nogc @safe void(string b64Json) pure nothrow @nogc @safe virtual` porter `Image.setB64Json#0 public pure nothrow @nogc @safe void(Nullable!string b64Json) pure nothrow @nogc @safe virtual` | row: hand ported [], porter adapted ['R5']"
+  },
+  "org.springframework.ai.image.Image#setUrl(String)": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `Image.setUrl#0 public pure nothrow @nogc @safe void(string url) pure nothrow @nogc @safe virtual` porter `Image.setUrl#0 public pure nothrow @nogc @safe void(Nullable!string url) pure nothrow @nogc @safe virtual` | row: hand ported [], porter adapted ['R5']"
+  },
+  "org.springframework.ai.image.ImageOptionsBuilder#build()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R12'], porter ported []"
+  },
+  "org.springframework.beans.factory.BeanCreationException#getBeanName()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `BeanCreationException.getBeanName#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` porter `BeanCreationException.getBeanName#0 public const pure nothrow @nogc @safe Nullable!string() const pure nothrow @nogc @safe virtual` | row: hand ported [], por"
+  },
+  "org.springframework.beans.factory.BeanCreationException#getResourceDescription()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `BeanCreationException.getResourceDescription#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` porter `BeanCreationException.getResourceDescription#0 public const pure nothrow @nogc @safe Nullable!string() const pure nothrow @nogc @safe virtual` | ro"
+  },
+  "org.springframework.beans.factory.BeanDefinitionStoreException#getBeanName()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `BeanDefinitionStoreException.getBeanName#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` porter `BeanDefinitionStoreException.getBeanName#0 public const pure nothrow @nogc @safe Nullable!string() const pure nothrow @nogc @safe virtual` | row: hand "
+  },
+  "org.springframework.beans.factory.NoSuchBeanDefinitionException#getBeanName()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `NoSuchBeanDefinitionException.getBeanName#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` porter `NoSuchBeanDefinitionException.getBeanName#0 public const pure nothrow @nogc @safe Nullable!string() const pure nothrow @nogc @safe virtual` | row: han"
+  },
+  "org.springframework.beans.factory.NoUniqueBeanDefinitionException#getBeanNamesFound()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Collection!string` template `Collection` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Collection!string` template `Collection` is not defined | row: hand ported [], porter "
+  },
+  "org.springframework.beans.factory.NoUniqueBeanDefinitionException#getNumberOfBeansFound()": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: function `@safe int flint.beans.factory.NoUniqueBeanDefinitionException.getNumberOfBeansFound()` does not override any function | the derived body does not compile against the hand class: dmd: does not compile: Error: function `@safe int flint.beans.factory.NoUniqueBean"
+  },
+  "org.springframework.beans.factory.support.BeanDefinitionDefaults#setAutowireMode(int)": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `BeanDefinitionDefaults.setAutowireMode#0 public pure nothrow @nogc @safe void(int mode) pure nothrow @nogc @safe virtual` porter `BeanDefinitionDefaults.setAutowireMode#0 public pure nothrow @nogc @safe void(int autowireMode) pure nothrow @nogc @safe virtual`"
+  },
+  "org.springframework.beans.factory.support.BeanDefinitionDefaults#setDependencyCheck(int)": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `BeanDefinitionDefaults.setDependencyCheck#0 public pure nothrow @nogc @safe void(int code) pure nothrow @nogc @safe virtual` porter `BeanDefinitionDefaults.setDependencyCheck#0 public pure nothrow @nogc @safe void(int dependencyCheck) pure nothrow @nogc @safe virtual`"
+  },
+  "org.springframework.beans.factory.support.BeanDefinitionDefaults#setLazyInit(boolean)": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `BeanDefinitionDefaults.setLazyInit#0 public pure nothrow @nogc @safe void(bool value) pure nothrow @nogc @safe virtual` porter `BeanDefinitionDefaults.setLazyInit#0 public pure nothrow @nogc @safe void(bool lazyInit) pure nothrow @nogc @safe virtual`"
+  },
+  "org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#getParent()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R22'], porter ported []"
+  },
+  "org.springframework.boot.autoconfigure.condition.ConditionOutcome#getConditionMessage()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R22'], porter ported []"
+  },
+  "org.springframework.boot.autoconfigure.condition.ConditionOutcome#isMatch()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R22'], porter ported []"
+  },
+  "org.springframework.cache.interceptor.CacheOperation#toString()": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: cannot implicitly override base class method `object.Object.toString` with `flint.cache.interceptor.CacheOperation.toString`; add `override` attribute | the derived body does not compile against the hand class: dmd: does not compile: Error: cannot implicitly override ba"
+  },
+  "org.springframework.cache.support.SimpleValueWrapper#get()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R7'], porter adapted ['R23']"
+  },
+  "org.springframework.context.i18n.SimpleLocaleContext#getLocale()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!Locale` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!Locale` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.context.support.AbstractMessageSource#getCommonMessages()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `AbstractMessageSource.getCommonMessages#0 public @safe Properties() @safe virtual` porter `AbstractMessageSource.getCommonMessages#0 protected @safe Properties() @safe virtual`"
+  },
+  "org.springframework.context.support.AbstractMessageSource#isUseCodeAsDefaultMessage()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `AbstractMessageSource.isUseCodeAsDefaultMessage#0 protected const pure nothrow @nogc @safe bool() const pure nothrow @nogc @safe virtual` porter `AbstractMessageSource.isUseCodeAsDefaultMessage#0 protected @safe bool() @safe virtual`"
+  },
+  "org.springframework.context.support.AbstractMessageSource#setUseCodeAsDefaultMessage(boolean)": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `AbstractMessageSource.setUseCodeAsDefaultMessage#0 public pure nothrow @nogc @safe void(bool useCodeAsDefaultMessage) pure nothrow @nogc @safe virtual` porter `AbstractMessageSource.setUseCodeAsDefaultMessage#0 public @safe void(bool useCodeAsDefaultMessage) @safe virtual`"
+  },
+  "org.springframework.context.support.AbstractResourceBasedMessageSource#getBasenameSet()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Set!string` template `Set` is not defined, did you mean get(K, V)(inout(V[K]) aa, K key, lazy inout(V) defaultValue)? | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Set!string` template `Se"
+  },
+  "org.springframework.context.support.AbstractResourceBasedMessageSource#setDefaultLocale(Locale)": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!Locale` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!Locale` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.context.support.DefaultMessageSourceResolvable#getArguments()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.context.support.DefaultMessageSourceResolvable#getDefaultMessage()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.context.support.GenericApplicationContext#getBeanFactory()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `GenericApplicationContext.getBeanFactory#0 public @safe ConfigurableListableBeanFactory() @safe virtual` porter `GenericApplicationContext.getBeanFactory#0 public @safe ConfigurableListableBeanFactory() @safe virtual final`"
+  },
+  "org.springframework.context.support.GenericApplicationContext#getDefaultListableBeanFactory()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `GenericApplicationContext.getDefaultListableBeanFactory#0 public pure nothrow @nogc @safe DefaultListableBeanFactory() pure nothrow @nogc @safe final` porter `GenericApplicationContext.getDefaultListableBeanFactory#0 public @safe DefaultListableBeanFactory() @safe final`"
+  },
+  "org.springframework.core.env.AbstractPropertyResolver#setValueSeparator(String)": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.core.env.MissingRequiredPropertiesException#getMissingRequiredProperties()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `MissingRequiredPropertiesException.getMissingRequiredProperties#0 public const @safe string[]() const @safe virtual` porter `MissingRequiredPropertiesException.getMissingRequiredProperties#0 public const @safe Set!string() const @safe virtual` | row: hand ported [], porter adapted ['R10']"
+  },
+  "org.springframework.core.io.ByteArrayResource#getByteArray()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `ByteArrayResource.getByteArray#0 public const pure nothrow @nogc @safe immutable(ubyte)[]() const pure nothrow @nogc @safe final` porter `ByteArrayResource.getByteArray#0 public const pure nothrow @nogc @safe byte[]() const pure nothrow @nogc @safe final`"
+  },
+  "org.springframework.core.io.DefaultResourceLoader#getProtocolResolvers()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Collection!ProtocolResolver` template `Collection` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Collection!ProtocolResolver` template `Collection` is not defined | row: han"
+  },
+  "org.springframework.core.io.DescriptiveResource#getDescription()": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: cannot implicitly override base class method `flint.core.io.AbstractResource.getDescription` with `flint.core.io.DescriptiveResource.getDescription`; add `override` attribute | the derived body does not compile against the hand class: dmd: does not compile: Error: canno"
+  },
+  "org.springframework.data.domain.KeysetScrollPosition#getKeys()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `` porter `KeysetScrollPosition.getKeys#0 public @safe Map!(string, Any)() @safe final` | row: hand adapted ['R10'], porter adapted ['R10', 'R23']"
+  },
+  "org.springframework.data.mapping.Alias#getValue()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `Alias.getValue#0 public nothrow @nogc @safe Any() nothrow @nogc @safe virtual abstract` porter `Alias.getValue#0 public nothrow @nogc @safe Any() nothrow @nogc @safe virtual`"
+  },
+  "org.springframework.expression.ExpressionException#getExpressionString()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.expression.TypedValue#getValue()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `TypedValue.getValue#0 public inout pure nothrow @nogc @safe inout(Any)() inout pure nothrow @nogc @safe` porter `TypedValue.getValue#0 public inout pure nothrow @nogc @safe Any() inout pure nothrow @nogc @safe` | row: hand adapted ['R3'], porter adapted ['R23']"
+  },
+  "org.springframework.expression.spel.support.StandardEvaluationContext#setPropertyAccessors(List)": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `StandardEvaluationContext.setPropertyAccessors#0 public @safe void(List!(PropertyAccessor) accessors) @safe virtual` porter `StandardEvaluationContext.setPropertyAccessors#0 public @safe void(List!(PropertyAccessor) propertyAccessors) @safe virtual`"
+  },
+  "org.springframework.http.HttpMethod#name()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R11'], porter ported []"
+  },
+  "org.springframework.http.HttpMethod#toString()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: `assert(0)` failed | the derived body does not compile against the hand class: dmd: does not compile: Error: no property `name_` for type `const(HttpMethod)` | row: hand adapted ['R11'], porter ported []"
+  },
+  "org.springframework.jdbc.InvalidResultSetAccessException#getSql()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.jdbc.UncategorizedSQLException#getSql()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.jdbc.core.SqlParameterValue#getValue()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.jdbc.core.metadata.GenericTableMetaDataProvider#getDatabaseVersion()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.jdbc.core.metadata.GenericTableMetaDataProvider#getDefaultSchema()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.jdbc.core.metadata.TableMetaDataContext#getCatalogName()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.jdbc.core.metadata.TableMetaDataContext#getSchemaName()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.jdbc.core.metadata.TableMetaDataContext#getTableName()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.jdbc.core.metadata.TableMetaDataContext#setCatalogName(String)": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.jdbc.core.metadata.TableMetaDataContext#setSchemaName(String)": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.jdbc.core.metadata.TableMetaDataContext#setTableName(String)": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.jdbc.core.namedparam.ParsedSql#toString()": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: cannot implicitly override base class method `object.Object.toString` with `flint.jdbc.core.namedparam.ParsedSql.toString`; add `override` attribute | the derived body does not compile against the hand class: dmd: does not compile: Error: cannot implicitly override base"
+  },
+  "org.springframework.jdbc.datasource.AbstractDriverBasedDataSource#getCatalog()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `AbstractDriverBasedDataSource.getCatalog#0 public @safe string() @safe virtual` porter `AbstractDriverBasedDataSource.getCatalog#0 public @safe Nullable!string() @safe virtual` | row: hand ported [], porter adapted ['R5']"
+  },
+  "org.springframework.jdbc.datasource.AbstractDriverBasedDataSource#getPassword()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `AbstractDriverBasedDataSource.getPassword#0 public @safe string() @safe virtual` porter `AbstractDriverBasedDataSource.getPassword#0 public @safe Nullable!string() @safe virtual` | row: hand ported [], porter adapted ['R5']"
+  },
+  "org.springframework.jdbc.datasource.AbstractDriverBasedDataSource#getSchema()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `AbstractDriverBasedDataSource.getSchema#0 public @safe string() @safe virtual` porter `AbstractDriverBasedDataSource.getSchema#0 public @safe Nullable!string() @safe virtual` | row: hand ported [], porter adapted ['R5']"
+  },
+  "org.springframework.jdbc.datasource.AbstractDriverBasedDataSource#getUrl()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `AbstractDriverBasedDataSource.getUrl#0 public @safe string() @safe virtual` porter `AbstractDriverBasedDataSource.getUrl#0 public @safe Nullable!string() @safe virtual` | row: hand ported [], porter adapted ['R5']"
+  },
+  "org.springframework.jdbc.datasource.AbstractDriverBasedDataSource#getUsername()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `AbstractDriverBasedDataSource.getUsername#0 public @safe string() @safe virtual` porter `AbstractDriverBasedDataSource.getUsername#0 public @safe Nullable!string() @safe virtual` | row: hand ported [], porter adapted ['R5']"
+  },
+  "org.springframework.jdbc.datasource.AbstractDriverBasedDataSource#setCatalog(String)": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `AbstractDriverBasedDataSource.setCatalog#0 public @safe void(string catalog) @safe virtual` porter `AbstractDriverBasedDataSource.setCatalog#0 public @safe void(Nullable!string catalog) @safe virtual` | row: hand ported [], porter adapted ['R5']"
+  },
+  "org.springframework.jdbc.datasource.AbstractDriverBasedDataSource#setPassword(String)": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `AbstractDriverBasedDataSource.setPassword#0 public @safe void(string password) @safe virtual` porter `AbstractDriverBasedDataSource.setPassword#0 public @safe void(Nullable!string password) @safe virtual` | row: hand ported [], porter adapted ['R5']"
+  },
+  "org.springframework.jdbc.datasource.AbstractDriverBasedDataSource#setSchema(String)": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `AbstractDriverBasedDataSource.setSchema#0 public @safe void(string schema) @safe virtual` porter `AbstractDriverBasedDataSource.setSchema#0 public @safe void(Nullable!string schema) @safe virtual` | row: hand ported [], porter adapted ['R5']"
+  },
+  "org.springframework.jdbc.datasource.AbstractDriverBasedDataSource#setUsername(String)": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `AbstractDriverBasedDataSource.setUsername#0 public @safe void(string username) @safe virtual` porter `AbstractDriverBasedDataSource.setUsername#0 public @safe void(Nullable!string username) @safe virtual` | row: hand ported [], porter adapted ['R5']"
+  },
+  "org.springframework.jdbc.datasource.SimpleDriverDataSource#getDriver()": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: undefined identifier `AbstractDriverBasedDataSource.getConnectionFromDriver` | the derived body does not compile against the hand class: dmd: does not compile: Error: undefined identifier `AbstractDriverBasedDataSource.getConnectionFromDriver`"
+  },
+  "org.springframework.jdbc.datasource.SimpleDriverDataSource#setDriver(Driver)": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: undefined identifier `AbstractDriverBasedDataSource.getConnectionFromDriver` | the derived body does not compile against the hand class: dmd: does not compile: Error: undefined identifier `AbstractDriverBasedDataSource.getConnectionFromDriver`"
+  },
+  "org.springframework.jdbc.support.GeneratedKeyHolder#getKeyList()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R10'], porter adapted ['R10', 'R23']"
+  },
+  "org.springframework.orm.ObjectRetrievalFailureException#getIdentifier()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R7'], porter adapted ['R23']"
+  },
+  "org.springframework.security.authentication.AbstractAuthenticationToken#getAuthorities()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Collection!GrantedAuthority` template `Collection` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Collection!GrantedAuthority` template `Collection` is not defined | row: han"
+  },
+  "org.springframework.security.authentication.AbstractAuthenticationToken#getDetails()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.security.authentication.AbstractAuthenticationToken#setDetails(Object)": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.security.authentication.AnonymousAuthenticationToken#getPrincipal()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `AnonymousAuthenticationToken.getPrincipal#0 public @safe Any() @safe virtual` porter `AnonymousAuthenticationToken.getPrincipal#0 public const pure nothrow @nogc @safe Any() const pure nothrow @nogc @safe virtual` | row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.security.authentication.ProviderManager#getProviders()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `List!AuthenticationProvider` template `List` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `List!AuthenticationProvider` template `List` is not defined | row: hand ported [],"
+  },
+  "org.springframework.security.authentication.ProviderManager#setEraseCredentialsAfterAuthentication(boolean)": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `ProviderManager.setEraseCredentialsAfterAuthentication#0 public pure nothrow @nogc @safe void(bool erase) pure nothrow @nogc @safe virtual` porter `ProviderManager.setEraseCredentialsAfterAuthentication#0 public pure nothrow @nogc @safe void(bool eraseSecretData) pure nothrow @nogc @safe "
+  },
+  "org.springframework.security.authentication.UsernamePasswordAuthenticationToken#getCredentials()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.security.authentication.UsernamePasswordAuthenticationToken#getPrincipal()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.security.authorization.AuthorityAuthorizationDecision#getAuthorities()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Collection!GrantedAuthority` template `Collection` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Collection!GrantedAuthority` template `Collection` is not defined | row: han"
+  },
+  "org.springframework.security.core.authority.SimpleGrantedAuthority#toString()": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: cannot implicitly override base class method `object.Object.toString` with `flint.security.core.SimpleGrantedAuthority.toString`; add `override` attribute | the derived body does not compile against the hand class: dmd: does not compile: Error: cannot implicitly overrid"
+  },
+  "org.springframework.security.core.userdetails.User#getAuthorities()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Collection!GrantedAuthority` template `Collection` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Collection!GrantedAuthority` template `Collection` is not defined | row: han"
+  },
+  "org.springframework.security.core.userdetails.User#getPassword()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: class `flint.security.core.userdetails.User` interface function `string getPassword() @safe` is not implemented | the derived body does not compile against the hand class: dmd: does not compile: Error: class `flint.security.core.userdetails.User` interface function `str"
+  },
+  "org.springframework.security.web.DefaultSecurityFilterChain#getFilters()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `List!Filter` template `List` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `List!Filter` template `List` is not defined | row: hand ported [], porter adapted ['R10']"
+  },
+  "org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint#getRealmName()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint#setRealmName(String)": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.transaction.interceptor.DefaultTransactionAttribute#getDescriptor()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.transaction.interceptor.DefaultTransactionAttribute#getLabels()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R10']"
+  },
+  "org.springframework.transaction.interceptor.DefaultTransactionAttribute#getQualifier()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.transaction.interceptor.DefaultTransactionAttribute#getTimeoutString()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.transaction.interceptor.DefaultTransactionAttribute#setDescriptor(String)": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.transaction.interceptor.DefaultTransactionAttribute#setLabels(Collection)": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R10']"
+  },
+  "org.springframework.transaction.interceptor.DefaultTransactionAttribute#setQualifier(String)": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.transaction.interceptor.DefaultTransactionAttribute#setTimeoutString(String)": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.transaction.interceptor.RuleBasedTransactionAttribute#setRollbackRules(List)": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R10']"
+  },
+  "org.springframework.transaction.interceptor.TransactionAspectSupport#getTransactionManagerBeanName()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.transaction.interceptor.TransactionAspectSupport#setTransactionManagerBeanName(String)": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.transaction.support.AbstractPlatformTransactionManager#getTransactionExecutionListeners()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R10']"
+  },
+  "org.springframework.transaction.support.AbstractPlatformTransactionManager#setTransactionExecutionListeners(Collection)": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R10']"
+  },
+  "org.springframework.transaction.support.AbstractTransactionStatus#getSavepoint()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: undefined identifier `Any` | the derived body does not compile against the hand class: dmd: does not compile: Error: undefined identifier `Any` | row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.transaction.support.AbstractTransactionStatus#setSavepoint(Object)": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: undefined identifier `Any` | the derived body does not compile against the hand class: dmd: does not compile: Error: undefined identifier `Any` | row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.transaction.support.DefaultTransactionDefinition#getName()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: class `flint.transaction.support.DefaultTransactionDefinition` interface function `string getName() @safe` is not implemented | the derived body does not compile against the hand class: dmd: does not compile: Error: class `flint.transaction.support.DefaultTransactionDef"
+  },
+  "org.springframework.transaction.support.DefaultTransactionDefinition#setName(String)": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `DefaultTransactionDefinition.setName#0 public @safe void(string name) @safe final` porter `DefaultTransactionDefinition.setName#0 public @safe void(Nullable!string name) @safe final` | row: hand ported [], porter adapted ['R5']"
+  },
+  "org.springframework.transaction.support.DefaultTransactionStatus#getSuspendedResources()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: undefined identifier `Any` | the derived body does not compile against the hand class: dmd: does not compile: Error: undefined identifier `Any` | row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.transaction.support.DefaultTransactionStatus#isNested()": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: cannot implicitly override base class method `flint.transaction.support.AbstractTransactionStatus.isNested` with `flint.transaction.support.DefaultTransactionStatus.isNested`; add `override` attribute | the derived body does not compile against the hand class: dmd: does"
+  },
+  "org.springframework.transaction.support.DefaultTransactionStatus#isReadOnly()": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: cannot implicitly override base class method `flint.transaction.support.AbstractTransactionStatus.isReadOnly` with `flint.transaction.support.DefaultTransactionStatus.isReadOnly`; add `override` attribute | the derived body does not compile against the hand class: dmd: "
+  },
+  "org.springframework.transaction.support.SimpleTransactionStatus#isNewTransaction()": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: cannot implicitly override base class method `flint.transaction.support.AbstractTransactionStatus.isNewTransaction` with `flint.transaction.support.SimpleTransactionStatus.isNewTransaction`; add `override` attribute | the derived body does not compile against the hand c"
+  },
+  "org.springframework.util.PlaceholderResolutionException#getValues()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R10']"
+  },
+  "org.springframework.validation.BeanPropertyBindingResult#getTarget()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `BeanPropertyBindingResult.getTarget#0 public @safe Any() @safe virtual` porter `BeanPropertyBindingResult.getTarget#0 public @safe Any() @safe virtual final` | row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.validation.FieldError#getField()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `FieldError.getField#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` porter `FieldError.getField#0 public @safe string() @safe virtual`"
+  },
+  "org.springframework.validation.FieldError#getRejectedValue()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `FieldError.getRejectedValue#0 public pure nothrow @nogc @safe Any() pure nothrow @nogc @safe virtual` porter `FieldError.getRejectedValue#0 public @safe Any() @safe virtual` | row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.validation.FieldError#isBindingFailure()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `FieldError.isBindingFailure#0 public const pure nothrow @nogc @safe bool() const pure nothrow @nogc @safe virtual` porter `FieldError.isBindingFailure#0 public @safe bool() @safe virtual`"
+  },
+  "org.springframework.validation.MapBindingResult#getTarget()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `MapBindingResult.getTarget#0 public @safe Any() @safe virtual` porter `MapBindingResult.getTarget#0 public @safe Any() @safe virtual final` | row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.validation.SimpleErrors#getFieldErrors()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: cannot implicitly override base class method `flint.validation.AbstractErrors.getFieldErrors` with `flint.validation.SimpleErrors.getFieldErrors`; add `override` attribute | the derived body does not compile against the hand class: dmd: does not compile: Error: cannot i"
+  },
+  "org.springframework.validation.SimpleErrors#getGlobalErrors()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: cannot implicitly override base class method `flint.validation.AbstractErrors.getGlobalErrors` with `flint.validation.SimpleErrors.getGlobalErrors`; add `override` attribute | the derived body does not compile against the hand class: dmd: does not compile: Error: cannot"
+  },
+  "org.springframework.web.ErrorResponseException#getDetailMessageArguments()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.web.HttpMediaTypeException#getDetailMessageArguments()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.web.HttpMediaTypeException#getSupportedMediaTypes()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `List!MediaType` template `List` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `List!MediaType` template `List` is not defined | row: hand ported [], porter adapted ['R10']"
+  },
+  "org.springframework.web.accept.ContentNegotiationManager#getStrategies()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `List!ContentNegotiationStrategy` template `List` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `List!ContentNegotiationStrategy` template `List` is not defined | row: hand po"
+  },
+  "org.springframework.web.bind.MissingPathVariableException#getParameter()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `MissingPathVariableException.getParameter#0 public pure nothrow @nogc @safe MethodParameter() pure nothrow @nogc @safe final` porter `MissingPathVariableException.getParameter#0 public @safe MethodParameter() @safe final`"
+  },
+  "org.springframework.web.bind.MissingPathVariableException#getVariableName()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `MissingPathVariableException.getVariableName#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe final` porter `MissingPathVariableException.getVariableName#0 public @safe string() @safe final`"
+  },
+  "org.springframework.web.bind.MissingRequestHeaderException#getHeaderName()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `MissingRequestHeaderException.getHeaderName#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe final` porter `MissingRequestHeaderException.getHeaderName#0 public @safe string() @safe final`"
+  },
+  "org.springframework.web.bind.MissingRequestHeaderException#getParameter()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `MissingRequestHeaderException.getParameter#0 public pure nothrow @nogc @safe MethodParameter() pure nothrow @nogc @safe final` porter `MissingRequestHeaderException.getParameter#0 public @safe MethodParameter() @safe final`"
+  },
+  "org.springframework.web.bind.MissingServletRequestParameterException#getMethodParameter()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `MissingServletRequestParameterException.getMethodParameter#0 public pure nothrow @nogc @safe MethodParameter() pure nothrow @nogc @safe virtual` porter `MissingServletRequestParameterException.getMethodParameter#0 public @safe MethodParameter() @safe virtual`"
+  },
+  "org.springframework.web.bind.MissingServletRequestParameterException#getParameterName()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `MissingServletRequestParameterException.getParameterName#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe final` porter `MissingServletRequestParameterException.getParameterName#0 public @safe string() @safe final`"
+  },
+  "org.springframework.web.bind.MissingServletRequestParameterException#getParameterType()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `MissingServletRequestParameterException.getParameterType#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe final` porter `MissingServletRequestParameterException.getParameterType#0 public @safe string() @safe final`"
+  },
+  "org.springframework.web.bind.ServletRequestBindingException#getDetailMessageArguments()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.web.method.HandlerMethod#getBean()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `HandlerMethod.getBean#0 public pure nothrow @nogc @safe Object() pure nothrow @nogc @safe virtual` porter `HandlerMethod.getBean#0 public pure nothrow @nogc @safe Any() pure nothrow @nogc @safe virtual` | row: hand adapted ['R4'], porter adapted ['R23']"
+  },
+  "org.springframework.web.method.HandlerMethod#getResponseStatus()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!HttpStatusCode` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!HttpStatusCode` template `Nullable` is not defined | row: hand adapted ['"
+  },
+  "org.springframework.web.method.HandlerMethod#getResponseStatusReason()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand adapted ['R4'], porter ada"
+  },
+  "org.springframework.web.method.HandlerMethod#toString()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: cannot implicitly override base class method `object.Object.toString` with `flint.web.method.HandlerMethod.toString`; add `override` attribute | the derived body does not compile against the hand class: dmd: does not compile: Error: cannot implicitly override base class"
+  },
+  "org.springframework.web.method.annotation.MethodArgumentConversionNotSupportedException#getName()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `MethodArgumentConversionNotSupportedException.getName#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` porter `MethodArgumentConversionNotSupportedException.getName#0 public @safe string() @safe virtual` | row: hand adapted ['R4'], porter ported []"
+  },
+  "org.springframework.web.method.annotation.MethodArgumentConversionNotSupportedException#getParameter()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `MethodArgumentConversionNotSupportedException.getParameter#0 public pure nothrow @nogc @safe MethodParameter() pure nothrow @nogc @safe virtual` porter `MethodArgumentConversionNotSupportedException.getParameter#0 public @safe MethodParameter() @safe virtual` | row: hand adapted ['R4'], p"
+  },
+  "org.springframework.web.method.annotation.MethodArgumentTypeMismatchException#getName()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `MethodArgumentTypeMismatchException.getName#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` porter `MethodArgumentTypeMismatchException.getName#0 public @safe string() @safe virtual` | row: hand adapted ['R4'], porter ported []"
+  },
+  "org.springframework.web.method.annotation.MethodArgumentTypeMismatchException#getParameter()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `MethodArgumentTypeMismatchException.getParameter#0 public pure nothrow @nogc @safe MethodParameter() pure nothrow @nogc @safe virtual` porter `MethodArgumentTypeMismatchException.getParameter#0 public @safe MethodParameter() @safe virtual` | row: hand adapted ['R4'], porter ported []"
+  },
+  "org.springframework.web.method.support.ModelAndViewContainer#getStatus()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!HttpStatusCode` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!HttpStatusCode` template `Nullable` is not defined | row: hand ported [],"
+  },
+  "org.springframework.web.method.support.ModelAndViewContainer#getView()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `ModelAndViewContainer.getView#0 public pure nothrow @nogc @safe Object() pure nothrow @nogc @safe virtual` porter `ModelAndViewContainer.getView#0 public @safe Any() @safe virtual` | row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.web.method.support.ModelAndViewContainer#isRequestHandled()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `ModelAndViewContainer.isRequestHandled#0 public const pure nothrow @nogc @safe bool() const pure nothrow @nogc @safe virtual` porter `ModelAndViewContainer.isRequestHandled#0 public @safe bool() @safe virtual`"
+  },
+  "org.springframework.web.method.support.ModelAndViewContainer#setStatus(HttpStatusCode)": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!HttpStatusCode` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!HttpStatusCode` template `Nullable` is not defined | row: hand ported [],"
+  },
+  "org.springframework.web.method.support.ModelAndViewContainer#setView(Object)": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `ModelAndViewContainer.setView#0 public pure nothrow @nogc @safe void(Object view) pure nothrow @nogc @safe virtual` porter `ModelAndViewContainer.setView#0 public pure nothrow @nogc @safe void(Any view) pure nothrow @nogc @safe virtual` | row: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.web.method.support.ModelAndViewContainer#setViewName(String)": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.web.server.ResponseStatusException#getReason()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
+  },
+  "org.springframework.web.servlet.ModelAndView#getStatus()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!HttpStatusCode` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!HttpStatusCode` template `Nullable` is not defined | row: hand adapted ['"
+  },
+  "org.springframework.web.servlet.ModelAndView#setStatus(HttpStatusCode)": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!HttpStatusCode` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!HttpStatusCode` template `Nullable` is not defined | row: hand adapted ['"
+  },
+  "org.springframework.web.servlet.ModelAndView#setView(View)": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R10'], porter ported []"
+  },
+  "org.springframework.web.servlet.ModelAndView#setViewName(String)": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand adapted ['R10'], porter ad"
+  },
+  "org.springframework.web.servlet.NoHandlerFoundException#getHttpMethod()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `NoHandlerFoundException.getHttpMethod#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` porter `NoHandlerFoundException.getHttpMethod#0 public @safe string() @safe virtual`"
+  },
+  "org.springframework.web.servlet.NoHandlerFoundException#getRequestHeaders()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `NoHandlerFoundException.getRequestHeaders#0 public pure nothrow @nogc @safe HttpHeaders() pure nothrow @nogc @safe virtual` porter `NoHandlerFoundException.getRequestHeaders#0 public @safe HttpHeaders() @safe virtual`"
+  },
+  "org.springframework.web.servlet.NoHandlerFoundException#getRequestURL()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `NoHandlerFoundException.getRequestURL#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` porter `NoHandlerFoundException.getRequestURL#0 public @safe string() @safe virtual`"
+  },
+  "org.springframework.web.servlet.config.annotation.InterceptorRegistration#getOrder()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `InterceptorRegistration.getOrder#0 public const pure nothrow @nogc @safe int() const pure nothrow @nogc @safe virtual` porter `InterceptorRegistration.getOrder#0 protected const pure nothrow @nogc @safe int() const pure nothrow @nogc @safe virtual`"
+  },
+  "org.springframework.web.servlet.handler.HandlerExceptionResolverComposite#setExceptionResolvers(List)": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: template instance `List!HandlerExceptionResolver` template `List` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `List!HandlerExceptionResolver` template `List` is not defined"
+  },
+  "org.springframework.web.servlet.mvc.method.RequestMappingInfo#getName()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `RequestMappingInfo.getName#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe final` porter `RequestMappingInfo.getName#0 public const pure nothrow @nogc @safe Nullable!string() const pure nothrow @nogc @safe final` | row: hand adapted ['R12'], porter adapted "
+  },
+  "org.springframework.web.servlet.resource.NoResourceFoundException#getHttpMethod()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `NoResourceFoundException.getHttpMethod#0 public const pure nothrow @nogc @safe HttpMethod() const pure nothrow @nogc @safe virtual` porter `NoResourceFoundException.getHttpMethod#0 public @safe HttpMethod() @safe virtual`"
+  },
+  "org.springframework.web.servlet.resource.NoResourceFoundException#getResourcePath()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `NoResourceFoundException.getResourcePath#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` porter `NoResourceFoundException.getResourcePath#0 public @safe string() @safe virtual`"
+  },
+  "org.springframework.web.util.pattern.PathPattern#getPatternString()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R14'], porter ported []"
+  },
+  "org.springframework.web.util.pattern.PathPattern#toString()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: cannot implicitly override base class method `object.Object.toString` with `flint.web.util.pattern.PathPattern.toString`; add `override` attribute | the derived body does not compile against the hand class: dmd: does not compile: Error: cannot implicitly override base c"
+  },
+  "org.springframework.web.util.pattern.PathPattern.PathMatchInfo#getUriVariables()": {
+   "kind": "api+body",
+   "reason": "triage: dmd: does not compile: Error: template instance `Map!(string, string)` template `Map` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Map!(string, string)` template `Map` is not defined"
+  },
+  "org.springframework.web.util.pattern.PatternParseException#getPosition()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `PatternParseException.getPosition#0 public const pure nothrow @nogc @safe ulong() const pure nothrow @nogc @safe virtual` porter `PatternParseException.getPosition#0 public const pure nothrow @nogc @safe int() const pure nothrow @nogc @safe virtual` | row: hand adapted ['R14'], porter por"
+  },
+  "org.thymeleaf.exceptions.TemplateProcessingException#getCol()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R8', 'R5'], porter adapted ['R5']"
+  },
+  "org.thymeleaf.exceptions.TemplateProcessingException#getLine()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R8', 'R5'], porter adapted ['R5']"
+  },
+  "org.thymeleaf.exceptions.TemplateProcessingException#getTemplateName()": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `TemplateProcessingException.getTemplateName#0 public const pure nothrow @nogc @safe Nullable!string() const pure nothrow @nogc @safe virtual` porter `TemplateProcessingException.getTemplateName#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` | row:"
+  },
+  "org.thymeleaf.exceptions.TemplateProcessingException#setTemplateName(String)": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `TemplateProcessingException.setTemplateName#0 public @safe void(Nullable!string templateName) @safe virtual` porter `TemplateProcessingException.setTemplateName#0 public @safe void(string templateName) @safe virtual` | row: hand adapted ['R8', 'R5'], porter ported []"
+  },
+  "org.thymeleaf.processor.AbstractProcessor#getTemplateMode()": {
+   "kind": "mapping",
+   "reason": "triage: row: hand adapted ['R15'], porter ported []"
+  },
+  "tools.jackson.core.JsonPointer#getMatchingIndex()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `JsonPointer.getMatchingIndex#0 public const pure nothrow @nogc @safe int() const pure nothrow @nogc @safe virtual` porter `JsonPointer.getMatchingIndex#0 public @safe int() @safe virtual`"
+  },
+  "tools.jackson.core.JsonPointer#getMatchingProperty()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `JsonPointer.getMatchingProperty#0 public const pure nothrow @nogc @safe string() const pure nothrow @nogc @safe virtual` porter `JsonPointer.getMatchingProperty#0 public @safe string() @safe virtual`"
+  },
+  "tools.jackson.core.JsonPointer#tail()": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `JsonPointer.tail#0 public pure nothrow @nogc @safe JsonPointer() pure nothrow @nogc @safe virtual` porter `JsonPointer.tail#0 public @safe JsonPointer() @safe virtual`"
+  },
+  "tools.jackson.databind.exc.InvalidFormatException#getValue()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: undefined identifier `Any` | the derived body does not compile against the hand class: dmd: does not compile: Error: undefined identifier `Any` | row: hand ported [], porter adapted ['R23']"
+  },
+  "tools.jackson.databind.node.ArrayNode#values()": {
+   "kind": "api+body+mapping",
+   "reason": "triage: dmd: does not compile: Error: template instance `Collection!JsonNode` template `Collection` is not defined, did you mean Collections? | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Collection!JsonNode` template `Collection` is not defined"
   }
  }
 }

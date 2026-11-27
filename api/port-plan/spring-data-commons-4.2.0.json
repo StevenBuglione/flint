@@ -238,7 +238,13 @@
 "status": "adapted",
 "rules": [
 "D-DATA-11"
+],
+"accessors": {
+"getter": [
+"nothrow",
+"@nogc"
 ]
+}
 },
 "org.springframework.data.mapping.IdentifierAccessor": {
 "kind": "interface",

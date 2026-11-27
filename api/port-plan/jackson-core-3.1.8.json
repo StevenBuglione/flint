@@ -6,7 +6,14 @@
 "kind": "class",
 "module": "flint.jackson.core",
 "d": "JacksonException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "tools.jackson.core.JsonGenerator": {
 "kind": "abstract class",
@@ -72,7 +79,15 @@
 "kind": "struct",
 "module": "flint.jackson.core",
 "d": "StreamWriteConstraints",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "tools.jackson.core.StreamWriteFeature": {
 "kind": "enum",
@@ -90,13 +105,29 @@
 "kind": "final class",
 "module": "flint.jackson.core",
 "d": "TokenStreamLocation",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "tools.jackson.core.exc.InputCoercionException": {
 "kind": "class",
 "module": "flint.jackson.core.exc",
 "d": "InputCoercionException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "tools.jackson.core.exc.StreamConstraintsException": {
 "kind": "class",
@@ -120,7 +151,15 @@
 "kind": "class",
 "module": "flint.jackson.core.exc",
 "d": "UnexpectedEndOfInputException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "tools.jackson.core.io.NumberOutput": {
 "kind": "struct",
@@ -198,7 +237,15 @@
 "kind": "final class",
 "module": "flint.jackson.core.util",
 "d": "Separators",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 }
 },
 "unresolved": {

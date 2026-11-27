@@ -189,7 +189,14 @@
 "kind": "final class",
 "module": "flint.boot.security.autoconfigure",
 "d": "SecurityProperties",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration": {
 "kind": "final class",
@@ -213,7 +220,20 @@
 "kind": "final class",
 "module": "flint.boot.security.autoconfigure.web.servlet",
 "d": "SecurityFilterProperties",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+],
+"setter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration": {
 "kind": "final class",

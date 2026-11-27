@@ -156,7 +156,15 @@
 "rules": [
 "R1",
 "R10"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "jakarta.servlet.http.HttpFilter": {
 "kind": "abstract class",

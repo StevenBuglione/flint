@@ -88,6 +88,12 @@ The order changed on 2026-11-27 18:45Z: skeleton mode moves ahead of M3, because
 
 1. **M1 (done 18:26Z, d0caeccbd):** gates (a), (b) and (d) over the shapes already supported, the port-plan seed, and provenance in mapping.json.
 2. **M2:** `@ConfigurationProperties` specs derived from the pinned Java and rendered by boot/tools/configuration_properties.py (M2a: 117/137 fields exact). Then R6 getters, setters and fields for ordinary classes, measured per element; the 40 pure-bean classes are also reproduced as whole types (M2b).
+   - M2b, first part (tools/port-spring/accessors.py, `r6-accessor` shape), 2026-11-27. The corpus is 764 trivial accessors of hand-ported classes: 605 getters and 159 setters.
+     - Correctness: 386 reproduced exactly on DMD and LDC with matching rows, 50.5% of the corpus and 66.7% of the 579 the rules accept. With the rules alone, before function attributes moved into the port plans, the count was 238. Hand ports have no common attribute convention: of 530 getters, 225 are bare and the rest mix `const`, `pure`, `nothrow` and `@nogc`.
+     - The 193 divergences (some elements have more than one kind): 137 rows, mostly hand rows that don't cite the R5, R10 or R23 the type mapping applies; about 70 API differences (parameter names, `Nullable!string` under R5, arrays where R10 says `List!T`); 76 bodies over a renamed hand field.
+     - Unsupported: 185, mostly types without a plan entry or a mapping, ambiguous hand overloads and members the hand class doesn't declare.
+     - Yield: 8,572 deferred trivial accessors; the rules derive 5,587 (65%) given a default plan entry. The main blocker is 2,245 accessors over unmapped types: `java.time.Duration` 383, `DataSize` 67, `Charset` 57, `Instant` 26, `ClassLoader` 26.
+     - Next: whole-type reproduction of the pure-bean classes.
 3. **M3 (was M4):** skeleton mode for every type, with all declarations, signatures, mapping rows, DDoc and headers generated, and the bodies marked; plus JUnit test translation.
 4. **M4 (was M3):** `equals`/`hashCode`/`toString`, records, builders, exception families and enums, filling bodies inside skeletons. Also the behaviour oracle (c) and the first `flint check --perf` rules (f).
 5. **M5:** body statement forms, one rule ID at a time, chosen by how many deferred elements each unlocks.

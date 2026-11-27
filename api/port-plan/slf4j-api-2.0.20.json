@@ -96,7 +96,14 @@
 "kind": "final class",
 "module": "flint.slf4j.helpers",
 "d": "FormattingTuple",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.slf4j.helpers.MessageFormatter": {
 "kind": "struct",
@@ -126,7 +133,14 @@
 "kind": "final class",
 "module": "flint.slf4j.helpers",
 "d": "NormalizedParameters",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.slf4j.spi.CallerBoundaryAware": {
 "kind": "interface",

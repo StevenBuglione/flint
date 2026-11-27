@@ -504,7 +504,15 @@
 "kind": "class",
 "module": "flint.beans.factory",
 "d": "BeanCreationException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.beans.factory.BeanCreationNotAllowedException": {
 "kind": "class",
@@ -522,7 +530,15 @@
 "kind": "class",
 "module": "flint.beans.factory",
 "d": "BeanDefinitionStoreException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.beans.factory.BeanFactory": {
 "kind": "interface",
@@ -564,7 +580,15 @@
 "kind": "class",
 "module": "flint.beans.factory",
 "d": "BeanNotOfRequiredTypeException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.beans.factory.DisposableBean": {
 "kind": "interface",
@@ -600,7 +624,15 @@
 "kind": "class",
 "module": "flint.beans.factory",
 "d": "NoSuchBeanDefinitionException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.beans.factory.NoUniqueBeanDefinitionException": {
 "kind": "class",
@@ -708,13 +740,33 @@
 "kind": "class",
 "module": "flint.beans.factory.support",
 "d": "BeanDefinitionDefaults",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+],
+"setter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.beans.factory.support.BeanDefinitionOverrideException": {
 "kind": "class",
 "module": "flint.beans.factory.support",
 "d": "BeanDefinitionOverrideException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.beans.factory.support.BeanDefinitionRegistry": {
 "kind": "interface",
@@ -834,13 +886,25 @@
 "kind": "class",
 "module": "flint.cache.concurrent",
 "d": "ConcurrentMapCache",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.cache.concurrent.ConcurrentMapCacheManager": {
 "kind": "class",
 "module": "flint.cache.concurrent",
 "d": "ConcurrentMapCacheManager",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.cache.interceptor.AbstractFallbackCacheOperationSource": {
 "kind": "abstract class",
@@ -858,13 +922,25 @@
 "kind": "class",
 "module": "flint.cache.interceptor",
 "d": "CacheEvictOperation",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.cache.interceptor.CacheOperation": {
 "kind": "abstract class",
 "module": "flint.cache.interceptor",
 "d": "CacheOperation",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.cache.interceptor.CacheOperationSource": {
 "kind": "interface",
@@ -876,13 +952,25 @@
 "kind": "class",
 "module": "flint.cache.interceptor",
 "d": "CachePutOperation",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.cache.interceptor.CacheableOperation": {
 "kind": "class",
 "module": "flint.cache.interceptor",
 "d": "CacheableOperation",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.cache.interceptor.KeyGenerator": {
 "kind": "interface",
@@ -909,7 +997,13 @@
 "kind": "class",
 "module": "flint.cache.support",
 "d": "NoOpCache",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.cache.support.NoOpCacheManager": {
 "kind": "class",
@@ -921,7 +1015,13 @@
 "kind": "class",
 "module": "flint.cache.support",
 "d": "SimpleValueWrapper",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.context.ApplicationContext": {
 "kind": "interface",
@@ -945,7 +1045,15 @@
 "kind": "abstract class",
 "module": "flint.context",
 "d": "ApplicationEvent",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.context.ApplicationEventPublisher": {
 "kind": "interface",
@@ -1246,7 +1354,20 @@
 "kind": "abstract class",
 "module": "flint.context.support",
 "d": "AbstractResourceBasedMessageSource",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+],
+"setter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.context.support.DefaultLifecycleProcessor": {
 "kind": "class",
@@ -1282,7 +1403,20 @@
 "kind": "abstract class",
 "module": "flint.context.support",
 "d": "MessageSourceSupport",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+],
+"setter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.context.support.ResourceBundleMessageSource": {
 "kind": "class",
@@ -1318,7 +1452,15 @@
 "kind": "final class",
 "module": "flint.core",
 "d": "MethodParameter",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.core.NestedExceptionUtils": {
 "kind": "struct",
@@ -1542,7 +1684,12 @@
 "kind": "class",
 "module": "flint.core.env",
 "d": "MissingRequiredPropertiesException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const"
+]
+}
 },
 "org.springframework.core.env.MutablePropertySources": {
 "kind": "class",
@@ -1615,13 +1762,29 @@
 "kind": "class",
 "module": "flint.core.io",
 "d": "ByteArrayResource",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.core.io.ClassPathResource": {
 "kind": "class",
 "module": "flint.core.io",
 "d": "ClassPathResource",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.core.io.DefaultResourceLoader": {
 "kind": "class",
@@ -1639,7 +1802,15 @@
 "kind": "class",
 "module": "flint.core.io",
 "d": "FileSystemResource",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.core.io.InputStreamResource": {
 "kind": "class",
@@ -1753,7 +1924,15 @@
 "kind": "class",
 "module": "flint.dao",
 "d": "IncorrectResultSizeDataAccessException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.dao.IncorrectUpdateSemanticsDataAccessException": {
 "kind": "class",
@@ -1885,7 +2064,15 @@
 "kind": "class",
 "module": "flint.expression",
 "d": "ExpressionException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.expression.ExpressionParser": {
 "kind": "interface",
@@ -1924,13 +2111,29 @@
 "status": "adapted",
 "rules": [
 "R3"
+],
+"accessors": {
+"getter": [
+"inout",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "org.springframework.expression.spel.SpelEvaluationException": {
 "kind": "class",
 "module": "flint.expression.spel",
 "d": "SpelEvaluationException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.expression.spel.SpelMessage": {
 "kind": "enum",
@@ -1942,13 +2145,29 @@
 "kind": "class",
 "module": "flint.expression.spel",
 "d": "SpelParseException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.expression.spel.standard.SpelExpression": {
 "kind": "class",
 "module": "flint.expression.spel.standard",
 "d": "SpelExpression",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.expression.spel.standard.SpelExpressionParser": {
 "kind": "class",
@@ -2011,7 +2230,15 @@
 "status": "adapted",
 "rules": [
 "R11"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "org.springframework.http.HttpOutputMessage": {
 "kind": "interface",
@@ -2051,7 +2278,15 @@
 "kind": "class",
 "module": "flint.http",
 "d": "InvalidMediaTypeException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.http.MediaType": {
 "kind": "struct",
@@ -2177,13 +2412,27 @@
 "kind": "class",
 "module": "flint.http.server",
 "d": "ServletServerHttpRequest",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.http.server.ServletServerHttpResponse": {
 "kind": "class",
 "module": "flint.http.server",
 "d": "ServletServerHttpResponse",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.jdbc.BadSqlGrammarException": {
 "kind": "class",
@@ -2726,7 +2975,15 @@
 "kind": "final class",
 "module": "flint.test.json",
 "d": "JsonComparison",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.test.util.JsonPathExpectationsHelper": {
 "kind": "struct",
@@ -2846,7 +3103,15 @@
 "kind": "class",
 "module": "flint.transaction",
 "d": "HeuristicCompletionException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.transaction.IllegalTransactionStateException": {
 "kind": "class",
@@ -2864,7 +3129,15 @@
 "kind": "class",
 "module": "flint.transaction",
 "d": "InvalidTimeoutException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.transaction.NestedTransactionNotSupportedException": {
 "kind": "class",
@@ -3293,7 +3566,14 @@
 "kind": "class",
 "module": "flint.validation",
 "d": "BindException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.validation.BindingResult": {
 "kind": "interface",
@@ -3347,7 +3627,15 @@
 "kind": "class",
 "module": "flint.validation",
 "d": "ObjectError",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.validation.SimpleErrors": {
 "kind": "class",
@@ -3476,7 +3764,15 @@
 "kind": "class",
 "module": "flint.web.bind",
 "d": "MissingRequestCookieException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.web.bind.MissingRequestHeaderException": {
 "kind": "class",
@@ -3488,7 +3784,15 @@
 "kind": "class",
 "module": "flint.web.bind",
 "d": "MissingRequestValueException",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.web.bind.MissingServletRequestParameterException": {
 "kind": "class",
@@ -3728,7 +4032,14 @@
 "kind": "class",
 "module": "flint.web.context.request",
 "d": "ServletRequestAttributes",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.web.context.request.ServletWebRequest": {
 "kind": "class",
@@ -3749,7 +4060,14 @@
 "status": "adapted",
 "rules": [
 "R4"
+],
+"accessors": {
+"getter": [
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "org.springframework.web.method.annotation.AbstractNamedValueMethodArgumentResolver": {
 "kind": "abstract class",
@@ -3833,13 +4151,27 @@
 "kind": "class",
 "module": "flint.web.method.support",
 "d": "InvocableHandlerMethod",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"setter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.web.method.support.ModelAndViewContainer": {
 "kind": "class",
 "module": "flint.web.method.support",
 "d": "ModelAndViewContainer",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"setter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.web.server.ResponseStatusException": {
 "kind": "class",
@@ -3893,7 +4225,14 @@
 "status": "adapted",
 "rules": [
 "R10"
+],
+"accessors": {
+"setter": [
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "org.springframework.web.servlet.NoHandlerFoundException": {
 "kind": "class",
@@ -3920,7 +4259,15 @@
 "kind": "class",
 "module": "flint.web.servlet.config.annotation",
 "d": "InterceptorRegistration",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.web.servlet.config.annotation.InterceptorRegistry": {
 "kind": "class",
@@ -3950,13 +4297,39 @@
 "kind": "abstract class",
 "module": "flint.web.servlet.handler",
 "d": "AbstractHandlerExceptionResolver",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+],
+"setter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.web.servlet.handler.AbstractHandlerMapping": {
 "kind": "abstract class",
 "module": "flint.web.servlet.handler",
 "d": "AbstractHandlerMapping",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+],
+"setter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.web.servlet.handler.HandlerExceptionResolverComposite": {
 "kind": "class",
@@ -3968,7 +4341,14 @@
 "kind": "final class",
 "module": "flint.web.servlet.handler",
 "d": "MappedInterceptor",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.web.servlet.handler.SimpleUrlHandlerMapping": {
 "kind": "class",
@@ -3995,7 +4375,15 @@
 "status": "adapted",
 "rules": [
 "R12"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping": {
 "kind": "abstract class",
@@ -4103,7 +4491,15 @@
 "status": "adapted",
 "rules": [
 "R14"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "org.springframework.web.util.pattern.PathPattern.PathMatchInfo": {
 "kind": "struct",
@@ -4130,7 +4526,15 @@
 "status": "adapted",
 "rules": [
 "R14"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 }
 },
 "unresolved": {

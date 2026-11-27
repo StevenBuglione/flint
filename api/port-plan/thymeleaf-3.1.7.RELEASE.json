@@ -24,7 +24,15 @@
 "kind": "class",
 "module": "flint.thymeleaf.cache",
 "d": "TTLCacheEntryValidity",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.thymeleaf.context.IContext": {
 "kind": "interface",
@@ -52,7 +60,13 @@
 "kind": "class",
 "module": "flint.thymeleaf.dialect",
 "d": "AbstractDialect",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.thymeleaf.dialect.IDialect": {
 "kind": "interface",
@@ -145,7 +159,15 @@
 "status": "adapted",
 "rules": [
 "R8"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "org.thymeleaf.expression.IExpressionObjects": {
 "kind": "interface",
@@ -169,7 +191,13 @@
 "kind": "abstract class",
 "module": "flint.thymeleaf.processor",
 "d": "AbstractProcessor",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.thymeleaf.processor.IProcessor": {
 "kind": "interface",
@@ -184,7 +212,15 @@
 "status": "adapted",
 "rules": [
 "R15"
+],
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
 ]
+}
 },
 "org.thymeleaf.standard.inline.StandardInlineMode": {
 "kind": "enum",

@@ -2,8 +2,9 @@
 """Port plans: the per-type decisions the mechanical porter reads (docs/spring/phase2/porter-plan.md).
 
 api/port-plan/<project>-<version>.json holds, for each Java type, the D kind, the destination module, the rules
-with their IDs and, where known, whether storage is templated and whether a GC-free path is required. A lane edits
-the plan, not D code, for a mechanical shape.
+with their IDs and, where known, whether storage is templated and whether a GC-free path is required, and the
+function attributes of its generated getters and setters (`"accessors": {"getter": [...], "setter": [...]}`). A lane
+edits the plan, not D code, for a mechanical shape.
 
   --seed   writes the plans from every exact, mapped type row in api/*/mapping.json. The module and rules come
            from the row and the D kind from compiling the hand port. A lane's kind and storage choices are kept;
@@ -30,6 +31,8 @@ import porter_gate  # noqa: E402
 
 PLANS = ROOT / 'api' / 'port-plan'
 SCHEMA = 'flint.port-plan/1'
+# Function attributes a plan may give the R6 accessors it generates (tools/port-spring/accessors.py).
+ACCESSOR_ATTRIBUTES = {'const', 'inout', 'pure', 'nothrow', '@nogc', 'scope', 'return', 'ref', '@trusted', '@system'}
 KINDS = ('struct', 'final class', 'class', 'abstract class', 'interface', 'enum', 'uda', 'functions')
 
 PROBE = '''
@@ -177,6 +180,10 @@ def check():
                 failures.append(f'{where}: not declared by the pinned manifest')
             if entry.get('kind') not in KINDS or not str(entry.get('module', '')).startswith('flint.'):
                 failures.append(f'{where}: needs a kind ({", ".join(KINDS)}) and a flint.* module')
+            for kind, attributes in entry.get('accessors', {}).items():
+                if kind not in ('getter', 'setter') or not set(attributes) <= ACCESSOR_ATTRIBUTES:
+                    failures.append(f'{where}: "accessors" maps getter or setter to attributes from '
+                                    + ', '.join(sorted(ACCESSOR_ATTRIBUTES)))
             found = classifier.classify(type_id) if classifier else None
             if found and found[0] == type_id and found[1]['status'] in ('ported', 'adapted') and found[1].get('d'):
                 row = found[1]

@@ -63,6 +63,28 @@ python3 tools/measure_queue.py hold -- python3 tools/gates.py --gate porter \
   --flint .flint/bin/flint --helper .flint/port-spring/flint-port-spring --cache "$PWD/.flint/cache/api"
 ```
 
+### R6 accessors, per element
+
+`accessors.py` handles trivial Java getters (`return this.f;`) and setters (`this.f = p;`) of instance fields. It derives each D member by fixed rules, without reading the hand port:
+- the Java name (R19 for D keywords) and visibility;
+- `override` when a superclass in the pinned manifests declares the same method, and `final` for a Java `final` method;
+- the D type through the mapping rows: R5 for nullable strings, boxed values and `Optional`; R10 for `List`, `Set`, `Collection` and `Map`; R23 for `Object`;
+- the function attributes recorded in the type's port plan under `"accessors": {"getter": [...], "setter": [...]}`, none when absent;
+- a body over the field's Java name, or `name_` when the field would collide with a method name;
+- the mapping row: `ported`, or `adapted` with the rules applied.
+
+The gate offers it every trivial accessor of a hand-ported class whose row is ported or adapted with a D symbol. The derived member replaces the hand member in a copy of the declaring module, and `porter_describe.d` must print the same member lines on DMD and LDC. The rows must also agree. If the derived body doesn't compile against the hand class, an `assert(0)` body is used for the API comparison and the element counts as a body divergence. The reproduced count is the `r6-accessor` floor, and divergences are listed per element under `"accessorDivergences"` in `api/porter-baseline.json`. Both only move one way. Accessors the rules reject (an unmapped type, `Class<?>` under R4, Java `char`, type variables, an ambiguous hand overload) are reported as unsupported.
+
+```sh
+python3 tools/port-spring/accessors.py --helper .flint/port-spring/flint-port-spring --cache "$PWD/.flint/cache/api" \
+  --compare --json artifacts/porter/accessors.json      # compiles: run under hold
+python3 tools/port-spring/accessors.py ... --yield      # deferred trivial accessors the rules derive
+python3 tools/port-spring/accessors.py ... --render 'org.springframework.http.ResponseCookie#getDomain()'
+python3 tools/port-spring/accessors.py ... --seed-plan artifacts/porter/accessors.json
+```
+
+`--seed-plan` records, per type and accessor kind, the attributes every hand accessor of that kind shares, so attributes become lane-owned plan data. A lane's existing entry wins. `test_accessors.py` covers detection, the type and row rules, plan attributes and splicing.
+
 `tools/port_plan.py --seed` writes `api/port-plan/<project>-<version>.json` from the mapped type rows and the hand ports' D kinds, keeping entries a lane already edited; `--check` validates the plans against the manifests and mapping rows.
 
 ## Verification
