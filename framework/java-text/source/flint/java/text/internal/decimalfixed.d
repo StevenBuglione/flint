@@ -12,12 +12,21 @@ struct DecimalAffixes
 {
     string prefix;
     string suffix;
+    // Each symbolic token is a (DecimalField, begin, end) triple of UTF-8 offsets within its affix text.
+    // Flat words reuse the compiler's existing size_t[] append and comparison instances (B-93).
+    const(size_t)[] prefixFields;
+    const(size_t)[] suffixFields;
 }
+
+enum affixFieldWords = 3;
+
+// Java's implicit negative prefix is the symbolic minus sign.
+immutable size_t[affixFieldWords] minusSignField = [DecimalField.sign, 0, "-".length];
 
 struct DecimalFixedPattern
 {
     DecimalAffixes positive;
-    DecimalAffixes negative = DecimalAffixes("-", null);
+    DecimalAffixes negative = DecimalAffixes("-", null, minusSignField[]);
     uint minimumIntegerDigits = 1;
     uint maximumIntegerDigits = int.max;
     uint minimumFractionDigits;
@@ -58,7 +67,7 @@ struct DecimalFixedPattern
     }
 }
 
-/// The NumberFormat.Field kinds the renderer reports from the number body.
+/// The NumberFormat.Field kinds the renderer reports from the number body and the symbolic affix tokens.
 enum DecimalField : ubyte
 {
     integer,
@@ -68,6 +77,9 @@ enum DecimalField : ubyte
     exponentSymbol,
     exponentSign,
     exponent,
+    sign,
+    percent,
+    perMille,
 }
 
 struct DecimalFieldSpan
@@ -89,6 +101,19 @@ struct DecimalFieldSpans
         if (spans[field].recorded && spans[field].begin != spans[field].end)
             return;
         spans[field] = DecimalFieldSpan(begin, end, true);
+    }
+
+    // No affix field kind is also a body field, so recording the affixes after the body keeps Java's order.
+    void recordAffixes(ref scope const DecimalAffixes affixes, size_t suffixStart) pure nothrow @nogc
+    {
+        recordAffix(affixes.prefixFields, 0);
+        recordAffix(affixes.suffixFields, suffixStart);
+    }
+
+    private void recordAffix(scope const(size_t)[] affixFields, size_t start) pure nothrow @nogc
+    {
+        for (size_t i; i + affixFieldWords <= affixFields.length; i += affixFieldWords)
+            record(cast(DecimalField) affixFields[i], start + affixFields[i + 1], start + affixFields[i + 2]);
     }
 }
 
@@ -194,8 +219,11 @@ pure nothrow @nogc size_t renderFixedDigits(scope const(char)[] digits, int deci
     writeFraction(digits, decimalAt, cast(char) symbols.zeroDigit, output[at .. at + fractionCount]);
     output[at + fractionCount .. cast(size_t) required] = affixes.suffix;
     if (fields !is null)
+    {
         recordFixedFields(*fields, prefixEnd, integerCount, groups ? pattern.groupingSize : 0,
                 at - decimalPoint, decimalPoint, fractionCount);
+        fields.recordAffixes(affixes, at + fractionCount);
+    }
     return cast(size_t) required;
 }
 

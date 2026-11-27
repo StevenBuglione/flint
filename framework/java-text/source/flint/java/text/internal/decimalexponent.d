@@ -123,7 +123,10 @@ pure nothrow @nogc size_t renderExponentDigits(scope const(char)[] digits, int d
     output[at .. at + exponentWidth] = exponentDigits[exponentStart .. $];
     output[at + exponentWidth .. cast(size_t) required] = affixes.suffix;
     if (fields !is null)
+    {
         recordExponentFields(*fields, layout, affixes.prefix.length, signStart, exponentFieldStart, at + exponentWidth);
+        fields.recordAffixes(affixes, at + exponentWidth);
+    }
     return cast(size_t) required;
 }
 
