@@ -98,12 +98,13 @@ unittest
         "0E" ~ "0".replicate(127), "0E" ~ "0".replicate(257), "0E" ~ "0".replicate(300),
     ];
     const expected = [
-        DecimalDigitSettings(1, 0, 3, 0, false, 1, 1), DecimalDigitSettings(1, 0, 5, 0, false, 3, 1),
-        DecimalDigitSettings(0, 0, 0, 0, false, 1, 1), DecimalDigitSettings(1, 1, 1, 0, false, 1, 2),
-        DecimalDigitSettings(1, 1, 1, 3, false, 4, 1), DecimalDigitSettings(1, 0, 0, 0, true, 1, 1),
-        DecimalDigitSettings(0, 1, 2, 0, true, 0, 1), DecimalDigitSettings(2, 2, 4, 0, false, 4, 2),
-        DecimalDigitSettings(1, 0, 0, 0, false, 1, 127), DecimalDigitSettings(1, 0, 0, 0, false, 1, 1),
-        DecimalDigitSettings(1, 0, 0, 0, false, 1, 44),
+        DecimalDigitSettings(1, 0, 3, 0, false, 1, 1), DecimalDigitSettings(1, 0, 5, 0, false, 3,
+                1), DecimalDigitSettings(0, 0, 0, 0, false, 1, 1),
+        DecimalDigitSettings(1, 1, 1, 0, false, 1, 2), DecimalDigitSettings(1, 1, 1, 3, false, 4,
+                1), DecimalDigitSettings(1, 0, 0, 0, true, 1, 1),
+        DecimalDigitSettings(0, 1, 2, 0, true, 0, 1), DecimalDigitSettings(2, 2, 4, 0, false, 4,
+                2), DecimalDigitSettings(1, 0, 0, 0, false, 1, 127),
+        DecimalDigitSettings(1, 0, 0, 0, false, 1, 1), DecimalDigitSettings(1, 0, 0, 0, false, 1, 44),
     ];
     foreach (i, text; patterns)
     {
