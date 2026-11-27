@@ -612,7 +612,10 @@ interface List(T) : Collection!T
     {
         if (elements.length == 0)
             return Collections.emptyList!T();
-        return new ImmutableList!T(elements.dup);
+        static if (isListInterface!T)
+            return new ImmutableList!T(elements);
+        else
+            return new ImmutableList!T(elements.dup);
     }
 
     /// An unmodifiable copy of `c`.
@@ -997,7 +1000,7 @@ abstract class AbstractList(T) : AbstractCollection!T, List!T
 }
 
 /// Java's `Collections.EMPTY_LIST`: no fields, so one instance serves every caller (`emptyList`).
-private final class EmptyList(T) if (!isErasedElement!T) : AbstractList!T
+private final class EmptyList(T) if (!isErasedListElement!T) : AbstractList!T
 {
     override T get(int index)
     {
@@ -1036,7 +1039,7 @@ private final class EmptyList(T) if (!isErasedElement!T) : AbstractList!T
     }
 }
 
-private final class ImmutableList(T) if (!isErasedElement!T) : AbstractList!T
+private final class ImmutableList(T) if (!isErasedListElement!T) : AbstractList!T
 {
     private T[] items;
 
@@ -1085,11 +1088,16 @@ private final class ImmutableList(T) if (!isErasedElement!T) : AbstractList!T
 private void checkIndex(int index, int length)
 {
     if (index < 0 || index >= length)
-        throw new IndexOutOfBoundsException("Index " ~ valueOf(index) ~ " out of bounds for length " ~ valueOf(length));
+        throwListIndex(index, length);
+}
+
+pragma(inline, false) private void throwListIndex(int index, int length)
+{
+    throw new IndexOutOfBoundsException("Index " ~ valueOf(index) ~ " out of bounds for length " ~ valueOf(length));
 }
 
 /// Java's `ArrayList`: a resizable array.
-class ArrayList(T) if (!isErasedElement!T) : AbstractList!T
+class ArrayList(T) if (!isErasedListElement!T) : AbstractList!T
 {
     /// Descriptor hook: storage is private, not JSON properties.
     enum __flintOpaque = true;
@@ -1207,18 +1215,65 @@ class ArrayList(T) if (!isErasedElement!T) : AbstractList!T
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// Erased lists of a class (playbook B-1): Java's erasure for class element types
+// Erased lists (playbook B-1): one Object store for D class and interface elements.
 
-/++
-Whether lists of `T` are erased: `T` is a class. Java erases every `List<E>` to one implementation over `Object`;
-Flint does the same for class elements, so `ArrayList!Owner` and `ArrayList!Pet` share `ErasedArrayList`'s code and
-add only thin typed methods (no per-element cast: a class reference is the object's address). Interface, struct and
-scalar elements keep the template implementations (`AbstractList!T`).
-+/
+/// Whether T uses the class-only storage reinterpretation shared by lists and sets.
 enum bool isErasedElement(T) = is(T == class);
 
+private template isListInterface(T)
+{
+    static if (is(T == interface))
+        enum isListInterface = __traits(getLinkage, T) == "D";
+    else
+        enum isListInterface = false;
+}
+
+private enum bool isErasedListElement(T) = isErasedElement!T || isListInterface!T;
+
+pragma(inline, false) private void throwListInsertionIndex(int index, int length)
+{
+    throw new IndexOutOfBoundsException("Index: " ~ valueOf(index) ~ ", Size: " ~ valueOf(length));
+}
+
+pragma(inline, false) private void invalidListInterface()
+{
+    throw new ClassCastException("Erased list element does not implement the list's element interface");
+}
+
+private T listInterfaceElement(T)(Object element)
+{
+    auto reference = cast(T) element;
+    if (reference is null && element !is null)
+        invalidListInterface();
+    return reference;
+}
+
+private template listElement(T)
+{
+    static if (isListInterface!T)
+        alias listElement = listInterfaceElement!T;
+    else
+        alias listElement = assumeClass!T;
+}
+
+private Object[] copyInterfaceObjects(T)(scope T[] source) pure nothrow
+{
+    auto copy = new Object[source.length];
+    foreach (index, value; source)
+        copy[index] = cast(Object) value;
+    return copy;
+}
+
+private T[] copyInterfaceArray(T)(Object[] source)
+{
+    auto copy = new T[source.length];
+    foreach (index, value; source)
+        copy[index] = listInterfaceElement!T(value);
+    return copy;
+}
+
 /++
-The non-template part of an erased list of a class: everything that needs only `Object` (search, `toString`, boxing,
+The non-template part of an erased list: everything that needs only `Object` (search, `toString`, boxing,
 bounds), over `objectAt` and `size`. No fields, so a stateless list (`EmptyList`) can share one instance.
 +/
 abstract class ErasedList : RawCollection
@@ -1322,7 +1377,7 @@ abstract class ErasedList : RawCollection
     }
 }
 
-/// The non-template storage and mutations of an erased list of a class: elements as `Object`s, every one a `T`.
+/// Shared storage and mutations for erased lists. Every stored Object is null or a typed list element.
 abstract class ErasedArrayList : ErasedList
 {
     // Only typed facades in this module store here, each storing only its own T: the erasure invariant.
@@ -1342,8 +1397,7 @@ abstract class ErasedArrayList : ErasedList
     private void insertObject(int index, Object element)
     {
         if (index < 0 || index > items.length)
-            throw new IndexOutOfBoundsException("Index: " ~ valueOf(index) ~ ", Size: " ~ valueOf(cast(int) items
-                    .length));
+            throwListInsertionIndex(index, cast(int) items.length);
         items ~= element;
         foreach_reverse (i; index + 1 .. items.length)
             items[i] = items[i - 1];
@@ -1378,7 +1432,7 @@ abstract class ErasedArrayList : ErasedList
 }
 
 /++
-The typed methods of an erased list of class `T` over `ErasedList`: each reads or writes through the `Object`
+The typed methods of an erased list of `T` over `ErasedList`: each reads or writes through the `Object`
 operations and views elements as `T`. `mutable` lists (`ArrayList`) write their `ErasedArrayList` storage; the
 others throw `UnsupportedOperationException` from every mutator, as Java's unmodifiable lists do.
 +/
@@ -1386,7 +1440,7 @@ private mixin template ErasedListMethods(T, bool mutable)
 {
     T get(int index)
     {
-        return assumeClass!T(objectAt(index));
+        return listElement!T(objectAt(index));
     }
 
     static if (mutable)
@@ -1395,29 +1449,29 @@ private mixin template ErasedListMethods(T, bool mutable)
         {
             checkIndex(index, cast(int) items.length);
             auto previous = items[index];
-            items[index] = element;
-            return assumeClass!T(previous);
+            items[index] = cast(Object) element;
+            return listElement!T(previous);
         }
 
         void add(int index, T element)
         {
-            insertObject(index, element);
+            insertObject(index, cast(Object) element);
         }
 
         bool add(T e)
         {
-            items ~= e;
+            items ~= cast(Object) e;
             return true;
         }
 
         T removeAt(int index)
         {
-            return assumeClass!T(removeObjectAt(index));
+            return listElement!T(removeObjectAt(index));
         }
 
         bool remove(T o)
         {
-            const index = indexOfObject(o);
+            const index = indexOfObject(cast(Object) o);
             if (index < 0)
                 return false;
             removeAt(index);
@@ -1426,7 +1480,7 @@ private mixin template ErasedListMethods(T, bool mutable)
 
         bool removeIf(bool delegate(T) @safe filter)
         {
-            return removeObjectsIf((Object e) => filter(assumeClass!T(e)));
+            return removeObjectsIf((Object e) => filter(listElement!T(e)));
         }
 
         void clear()
@@ -1436,15 +1490,18 @@ private mixin template ErasedListMethods(T, bool mutable)
 
         T[] toArray()
         {
-            return assumeClasses!T(items).dup;
+            static if (isListInterface!T)
+                return copyInterfaceArray!T(items);
+            else
+                return assumeClasses!T(items).dup;
         }
 
         void sort(Comparator!T c)
         {
             if (c is null)
-                sortObjects((Object a, Object b) => compareNatural(assumeClass!T(a), assumeClass!T(b)));
+                sortObjects((Object a, Object b) => compareNatural(listElement!T(a), listElement!T(b)));
             else
-                sortObjects((Object a, Object b) => c.compare(assumeClass!T(a), assumeClass!T(b)));
+                sortObjects((Object a, Object b) => c.compare(listElement!T(a), listElement!T(b)));
         }
     }
     else
@@ -1501,17 +1558,17 @@ private mixin template ErasedListMethods(T, bool mutable)
 
     int indexOf(T o)
     {
-        return indexOfObject(o);
+        return indexOfObject(cast(Object) o);
     }
 
     int lastIndexOf(T o)
     {
-        return lastIndexOfObject(o);
+        return lastIndexOfObject(cast(Object) o);
     }
 
     bool contains(T o)
     {
-        return indexOfObject(o) >= 0;
+        return indexOfObject(cast(Object) o) >= 0;
     }
 
     bool containsAll(Collection!T c)
@@ -1647,8 +1704,8 @@ private final class ErasedListIterator(T) : Iterator!T
     }
 }
 
-/// Java's `ArrayList` of a class: the erased storage and `ErasedListMethods`.
-class ArrayList(T) if (isErasedElement!T) : ErasedArrayList, List!T
+/// Java's `ArrayList` over the shared reference storage.
+class ArrayList(T) if (isErasedListElement!T) : ErasedArrayList, List!T
 {
     /// Descriptor hook: storage is private, not JSON properties.
     enum __flintOpaque = true;
@@ -1674,19 +1731,33 @@ class ArrayList(T) if (isErasedElement!T) : ErasedArrayList, List!T
     /// A list of `c`'s elements, in its iteration order.
     this(Collection!T c)
     {
-        items = asObjects(c.toArray());
+        static if (isListInterface!T)
+            items = copyInterfaceObjects(c.toArray());
+        else
+            items = asObjects(c.toArray());
     }
 
     /// A list of a copy of `elements` (the D array conversion of R10).
     this(T[] elements) pure nothrow
     {
-        items = asObjects(elements.dup);
+        static if (isListInterface!T)
+            items = copyInterfaceObjects(elements);
+        else
+            items = asObjects(elements.dup);
     }
 
     override T get(int index)
     {
         checkIndex(index, cast(int) items.length);
-        return assumeClass!T(items[index]);
+        return listElement!T(items[index]);
+    }
+
+    static if (isListInterface!T)
+    {
+        override Object objectAt(int index)
+        {
+            return cast(Object) get(index);
+        }
     }
 
     /// Ensure room for `minCapacity` elements.
@@ -1697,27 +1768,40 @@ class ArrayList(T) if (isErasedElement!T) : ErasedArrayList, List!T
     }
 }
 
-/// An unmodifiable list of a class over its own array (`List.of`, `copyOf`, `singletonList`).
-private final class ImmutableList(T) if (isErasedElement!T) : ErasedArrayList, List!T
+/// An unmodifiable erased list over its own array (`List.of`, `copyOf`, `singletonList`).
+private final class ImmutableList(T) if (isErasedListElement!T) : ErasedArrayList, List!T
 {
     mixin ErasedListMethods!(T, false) erased;
     // Java's remove(T) from the methods and List's remove(int index) in one overload set.
     alias remove = erased.remove;
     alias remove = List!T.remove;
 
-    this(T[] items) pure nothrow @nogc
+    static if (isListInterface!T)
     {
-        this.items = asObjects(items);
+        this(scope T[] items) pure nothrow
+        {
+            this.items = copyInterfaceObjects(items);
+        }
+    }
+    else
+    {
+        this(T[] items) pure nothrow @nogc
+        {
+            this.items = asObjects(items);
+        }
     }
 
     override T[] toArray()
     {
-        return assumeClasses!T(items).dup;
+        static if (isListInterface!T)
+            return copyInterfaceArray!T(items);
+        else
+            return assumeClasses!T(items).dup;
     }
 }
 
-/// Java's `Collections.EMPTY_LIST` of a class: no fields, so one instance serves every caller.
-private final class EmptyList(T) if (isErasedElement!T) : ErasedList, List!T
+/// Java's erased `Collections.EMPTY_LIST`: no fields, so one instance serves every caller.
+private final class EmptyList(T) if (isErasedListElement!T) : ErasedList, List!T
 {
     mixin ErasedListMethods!(T, false) erased;
     // Java's remove(T) from the methods and List's remove(int index) in one overload set.
@@ -1741,8 +1825,8 @@ private final class EmptyList(T) if (isErasedElement!T) : ErasedList, List!T
     }
 }
 
-/// `Collections.unmodifiableList` of a class: reads through to `backing`, every mutator throws.
-private final class UnmodifiableList(T) if (isErasedElement!T) : ErasedList, List!T
+/// An erased `Collections.unmodifiableList`: reads through to `backing`, every mutator throws.
+private final class UnmodifiableList(T) if (isErasedListElement!T) : ErasedList, List!T
 {
     mixin ErasedListMethods!(T, false) erased;
     // Java's remove(T) from the methods and List's remove(int index) in one overload set.
@@ -1758,7 +1842,7 @@ private final class UnmodifiableList(T) if (isErasedElement!T) : ErasedList, Lis
 
     override Object objectAt(int index)
     {
-        return backing.get(index);
+        return cast(Object) backing.get(index);
     }
 
     override T get(int index)
@@ -2951,7 +3035,7 @@ struct Collections
     }
 }
 
-private final class UnmodifiableList(T) if (!isErasedElement!T) : AbstractList!T
+private final class UnmodifiableList(T) if (!isErasedListElement!T) : AbstractList!T
 {
     private List!T backing;
 
