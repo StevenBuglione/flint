@@ -993,6 +993,7 @@
    "module": "flint.java.util.uuid",
    "also": [
     "flint.java.util.hexformat",
+    "flint.java.util.random.random",
     "flint.java.util.stringjoiner"
    ],
    "repo": "framework",
