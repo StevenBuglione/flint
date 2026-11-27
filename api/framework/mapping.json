@@ -7929,6 +7929,7 @@
 "java.util.BitSet#toByteArray()":{"status":"ported","d":"flint.java.util.bitset.BitSet.toByteArray"},
 "java.util.BitSet#toLongArray()":{"status":"ported","d":"flint.java.util.bitset.BitSet.toLongArray"},
 "java.util.BitSet#valueOf(long[])":{"status":"adapted","d":"flint.java.util.bitset.BitSet.valueOf","rules":["R26"]},
+"java.util.BitSet#valueOf(byte[])":{"status":"adapted","d":"flint.java.util.bitset.BitSet.valueOf","rules":["R26"]},
 "java.util.BitSet#xor(BitSet)":{"status":"ported","d":"flint.java.util.bitset.BitSet.xor"},
 "java.util.HexFormat#parseHex(char[],int,int)":{"status":"excluded","category":"deferred","phase":"2","reason":"Requires a UTF-16 code-unit array overload."},
 "java.util.IllegalFormatConversionException":{"d":"flint.java.util.formatter.IllegalFormatConversionException","rules":["R1"],"status":"adapted","note":"Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists."},
