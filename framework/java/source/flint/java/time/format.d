@@ -147,6 +147,105 @@ TextStyle asNormal(TextStyle style) pure nothrow @nogc
     }
 }
 
+/++
+The localized symbols of numeric text: the zero digit, the positive and negative signs and the decimal separator, each
+a UTF-16 code unit as in Java. An immutable value; `DecimalStyle.init` is `STANDARD`. The locale factories `of`,
+`ofDefaultLocale` and `getAvailableLocales` are not supported yet.
++/
+struct DecimalStyle
+{
+    /// '0', '+', '-' and '.'.
+    static immutable DecimalStyle STANDARD = DecimalStyle.init;
+
+    private wchar zeroDigit_ = '0';
+    private wchar positiveSign_ = '+';
+    private wchar negativeSign_ = '-';
+    private wchar decimalSeparator_ = '.';
+
+    private this(wchar zeroDigit, wchar positiveSign, wchar negativeSign, wchar decimalSeparator) pure nothrow @nogc
+    {
+        zeroDigit_ = zeroDigit;
+        positiveSign_ = positiveSign;
+        negativeSign_ = negativeSign;
+        decimalSeparator_ = decimalSeparator;
+    }
+
+    /// The character that represents zero; the digits one to nine follow it.
+    wchar getZeroDigit() const pure nothrow @nogc
+    {
+        return zeroDigit_;
+    }
+
+    /// A copy with a new zero digit.
+    DecimalStyle withZeroDigit(wchar zeroDigit) const pure nothrow @nogc
+    {
+        return DecimalStyle(zeroDigit, positiveSign_, negativeSign_, decimalSeparator_);
+    }
+
+    /// The character that represents the positive sign.
+    wchar getPositiveSign() const pure nothrow @nogc
+    {
+        return positiveSign_;
+    }
+
+    /// A copy with a new positive sign.
+    DecimalStyle withPositiveSign(wchar positiveSign) const pure nothrow @nogc
+    {
+        return DecimalStyle(zeroDigit_, positiveSign, negativeSign_, decimalSeparator_);
+    }
+
+    /// The character that represents the negative sign.
+    wchar getNegativeSign() const pure nothrow @nogc
+    {
+        return negativeSign_;
+    }
+
+    /// A copy with a new negative sign.
+    DecimalStyle withNegativeSign(wchar negativeSign) const pure nothrow @nogc
+    {
+        return DecimalStyle(zeroDigit_, positiveSign_, negativeSign, decimalSeparator_);
+    }
+
+    /// The character that represents the decimal point.
+    wchar getDecimalSeparator() const pure nothrow @nogc
+    {
+        return decimalSeparator_;
+    }
+
+    /// A copy with a new decimal separator.
+    DecimalStyle withDecimalSeparator(wchar decimalSeparator) const pure nothrow @nogc
+    {
+        return DecimalStyle(zeroDigit_, positiveSign_, negativeSign_, decimalSeparator);
+    }
+
+    /// Whether all four symbols are equal.
+    bool equals(DecimalStyle other) const pure nothrow @nogc
+    {
+        return this == other;
+    }
+
+    /// The sum of the four code units, as Java.
+    int hashCode() const pure nothrow @nogc
+    {
+        return zeroDigit_ + positiveSign_ + negativeSign_ + decimalSeparator_;
+    }
+
+    /// `DecimalStyle[0+-.]`. A lone surrogate is written as U+FFFD (R14).
+    string toString() const pure nothrow
+    {
+        import flint.engine.aot.text : utf8;
+
+        const wchar[4] units = [zeroDigit_, positiveSign_, negativeSign_, decimalSeparator_];
+        string result = "DecimalStyle[";
+        foreach (unit; units)
+        {
+            const encoded = utf8(unit);
+            result ~= encoded is null ? "\uFFFD" : encoded;
+        }
+        return result ~ "]";
+    }
+}
+
 private enum Field : ubyte
 {
     year,

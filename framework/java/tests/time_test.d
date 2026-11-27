@@ -968,3 +968,59 @@ unittest
     assert(cast(int) FormatStyle.SHORT == 3);
     static assert(!__traits(compiles, isStandalone(null)));
 }
+
+@("DecimalStyle keeps four UTF-16 symbols with Java's hash and text, as in JDK 21")
+unittest
+{
+    import flint.java.time.format : DecimalStyle;
+
+    static struct Row
+    {
+        DecimalStyle style;
+        wchar[4] units;
+        int hash;
+        string text;
+        bool standard;
+    }
+
+    const s = DecimalStyle.STANDARD;
+    // JDK 21 DecimalWitness: code units, hashCode(), toString() and equals(STANDARD).
+    // Java's lone U+D800 is written as U+FFFD (R14).
+    const Row[] rows = [
+        Row(s, ['0', '+', '-', '.'], 182, "DecimalStyle[0+-.]", true),
+        Row(s.withZeroDigit('\u0660'), ['\u0660', '+', '-', '.'], 1766,
+                "DecimalStyle[\u0660+-.]", false),
+        Row(s.withZeroDigit('0'), ['0', '+', '-', '.'], 182, "DecimalStyle[0+-.]", true),
+        Row(s.withPositiveSign('p'), ['0', 'p', '-', '.'], 251, "DecimalStyle[0p-.]", false),
+        Row(s.withNegativeSign('\u2212'), ['0', '+', '\u2212', '.'], 8859,
+                "DecimalStyle[0+\u2212.]", false),
+        Row(s.withDecimalSeparator(','), ['0', '+', '-', ','], 180, "DecimalStyle[0+-,]", false),
+        Row(s.withZeroDigit('\u0966').withPositiveSign('P').withNegativeSign('N')
+                .withDecimalSeparator('\u066B'), ['\u0966', 'P', 'N', '\u066B'], 4207,
+                "DecimalStyle[\u0966PN\u066B]", false),
+        Row(s.withZeroDigit(cast(wchar) 0xD800), [0xD800, '+', '-', '.'], 55_430,
+                "DecimalStyle[\uFFFD+-.]", false),
+        Row(s.withZeroDigit(wchar.max).withPositiveSign(wchar.max).withNegativeSign(wchar.max)
+                .withDecimalSeparator(wchar.max), [wchar.max, wchar.max, wchar.max, wchar.max],
+                262_140, "DecimalStyle[\uFFFF\uFFFF\uFFFF\uFFFF]", false),
+        Row(s.withZeroDigit('\0'), ['\0', '+', '-', '.'], 134, "DecimalStyle[\0+-.]", false),
+        Row(s.withDecimalSeparator(',').withDecimalSeparator('.'), ['0', '+', '-', '.'], 182,
+                "DecimalStyle[0+-.]", true),
+    ];
+    foreach (i, row; rows)
+    {
+        const d = row.style;
+        const wchar[4] units = [
+            d.getZeroDigit, d.getPositiveSign, d.getNegativeSign, d.getDecimalSeparator
+        ];
+        assert(units == row.units, row.text);
+        assert(d.hashCode == row.hash, row.text);
+        assert(d.toString == row.text, row.text);
+        assert(d.equals(DecimalStyle.STANDARD) == row.standard, row.text);
+        assert((d == DecimalStyle.STANDARD) == row.standard, row.text);
+    }
+    assert(DecimalStyle.init == DecimalStyle.STANDARD);
+    assert(s.withDecimalSeparator(',').equals(s.withDecimalSeparator(',')));
+    static assert(!__traits(compiles, DecimalStyle('1', '+', '-', '.')));
+    static assert(!__traits(compiles, s.withZeroDigit(null)));
+}
