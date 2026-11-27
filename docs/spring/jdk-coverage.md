@@ -16,7 +16,7 @@ Overall: types 232/1303 (18%), members 2030/15207 (13%); 0 of the done elements 
 | `java.nio` | sol-jackson | 13 / 14 | 340 / 363 | 94% |  |  | 13 |
 | `java.nio.channels` | sol-jackson | 30 / 56 | 38 / 276 | 14% |  |  | 30 |
 | `java.nio.channels.spi` | sol-jackson | 0 / 6 | 0 / 47 | 0% |  |  |  |
-| `java.nio.charset` | sol-jackson | 9 / 12 | 74 / 103 | 72% |  | 12 | 5 |
+| `java.nio.charset` | sol-jackson | 9 / 12 | 74 / 103 | 72% |  |  | 5 |
 | `java.nio.charset.spi` | sol-jackson | 1 / 1 | 3 / 3 | 100% |  |  | 1 |
 | `java.nio.file` | sol-data | 2 / 47 | 15 / 238 | 6% |  |  |  |
 | `java.nio.file.attribute` | sol-data | 0 / 25 | 0 / 112 | 0% |  |  |  |
