@@ -49,13 +49,24 @@ unittest
     }
 }
 
+@("DecimalFormat pattern compilation resolves exponent widths")
+unittest
+{
+    DecimalFixedPattern pattern;
+    assert(compileFixedDecimalPattern("##0.0#E00", pattern) == DecimalCompileStatus.accepted);
+    assert(pattern.minimumIntegerDigits == 1 && pattern.maximumIntegerDigits == 3);
+    assert(pattern.minimumFractionDigits == 1 && pattern.maximumFractionDigits == 2);
+    assert(pattern.minimumExponentDigits == 2 && !pattern.decimalSeparatorAlwaysShown);
+    assert(compileFixedDecimalPattern("0.00", pattern) == DecimalCompileStatus.accepted);
+    assert(pattern.minimumExponentDigits == 0 && pattern.maximumIntegerDigits == int.max);
+}
+
 @("DecimalFormat long composition distinguishes malformed and unsupported patterns")
 unittest
 {
     DecimalFixedPattern pattern;
     foreach (text; ["0;;", "'a';0", "0%%", "%0‰", "0'x", "0#"])
         assert(compileFixedDecimalPattern(text, pattern) == DecimalCompileStatus.malformed);
-    assert(compileFixedDecimalPattern("0E00", pattern) == DecimalCompileStatus.exponential);
     assert(compileFixedDecimalPattern("¤0", pattern) == DecimalCompileStatus.currency);
     assert(compileFixedDecimalPattern("0x0", pattern) == DecimalCompileStatus.splitDigits);
 }
