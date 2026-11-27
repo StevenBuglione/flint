@@ -1248,4 +1248,38 @@ struct Math
         scaleFactor = max(min(scaleFactor, MAX_SCALE), -MAX_SCALE);
         return cast(float)(cast(double) f * powerOfTwoD(scaleFactor));
     }
+
+    /// Correctly rounded positive square root of `a` (delegates to FDLIBM).
+    static double sqrt()(double a) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdSqrt;
+
+        return fdSqrt(a);
+    }
+
+    /// Cube root of `a` (delegates to FDLIBM).
+    static double cbrt()(double a) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdCbrt;
+
+        return fdCbrt(a);
+    }
+
+    /// `sqrt(x^2 + y^2)` without intermediate overflow or underflow (delegates to FDLIBM).
+    static double hypot()(double x, double y) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdHypot;
+
+        return fdHypot(x, y);
+    }
+
+    private static double ieeeRemainderImpl()(double f1, double f2) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdIEEEremainder;
+
+        return fdIEEEremainder(f1, f2);
+    }
+
+    /// IEEE-754 remainder of `f1` divided by `f2` (delegates to FDLIBM).
+    alias IEEEremainder = ieeeRemainderImpl;
 }

@@ -626,6 +626,7 @@
     },
     "java/lang/Math/CubeRootTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 171,224-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.cbrt(double).",
       "status": "deferred"
     },
     "java/lang/Math/DivModTests.java": {
@@ -657,6 +658,7 @@
     },
     "java/lang/Math/HypotTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 171,224-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.hypot(double, double).",
       "status": "deferred"
     },
     "java/lang/Math/Ieee754SpecialCaseTests.java": {
@@ -670,6 +672,7 @@
     },
     "java/lang/Math/IeeeRemainderTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 171,224-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.IEEEremainder(double, double).",
       "status": "deferred"
     },
     "java/lang/Math/InverseTrigTests.java": {
@@ -722,6 +725,7 @@
     },
     "java/lang/Math/SqrtTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 171,224-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.sqrt(double).",
       "status": "deferred"
     },
     "java/lang/Math/TanTests.java": {

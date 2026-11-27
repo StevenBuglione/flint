@@ -371,3 +371,56 @@ private double fmaNoGc() pure nothrow @nogc
 }
 
 static assert(!__traits(compiles, { enum x = Math.fma(1.0, 2.0, 3.0); }));
+
+@("Math sqrt, cbrt, hypot and IEEEremainder match Java special cases and exact values")
+unittest
+{
+    // sqrt special cases, subnormals and exact roots
+    assert(dbits(Math.sqrt(0.0)) == 0);
+    assert(dbits(Math.sqrt(-0.0)) == 0x8000_0000_0000_0000UL);
+    assert(sameDouble(Math.sqrt(double.infinity), double.infinity));
+    assert(sameDouble(Math.sqrt(-double.infinity), double.nan));
+    assert(sameDouble(Math.sqrt(-1.0), double.nan));
+    assert(sameDouble(Math.sqrt(-double.min_normal), double.nan));
+    assert(sameDouble(Math.sqrt(double.nan), double.nan));
+    assert(sameDouble(Math.sqrt(4.0), 2.0));
+    assert(sameDouble(Math.sqrt(0x1p-1074), 0x1p-537));
+    assert(sameDouble(Math.sqrt(fromDbits(0x0000_0000_8000_0001UL)), fromDbits(0x1f56_a09e_6695_dc6bUL)));
+
+    // cbrt special cases, signs and exact cubes
+    assert(dbits(Math.cbrt(0.0)) == 0);
+    assert(dbits(Math.cbrt(-0.0)) == 0x8000_0000_0000_0000UL);
+    assert(sameDouble(Math.cbrt(double.infinity), double.infinity));
+    assert(sameDouble(Math.cbrt(-double.infinity), -double.infinity));
+    assert(sameDouble(Math.cbrt(double.nan), double.nan));
+    assert(sameDouble(Math.cbrt(27.0), 3.0));
+    assert(sameDouble(Math.cbrt(-27.0), -3.0));
+    assert(sameDouble(Math.cbrt(0x1p-1074), 0x1p-358));
+
+    // hypot special cases (Inf wins over NaN!) and scaling without overflow/underflow
+    assert(sameDouble(Math.hypot(double.infinity, double.nan), double.infinity));
+    assert(sameDouble(Math.hypot(double.nan, -double.infinity), double.infinity));
+    assert(sameDouble(Math.hypot(double.nan, 1.0), double.nan));
+    assert(dbits(Math.hypot(-0.0, -0.0)) == 0);
+    assert(sameDouble(Math.hypot(3.0, 4.0), 5.0));
+    assert(sameDouble(Math.hypot(3.0 * 0x1p600, 4.0 * 0x1p600), 5.0 * 0x1p600));
+    assert(sameDouble(Math.hypot(3.0 * 0x1p-1074, 4.0 * 0x1p-1074), 5.0 * 0x1p-1074));
+
+    // IEEEremainder special cases, ties-to-even and signed zero
+    assert(sameDouble(Math.IEEEremainder(1.0, 0.0), double.nan));
+    assert(sameDouble(Math.IEEEremainder(double.infinity, 1.0), double.nan));
+    assert(sameDouble(Math.IEEEremainder(double.nan, 1.0), double.nan));
+    assert(sameDouble(Math.IEEEremainder(1.0, double.nan), double.nan));
+    assert(sameDouble(Math.IEEEremainder(5.0, double.infinity), 5.0));
+    assert(sameDouble(Math.IEEEremainder(-5.0, double.infinity), -5.0));
+    assert(sameDouble(Math.IEEEremainder(3.0, 2.0), -1.0)); // 3 / 2 = 1.5 -> nearest even is 2
+    assert(sameDouble(Math.IEEEremainder(5.0, 2.0), 1.0)); // 5 / 2 = 2.5 -> nearest even is 2
+    assert(dbits(Math.IEEEremainder(4.0, 2.0)) == 0);
+    assert(dbits(Math.IEEEremainder(-4.0, 2.0)) == 0x8000_0000_0000_0000UL);
+    assert(sameDouble(Math.IEEEremainder(0x1p-1073, 0x1p-1074), 0.0));
+}
+
+private double fdlibmSlice1NoGc() pure nothrow @nogc
+{
+    return Math.sqrt(2.0) + Math.cbrt(2.0) + Math.hypot(3.0, 4.0) + Math.IEEEremainder(5.0, 2.0);
+}
