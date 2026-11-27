@@ -4,7 +4,7 @@ import core.memory : GC;
 import flint.java.lang : ArithmeticException, IllegalArgumentException;
 import flint.java.time : DateTimeException, DayOfWeek, Duration, Instant, LocalDate, LocalDateTime,
     LocalTime, Month, OffsetDateTime, ZoneId, ZoneOffset, ZonedDateTime, getValue, isLeap;
-import flint.java.time.format : DateTimeFormatter, DateTimeParseException;
+import flint.java.time.format : DateTimeFormatter, DateTimeFormatterBuilder, DateTimeParseException;
 
 @safe:
 
@@ -1203,4 +1203,223 @@ unittest
     }
     assert(failures == 0, report);
     assert(count == 4396);
+}
+
+// The formatter a formatter_builder.tsv recipe makes; see GoldenFormatterBuilder.java for its steps.
+private DateTimeFormatter builderRecipe(string recipe)
+{
+    import std.array : split;
+
+    static DateTimeFormatter named(string name)
+    {
+        const DateTimeFormatter[string] constants = [
+            "ISO_LOCAL_DATE": DateTimeFormatter.ISO_LOCAL_DATE,
+            "ISO_LOCAL_TIME": DateTimeFormatter.ISO_LOCAL_TIME,
+            "ISO_LOCAL_DATE_TIME": DateTimeFormatter.ISO_LOCAL_DATE_TIME,
+            "ISO_OFFSET_DATE_TIME": DateTimeFormatter.ISO_OFFSET_DATE_TIME,
+            "ISO_OFFSET_DATE": DateTimeFormatter.ISO_OFFSET_DATE,
+            "ISO_DATE": DateTimeFormatter.ISO_DATE, "ISO_DATE_TIME": DateTimeFormatter.ISO_DATE_TIME,
+            "ISO_TIME": DateTimeFormatter.ISO_TIME, "ISO_INSTANT": DateTimeFormatter.ISO_INSTANT,
+            "BASIC_ISO_DATE": DateTimeFormatter.BASIC_ISO_DATE,
+            "ISO_ORDINAL_DATE": DateTimeFormatter.ISO_ORDINAL_DATE,
+        ];
+        return name[0] == '=' ? DateTimeFormatter.ofPattern(name[1 .. $]) : constants[name];
+    }
+
+    DateTimeFormatterBuilder b;
+    foreach (step; recipe.length ? recipe.split("|") : null)
+    {
+        if (step.length >= 2 && step[1] == ':')
+            builderStep(b, step[0], step[2 .. $], &named);
+        else
+            builderSetting(b, step);
+    }
+    return b.toFormatter();
+}
+
+// A recipe step without an argument.
+private void builderSetting(ref DateTimeFormatterBuilder b, string step)
+{
+    switch (step)
+    {
+    case "cs":
+        b.parseCaseSensitive();
+        break;
+    case "ci":
+        b.parseCaseInsensitive();
+        break;
+    case "strict":
+        b.parseStrict();
+        break;
+    case "lenient":
+        b.parseLenient();
+        break;
+    case "inst":
+        b.appendInstant();
+        break;
+    case "offid":
+        b.appendOffsetId();
+        break;
+    case "zid":
+        b.appendZoneId();
+        break;
+    case "zrid":
+        b.appendZoneRegionId();
+        break;
+    case "[":
+        b.optionalStart();
+        break;
+    default:
+        b.optionalEnd();
+        break;
+    }
+}
+
+// A recipe step with an argument; `named` gives the formatter an `a:` or `q:` step names.
+private void builderStep(ref DateTimeFormatterBuilder b, char step, string arg,
+        DateTimeFormatter function(string) @safe named)
+{
+    import flint.engine.aot.text : decodeUtf8;
+    import std.algorithm.searching : findSplit;
+
+    switch (step)
+    {
+    case 'c':
+        size_t next;
+        b.appendLiteral(cast(wchar) decodeUtf8(arg, next));
+        break;
+    case 's':
+        b.appendLiteral(arg);
+        break;
+    case 'p':
+        b.appendPattern(arg);
+        break;
+    case 'o':
+        auto parts = arg.findSplit(",");
+        b.appendOffset(parts[0], parts[2]);
+        break;
+    case 'a':
+        b.append(named(arg));
+        break;
+    default:
+        b.appendOptional(named(arg));
+        break;
+    }
+}
+
+// One operation of formatter_builder.tsv: the escaped result, or `!` and the exception message (and a parse
+// exception's error index).
+private string builderResult(string op, string recipe, string kind, string input)
+{
+    import flint.engine.aot.text : decimal;
+    import flint.java.lang : IllegalStateException;
+
+    try
+    {
+        const f = builderRecipe(unescapedUtf16(recipe));
+        if (op == "build")
+            return escapedUtf16(f.toString());
+        const text = unescapedUtf16(input);
+        if (op == "parse")
+            return escapedUtf16(decimalStyleParse(kind, f, text));
+        switch (kind)
+        {
+        case "zoned":
+            return escapedUtf16(f.format(ZonedDateTime.parse(text)));
+        case "instant":
+            return escapedUtf16(f.format(Instant.parse(text)));
+        default:
+            return escapedUtf16(decimalStyleFormat(kind, f, text));
+        }
+    }
+    catch (DateTimeParseException e)
+        return "!" ~ escapedUtf16(e.msg) ~ "\t" ~ decimal(e.getErrorIndex());
+    catch (DateTimeException e)
+        return "!" ~ escapedUtf16(e.msg);
+    catch (IllegalArgumentException e)
+        return "!" ~ escapedUtf16(e.msg);
+    catch (IllegalStateException e)
+        return "!" ~ escapedUtf16(e.msg);
+}
+
+// `result` with its Parsed field list written as `{?}`, as GoldenFormatterBuilder.java writes Java's when the list
+// order is HashMap order.
+private string unorderedParsed(string result) pure
+{
+    import std.string : indexOf;
+
+    enum marker = "TemporalAccessor: {";
+    const start = result.indexOf(marker);
+    if (start < 0)
+        return result;
+    const close = result.indexOf('}', start);
+    return result[0 .. start + marker.length] ~ "?" ~ result[close .. $];
+}
+
+@("DateTimeFormatterBuilder describes, prints and parses like JDK 21")
+unittest
+{
+    import std.algorithm.searching : canFind;
+    import std.array : join;
+
+    size_t count, failures;
+    string report;
+    foreach (row; rows(import("formatter_builder.tsv")))
+    {
+        const expected = row[4 .. $].join("\t");
+        auto got = builderResult(row[0], row[1], row[2], row.length > 3 ? row[3] : "");
+        if (expected.canFind("TemporalAccessor: {?}"))
+            got = unorderedParsed(got);
+        if (got != expected)
+        {
+            if (++failures <= 60)
+                report ~= row[0 .. 4].join(" | ") ~ ": " ~ got ~ " != " ~ expected ~ "\n";
+        }
+        ++count;
+    }
+    assert(failures == 0, report);
+    assert(count == 1581);
+}
+
+@("DateTimeFormatterBuilder rejects the single-digit hour offset patterns Flint does not support yet")
+unittest
+{
+
+    foreach (pattern; [
+        "+H", "+Hmm", "+H:mm", "+HMM", "+H:MM", "+HMMss", "+H:MM:ss", "+HMMSS", "+H:MM:SS", "+Hmmss",
+        "+H:mm:ss"
+    ])
+    {
+        DateTimeFormatterBuilder b;
+        try
+        {
+            b.appendOffset(pattern, "Z");
+            assert(false, pattern);
+        }
+        catch (IllegalArgumentException e)
+            assert(e.msg == "Offset pattern not supported by Flint yet: " ~ pattern, e.msg);
+    }
+    // A case-insensitive parse folds ASCII letters only; Java folds "É" to "é" too.
+    auto literal = DateTimeFormatterBuilder().parseCaseInsensitive().appendLiteral("été").toFormatter();
+    try
+    {
+        literal.parse("ÉTÉ");
+        assert(false);
+    }
+    catch (DateTimeParseException e)
+        assert(e.getErrorIndex() == 0);
+    literal.parse("éTé");
+    // Java's message for a value without a region names the zone query's lambda.
+    try
+    {
+        DateTimeFormatterBuilder().appendZoneRegionId().toFormatter().format(LocalDate.of(2024, 1, 1));
+        assert(false);
+    }
+    catch (DateTimeException e)
+        assert(e.msg == "Unsupported field: ZoneId", e.msg);
+    // A lone surrogate literal prints as U+FFFD (R14); the chain reads as Java's.
+    auto f = DateTimeFormatterBuilder().appendLiteral(cast(wchar) 0xD800).appendPattern("uuuu").toFormatter();
+    assert(f.format(LocalDate.of(2024, 1, 1)) == "�2024");
+    assert(DateTimeFormatterBuilder().appendPattern("uuuu").appendLiteral('-').toFormatter()
+            .format(LocalDate.of(2024, 1, 1)) == "2024-");
 }

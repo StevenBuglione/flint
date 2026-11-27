@@ -1,9 +1,11 @@
 /++
-Java's `java.time.format`: `DateTimeFormatter`, its ISO constants and `ofPattern`, and `DateTimeParseException`.
+Java's `java.time.format`: `DateTimeFormatter`, its ISO constants and `ofPattern`, `DateTimeFormatterBuilder`, and
+`DateTimeParseException`.
 
 Written from the Java SE 21 API specification of `DateTimeFormatter` and `DateTimeFormatterBuilder`; OpenJDK
-21.0.13's `DateTimeFormatterBuilder.java` and `SignStyle.java` (GPL-2.0-only WITH Classpath-exception-2.0) were
-consulted for the sign and adjacent-width rules. Modified by the Flint authors.
+21.0.13's `DateTimeFormatterBuilder.java`, `DateTimeParseContext.java` and `SignStyle.java` (GPL-2.0-only WITH
+Classpath-exception-2.0) were consulted for the sign, adjacent-width, optional-section and offset parse rules.
+Modified by the Flint authors.
 A formatter is a list of printer-parser elements, as the specification describes: numeric fields with a width and
 sign style, fractions, literals, text, offsets, zone IDs, the instant, and optional sections. English text only;
 `Locale` arguments are not supported yet.
@@ -14,7 +16,7 @@ produces.
 module flint.java.time.format;
 
 import flint.engine.aot.text : decodeUtf8;
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException;
 import flint.java.time : DateTimeException, Duration, Instant, LocalDate, LocalDateTime, LocalTime,
     OffsetDateTime, ZoneId, ZoneOffset, ZonedDateTime, checkRange;
 import std.typecons : Nullable;
@@ -718,11 +720,15 @@ private enum Op : ubyte
     zoneRegion,
     instant,
     // Control elements: everything from here on prints nothing.
-    optionalStart,
+    optionalStart, // `lenient` set: an appended formatter, which `text` describes
     optionalEnd,
     caseInsensitive,
     caseSensitive,
     lenient,
+    strict,
+    groupStart, // an appended formatter, which `text` describes
+    groupEnd,
+    adjacentEnd, // where an empty optional section was: no element, but values before it are not adjacent
 }
 
 private struct Element
@@ -835,8 +841,9 @@ private immutable Element[] rfc1123 = [
     colon, num(Field.minuteOfHour, 2), op(Op.optionalStart), colon, num(Field.secondOfMinute, 2),
     op(Op.optionalEnd), space, offsetElement("+HHMM", "GMT", false)
 ];
-// What the instant element parses: an ISO local date-time with seconds, and an offset.
-private immutable Element[] instantParse = [op(Op.caseInsensitive)] ~ isoLocalDate ~ [
+// What the instant element parses: an ISO local date-time with seconds, and an offset. Case sensitivity and
+// strictness are the enclosing parse's.
+private immutable Element[] instantParse = isoLocalDate ~ [
     lit("T"), num(Field.hourOfDay, 2), lit(":"), num(Field.minuteOfHour, 2), lit(":"),
     num(Field.secondOfMinute, 2), fraction(0, 9, true), isoOffset
 ];
@@ -932,8 +939,8 @@ struct DateTimeFormatter
      */
     static DateTimeFormatter ofPattern(string pattern)
     {
-        auto elements = compilePattern(pattern);
-        return DateTimeFormatter(elements.idup, describeElements(elements), true);
+        DateTimeFormatterBuilder builder;
+        return builder.appendPattern(pattern).toFormatter();
     }
 
     /// How a parse resolves its fields: `SMART` for `ofPattern` and `RFC_1123_DATE_TIME`, `STRICT` for the ISO
@@ -1064,25 +1071,269 @@ struct DateTimeFormatter
     }
 }
 
+/++
+Builder to create date-time formatters. Java's `DateTimeFormatterBuilder` is a mutable class whose methods return
+`this`; Flint's is a struct whose methods return it by `ref` (ADR-030, R12), so Java's chain reads the same:
+`DateTimeFormatterBuilder().appendPattern("uuuu-MM-dd").appendLiteral('T').appendOffsetId().toFormatter()`.
+
+Only the methods that take no `TemporalField`, `Locale` or text lookup exist yet. Text is English.
++/
+struct DateTimeFormatterBuilder
+{
+    private Element[] elements_;
+    private size_t[] open_; // the index of each optional section not yet ended
+
+    /// Changes the parse of the rest of the formatter to be case sensitive, the default.
+    ref DateTimeFormatterBuilder parseCaseSensitive() return
+    {
+        elements_ ~= op(Op.caseSensitive);
+        return this;
+    }
+
+    /// Changes the parse of the rest of the formatter to be case insensitive.
+    ref DateTimeFormatterBuilder parseCaseInsensitive() return
+    {
+        elements_ ~= op(Op.caseInsensitive);
+        return this;
+    }
+
+    /// Changes the parse of the rest of the formatter to be strict, the default.
+    ref DateTimeFormatterBuilder parseStrict() return
+    {
+        elements_ ~= op(Op.strict);
+        return this;
+    }
+
+    /// Changes the parse of the rest of the formatter to be lenient.
+    ref DateTimeFormatterBuilder parseLenient() return
+    {
+        elements_ ~= op(Op.lenient);
+        return this;
+    }
+
+    /// Appends an instant in ISO-8601 form, in UTC, with the fraction in groups of three digits as needed.
+    ref DateTimeFormatterBuilder appendInstant() return
+    {
+        elements_ ~= op(Op.instant);
+        return this;
+    }
+
+    /// Appends the zone offset, such as '+01:00', or 'Z' for zero: `appendOffset("+HH:MM:ss", "Z")`.
+    ref DateTimeFormatterBuilder appendOffsetId() return
+    {
+        elements_ ~= isoStrictOffset;
+        return this;
+    }
+
+    /**
+     * Appends the zone offset in `pattern`, or `noOffsetText` for zero. Throws `IllegalArgumentException` for a
+     * pattern Java does not define, and for the single-digit hour patterns, such as `+H:mm`, which Flint does not
+     * support yet.
+     */
+    ref DateTimeFormatterBuilder appendOffset(string pattern, string noOffsetText) return
+    {
+        static immutable string[11] supported = [
+            "+HH", "+HHmm", "+HH:mm", "+HHMM", "+HH:MM", "+HHMMss", "+HH:MM:ss", "+HHMMSS",
+            "+HH:MM:SS", "+HHmmss", "+HH:mm:ss"
+        ];
+        static immutable string[11] singleDigitHour = [
+            "+H", "+Hmm", "+H:mm", "+HMM", "+H:MM", "+HMMss", "+H:MM:ss", "+HMMSS", "+H:MM:SS",
+            "+Hmmss", "+H:mm:ss"
+        ];
+        foreach (candidate; supported)
+            if (candidate == pattern)
+            {
+                elements_ ~= offsetElement(candidate, noOffsetText, false);
+                return this;
+            }
+        foreach (candidate; singleDigitHour)
+            if (candidate == pattern)
+                throw new IllegalArgumentException("Offset pattern not supported by Flint yet: " ~ pattern);
+        throw new IllegalArgumentException("Invalid zone offset pattern: " ~ pattern);
+    }
+
+    /// Appends the zone ID, such as 'Europe/Paris' or '+02:00'.
+    ref DateTimeFormatterBuilder appendZoneId() return
+    {
+        elements_ ~= op(Op.zoneId);
+        return this;
+    }
+
+    /// Appends a region zone ID, such as 'Europe/Paris'; a value with only an offset does not print one.
+    ref DateTimeFormatterBuilder appendZoneRegionId() return
+    {
+        elements_ ~= op(Op.zoneRegion);
+        return this;
+    }
+
+    /// Appends a character literal. A lone surrogate prints as U+FFFD (R14).
+    ref DateTimeFormatterBuilder appendLiteral(wchar literal) return
+    {
+        char[3] buffer;
+        const length = encodeUnit(literal, buffer);
+        elements_ ~= lit(length ? buffer[0 .. length].idup : "\uFFFD");
+        return this;
+    }
+
+    /// Appends a string literal; an empty one appends nothing.
+    ref DateTimeFormatterBuilder appendLiteral(string literal) return
+    {
+        if (literal.length)
+            elements_ ~= lit(literal);
+        return this;
+    }
+
+    /// Appends all the elements of `formatter`. Its zone, decimal style and resolver style are not used.
+    ref DateTimeFormatterBuilder append(const DateTimeFormatter formatter) return
+    {
+        Element start = op(Op.groupStart);
+        start.text = formatter.description_;
+        elements_ ~= start;
+        elements_ ~= formatter.elements_;
+        elements_ ~= op(Op.groupEnd);
+        return this;
+    }
+
+    /// Appends `formatter` as an optional section: it prints what is available and parses when it matches.
+    ref DateTimeFormatterBuilder appendOptional(const DateTimeFormatter formatter) return
+    {
+        Element start = op(Op.optionalStart);
+        start.lenient = true;
+        start.text = formatter.description_;
+        elements_ ~= start;
+        elements_ ~= formatter.elements_;
+        elements_ ~= op(Op.optionalEnd);
+        return this;
+    }
+
+    /**
+     * Appends the elements of `pattern`, as `DateTimeFormatter.ofPattern` describes: `u y D M L d E a h H m s S n
+     * VV X x Z`, quoted text, `''` and `[ ]` optional sections. A `]` ends an optional section this builder
+     * started; one left open stays open. Other pattern letters throw `IllegalArgumentException`.
+     */
+    ref DateTimeFormatterBuilder appendPattern(string pattern) return
+    {
+        size_t i;
+        while (i < pattern.length)
+        {
+            const c = pattern[i];
+            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+            {
+                size_t count = 1;
+                while (i + count < pattern.length && pattern[i + count] == c)
+                    ++count;
+                elements_ ~= letterElement(c, cast(int) count);
+                i += count;
+            }
+            else if (c == '\'')
+                i = quoted(pattern, i, elements_);
+            else if (c == '[')
+            {
+                optionalStart();
+                ++i;
+            }
+            else if (c == ']')
+            {
+                if (open_.length == 0)
+                    throw new IllegalArgumentException("Pattern invalid as it contains ] without previous [");
+                endSection();
+                ++i;
+            }
+            else if (c == '{' || c == '}' || c == '#')
+                throw new IllegalArgumentException("Pattern includes reserved character: '" ~ c ~ "'");
+            else
+            {
+                size_t next = i;
+                decodeUtf8(pattern, next);
+                elements_ ~= lit(pattern[i .. next]);
+                i = next;
+            }
+        }
+        return this;
+    }
+
+    /// Starts an optional section: it prints when all its fields are available, and parses when it matches.
+    ref DateTimeFormatterBuilder optionalStart() return
+    {
+        open_ ~= elements_.length;
+        elements_ ~= op(Op.optionalStart);
+        return this;
+    }
+
+    /// Ends the optional section `optionalStart` started; an empty one is dropped, but still ends adjacent value
+    /// parsing, as in Java. Throws `IllegalStateException` when no section is open.
+    ref DateTimeFormatterBuilder optionalEnd() return
+    {
+        if (open_.length == 0)
+            throw new IllegalStateException(
+                    "Cannot call optionalEnd() as there was no previous call to optionalStart()");
+        endSection();
+        return this;
+    }
+
+    // Ends the open section; appendPattern and toFormatter call it only with one open, so ofPattern does not link
+    // IllegalStateException.
+    private void endSection() pure nothrow
+    {
+        const start = open_[$ - 1];
+        open_ = open_[0 .. $ - 1];
+        foreach (e; elements_[start + 1 .. $])
+            if (e.op != Op.adjacentEnd)
+            {
+                elements_ ~= op(Op.optionalEnd);
+                return;
+            }
+        elements_ = elements_[0 .. start] ~ op(Op.adjacentEnd);
+    }
+
+    /// Ends any optional sections still open, and creates the formatter, which resolves `SMART`.
+    DateTimeFormatter toFormatter()
+    {
+        while (open_.length)
+            endSection();
+        return DateTimeFormatter(elements_.idup, describeElements(elements_), true);
+    }
+}
+
 private immutable string[SignStyle.max + 1] signNames = [
     "NORMAL", "ALWAYS", "NEVER", "NOT_NEGATIVE", "EXCEEDS_PAD"
 ];
 
-// Java's toString of the printer-parsers of `ofPattern`.
+// Java's toString of the printer-parsers of `ofPattern` and `DateTimeFormatterBuilder`. An appended formatter is
+// its own description, in brackets when optional and in parentheses otherwise.
 private string describeElements(scope const(Element)[] elements) pure
 {
     string text;
-    foreach (e; elements)
-        text ~= describeElement(e);
+    for (size_t i = 0; i < elements.length; ++i)
+    {
+        const e = elements[i];
+        if (e.op == Op.groupStart || (e.op == Op.optionalStart && e.lenient))
+        {
+            text ~= e.op == Op.groupStart ? "(" ~ e.text ~ ")" : "[" ~ e.text ~ "]";
+            i = sectionEnd(elements, i);
+        }
+        else
+            text ~= describeElement(e);
+    }
     return text;
 }
+
+private immutable string[Op.max - Op.optionalStart + 1] controlNames = [
+    "[", "]", "ParseCaseSensitive(false)", "ParseCaseSensitive(true)", "ParseStrict(false)",
+    "ParseStrict(true)", "(", ")", ""
+];
+
+// Op.zoneId, Op.zoneRegion and Op.instant.
+private immutable string[3] zoneInstantNames = ["ZoneId()", "ZoneRegionId()", "Instant()"];
 
 private string describeElement(const Element e) pure
 {
     if (e.op == Op.number || e.op == Op.fraction)
         return describeNumber(e);
     if (e.op >= Op.optionalStart)
-        return e.op == Op.optionalStart ? "[" : e.op == Op.optionalEnd ? "]" : "";
+        return controlNames[e.op - Op.optionalStart];
+    if (e.op >= Op.zoneId)
+        return zoneInstantNames[e.op - Op.zoneId];
     switch (e.op)
     {
     case Op.reducedYear:
@@ -1091,10 +1342,8 @@ private string describeElement(const Element e) pure
         return e.text == "'" ? "''" : "'" ~ doubledQuotes(e.text) ~ "'";
     case Op.text:
         return "Text(" ~ fieldNames[e.field] ~ (e.text == "full" ? ")" : ",SHORT)");
-    case Op.offset:
-        return "Offset(" ~ e.text ~ ",'" ~ e.noOffsetText ~ "')";
     default:
-        return "ZoneId()";
+        return "Offset(" ~ e.text ~ ",'" ~ doubledQuotes(e.noOffsetText) ~ "')";
     }
 }
 
@@ -1191,11 +1440,13 @@ private struct Printer
         for (size_t i = 0; i < elements.length; ++i)
         {
             const e = elements[i];
-            if (e.op == Op.optionalStart)
+            // An appended formatter, like an optional section, drops what it printed when a field is missing in an
+            // optional section, and what follows it still prints.
+            if (e.op == Op.optionalStart || e.op == Op.groupStart)
             {
                 const end = sectionEnd(elements, i);
                 const mark = output.length;
-                if (!run(elements[i + 1 .. end], true))
+                if (!run(elements[i + 1 .. end], optional || e.op == Op.optionalStart))
                     output = output[0 .. mark];
                 i = end;
                 continue;
@@ -1408,15 +1659,16 @@ private immutable string[7] dayFull = [
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
 ];
 
-// The index of the optionalEnd matching the optionalStart at `start`, or the end of the list.
+// The index of the end matching the optionalStart or groupStart at `start`, or the end of the list.
 private size_t sectionEnd(scope const(Element)[] elements, size_t start) pure nothrow @nogc
 {
+    const open = elements[start].op, close = open == Op.optionalStart ? Op.optionalEnd : Op.groupEnd;
     int depth;
     foreach (i; start .. elements.length)
     {
-        if (elements[i].op == Op.optionalStart)
+        if (elements[i].op == open)
             ++depth;
-        else if (elements[i].op == Op.optionalEnd && --depth == 0)
+        else if (elements[i].op == close && --depth == 0)
             return i;
     }
     return elements.length;
@@ -1431,7 +1683,8 @@ private struct OffsetShape
     bool colon;
 }
 
-// "+HH", "+HHmm", "+HH:mm", "+HHMM", "+HH:MM", "+HHMMss", "+HH:MM:ss", "+HHMMSS", "+HH:MM:SS".
+// "+HH", "+HHmm", "+HH:mm", "+HHMM", "+HH:MM", "+HHMMss", "+HH:MM:ss", "+HHMMSS", "+HH:MM:SS", "+HHmmss",
+// "+HH:mm:ss".
 private OffsetShape offsetShape(string pattern) pure nothrow @nogc
 {
     OffsetShape shape;
@@ -1488,16 +1741,12 @@ private struct Parser
             const e = elements[i];
             if (e.op == Op.optionalStart)
             {
+                // As Java, a failed section restores the parsed fields; its settings stay.
                 const end = sectionEnd(elements, i);
                 const saved = *fields;
-                const savedCase = caseInsensitive, savedLenient = lenient;
                 const next = run(elements[i + 1 .. end], position);
                 if (next < 0)
-                {
                     *fields = saved;
-                    caseInsensitive = savedCase;
-                    lenient = savedLenient;
-                }
                 else
                     position = next;
                 i = end;
@@ -1516,8 +1765,8 @@ private struct Parser
             caseInsensitive = true;
         else if (e.op == Op.caseSensitive)
             caseInsensitive = false;
-        else if (e.op == Op.lenient)
-            lenient = true;
+        else if (e.op == Op.lenient || e.op == Op.strict)
+            lenient = e.op == Op.lenient;
         return position;
     }
 
@@ -1777,23 +2026,20 @@ private struct Parser
 
     int parseOffset(const Element e, int position) scope
     {
-        if (e.noOffsetText.length && matches(e.noOffsetText, position))
-        {
-            fields.hasOffset_ = true;
-            fields.offsetSeconds_ = 0;
-            return position + cast(int) e.noOffsetText.length;
-        }
+        // As Java, empty no-offset text matches only at the end, or where no offset can be read.
+        if (e.noOffsetText.length ? matches(e.noOffsetText, position) : position == text.length)
+            return zeroOffset(position + cast(int) e.noOffsetText.length);
         if (position >= text.length || (text[position] != '+' && text[position] != '-'))
-            return ~position;
+            return noOffset(e, position);
         const sign = text[position] == '-' ? -1 : 1;
         // Java reads each group as two digits up to 59; hours 24 to 59 are then out of range.
         const hours = twoDigits(position + 1);
         if (hours < 0 || hours > 59)
-            return ~position;
+            return noOffset(e, position);
         int[2] parts;
         const end = offsetMinutesSeconds(e, position + 3, parts);
         if (end < 0)
-            return ~position;
+            return noOffset(e, position);
         if (hours > 23)
             throw Fields.failed(text,
                     new DateTimeException("Value out of range: Hour[0-23], Minute[0-59], Second[0-59]"));
@@ -1802,12 +2048,32 @@ private struct Parser
         return end;
     }
 
+    // A lenient "+HH" reads colon-separated groups when the text has a colon after the hours, as Java.
+    bool colonAfterHours(const Element e, int pos, bool lenient) scope const pure nothrow @nogc
+    {
+        return lenient && e.text == "+HH" && pos < text.length && text[pos] == ':';
+    }
+
+    int zeroOffset(int end) scope pure nothrow @nogc
+    {
+        fields.hasOffset_ = true;
+        fields.offsetSeconds_ = 0;
+        return end;
+    }
+
+    // Where no offset can be read: a zero offset for empty no-offset text, otherwise an error.
+    int noOffset(const Element e, int position) scope pure nothrow @nogc
+    {
+        return e.noOffsetText.length ? ~position : zeroOffset(position);
+    }
+
     // The minutes and seconds groups after an offset's hours; returns the end, or -1 when a required group is
     // missing.
     int offsetMinutesSeconds(const Element e, int pos, ref int[2] parts) scope const pure nothrow @nogc
     {
-        const shape = offsetShape(e.text);
+        auto shape = offsetShape(e.text);
         const lenient = e.lenient || this.lenient;
+        shape.colon |= colonAfterHours(e, pos, lenient);
         if (!shape.minutes && !lenient)
             return pos;
         const next = offsetGroup(pos, shape.colon, parts[0]);
@@ -1841,51 +2107,6 @@ private struct Parser
         return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || digit(c) || c == '/' || c == '_'
             || c == '+' || c == '-' || c == '.' || c == '~' || c == ':';
     }
-}
-
-// Compiles an `ofPattern` pattern into elements.
-private Element[] compilePattern(string pattern)
-{
-    Element[] elements;
-    size_t i;
-    int depth;
-    while (i < pattern.length)
-    {
-        const c = pattern[i];
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
-        {
-            size_t count = 1;
-            while (i + count < pattern.length && pattern[i + count] == c)
-                ++count;
-            elements ~= letterElement(c, cast(int) count);
-            i += count;
-        }
-        else if (c == '\'')
-            i = quoted(pattern, i, elements);
-        else if (c == '[')
-        {
-            ++depth;
-            elements ~= op(Op.optionalStart);
-            ++i;
-        }
-        else if (c == ']')
-        {
-            if (depth-- == 0)
-                throw new IllegalArgumentException("Pattern invalid as it contains ] without previous [");
-            elements ~= op(Op.optionalEnd);
-            ++i;
-        }
-        else if (c == '{' || c == '}' || c == '#')
-            throw new IllegalArgumentException("Pattern includes reserved character: '" ~ c ~ "'");
-        else
-        {
-            elements ~= lit(pattern[i .. i + 1]);
-            ++i;
-        }
-    }
-    foreach (_; 0 .. depth)
-        elements ~= op(Op.optionalEnd);
-    return elements;
 }
 
 // A quoted literal starting at `start`; `''` is a single quote. Returns the index after the closing quote.

@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,256 | 421 | 1,871 | 14,873 |
+| framework | openjdk@21.0.13 | 1,256 | 435 | 1,871 | 14,859 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 88 | 11,744 |
@@ -2472,6 +2472,20 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.format.DateTimeFormatter#getZone()` | `flint.java.time.format.DateTimeFormatter.getZone` | [R5](api-mapping.md#r5-optional-and-nullable-values) | An absent override is represented by Nullable!ZoneId. |
 | `java.time.format.DateTimeFormatter#withDecimalStyle(DecimalStyle)` | `flint.java.time.format.DateTimeFormatter.withDecimalStyle` | [R11](api-mapping.md#r11-object-identity-and-equality), [R14](api-mapping.md#r14-strings-and-text) | Returns a copy of the immutable D value. Numbers, reduced years and fractions print and parse with the zero digit, signs and decimal separator. A symbol or digit that is a lone surrogate prints as U+FFFD and never matches UTF-8 input. |
 | `java.time.format.DateTimeFormatter#withResolverStyle(ResolverStyle)` | `flint.java.time.format.DateTimeFormatter.withResolverStyle` | [R11](api-mapping.md#r11-object-identity-and-equality) | Returns a copy of the immutable D value. ResolverStyle has no LENIENT member yet, so only STRICT and SMART can be requested. |
+| `java.time.format.DateTimeFormatterBuilder` | `flint.java.time.format.DateTimeFormatterBuilder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | A struct whose methods return it by ref (DIP1000 return), so Java's chain reads the same. Only the methods that take no TemporalField, Locale or text lookup exist yet, with English text. |
+| `java.time.format.DateTimeFormatterBuilder#<init>()` | `flint.java.time.format.DateTimeFormatterBuilder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | DateTimeFormatterBuilder() is the struct's initial value. |
+| `java.time.format.DateTimeFormatterBuilder#append(DateTimeFormatter)` | `flint.java.time.format.DateTimeFormatterBuilder.append` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | Returns the builder by ref, so the Java chain reads the same. |
+| `java.time.format.DateTimeFormatterBuilder#appendLiteral(String)` | `flint.java.time.format.DateTimeFormatterBuilder.appendLiteral` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | Returns the builder by ref, so the Java chain reads the same. |
+| `java.time.format.DateTimeFormatterBuilder#appendLiteral(char)` | `flint.java.time.format.DateTimeFormatterBuilder.appendLiteral` | [R12](api-mapping.md#r12-builders-and-fluent-apis), [R14](api-mapping.md#r14-strings-and-text) | Returns the builder by ref, so the Java chain reads the same. A lone surrogate prints as U+FFFD. |
+| `java.time.format.DateTimeFormatterBuilder#appendOffsetId()` | `flint.java.time.format.DateTimeFormatterBuilder.appendOffsetId` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | Returns the builder by ref, so the Java chain reads the same. |
+| `java.time.format.DateTimeFormatterBuilder#appendOptional(DateTimeFormatter)` | `flint.java.time.format.DateTimeFormatterBuilder.appendOptional` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | Returns the builder by ref, so the Java chain reads the same. |
+| `java.time.format.DateTimeFormatterBuilder#optionalEnd()` | `flint.java.time.format.DateTimeFormatterBuilder.optionalEnd` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | Returns the builder by ref, so the Java chain reads the same. |
+| `java.time.format.DateTimeFormatterBuilder#optionalStart()` | `flint.java.time.format.DateTimeFormatterBuilder.optionalStart` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | Returns the builder by ref, so the Java chain reads the same. |
+| `java.time.format.DateTimeFormatterBuilder#parseCaseInsensitive()` | `flint.java.time.format.DateTimeFormatterBuilder.parseCaseInsensitive` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | Returns the builder by ref, so the Java chain reads the same. Literals and text fold ASCII letters only; Java also folds other letters with Character.toUpperCase and toLowerCase. |
+| `java.time.format.DateTimeFormatterBuilder#parseCaseSensitive()` | `flint.java.time.format.DateTimeFormatterBuilder.parseCaseSensitive` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | Returns the builder by ref, so the Java chain reads the same. |
+| `java.time.format.DateTimeFormatterBuilder#parseLenient()` | `flint.java.time.format.DateTimeFormatterBuilder.parseLenient` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | Returns the builder by ref, so the Java chain reads the same. |
+| `java.time.format.DateTimeFormatterBuilder#parseStrict()` | `flint.java.time.format.DateTimeFormatterBuilder.parseStrict` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | Returns the builder by ref, so the Java chain reads the same. |
+| `java.time.format.DateTimeFormatterBuilder#toFormatter()` | `flint.java.time.format.DateTimeFormatterBuilder.toFormatter` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | Resolves SMART with English text; the default FORMAT locale is not consulted yet. |
 | `java.time.format.DateTimeParseException` | `flint.java.time.format.DateTimeParseException` | [R26](api-mapping.md#r26-null-arrays) | A null parsed text counts as empty (R26). Java throws NullPointerException. A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.time.format.DateTimeParseException#<init>(String,CharSequence,int)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.time.format.DateTimeParseException#<init>(String,CharSequence,int,Throwable)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
@@ -10755,7 +10769,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.text.spi | 0 | 27 |
 | java.time | 684 | 0 |
 | java.time.chrono | 405 | 0 |
-| java.time.format | 86 | 0 |
+| java.time.format | 72 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
 | java.util | 1,877 | 0 |
@@ -11968,6 +11982,11 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.format.DateTimeFormatter#ISO_DATE_TIME` | 2 | The optional numeric offset now matches Java. Regional IDs such as Europe/Paris still require the region zone provider. |
 | framework | `java.time.format.DateTimeFormatter#ofPattern(String)` | 2 | Resolves SMART by default and parses eagerly, as Java does. Only the letters u y D M d E a h H m s S n VV X x Z are supported, with English text; others throw IllegalArgumentException. An unresolved parse lists no fields in its "Unable to obtain" message, and a VV offset zone does not yield an OffsetDateTime. |
 | framework | `java.time.format.DateTimeFormatter#withZone(ZoneId)` | 2 | Parsing uses the override zone when the input omits a zone ID. ZonedDateTime uses an explicit offset to determine the instant when present. Full parsed-temporal queries and printing temporals with only an offset remain deferred. |
+| framework | `java.time.format.DateTimeFormatterBuilder#appendInstant()` | 2 | Prints as Java. A parse also keeps the local date-time and offset it read, so OffsetDateTime and ZonedDateTime resolve from it, where Java resolves only the instant and needs an override zone. |
+| framework | `java.time.format.DateTimeFormatterBuilder#appendOffset(String,String)` | 2 | The eleven two-digit hour patterns print and parse as Java. The single-digit hour patterns, such as +H:mm, throw IllegalArgumentException until Flint supports them. |
+| framework | `java.time.format.DateTimeFormatterBuilder#appendPattern(String)` | 2 | Supports the pattern letters ofPattern does, u y D M L d E a h H m s S n VV X x Z, with English text; others throw IllegalArgumentException. |
+| framework | `java.time.format.DateTimeFormatterBuilder#appendZoneId()` | 2 | Regional IDs such as Europe/Paris still require the region zone provider. |
+| framework | `java.time.format.DateTimeFormatterBuilder#appendZoneRegionId()` | 2 | Regional IDs such as Europe/Paris still require the region zone provider. A value without a region reports "Unsupported field: ZoneId"; Java's message names its zone query. |
 | framework | `java.time.format.DecimalStyle#getAvailableLocales()` | 2 | Needs the locale decimal symbols that java.text.DecimalFormatSymbols supplies (sol-template). The root and English locales give STANDARD. |
 | framework | `java.time.format.DecimalStyle#of(Locale)` | 2 | Needs the locale decimal symbols that java.text.DecimalFormatSymbols supplies (sol-template). The root and English locales give STANDARD. |
 | framework | `java.time.format.DecimalStyle#ofDefaultLocale()` | 2 | Needs the locale decimal symbols that java.text.DecimalFormatSymbols supplies (sol-template). The root and English locales give STANDARD. It also needs Locale.getDefault(Category.FORMAT). |
