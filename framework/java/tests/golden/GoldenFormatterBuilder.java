@@ -6,6 +6,7 @@
 //   [ ]                    optionalStart, optionalEnd
 //   c:X s:TEXT p:PATTERN   appendLiteral(char), appendLiteral(String), appendPattern
 //   o:PATTERN,TEXT         appendOffset
+//   l:STYLE                appendLocalizedOffset(TextStyle.valueOf(STYLE))
 //   a:NAME q:NAME          append, appendOptional of an ISO constant, or of ofPattern(P) for NAME `=P`
 // Ops: `build` (the formatter's toString, or the builder's exception), `format` (a value of the kind, from its
 // toString) and `parse` (into the kind). A result is the toString() or `!` and the exception message (and a parse
@@ -93,6 +94,7 @@ public class GoldenFormatterBuilder {
                 case "s" -> b.appendLiteral(arg);
                 case "p" -> b.appendPattern(arg);
                 case "o" -> b.appendOffset(arg.substring(0, arg.indexOf(',')), arg.substring(arg.indexOf(',') + 1));
+                case "l" -> b.appendLocalizedOffset(TextStyle.valueOf(arg));
                 case "a" -> b.append(named(arg));
                 case "q" -> b.appendOptional(named(arg));
                 default -> throw new AssertionError(step);
@@ -161,6 +163,20 @@ public class GoldenFormatterBuilder {
                 }
                 row("parse", recipe, kind, text, out);
             }
+    }
+
+    // Format rows of the recipe for extra offset values beyond the samples.
+    static void formats(String recipe, String... values) {
+        DateTimeFormatter f = build(recipe);
+        for (String v : values) {
+            String out;
+            try {
+                out = esc(f.format(OffsetDateTime.parse(v)));
+            } catch (DateTimeException e) {
+                out = err(e);
+            }
+            row("format", recipe, "offset", v, out);
+        }
     }
 
     static String[] k(String... kinds) {
@@ -262,6 +278,44 @@ public class GoldenFormatterBuilder {
         recipe("inst|s:Ab", k("offset", "zoned"), "2024-03-05T10:15:30ZAb", "2024-03-05T10:15:30Zab");
         recipe("ci|inst|cs|s:Ab", k("offset", "zoned"), "2024-03-05T10:15:30zAb", "2024-03-05T10:15:30Zab");
         recipe("s:at |inst", k("zoned"), "at 2024-03-05T10:15:30Z");
+        // Localized offsets: appendLocalizedOffset and the pattern letters O, OOOO and ZZZZ, with Java's parse rules
+        // (a seconds group, and in SHORT a minutes group, is read only when a character follows it).
+        for (String style : new String[] {"NARROW", "FULL_STANDALONE", "SHORT_STANDALONE", "NARROW_STANDALONE"})
+            recipe("l:" + style, none);
+        for (String pattern : new String[] {"OO", "OOO", "OOOOO", "ZZZZZZ"})
+            recipe("p:" + pattern, none);
+        String[] localized = {"GMT", "GMT+01:00", "GMT-05:30", "GMT+01:00:30", "GMT+01:00:3", "GMT+01:0", "GMT+1",
+            "GMT+10", "GMT+1:30", "GMT+1:30:15", "GMT+1:3", "GMT+01", "GMT+0100", "GMT+123", "GMT+", "GMT-", "GMTx",
+            "gmt+01:00", "GMT+99:59", "GMT+18:00", "GMT+18:00:01", "GMT-18:00", "GMT+24", "GMT+00:00", "GMT-0",
+            "UTC", ""};
+        for (String recipe : new String[] {"p:uuuu-MM-dd'T'HH:mm|l:FULL", "p:uuuu-MM-dd'T'HH:mm|l:SHORT",
+                "p:uuuu-MM-dd'T'HH:mmOOOO", "p:uuuu-MM-dd'T'HH:mmO", "p:uuuu-MM-dd'T'HH:mmZZZZ"}) {
+            String[] inputs = new String[localized.length];
+            for (int i = 0; i < localized.length; i++)
+                inputs[i] = "2024-03-05T10:15" + localized[i];
+            recipe(recipe, k("offset"), inputs);
+            formats(recipe, "2024-03-05T10:15+10:00", "2024-03-05T10:15-18:00", "2024-03-05T10:15+05:30",
+                    "2024-03-05T10:15-00:30", "2024-03-05T10:15+12:34:56", "2024-03-05T10:15-09:00:05",
+                    "2024-03-05T10:15+18:00", "2024-03-05T10:15-00:00:01");
+        }
+        recipe("ci|p:uuuu-MM-dd'T'HH:mm|l:FULL", k("offset"), "2024-03-05T10:15gmt+01:00", "2024-03-05T10:15Gmt");
+        recipe("p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x", k("offset"), "2024-03-05T10:15GMT+01:00:30x",
+                "2024-03-05T10:15GMT+01:00:3x", "2024-03-05T10:15GMT+01:00x", "2024-03-05T10:15GMTx",
+                "2024-03-05T10:15GMT+01x", "2024-03-05T10:15GMT+0x", "2024-03-05T10:15GMT+01:00:xx");
+        recipe("p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x", k("offset"), "2024-03-05T10:15GMT+1:30:15x",
+                "2024-03-05T10:15GMT+1:30x", "2024-03-05T10:15GMT+1:3x", "2024-03-05T10:15GMT+1x",
+                "2024-03-05T10:15GMT+12:00:0x", "2024-03-05T10:15GMT+x");
+        recipe("p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]", k("dateTime", "offset"), "2024-03-05T10:15",
+                "2024-03-05T10:15GMT+2");
+        recipe("p:uuuu-MM-dd'T'HH:mm|l:FULL|offid", k("offset"), "2024-03-05T10:15GMT+01:00",
+                "2024-03-05T10:15GMT+01:00Z", "2024-03-05T10:15GMT+02:00+02:00");
+        // Java's positions count UTF-16 units: a non-ASCII prefix, and characters outside ASCII where digits belong.
+        for (String style : new String[] {"FULL", "SHORT"})
+            recipe("s:\u00e9|p:uuuu-MM-dd'T'HH:mm|l:" + style, k("offset"), "\u00e92024-03-05T10:15GMT+1",
+                    "\u00e92024-03-05T10:15GMT+\u00e9", "\u00e92024-03-05T10:15GMT+\u00e90",
+                    "\u00e92024-03-05T10:15GMT+\ud83d\ude00", "\u00e92024-03-05T10:15GMT+0\ud83d\ude00",
+                    "\u00e92024-03-05T10:15GMT+01:\ud83d\ude00", "\u00e92024-03-05T10:15GMT+1:\u00e9\u00e9",
+                    "\u00e92024-03-05T10:15GMT+01:00:\u00e9\u00e9", "\u00e92024-03-05T10:15GMT\u00e9");
         Files.write(Path.of(a[0]), lines);
     }
 }

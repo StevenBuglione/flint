@@ -1579,3 +1579,492 @@ format	s:at |inst	zoned	2024-03-05T10:15:30+02:00	at 2024-03-05T08:15:30Z
 format	s:at |inst	zoned	2024-03-05T10:15:30Z[UTC]	at 2024-03-05T10:15:30Z
 format	s:at |inst	instant	2024-03-05T10:15:30Z	at 2024-03-05T10:15:30Z
 format	s:at |inst	instant	2024-03-05T10:15:30.120Z	at 2024-03-05T10:15:30.120Z
+build	l:NARROW	-	-	!Style must be either full or short
+build	l:FULL_STANDALONE	-	-	!Style must be either full or short
+build	l:SHORT_STANDALONE	-	-	!Style must be either full or short
+build	l:NARROW_STANDALONE	-	-	!Style must be either full or short
+build	p:OO	-	-	!Pattern letter count must be 1 or 4: O
+build	p:OOO	-	-	!Pattern letter count must be 1 or 4: O
+build	p:OOOOO	-	-	!Pattern letter count must be 1 or 4: O
+build	p:ZZZZZZ	-	-	!Too many pattern letters: Z
+build	p:uuuu-MM-dd'T'HH:mm|l:FULL	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)'T'Value(HourOfDay,2)':'Value(MinuteOfHour,2)LocalizedOffset(FULL)
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	dateTime	2024-03-05T10:15:30	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	dateTime	2024-03-05T00:00:00.000001	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15:30+01:00	2024-03-05T10:15GMT+01:00
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15:30Z	2024-03-05T10:15GMT
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05T10:15GMT-05:30:15
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15:30+00:00:45	2024-03-05T10:15GMT+00:00:45
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	zoned	2024-03-05T10:15:30+02:00	2024-03-05T10:15GMT+02:00
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05T10:15GMT
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+01:00	2024-03-05T10:15+01:00
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT-05:30	2024-03-05T10:15-05:30
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+01:00:30	2024-03-05T10:15+01:00:30
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+01:00:3	!Text '2024-03-05T10:15GMT+01:00:3' could not be parsed, unparsed text found at index 25	25
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+01:0	!Text '2024-03-05T10:15GMT+01:0' could not be parsed: Index 24 out of bounds for length 24	0
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+1	!Text '2024-03-05T10:15GMT+1' could not be parsed: Index 21 out of bounds for length 21	0
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+10	!Text '2024-03-05T10:15GMT+10' could not be parsed: Index 22 out of bounds for length 22	0
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+1:30	!Text '2024-03-05T10:15GMT+1:30' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+1:30:15	!Text '2024-03-05T10:15GMT+1:30:15' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+1:3	!Text '2024-03-05T10:15GMT+1:3' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+01	!Text '2024-03-05T10:15GMT+01' could not be parsed: Index 22 out of bounds for length 22	0
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+0100	!Text '2024-03-05T10:15GMT+0100' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+123	!Text '2024-03-05T10:15GMT+123' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+	!Text '2024-03-05T10:15GMT+' could not be parsed: Index 20 out of bounds for length 20	0
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT-	!Text '2024-03-05T10:15GMT-' could not be parsed: Index 20 out of bounds for length 20	0
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMTx	!Text '2024-03-05T10:15GMTx' could not be parsed, unparsed text found at index 19	19
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15gmt+01:00	!Text '2024-03-05T10:15gmt+01:00' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+99:59	!Text '2024-03-05T10:15GMT+99:59' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+18:00	2024-03-05T10:15+18:00
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+18:00:01	!Text '2024-03-05T10:15GMT+18:00:01' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT-18:00	2024-03-05T10:15-18:00
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+24	!Text '2024-03-05T10:15GMT+24' could not be parsed: Index 22 out of bounds for length 22	0
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+00:00	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT-0	!Text '2024-03-05T10:15GMT-0' could not be parsed: Index 21 out of bounds for length 21	0
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15UTC	!Text '2024-03-05T10:15UTC' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15	!Text '2024-03-05T10:15' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT-05:30:15	2024-03-05T10:15-05:30:15
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+00:00:45	2024-03-05T10:15+00:00:45
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+02:00	2024-03-05T10:15+02:00
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15+10:00	2024-03-05T10:15GMT+10:00
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15-18:00	2024-03-05T10:15GMT-18:00
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15+05:30	2024-03-05T10:15GMT+05:30
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15-00:30	2024-03-05T10:15GMT-00:30
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15+12:34:56	2024-03-05T10:15GMT+12:34:56
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15-09:00:05	2024-03-05T10:15GMT-09:00:05
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15+18:00	2024-03-05T10:15GMT+18:00
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15-00:00:01	2024-03-05T10:15GMT-00:00:01
+build	p:uuuu-MM-dd'T'HH:mm|l:SHORT	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)'T'Value(HourOfDay,2)':'Value(MinuteOfHour,2)LocalizedOffset(SHORT)
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	dateTime	2024-03-05T10:15:30	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	dateTime	2024-03-05T00:00:00.000001	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15:30+01:00	2024-03-05T10:15GMT+1
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15:30Z	2024-03-05T10:15GMT
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05T10:15GMT-5:30:15
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15:30+00:00:45	2024-03-05T10:15GMT+0:00:45
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	zoned	2024-03-05T10:15:30+02:00	2024-03-05T10:15GMT+2
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05T10:15GMT
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+01:00	2024-03-05T10:15+01:00
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT-05:30	2024-03-05T10:15-05:30
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+01:00:30	2024-03-05T10:15+01:00:30
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+01:00:3	!Text '2024-03-05T10:15GMT+01:00:3' could not be parsed, unparsed text found at index 25	25
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+01:0	!Text '2024-03-05T10:15GMT+01:0' could not be parsed, unparsed text found at index 22	22
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+1	2024-03-05T10:15+01:00
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+10	2024-03-05T10:15+10:00
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+1:30	2024-03-05T10:15+01:30
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+1:30:15	2024-03-05T10:15+01:30:15
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+1:3	!Text '2024-03-05T10:15GMT+1:3' could not be parsed, unparsed text found at index 21	21
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+01	2024-03-05T10:15+01:00
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+0100	!Text '2024-03-05T10:15GMT+0100' could not be parsed, unparsed text found at index 22	22
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+123	!Text '2024-03-05T10:15GMT+123' could not be parsed, unparsed text found at index 22	22
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+	!Text '2024-03-05T10:15GMT+' could not be parsed: Index 20 out of bounds for length 20	0
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT-	!Text '2024-03-05T10:15GMT-' could not be parsed: Index 20 out of bounds for length 20	0
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMTx	!Text '2024-03-05T10:15GMTx' could not be parsed, unparsed text found at index 19	19
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15gmt+01:00	!Text '2024-03-05T10:15gmt+01:00' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+99:59	!Text '2024-03-05T10:15GMT+99:59' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+18:00	2024-03-05T10:15+18:00
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+18:00:01	!Text '2024-03-05T10:15GMT+18:00:01' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT-18:00	2024-03-05T10:15-18:00
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+24	!Text '2024-03-05T10:15GMT+24' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+00:00	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT-0	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15UTC	!Text '2024-03-05T10:15UTC' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15	!Text '2024-03-05T10:15' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT-5:30:15	2024-03-05T10:15-05:30:15
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+0:00:45	2024-03-05T10:15+00:00:45
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15GMT+2	2024-03-05T10:15+02:00
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15+10:00	2024-03-05T10:15GMT+10
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15-18:00	2024-03-05T10:15GMT-18
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15+05:30	2024-03-05T10:15GMT+5:30
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15-00:30	2024-03-05T10:15GMT-0:30
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15+12:34:56	2024-03-05T10:15GMT+12:34:56
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15-09:00:05	2024-03-05T10:15GMT-9:00:05
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15+18:00	2024-03-05T10:15GMT+18
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15-00:00:01	2024-03-05T10:15GMT-0:00:01
+build	p:uuuu-MM-dd'T'HH:mmOOOO	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)'T'Value(HourOfDay,2)':'Value(MinuteOfHour,2)LocalizedOffset(FULL)
+format	p:uuuu-MM-dd'T'HH:mmOOOO	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mmOOOO	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mmOOOO	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mmOOOO	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mmOOOO	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mmOOOO	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mmOOOO	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mmOOOO	dateTime	2024-03-05T10:15:30	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mmOOOO	dateTime	2024-03-05T00:00:00.000001	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15:30+01:00	2024-03-05T10:15GMT+01:00
+format	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15:30Z	2024-03-05T10:15GMT
+format	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05T10:15GMT-05:30:15
+format	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15:30+00:00:45	2024-03-05T10:15GMT+00:00:45
+format	p:uuuu-MM-dd'T'HH:mmOOOO	zoned	2024-03-05T10:15:30+02:00	2024-03-05T10:15GMT+02:00
+format	p:uuuu-MM-dd'T'HH:mmOOOO	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05T10:15GMT
+format	p:uuuu-MM-dd'T'HH:mmOOOO	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mmOOOO	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+01:00	2024-03-05T10:15+01:00
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT-05:30	2024-03-05T10:15-05:30
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+01:00:30	2024-03-05T10:15+01:00:30
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+01:00:3	!Text '2024-03-05T10:15GMT+01:00:3' could not be parsed, unparsed text found at index 25	25
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+01:0	!Text '2024-03-05T10:15GMT+01:0' could not be parsed: Index 24 out of bounds for length 24	0
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+1	!Text '2024-03-05T10:15GMT+1' could not be parsed: Index 21 out of bounds for length 21	0
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+10	!Text '2024-03-05T10:15GMT+10' could not be parsed: Index 22 out of bounds for length 22	0
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+1:30	!Text '2024-03-05T10:15GMT+1:30' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+1:30:15	!Text '2024-03-05T10:15GMT+1:30:15' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+1:3	!Text '2024-03-05T10:15GMT+1:3' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+01	!Text '2024-03-05T10:15GMT+01' could not be parsed: Index 22 out of bounds for length 22	0
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+0100	!Text '2024-03-05T10:15GMT+0100' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+123	!Text '2024-03-05T10:15GMT+123' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+	!Text '2024-03-05T10:15GMT+' could not be parsed: Index 20 out of bounds for length 20	0
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT-	!Text '2024-03-05T10:15GMT-' could not be parsed: Index 20 out of bounds for length 20	0
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMTx	!Text '2024-03-05T10:15GMTx' could not be parsed, unparsed text found at index 19	19
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15gmt+01:00	!Text '2024-03-05T10:15gmt+01:00' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+99:59	!Text '2024-03-05T10:15GMT+99:59' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+18:00	2024-03-05T10:15+18:00
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+18:00:01	!Text '2024-03-05T10:15GMT+18:00:01' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT-18:00	2024-03-05T10:15-18:00
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+24	!Text '2024-03-05T10:15GMT+24' could not be parsed: Index 22 out of bounds for length 22	0
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+00:00	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT-0	!Text '2024-03-05T10:15GMT-0' could not be parsed: Index 21 out of bounds for length 21	0
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15UTC	!Text '2024-03-05T10:15UTC' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15	!Text '2024-03-05T10:15' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT-05:30:15	2024-03-05T10:15-05:30:15
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+00:00:45	2024-03-05T10:15+00:00:45
+parse	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15GMT+02:00	2024-03-05T10:15+02:00
+format	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15+10:00	2024-03-05T10:15GMT+10:00
+format	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15-18:00	2024-03-05T10:15GMT-18:00
+format	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15+05:30	2024-03-05T10:15GMT+05:30
+format	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15-00:30	2024-03-05T10:15GMT-00:30
+format	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15+12:34:56	2024-03-05T10:15GMT+12:34:56
+format	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15-09:00:05	2024-03-05T10:15GMT-09:00:05
+format	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15+18:00	2024-03-05T10:15GMT+18:00
+format	p:uuuu-MM-dd'T'HH:mmOOOO	offset	2024-03-05T10:15-00:00:01	2024-03-05T10:15GMT-00:00:01
+build	p:uuuu-MM-dd'T'HH:mmO	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)'T'Value(HourOfDay,2)':'Value(MinuteOfHour,2)LocalizedOffset(SHORT)
+format	p:uuuu-MM-dd'T'HH:mmO	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mmO	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mmO	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mmO	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mmO	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mmO	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mmO	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mmO	dateTime	2024-03-05T10:15:30	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mmO	dateTime	2024-03-05T00:00:00.000001	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15:30+01:00	2024-03-05T10:15GMT+1
+format	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15:30Z	2024-03-05T10:15GMT
+format	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05T10:15GMT-5:30:15
+format	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15:30+00:00:45	2024-03-05T10:15GMT+0:00:45
+format	p:uuuu-MM-dd'T'HH:mmO	zoned	2024-03-05T10:15:30+02:00	2024-03-05T10:15GMT+2
+format	p:uuuu-MM-dd'T'HH:mmO	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05T10:15GMT
+format	p:uuuu-MM-dd'T'HH:mmO	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mmO	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+01:00	2024-03-05T10:15+01:00
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT-05:30	2024-03-05T10:15-05:30
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+01:00:30	2024-03-05T10:15+01:00:30
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+01:00:3	!Text '2024-03-05T10:15GMT+01:00:3' could not be parsed, unparsed text found at index 25	25
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+01:0	!Text '2024-03-05T10:15GMT+01:0' could not be parsed, unparsed text found at index 22	22
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+1	2024-03-05T10:15+01:00
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+10	2024-03-05T10:15+10:00
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+1:30	2024-03-05T10:15+01:30
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+1:30:15	2024-03-05T10:15+01:30:15
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+1:3	!Text '2024-03-05T10:15GMT+1:3' could not be parsed, unparsed text found at index 21	21
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+01	2024-03-05T10:15+01:00
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+0100	!Text '2024-03-05T10:15GMT+0100' could not be parsed, unparsed text found at index 22	22
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+123	!Text '2024-03-05T10:15GMT+123' could not be parsed, unparsed text found at index 22	22
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+	!Text '2024-03-05T10:15GMT+' could not be parsed: Index 20 out of bounds for length 20	0
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT-	!Text '2024-03-05T10:15GMT-' could not be parsed: Index 20 out of bounds for length 20	0
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMTx	!Text '2024-03-05T10:15GMTx' could not be parsed, unparsed text found at index 19	19
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15gmt+01:00	!Text '2024-03-05T10:15gmt+01:00' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+99:59	!Text '2024-03-05T10:15GMT+99:59' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+18:00	2024-03-05T10:15+18:00
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+18:00:01	!Text '2024-03-05T10:15GMT+18:00:01' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT-18:00	2024-03-05T10:15-18:00
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+24	!Text '2024-03-05T10:15GMT+24' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+00:00	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT-0	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15UTC	!Text '2024-03-05T10:15UTC' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15	!Text '2024-03-05T10:15' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT-5:30:15	2024-03-05T10:15-05:30:15
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+0:00:45	2024-03-05T10:15+00:00:45
+parse	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15GMT+2	2024-03-05T10:15+02:00
+format	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15+10:00	2024-03-05T10:15GMT+10
+format	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15-18:00	2024-03-05T10:15GMT-18
+format	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15+05:30	2024-03-05T10:15GMT+5:30
+format	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15-00:30	2024-03-05T10:15GMT-0:30
+format	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15+12:34:56	2024-03-05T10:15GMT+12:34:56
+format	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15-09:00:05	2024-03-05T10:15GMT-9:00:05
+format	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15+18:00	2024-03-05T10:15GMT+18
+format	p:uuuu-MM-dd'T'HH:mmO	offset	2024-03-05T10:15-00:00:01	2024-03-05T10:15GMT-0:00:01
+build	p:uuuu-MM-dd'T'HH:mmZZZZ	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)'T'Value(HourOfDay,2)':'Value(MinuteOfHour,2)LocalizedOffset(FULL)
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	dateTime	2024-03-05T10:15:30	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	dateTime	2024-03-05T00:00:00.000001	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15:30+01:00	2024-03-05T10:15GMT+01:00
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15:30Z	2024-03-05T10:15GMT
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05T10:15GMT-05:30:15
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15:30+00:00:45	2024-03-05T10:15GMT+00:00:45
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	zoned	2024-03-05T10:15:30+02:00	2024-03-05T10:15GMT+02:00
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05T10:15GMT
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+01:00	2024-03-05T10:15+01:00
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT-05:30	2024-03-05T10:15-05:30
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+01:00:30	2024-03-05T10:15+01:00:30
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+01:00:3	!Text '2024-03-05T10:15GMT+01:00:3' could not be parsed, unparsed text found at index 25	25
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+01:0	!Text '2024-03-05T10:15GMT+01:0' could not be parsed: Index 24 out of bounds for length 24	0
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+1	!Text '2024-03-05T10:15GMT+1' could not be parsed: Index 21 out of bounds for length 21	0
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+10	!Text '2024-03-05T10:15GMT+10' could not be parsed: Index 22 out of bounds for length 22	0
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+1:30	!Text '2024-03-05T10:15GMT+1:30' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+1:30:15	!Text '2024-03-05T10:15GMT+1:30:15' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+1:3	!Text '2024-03-05T10:15GMT+1:3' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+01	!Text '2024-03-05T10:15GMT+01' could not be parsed: Index 22 out of bounds for length 22	0
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+0100	!Text '2024-03-05T10:15GMT+0100' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+123	!Text '2024-03-05T10:15GMT+123' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+	!Text '2024-03-05T10:15GMT+' could not be parsed: Index 20 out of bounds for length 20	0
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT-	!Text '2024-03-05T10:15GMT-' could not be parsed: Index 20 out of bounds for length 20	0
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMTx	!Text '2024-03-05T10:15GMTx' could not be parsed, unparsed text found at index 19	19
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15gmt+01:00	!Text '2024-03-05T10:15gmt+01:00' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+99:59	!Text '2024-03-05T10:15GMT+99:59' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+18:00	2024-03-05T10:15+18:00
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+18:00:01	!Text '2024-03-05T10:15GMT+18:00:01' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT-18:00	2024-03-05T10:15-18:00
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+24	!Text '2024-03-05T10:15GMT+24' could not be parsed: Index 22 out of bounds for length 22	0
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+00:00	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT-0	!Text '2024-03-05T10:15GMT-0' could not be parsed: Index 21 out of bounds for length 21	0
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15UTC	!Text '2024-03-05T10:15UTC' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15	!Text '2024-03-05T10:15' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT-05:30:15	2024-03-05T10:15-05:30:15
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+00:00:45	2024-03-05T10:15+00:00:45
+parse	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15GMT+02:00	2024-03-05T10:15+02:00
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15+10:00	2024-03-05T10:15GMT+10:00
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15-18:00	2024-03-05T10:15GMT-18:00
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15+05:30	2024-03-05T10:15GMT+05:30
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15-00:30	2024-03-05T10:15GMT-00:30
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15+12:34:56	2024-03-05T10:15GMT+12:34:56
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15-09:00:05	2024-03-05T10:15GMT-09:00:05
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15+18:00	2024-03-05T10:15GMT+18:00
+format	p:uuuu-MM-dd'T'HH:mmZZZZ	offset	2024-03-05T10:15-00:00:01	2024-03-05T10:15GMT-00:00:01
+build	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	-	-	ParseCaseSensitive(false)Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)'T'Value(HourOfDay,2)':'Value(MinuteOfHour,2)LocalizedOffset(FULL)
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	date	2024-03-05	!Unsupported field: HourOfDay
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	date	0001-12-31	!Unsupported field: HourOfDay
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	date	+12345-06-07	!Unsupported field: HourOfDay
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	time	10:15	!Unsupported field: Year
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	time	10:15:30	!Unsupported field: Year
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	time	10:15:30.123456789	!Unsupported field: Year
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	time	00:00	!Unsupported field: Year
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	dateTime	2024-03-05T10:15:30	!Unsupported field: OffsetSeconds
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	dateTime	2024-03-05T00:00:00.000001	!Unsupported field: OffsetSeconds
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15:30+01:00	2024-03-05T10:15GMT+01:00
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15:30Z	2024-03-05T10:15GMT
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05T10:15GMT-05:30:15
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15:30+00:00:45	2024-03-05T10:15GMT+00:00:45
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	zoned	2024-03-05T10:15:30+02:00	2024-03-05T10:15GMT+02:00
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05T10:15GMT
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15gmt+01:00	2024-03-05T10:15+01:00
+parse	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15Gmt	2024-03-05T10:15Z
+parse	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+01:00	2024-03-05T10:15+01:00
+parse	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT	2024-03-05T10:15Z
+parse	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT-05:30:15	2024-03-05T10:15-05:30:15
+parse	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+00:00:45	2024-03-05T10:15+00:00:45
+parse	ci|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15GMT+02:00	2024-03-05T10:15+02:00
+build	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)'T'Value(HourOfDay,2)':'Value(MinuteOfHour,2)LocalizedOffset(FULL)'x'
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	dateTime	2024-03-05T10:15:30	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	dateTime	2024-03-05T00:00:00.000001	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	offset	2024-03-05T10:15:30+01:00	2024-03-05T10:15GMT+01:00x
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	offset	2024-03-05T10:15:30Z	2024-03-05T10:15GMTx
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05T10:15GMT-05:30:15x
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	offset	2024-03-05T10:15:30+00:00:45	2024-03-05T10:15GMT+00:00:45x
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	zoned	2024-03-05T10:15:30+02:00	2024-03-05T10:15GMT+02:00x
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05T10:15GMTx
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	offset	2024-03-05T10:15GMT+01:00:30x	2024-03-05T10:15+01:00:30
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	offset	2024-03-05T10:15GMT+01:00:3x	!Text '2024-03-05T10:15GMT+01:00:3x' could not be parsed at index 25	25
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	offset	2024-03-05T10:15GMT+01:00x	2024-03-05T10:15+01:00
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	offset	2024-03-05T10:15GMTx	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	offset	2024-03-05T10:15GMT+01x	!Text '2024-03-05T10:15GMT+01x' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	offset	2024-03-05T10:15GMT+0x	!Text '2024-03-05T10:15GMT+0x' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	offset	2024-03-05T10:15GMT+01:00:xx	!Text '2024-03-05T10:15GMT+01:00:xx' could not be parsed at index 25	25
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	offset	2024-03-05T10:15GMT-05:30:15x	2024-03-05T10:15-05:30:15
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	offset	2024-03-05T10:15GMT+00:00:45x	2024-03-05T10:15+00:00:45
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|s:x	offset	2024-03-05T10:15GMT+02:00x	2024-03-05T10:15+02:00
+build	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)'T'Value(HourOfDay,2)':'Value(MinuteOfHour,2)LocalizedOffset(SHORT)'x'
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	dateTime	2024-03-05T10:15:30	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	dateTime	2024-03-05T00:00:00.000001	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	offset	2024-03-05T10:15:30+01:00	2024-03-05T10:15GMT+1x
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	offset	2024-03-05T10:15:30Z	2024-03-05T10:15GMTx
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05T10:15GMT-5:30:15x
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	offset	2024-03-05T10:15:30+00:00:45	2024-03-05T10:15GMT+0:00:45x
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	zoned	2024-03-05T10:15:30+02:00	2024-03-05T10:15GMT+2x
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05T10:15GMTx
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	offset	2024-03-05T10:15GMT+1:30:15x	2024-03-05T10:15+01:30:15
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	offset	2024-03-05T10:15GMT+1:30x	2024-03-05T10:15+01:30
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	offset	2024-03-05T10:15GMT+1:3x	!Text '2024-03-05T10:15GMT+1:3x' could not be parsed at index 21	21
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	offset	2024-03-05T10:15GMT+1x	2024-03-05T10:15+01:00
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	offset	2024-03-05T10:15GMT+12:00:0x	!Text '2024-03-05T10:15GMT+12:00:0x' could not be parsed at index 25	25
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	offset	2024-03-05T10:15GMT+x	!Text '2024-03-05T10:15GMT+x' could not be parsed at index 16	16
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	offset	2024-03-05T10:15GMTx	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	offset	2024-03-05T10:15GMT-5:30:15x	2024-03-05T10:15-05:30:15
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	offset	2024-03-05T10:15GMT+0:00:45x	2024-03-05T10:15+00:00:45
+parse	p:uuuu-MM-dd'T'HH:mm|l:SHORT|s:x	offset	2024-03-05T10:15GMT+2x	2024-03-05T10:15+02:00
+build	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)'T'Value(HourOfDay,2)':'Value(MinuteOfHour,2)[LocalizedOffset(SHORT)]
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	dateTime	2024-03-05T10:15:30	2024-03-05T10:15
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	dateTime	2024-03-05T00:00:00.000001	2024-03-05T00:00
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	offset	2024-03-05T10:15:30+01:00	2024-03-05T10:15GMT+1
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	offset	2024-03-05T10:15:30Z	2024-03-05T10:15GMT
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05T10:15GMT-5:30:15
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	offset	2024-03-05T10:15:30+00:00:45	2024-03-05T10:15GMT+0:00:45
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	zoned	2024-03-05T10:15:30+02:00	2024-03-05T10:15GMT+2
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05T10:15GMT
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	dateTime	2024-03-05T10:15	2024-03-05T10:15
+parse	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	offset	2024-03-05T10:15	!Text '2024-03-05T10:15' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2024-03-05T10:15 of type java.time.format.Parsed	0
+parse	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	dateTime	2024-03-05T10:15GMT+2	2024-03-05T10:15
+parse	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	offset	2024-03-05T10:15GMT+2	2024-03-05T10:15+02:00
+parse	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	dateTime	2024-03-05T00:00	2024-03-05T00:00
+parse	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	offset	2024-03-05T00:00	!Text '2024-03-05T00:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2024-03-05T00:00 of type java.time.format.Parsed	0
+parse	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	dateTime	2024-03-05T10:15GMT+1	2024-03-05T10:15
+parse	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	offset	2024-03-05T10:15GMT+1	2024-03-05T10:15+01:00
+parse	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	dateTime	2024-03-05T10:15GMT	2024-03-05T10:15
+parse	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	offset	2024-03-05T10:15GMT	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	dateTime	2024-03-05T10:15GMT-5:30:15	2024-03-05T10:15
+parse	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	offset	2024-03-05T10:15GMT-5:30:15	2024-03-05T10:15-05:30:15
+parse	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	dateTime	2024-03-05T10:15GMT+0:00:45	2024-03-05T10:15
+parse	p:uuuu-MM-dd'T'HH:mm|[|l:SHORT|]	offset	2024-03-05T10:15GMT+0:00:45	2024-03-05T10:15+00:00:45
+build	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)'T'Value(HourOfDay,2)':'Value(MinuteOfHour,2)LocalizedOffset(FULL)Offset(+HH:MM:ss,'Z')
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	dateTime	2024-03-05T10:15:30	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	dateTime	2024-03-05T00:00:00.000001	!Unsupported field: OffsetSeconds
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	offset	2024-03-05T10:15:30+01:00	2024-03-05T10:15GMT+01:00+01:00
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	offset	2024-03-05T10:15:30Z	2024-03-05T10:15GMTZ
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05T10:15GMT-05:30:15-05:30:15
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	offset	2024-03-05T10:15:30+00:00:45	2024-03-05T10:15GMT+00:00:45+00:00:45
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	zoned	2024-03-05T10:15:30+02:00	2024-03-05T10:15GMT+02:00+02:00
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05T10:15GMTZ
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	offset	2024-03-05T10:15GMT+01:00	!Text '2024-03-05T10:15GMT+01:00' could not be parsed at index 25	25
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	offset	2024-03-05T10:15GMT+01:00Z	!Text '2024-03-05T10:15GMT+01:00Z' could not be parsed at index 25	25
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	offset	2024-03-05T10:15GMT+02:00+02:00	2024-03-05T10:15+02:00
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	offset	2024-03-05T10:15GMT+01:00+01:00	2024-03-05T10:15+01:00
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	offset	2024-03-05T10:15GMTZ	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	offset	2024-03-05T10:15GMT-05:30:15-05:30:15	2024-03-05T10:15-05:30:15
+parse	p:uuuu-MM-dd'T'HH:mm|l:FULL|offid	offset	2024-03-05T10:15GMT+00:00:45+00:00:45	2024-03-05T10:15+00:00:45
+build	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	-	-	'\u00E9'Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)'T'Value(HourOfDay,2)':'Value(MinuteOfHour,2)LocalizedOffset(FULL)
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	date	2024-03-05	!Unsupported field: HourOfDay
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	date	0001-12-31	!Unsupported field: HourOfDay
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	date	+12345-06-07	!Unsupported field: HourOfDay
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	time	10:15	!Unsupported field: Year
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	time	10:15:30	!Unsupported field: Year
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	time	10:15:30.123456789	!Unsupported field: Year
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	time	00:00	!Unsupported field: Year
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	dateTime	2024-03-05T10:15:30	!Unsupported field: OffsetSeconds
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	dateTime	2024-03-05T00:00:00.000001	!Unsupported field: OffsetSeconds
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15:30+01:00	\u00E92024-03-05T10:15GMT+01:00
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15:30Z	\u00E92024-03-05T10:15GMT
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15:30.500-05:30:15	\u00E92024-03-05T10:15GMT-05:30:15
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	2024-03-05T10:15:30+00:00:45	\u00E92024-03-05T10:15GMT+00:00:45
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	zoned	2024-03-05T10:15:30+02:00	\u00E92024-03-05T10:15GMT+02:00
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	zoned	2024-03-05T10:15:30Z[UTC]	\u00E92024-03-05T10:15GMT
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	\u00E92024-03-05T10:15GMT+1	!Text '\u00E92024-03-05T10:15GMT+1' could not be parsed: Index 22 out of bounds for length 22	0
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	\u00E92024-03-05T10:15GMT+\u00E9	!Text '\u00E92024-03-05T10:15GMT+\u00E9' could not be parsed: Index 22 out of bounds for length 22	0
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	\u00E92024-03-05T10:15GMT+\u00E90	!Text '\u00E92024-03-05T10:15GMT+\u00E90' could not be parsed at index 17	17
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	\u00E92024-03-05T10:15GMT+\uD83D\uDE00	!Text '\u00E92024-03-05T10:15GMT+\uD83D\uDE00' could not be parsed at index 17	17
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	\u00E92024-03-05T10:15GMT+0\uD83D\uDE00	!Text '\u00E92024-03-05T10:15GMT+0\uD83D\uDE00' could not be parsed at index 17	17
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	\u00E92024-03-05T10:15GMT+01:\uD83D\uDE00	!Text '\u00E92024-03-05T10:15GMT+01:\uD83D\uDE00' could not be parsed at index 17	17
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	\u00E92024-03-05T10:15GMT+1:\u00E9\u00E9	!Text '\u00E92024-03-05T10:15GMT+1:\u00E9\u00E9' could not be parsed at index 17	17
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	\u00E92024-03-05T10:15GMT+01:00:\u00E9\u00E9	!Text '\u00E92024-03-05T10:15GMT+01:00:\u00E9\u00E9' could not be parsed, unparsed text found at index 26	26
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	\u00E92024-03-05T10:15GMT\u00E9	!Text '\u00E92024-03-05T10:15GMT\u00E9' could not be parsed, unparsed text found at index 20	20
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	\u00E92024-03-05T10:15GMT+01:00	2024-03-05T10:15+01:00
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	\u00E92024-03-05T10:15GMT	2024-03-05T10:15Z
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	\u00E92024-03-05T10:15GMT-05:30:15	2024-03-05T10:15-05:30:15
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	\u00E92024-03-05T10:15GMT+00:00:45	2024-03-05T10:15+00:00:45
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:FULL	offset	\u00E92024-03-05T10:15GMT+02:00	2024-03-05T10:15+02:00
+build	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	-	-	'\u00E9'Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)'T'Value(HourOfDay,2)':'Value(MinuteOfHour,2)LocalizedOffset(SHORT)
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	date	2024-03-05	!Unsupported field: HourOfDay
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	date	0001-12-31	!Unsupported field: HourOfDay
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	date	+12345-06-07	!Unsupported field: HourOfDay
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	time	10:15	!Unsupported field: Year
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	time	10:15:30	!Unsupported field: Year
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	time	10:15:30.123456789	!Unsupported field: Year
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	time	00:00	!Unsupported field: Year
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	dateTime	2024-03-05T10:15:30	!Unsupported field: OffsetSeconds
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	dateTime	2024-03-05T00:00:00.000001	!Unsupported field: OffsetSeconds
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15:30+01:00	\u00E92024-03-05T10:15GMT+1
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15:30Z	\u00E92024-03-05T10:15GMT
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15:30.500-05:30:15	\u00E92024-03-05T10:15GMT-5:30:15
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	2024-03-05T10:15:30+00:00:45	\u00E92024-03-05T10:15GMT+0:00:45
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	zoned	2024-03-05T10:15:30+02:00	\u00E92024-03-05T10:15GMT+2
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	zoned	2024-03-05T10:15:30Z[UTC]	\u00E92024-03-05T10:15GMT
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	\u00E92024-03-05T10:15GMT+1	2024-03-05T10:15+01:00
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	\u00E92024-03-05T10:15GMT+\u00E9	!Text '\u00E92024-03-05T10:15GMT+\u00E9' could not be parsed at index 17	17
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	\u00E92024-03-05T10:15GMT+\u00E90	!Text '\u00E92024-03-05T10:15GMT+\u00E90' could not be parsed at index 17	17
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	\u00E92024-03-05T10:15GMT+\uD83D\uDE00	!Text '\u00E92024-03-05T10:15GMT+\uD83D\uDE00' could not be parsed at index 17	17
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	\u00E92024-03-05T10:15GMT+0\uD83D\uDE00	!Text '\u00E92024-03-05T10:15GMT+0\uD83D\uDE00' could not be parsed, unparsed text found at index 22	22
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	\u00E92024-03-05T10:15GMT+01:\uD83D\uDE00	!Text '\u00E92024-03-05T10:15GMT+01:\uD83D\uDE00' could not be parsed, unparsed text found at index 23	23
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	\u00E92024-03-05T10:15GMT+1:\u00E9\u00E9	!Text '\u00E92024-03-05T10:15GMT+1:\u00E9\u00E9' could not be parsed, unparsed text found at index 22	22
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	\u00E92024-03-05T10:15GMT+01:00:\u00E9\u00E9	!Text '\u00E92024-03-05T10:15GMT+01:00:\u00E9\u00E9' could not be parsed, unparsed text found at index 26	26
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	\u00E92024-03-05T10:15GMT\u00E9	!Text '\u00E92024-03-05T10:15GMT\u00E9' could not be parsed, unparsed text found at index 20	20
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	\u00E92024-03-05T10:15GMT	2024-03-05T10:15Z
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	\u00E92024-03-05T10:15GMT-5:30:15	2024-03-05T10:15-05:30:15
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	\u00E92024-03-05T10:15GMT+0:00:45	2024-03-05T10:15+00:00:45
+parse	s:\u00E9|p:uuuu-MM-dd'T'HH:mm|l:SHORT	offset	\u00E92024-03-05T10:15GMT+2	2024-03-05T10:15+02:00

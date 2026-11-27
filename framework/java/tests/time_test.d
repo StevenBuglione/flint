@@ -4,7 +4,7 @@ import core.memory : GC;
 import flint.java.lang : ArithmeticException, IllegalArgumentException;
 import flint.java.time : DateTimeException, DayOfWeek, Duration, Instant, LocalDate, LocalDateTime,
     LocalTime, Month, OffsetDateTime, ZoneId, ZoneOffset, ZonedDateTime, getValue, isLeap;
-import flint.java.time.format : DateTimeFormatter, DateTimeFormatterBuilder, DateTimeParseException;
+import flint.java.time.format : DateTimeFormatter, DateTimeFormatterBuilder, DateTimeParseException, TextStyle;
 
 @safe:
 
@@ -1132,8 +1132,19 @@ private string unescapedUtf16(string text) pure
             result ~= text[i];
             continue;
         }
-        result ~= utf8(cast(dchar) text[i + 2 .. i + 6].to!uint(16));
+        uint unit = text[i + 2 .. i + 6].to!uint(16);
         i += 5;
+        // A surrogate pair is one character.
+        if (unit >= 0xD800 && unit < 0xDC00 && i + 6 < text.length && text[i + 1] == '\\')
+        {
+            const low = text[i + 3 .. i + 7].to!uint(16);
+            if (low >= 0xDC00 && low < 0xE000)
+            {
+                unit = 0x10000 + ((unit - 0xD800) << 10) + (low - 0xDC00);
+                i += 6;
+            }
+        }
+        result ~= utf8(cast(dchar) unit);
     }
     return result;
 }
@@ -1344,6 +1355,7 @@ private void builderStep(ref DateTimeFormatterBuilder b, char step, string arg,
 {
     import flint.engine.aot.text : decodeUtf8;
     import std.algorithm.searching : findSplit;
+    import std.conv : to;
 
     switch (step)
     {
@@ -1360,6 +1372,9 @@ private void builderStep(ref DateTimeFormatterBuilder b, char step, string arg,
     case 'o':
         auto parts = arg.findSplit(",");
         b.appendOffset(parts[0], parts[2]);
+        break;
+    case 'l':
+        b.appendLocalizedOffset(arg.to!TextStyle);
         break;
     case 'a':
         b.append(named(arg));
@@ -1441,7 +1456,7 @@ unittest
         ++count;
     }
     assert(failures == 0, report);
-    assert(count == 1581);
+    assert(count == 2070);
 }
 
 @("DateTimeFormatterBuilder rejects the single-digit hour offset patterns Flint does not support yet")

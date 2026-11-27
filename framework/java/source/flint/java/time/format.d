@@ -716,6 +716,7 @@ private enum Op : ubyte
     literal,
     text,
     offset,
+    localizedOffset, // `text` is "full" or "short"
     zoneId,
     zoneRegion,
     instant,
@@ -794,6 +795,14 @@ private immutable Element[] isoLocalTime = [
     op(Op.optionalEnd)
 ];
 private immutable Element[] isoLocalDateTime = [op(Op.caseInsensitive)] ~ isoLocalDate ~ [lit("T")] ~ isoLocalTime;
+private Element localizedOffsetElement(bool full) pure nothrow @nogc
+{
+    Element e;
+    e.op = Op.localizedOffset;
+    e.text = full ? "full" : "short";
+    return e;
+}
+
 private immutable Element isoOffset = offsetElement("+HH:MM:ss", "Z", true);
 private immutable Element isoStrictOffset = offsetElement("+HH:MM:ss", "Z", false);
 private immutable Element[] isoOffsetDate = [op(Op.caseInsensitive)] ~ isoLocalDate ~ [
@@ -934,7 +943,7 @@ struct DateTimeFormatter
 
     /**
      * Creates a formatter using the specified pattern, as `DateTimeFormatterBuilder.appendPattern` describes:
-     * `u y D M d E a h H m s S n VV X x Z`, quoted text, `''` and `[ ]` optional sections. Other pattern letters
+     * `u y D M d E a h H m s S n VV X x Z O`, quoted text, `''` and `[ ]` optional sections. Other pattern letters
      * throw `IllegalArgumentException`.
      */
     static DateTimeFormatter ofPattern(string pattern)
@@ -1152,6 +1161,18 @@ struct DateTimeFormatterBuilder
         throw new IllegalArgumentException("Invalid zone offset pattern: " ~ pattern);
     }
 
+    /**
+     * Appends the localized zone offset, such as 'GMT+08:00' for `TextStyle.FULL` or 'GMT+8' for `TextStyle.SHORT`,
+     * and 'GMT' for zero. Throws `IllegalArgumentException` for any other style. 'GMT' is the English and root text.
+     */
+    ref DateTimeFormatterBuilder appendLocalizedOffset(TextStyle style) return
+    {
+        if (style != TextStyle.FULL && style != TextStyle.SHORT)
+            throw new IllegalArgumentException("Style must be either full or short");
+        elements_ ~= localizedOffsetElement(style == TextStyle.FULL);
+        return this;
+    }
+
     /// Appends the zone ID, such as 'Europe/Paris' or '+02:00'.
     ref DateTimeFormatterBuilder appendZoneId() return
     {
@@ -1342,6 +1363,8 @@ private string describeElement(const Element e) pure
         return e.text == "'" ? "''" : "'" ~ doubledQuotes(e.text) ~ "'";
     case Op.text:
         return "Text(" ~ fieldNames[e.field] ~ (e.text == "full" ? ")" : ",SHORT)");
+    case Op.localizedOffset:
+        return e.text == "full" ? "LocalizedOffset(FULL)" : "LocalizedOffset(SHORT)";
     default:
         return "Offset(" ~ e.text ~ ",'" ~ doubledQuotes(e.noOffsetText) ~ "')";
     }
@@ -1468,6 +1491,7 @@ private struct Printer
         switch (e.op)
         {
         case Op.offset:
+        case Op.localizedOffset:
             return "OffsetSeconds";
         case Op.zoneId:
         case Op.zoneRegion:
@@ -1497,6 +1521,7 @@ private struct Printer
         case Op.text:
             return printText(e);
         case Op.offset:
+        case Op.localizedOffset:
             return printOffset(e);
         case Op.zoneId:
         case Op.zoneRegion:
@@ -1605,9 +1630,41 @@ private struct Printer
 
     bool printOffset(const Element e)
     {
+        if (e.op == Op.localizedOffset)
+            return printLocalizedOffset(e);
         if (!fields.hasOffset_)
             return false;
         output ~= formatOffset(fields.offsetSeconds_, e.text, e.noOffsetText);
+        return true;
+    }
+
+    // 'GMT', then for a non-zero offset its sign and hours, minutes and seconds: FULL prints "+HH:MM" and ":SS" when
+    // the seconds are not zero; SHORT prints the hours without padding and ":MM" or ":MM:SS" only when not zero.
+    bool printLocalizedOffset(const Element e)
+    {
+        if (!fields.hasOffset_)
+            return false;
+        output ~= "GMT";
+        const totalSeconds = fields.offsetSeconds_;
+        if (totalSeconds == 0)
+            return true;
+        const total = totalSeconds < 0 ? -totalSeconds : totalSeconds;
+        const hours = total / 3600 % 100, minutes = total / 60 % 60, seconds = total % 60;
+        output ~= totalSeconds < 0 ? "-" : "+";
+        if (e.text == "full")
+        {
+            output ~= padded(hours, 2) ~ ":" ~ padded(minutes, 2);
+            if (seconds != 0)
+                output ~= ":" ~ padded(seconds, 2);
+            return true;
+        }
+        output ~= padded(hours, 1);
+        if (minutes != 0 || seconds != 0)
+        {
+            output ~= ":" ~ padded(minutes, 2);
+            if (seconds != 0)
+                output ~= ":" ~ padded(seconds, 2);
+        }
         return true;
     }
 
@@ -1787,6 +1844,7 @@ private struct Parser
         case Op.text:
             return parseText(e, position);
         case Op.offset:
+        case Op.localizedOffset:
             return parseOffset(e, position);
         case Op.zoneId:
         case Op.zoneRegion:
@@ -2026,9 +2084,11 @@ private struct Parser
 
     int parseOffset(const Element e, int position) scope
     {
+        if (e.op == Op.localizedOffset)
+            return parseLocalizedOffset(e, position);
         // As Java, empty no-offset text matches only at the end, or where no offset can be read.
         if (e.noOffsetText.length ? matches(e.noOffsetText, position) : position == text.length)
-            return zeroOffset(position + cast(int) e.noOffsetText.length);
+            return setOffset(0, position, position + cast(int) e.noOffsetText.length);
         if (position >= text.length || (text[position] != '+' && text[position] != '-'))
             return noOffset(e, position);
         const sign = text[position] == '-' ? -1 : 1;
@@ -2043,9 +2103,7 @@ private struct Parser
         if (hours > 23)
             throw Fields.failed(text,
                     new DateTimeException("Value out of range: Hour[0-23], Minute[0-59], Second[0-59]"));
-        fields.hasOffset_ = true;
-        fields.offsetSeconds_ = sign * (hours * 3600 + parts[0] * 60 + parts[1]);
-        return end;
+        return setOffset(sign * (hours * 3600 + parts[0] * 60 + parts[1]), position, end);
     }
 
     // A lenient "+HH" reads colon-separated groups when the text has a colon after the hours, as Java.
@@ -2054,17 +2112,126 @@ private struct Parser
         return lenient && e.text == "+HH" && pos < text.length && text[pos] == ':';
     }
 
-    int zeroOffset(int end) scope pure nothrow @nogc
+    // Sets the parsed offset and returns `end`; as Java, an offset already parsed with another value fails at
+    // `position`.
+    int setOffset(int seconds, int position, int end) scope pure nothrow @nogc
     {
+        if (fields.hasOffset_ && fields.offsetSeconds_ != seconds)
+            return ~position;
         fields.hasOffset_ = true;
-        fields.offsetSeconds_ = 0;
+        fields.offsetSeconds_ = seconds;
         return end;
     }
 
     // Where no offset can be read: a zero offset for empty no-offset text, otherwise an error.
     int noOffset(const Element e, int position) scope pure nothrow @nogc
     {
-        return e.noOffsetText.length ? ~position : zeroOffset(position);
+        return e.noOffsetText.length ? ~position : setOffset(0, position, position);
+    }
+
+    // 'GMT' and an optional signed offset, read as Java reads it. FULL needs "HH:MM" and reads ":SS"; SHORT reads one
+    // or two hour digits, then ":MM" and ":SS". An optional group is read only when the whole group fits in the text.
+    // Where Java reads past the end of the text, the parse fails as Java's does with its IndexOutOfBoundsException.
+    int parseLocalizedOffset(const Element e, int position) scope
+    {
+        if (!matches("GMT", position))
+            return ~position;
+        const start = position + 3; // the sign; Java's positions from here count UTF-16 units
+        const end = utf16ErrorIndex(text[start .. $]);
+        if (end == 0)
+            return setOffset(0, position, start);
+        const sign = unitAfter(start, 0);
+        if (sign != '+' && sign != '-')
+            return setOffset(0, position, start);
+        int[3] hms;
+        const pos = e.text == "full" ? fullOffset(start, end, hms) : shortOffset(start, end, hms);
+        if (pos < 0)
+            return ~position;
+        // Every unit read on success is ASCII, so `pos` units are `pos` bytes.
+        return setOffset((sign == '-' ? -1 : 1) * (hms[0] * 3600 + hms[1] * 60 + hms[2]), position, start + pos);
+    }
+
+    // FULL's "HH:MM" and optional ":SS" after the sign at `start`; returns the units read, or -1.
+    int fullOffset(int start, int end, ref int[3] hms) scope
+    {
+        int pos = 1;
+        const h1 = offsetDigit(start, pos++, end), h2 = offsetDigit(start, pos++, end);
+        if (h1 < 0 || h2 < 0 || offsetUnit(start, pos++, end) != ':')
+            return -1;
+        const m1 = offsetDigit(start, pos++, end), m2 = offsetDigit(start, pos++, end);
+        if (m1 < 0 || m2 < 0)
+            return -1;
+        hms[0] = h1 * 10 + h2;
+        hms[1] = m1 * 10 + m2;
+        return offsetGroupAfter(start, pos, end, hms[2]);
+    }
+
+    // SHORT's one or two hour digits and optional ":MM" and ":SS" after the sign at `start`; returns the units read,
+    // or -1.
+    int shortOffset(int start, int end, ref int[3] hms) scope
+    {
+        int pos = 1;
+        hms[0] = offsetDigit(start, pos++, end);
+        if (hms[0] < 0)
+            return -1;
+        if (pos >= end)
+            return pos;
+        const h2 = offsetDigit(start, pos, end);
+        if (h2 >= 0)
+        {
+            hms[0] = hms[0] * 10 + h2;
+            ++pos;
+        }
+        const next = offsetGroupAfter(start, pos, end, hms[1]);
+        return next == pos ? pos : offsetGroupAfter(start, next, end, hms[2]);
+    }
+
+    // Java's ":" and two digits at `pos` units after `start`, read only when `pos + 2 < end`; returns the position
+    // after them, or `pos` without them.
+    int offsetGroupAfter(int start, int pos, int end, out int value) scope
+    {
+        if (pos + 2 >= end || unitAfter(start, pos) != ':')
+            return pos;
+        const d1 = offsetDigit(start, pos + 1, end), d2 = offsetDigit(start, pos + 2, end);
+        if (d1 < 0 || d2 < 0)
+            return pos;
+        value = d1 * 10 + d2;
+        return pos + 3;
+    }
+
+    // The ASCII digit `k` UTF-16 units after the byte index `start`, or -1 for any other character.
+    int offsetDigit(int start, int k, int end) scope
+    {
+        const unit = offsetUnit(start, k, end);
+        return unit >= '0' && unit <= '9' ? unit - '0' : -1;
+    }
+
+    // Java's `charAt` of the unit `k` UTF-16 units after the byte index `start`, which counts `end` units to the end
+    // of the text: as Java, an index past the end fails the parse with Java's out-of-bounds message.
+    int offsetUnit(int start, int k, int end) scope
+    {
+        if (k < end)
+            return unitAfter(start, k);
+        const copy = text.idup;
+        const offset = utf16ErrorIndex(text[0 .. start]);
+        const message = "Index " ~ indexText(offset + k) ~ " out of bounds for length " ~ indexText(offset + end);
+        throw new DateTimeParseException("Text '" ~ copy ~ "' could not be parsed: " ~ message, copy, 0);
+    }
+
+    // The UTF-16 unit `k` units after the byte index `start`: an ASCII character as it is, and 0xFFFF for any unit
+    // outside ASCII. The caller keeps `k` within the text.
+    int unitAfter(int start, int k) scope const pure nothrow @nogc
+    {
+        size_t pos = start;
+        while (pos < text.length)
+        {
+            const c = decodeUtf8(text, pos);
+            const units = c > 0xFFFF ? 2 : 1;
+            if (k < units)
+                return c < 0x80 ? cast(int) c : 0xFFFF;
+            k -= units;
+        }
+        return 0xFFFF;
     }
 
     // The minutes and seconds groups after an offset's hours; returns the end, or -1 when a required group is
@@ -2241,12 +2408,27 @@ private Element zoneLetter(char c, int count)
         if (count > 5)
             throw new IllegalArgumentException("Too many pattern letters: " ~ c);
         return offsetElement(xPatterns[count - 1], c == 'X' ? "Z" : xZero[count - 1], false);
+    default:
+        return offsetLetter(c, count);
+    }
+}
+
+private Element offsetLetter(char c, int count)
+{
+    switch (c)
+    {
     case 'Z':
         if (count < 4)
             return offsetElement("+HHMM", "+0000", false);
+        if (count == 4)
+            return localizedOffsetElement(true);
         if (count == 5)
             return offsetElement("+HH:MM:ss", "Z", false);
-        throw new IllegalArgumentException("Pattern letter not supported by Flint yet: ZZZZ");
+        throw new IllegalArgumentException("Too many pattern letters: Z");
+    case 'O':
+        if (count == 1 || count == 4)
+            return localizedOffsetElement(count == 4);
+        throw new IllegalArgumentException("Pattern letter count must be 1 or 4: O");
     default:
         throw new IllegalArgumentException("Pattern letter not supported by Flint yet: " ~ c);
     }
