@@ -179,7 +179,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 
 | Repo | Upstream | Ported | Adapted | By porter | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 235 | 359 | 0 | 0 | 15,202 |
+| ai | spring-ai@v2.1.0 | 240 | 387 | 0 | 0 | 15,169 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
 | framework | spring-framework@v7.1.0 | 3,662 | 1,549 | 0 | 4,870 | 29,753 |
@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,124 | 764 | 0 | 1,957 | 13,576 |
+| framework | openjdk@21.0.13 | 2,129 | 765 | 0 | 1,957 | 13,570 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -209,6 +209,7 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `io.micrometer.observation.ObservationPredicate` | `flint.micrometer.observation.ObservationPredicate` | Inherits the test method from Flint's Java BiPredicate. Its combinators are deferred with the Java provider. |
 | framework | `java.io.ByteArrayInputStream#close()` | `flint.java.io.ByteArrayInputStream.close` | Inherits the no-op close. Repeated calls leave the read position unchanged and subsequent reads still work. |
 | framework | `java.io.ByteArrayOutputStream#close()` | `flint.java.io.ByteArrayOutputStream.close` | Inherits the no-op close. Repeated calls preserve the buffered bytes and writes remain valid. |
+| framework | `java.io.OutputStream` | `flint.java.io.OutputStream` | Implements Closeable and Flushable. |
 | framework | `java.io.StringWriter#close()` | `flint.java.io.StringWriter.close` | Inherits the no-op close. Existing text and the ability to write survive repeated calls. |
 | framework | `java.io.StringWriter#flush()` | `flint.java.io.StringWriter.flush` | Inherits the no-op flush, preserving the stored text. |
 | framework | `java.lang.IllegalArgumentException#<init>(Throwable)` | `flint.java.lang.IllegalArgumentException.this` | A cause-specific toString override is not invoked. Flint derives the detail from the cause class name and message while retaining the original cause. |
@@ -350,6 +351,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.ai.chat.prompt.ChatOptions#builder()` | `flint.ai.chat.prompt.ChatOptions.builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getFrequencyPenalty()` | `flint.ai.chat.prompt.ChatOptions.getFrequencyPenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getMaxTokens()` | `flint.ai.chat.prompt.ChatOptions.getMaxTokens` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getModel()` | `flint.ai.chat.prompt.ChatOptions.getModel` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -358,6 +360,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.chat.prompt.ChatOptions#getTemperature()` | `flint.ai.chat.prompt.ChatOptions.getTemperature` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getTopK()` | `flint.ai.chat.prompt.ChatOptions.getTopK` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getTopP()` | `flint.ai.chat.prompt.ChatOptions.getTopP` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions#mutate()` | `flint.ai.chat.prompt.ChatOptions.mutate` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder` | `flint.ai.chat.prompt.ChatOptions.Builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder#frequencyPenalty(Double)` | `flint.ai.chat.prompt.ChatOptions.Builder.frequencyPenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder#maxTokens(Integer)` | `flint.ai.chat.prompt.ChatOptions.Builder.maxTokens` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder#model(String)` | `flint.ai.chat.prompt.ChatOptions.Builder.model` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder#presencePenalty(Double)` | `flint.ai.chat.prompt.ChatOptions.Builder.presencePenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder#temperature(Double)` | `flint.ai.chat.prompt.ChatOptions.Builder.temperature` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder#topK(Integer)` | `flint.ai.chat.prompt.ChatOptions.Builder.topK` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder#topP(Double)` | `flint.ai.chat.prompt.ChatOptions.Builder.topP` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#<init>(String,Double,Integer,Double,List,Double,Integer,Double)` | `flint.ai.chat.prompt.DefaultChatOptions.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#equals(Object)` | `flint.ai.chat.prompt.DefaultChatOptions.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getFrequencyPenalty()` | `flint.ai.chat.prompt.DefaultChatOptions.getFrequencyPenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -369,6 +380,24 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getTopK()` | `flint.ai.chat.prompt.DefaultChatOptions.getTopK` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getTopP()` | `flint.ai.chat.prompt.DefaultChatOptions.getTopP` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#hashCode()` | `flint.ai.chat.prompt.DefaultChatOptions.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptions#mutate()` | `flint.ai.chat.prompt.DefaultChatOptions.mutate` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#frequencyPenalty` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.frequencyPenalty_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#frequencyPenalty(Double)` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.frequencyPenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#maxTokens` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.maxTokens_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#maxTokens(Integer)` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.maxTokens` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#model` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.model_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#model(String)` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.model` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#presencePenalty` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.presencePenalty_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#presencePenalty(Double)` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.presencePenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#self()` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.self` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#stopSequences` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.stopSequences_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#temperature` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.temperature_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#temperature(Double)` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.temperature` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#topK` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.topK_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#topK(Integer)` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.topK` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#topP` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.topP_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#topP(Double)` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.topP` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### org.springframework.ai.content
 
@@ -2220,6 +2249,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `java.io.ByteArrayInputStream#<init>(byte[])` | `flint.java.io.ByteArrayInputStream.this` | [R26](api-mapping.md#r26-null-arrays) | Uses the caller's backing array as an unsigned byte slice. A null slice counts as an empty array under R26. |
 | `java.io.IOException` | `flint.java.io.IOException` | [R8](api-mapping.md#r8-exceptions) | Uses the D checked-exception hierarchy. The merged constructor represents omitted and explicit null causes identically under R8. The checked family currently lacks initCause. |
+| `java.io.InputStream` | `flint.java.io.InputStream` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Declared in the flint.java.io aggregate and implements Closeable; byte arrays are D slices (R26). readNBytes and transferTo remain deferred. |
 | `java.io.InputStream#read(byte[],int,int)` | `flint.java.io.InputStream.read` | [R26](api-mapping.md#r26-null-arrays), [R8](api-mapping.md#r8-exceptions) | Java byte arrays use D ubyte slices. A null slice counts as an empty array under R26. |
 | `java.io.InputStream#skip(long)` | `flint.java.io.InputStream.skip` | [R8](api-mapping.md#r8-exceptions) |  |
 | `java.io.InterruptedIOException` | `flint.java.io.interruptedioexception.InterruptedIOException` | [R1](api-mapping.md#r1-packages-and-names) | Import InterruptedIOException from flint.java.io.interruptedioexception until the java.io aggregate re-exports it. |
@@ -10282,7 +10312,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.chat.metadata | 76 | 0 |
 | org.springframework.ai.chat.model | 59 | 0 |
 | org.springframework.ai.chat.observation | 73 | 0 |
-| org.springframework.ai.chat.prompt | 144 | 0 |
+| org.springframework.ai.chat.prompt | 111 | 0 |
 | org.springframework.ai.chroma.vectorstore | 0 | 128 |
 | org.springframework.ai.chroma.vectorstore.common | 0 | 5 |
 | org.springframework.ai.content | 21 | 0 |
@@ -11160,7 +11190,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 770 | 0 |
+| java.io | 764 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -12024,10 +12054,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 
 | Repo | Java | Phase | Reason |
 | --- | --- | --- | --- |
-| ai | `org.springframework.ai.chat.prompt.ChatOptions#builder()` | 2 | Requires the default chat options builder and its self-typed result. |
-| ai | `org.springframework.ai.chat.prompt.ChatOptions#mutate()` | 2 | Requires a builder that can preserve the concrete chat option settings. |
-| ai | `org.springframework.ai.chat.prompt.ChatOptions.Builder` | 2 | Requires the self-typed fluent builder contract and its implementations. |
-| ai | `org.springframework.ai.chat.prompt.DefaultChatOptions#mutate()` | 2 | Requires the self-typed ChatOptions builder. |
+| ai | `org.springframework.ai.chat.prompt.ChatOptions.Builder#clone()` | 2 | The self-typed builder copy and combine contract is not ported yet. |
+| ai | `org.springframework.ai.chat.prompt.ChatOptions.Builder#combineWith(ChatOptions.Builder)` | 2 | The self-typed builder copy and combine contract is not ported yet. |
+| ai | `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#clone()` | 2 | The self-typed builder copy and combine contract is not ported yet. |
+| ai | `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#combineWith(ChatOptions.Builder)` | 2 | The self-typed builder copy and combine contract is not ported yet. |
 | ai | `org.springframework.ai.embedding.Embedding#<init>(float[],Integer)` | 2 | Requires the shared EmbeddingResultMetadata.EMPTY instance. |
 | ai | `org.springframework.ai.embedding.EmbeddingResultMetadata#EMPTY` | 2 | Requires a reviewed engine-aot helper to preserve shared metadata identity safely. |
 | boot | `org.springframework.boot.autoconfigure.AutoConfiguration#afterName` | 2 | Known defect. AOT ignores the direct afterName field when sorting auto-configurations. |
@@ -12096,17 +12126,11 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.IOException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. Flint lacks that API and its R26 detail accessor normalization is pending. |
 | framework | `java.io.IOException#<init>(String,Throwable)` | 2 | The current constructor retains a supplied non-null cause. The checked cause lifecycle and R26 detail accessor normalization are pending. R8 covers the merged constructor's explicit null projection. |
 | framework | `java.io.IOException#<init>(Throwable)` | 2 | Missing cause-only constructor. Java initializes the cause even if it is null and derives the detail from a non-null cause's virtual toString. |
-| framework | `java.io.InputStream` | 2 | The abstract source exists. The nominal Closeable interface required by Java is missing from the class. |
-| framework | `java.io.InputStream#available()` | 2 | Missing virtual base method that returns zero by default. |
-| framework | `java.io.InputStream#mark(int)` | 2 | Missing virtual mark operation with a no-op base implementation. |
-| framework | `java.io.InputStream#markSupported()` | 2 | Missing virtual mark support query with a false base result. |
 | framework | `java.io.InputStream#readNBytes(byte[],int,int)` | 2 | Missing bounded read into a caller-supplied array range. Java returns zero at EOF. |
 | framework | `java.io.InputStream#readNBytes(int)` | 2 | Missing bounded read that returns a new byte array. Java uses this virtual overload to implement readAllBytes(). |
-| framework | `java.io.InputStream#reset()` | 2 | Missing virtual reset method that throws IOException with detail mark/reset not supported by default. |
 | framework | `java.io.InputStream#transferTo(OutputStream)` | 2 | Missing transfer through virtual ranged reads and writes. Java rejects a null sink before reading, returns the count, and leaves both streams open. |
 | framework | `java.io.InterruptedIOException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.io.InterruptedIOException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
-| framework | `java.io.OutputStream` | 2 | The abstract sink exists. The Java type also implements the Closeable and Flushable interfaces, which are pending. |
 | framework | `java.io.OutputStreamWriter#<init>(OutputStream)` | 2 | Java rejects a null output stream during construction. The existing constructor accepts one. |
 | framework | `java.io.OutputStreamWriter#close()` | 2 | Java flushes buffered output, closes once, and rejects subsequent writes and flushes. The existing method forwards every close without flushing or tracking the closed state. |
 | framework | `java.io.OutputStreamWriter#flush()` | 2 | Java drains its encoded buffer before flushing the stream and rejects flush after close. The existing writer emits bytes eagerly and forwards flush even after close. |
@@ -12175,7 +12199,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.UncheckedIOException#getCause()` | 2 | The inherited accessor returns Throwable. Java overrides it to return IOException. |
 | framework | `java.io.UnsupportedEncodingException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.io.UnsupportedEncodingException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
-| framework | `java.io.Writer` | 2 | The abstract sink exists. The Java type also implements Appendable, Closeable and Flushable, which are pending. |
+| framework | `java.io.Writer` | 2 | The abstract sink implements Closeable and Flushable. Appendable and the UTF-16 string-range write hooks are pending. |
 | framework | `java.io.Writer#<init>()` | 2 | Java initializes the protected lock to the writer itself. The existing type has no lock field. |
 | framework | `java.io.Writer#append(CharSequence)` | 2 | Java appends the four characters null for an absent character sequence. The existing method treats a null slice as empty. |
 | framework | `java.io.Writer#close()` | 2 | Java requires subclasses to implement close. The existing method is a concrete no-op. |
