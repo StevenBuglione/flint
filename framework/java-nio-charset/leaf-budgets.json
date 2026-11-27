@@ -1,4 +1,10 @@
 {
+  "flint.java.nio.charset.codermalfunctionerror": {
+    "incremental_linked_bytes": 8294,
+    "template_instances": 489,
+    "control": "tools/jdk-closure-controls/d-exception.d",
+    "template_compile": "separate"
+  },
   "flint.java.nio.charset.coderresult": {
     "incremental_linked_bytes": 2130,
     "template_instances": 484,

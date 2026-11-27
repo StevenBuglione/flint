@@ -6628,6 +6628,8 @@
 "java.nio.charset.**":{"status":"excluded","category":"deferred","phase":"2"},
 "java.nio.charset.IllegalCharsetNameException":{"d":"flint.java.nio.charset.IllegalCharsetNameException","status":"ported"},
 "java.nio.charset.IllegalCharsetNameException#<init>(String)":{"d":"flint.java.nio.charset.IllegalCharsetNameException.this","status":"ported"},
+"java.nio.charset.CoderMalfunctionError":{"status":"adapted","rules":["R1","R8"],"d":"flint.java.nio.charset.codermalfunctionerror.CoderMalfunctionError","note":"Import CoderMalfunctionError from flint.java.nio.charset.codermalfunctionerror. Java's Error maps to the catchable D Exception base, as AssertionError does, so it is not a RuntimeException. The message is the cause's Java toString, with Flint's D class names. initCause always throws IllegalStateException, as in Java, because the constructor sets the cause."},
+"java.nio.charset.CoderMalfunctionError#<init>(Exception)":{"status":"ported","d":"flint.java.nio.charset.codermalfunctionerror.CoderMalfunctionError.this"},
 "java.nio.charset.CoderResult":{"status":"adapted","rules":["R1","R15"],"d":"flint.java.nio.charset.coderresult.CoderResult","note":"Import CoderResult from flint.java.nio.charset.coderresult. Represented as an R15 value struct whose value equality over (kind, length) stands in for Java's cached instance identity. The default value is UNDERFLOW."},
 "java.nio.charset.CoderResult#OVERFLOW":{"status":"adapted","rules":["R15"],"d":"flint.java.nio.charset.coderresult.CoderResult.OVERFLOW"},
 "java.nio.charset.CoderResult#UNDERFLOW":{"status":"adapted","rules":["R15"],"d":"flint.java.nio.charset.coderresult.CoderResult.UNDERFLOW"},

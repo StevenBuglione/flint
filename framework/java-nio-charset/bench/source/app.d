@@ -1,5 +1,6 @@
 module app;
 
+import flint.java.nio.charset.codermalfunctionerror : CoderMalfunctionError;
 import flint.java.nio.charset.coderresult : CoderResult;
 
 @safe:
@@ -8,7 +9,7 @@ int main(string[] args)
 {
     try
     {
-        const mode = args.length % 5;
+        const mode = args.length % 6;
         if (mode == 0)
             return cast(int) CoderResult.UNDERFLOW.toString().length;
         if (mode == 1)
@@ -23,7 +24,13 @@ int main(string[] args)
             auto unmappable = CoderResult.unmappableForLength(cast(int) args.length);
             return unmappable.isUnmappable() ? unmappable.length() + cast(int) unmappable.toString().length : 0;
         }
-        return CoderResult.UNDERFLOW.length();
+        if (mode == 4)
+            return CoderResult.UNDERFLOW.length();
+        throw new CoderMalfunctionError(new Exception(args[0]));
+    }
+    catch (CoderMalfunctionError error)
+    {
+        return error.getCause() is null ? 3 : 4;
     }
     catch (Exception error)
     {

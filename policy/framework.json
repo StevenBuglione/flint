@@ -1027,6 +1027,9 @@
   "java-nio-charset": {
    "directory": "framework/java-nio-charset",
    "module": "flint.java.nio.charset.coderresult",
+   "also": [
+    "flint.java.nio.charset.codermalfunctionerror"
+   ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
    "upstream": "openjdk@21.0.13",
@@ -1039,6 +1042,7 @@
     "edit_source": "framework/java-nio-charset/source/flint/java/nio/charset/coderresult.d"
    },
    "java_types": [
+    "java.nio.charset.CoderMalfunctionError",
     "java.nio.charset.CoderResult"
    ],
    "provisional": [

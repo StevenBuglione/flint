@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,709 | 494 | 0 | 1,905 | 14,313 |
+| framework | openjdk@21.0.13 | 1,710 | 495 | 0 | 1,905 | 14,311 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2464,6 +2464,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.nio.charset.CoderMalfunctionError` | `flint.java.nio.charset.codermalfunctionerror.CoderMalfunctionError` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions) | Import CoderMalfunctionError from flint.java.nio.charset.codermalfunctionerror. Java's Error maps to the catchable D Exception base, as AssertionError does, so it is not a RuntimeException. The message is the cause's Java toString, with Flint's D class names. initCause always throws IllegalStateException, as in Java, because the constructor sets the cause. |
 | `java.nio.charset.CoderResult` | `flint.java.nio.charset.coderresult.CoderResult` | [R1](api-mapping.md#r1-packages-and-names), [R15](api-mapping.md#r15-enums-with-fields) | Import CoderResult from flint.java.nio.charset.coderresult. Represented as an R15 value struct whose value equality over (kind, length) stands in for Java's cached instance identity. The default value is UNDERFLOW. |
 | `java.nio.charset.CoderResult#OVERFLOW` | `flint.java.nio.charset.coderresult.CoderResult.OVERFLOW` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `java.nio.charset.CoderResult#UNDERFLOW` | `flint.java.nio.charset.coderresult.CoderResult.UNDERFLOW` | [R15](api-mapping.md#r15-enums-with-fields) |  |
@@ -10799,7 +10800,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.nio | 24 | 0 |
 | java.nio.channels | 0 | 264 |
 | java.nio.channels.spi | 0 | 53 |
-| java.nio.charset | 86 | 0 |
+| java.nio.charset | 84 | 0 |
 | java.nio.charset.spi | 0 | 4 |
 | java.nio.file | 268 | 0 |
 | java.nio.file.attribute | 137 | 0 |

@@ -54,6 +54,7 @@
   "java.nio.channels.UnsupportedAddressTypeException": "flint.java.nio.channels.unsupportedaddresstypeexception",
   "java.nio.channels.WritableByteChannel": "flint.java.nio.channels.writablebytechannel",
   "java.nio.channels.WritePendingException": "flint.java.nio.channels.writependingexception",
+  "java.nio.charset.CoderMalfunctionError": "flint.java.nio.charset.codermalfunctionerror",
   "java.nio.charset.CoderResult": "flint.java.nio.charset.coderresult",
   "java.nio.charset.CodingErrorAction": "flint.java.nio.charset.codingerroraction",
   "java.time.MonthDay": "flint.java.time.monthday",
