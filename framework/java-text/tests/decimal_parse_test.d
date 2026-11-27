@@ -24,6 +24,14 @@ private void expectLong(DecimalParseResult result, long value, size_t index)
     assert(result.index == index && result.errorIndex == -1);
 }
 
+// Compares raw bits, so signed zeros differ.
+private void expectDouble(DecimalParseResult result, double value, size_t index)
+{
+    assert(result.kind == DecimalParseKind.doubleValue);
+    assert(result.doubleValue is value);
+    assert(result.index == index && result.errorIndex == -1);
+}
+
 private void expectFailure(DecimalParseResult result, size_t index, ptrdiff_t errorIndex)
 {
     assert(result.kind == DecimalParseKind.failed && result.index == index && result.errorIndex == errorIndex);
@@ -54,10 +62,10 @@ unittest
 unittest
 {
     expectLong(parse("0", "-9223372036854775808"), long.min, 20);
-    auto overflow = parse("0", "9223372036854775808");
-    assert(overflow.kind == DecimalParseKind.decimalDigits && overflow.decimalAt == 19 && overflow.positive);
-    auto negativeZero = parse("0", "-0.000");
-    assert(negativeZero.kind == DecimalParseKind.decimalDigits && !negativeZero.positive && negativeZero.count == 0);
+    expectDouble(parse("0", "9223372036854775808"), 9.223372036854776E18, 19);
+    expectDouble(parse("0", "-0.000"), -0.0, 6);
+    expectDouble(parse("0", "123456789012345678901234567890"), 1.2345678901234568E29, 30);
+    expectDouble(parse("0", "-1.5E-400"), -0.0, 9);
     DecimalParseOptions integerOnly;
     integerOnly.integerOnly = true;
     expectLong(parse("0", "-0.000", 0, integerOnly), 0, 2);
@@ -74,10 +82,8 @@ unittest
     expectLong(parse("0", "1E9223372036854775808"), 1, 1);
     expectLong(parse("0", "1E-9223372036854775808"), 1, 22);
     // The exponent wraps decimalAt to int.min, which Java then converts to 0.0.
-    auto wrapped = parse("0", "1E2147483647");
-    assert(wrapped.kind == DecimalParseKind.decimalDigits && wrapped.decimalAt == int.min && wrapped.index == 12);
-    auto fraction = parse("0", "1E9223372036854775807");
-    assert(fraction.kind == DecimalParseKind.decimalDigits && fraction.decimalAt == 0);
+    expectDouble(parse("0", "1E2147483647"), 0.0, 12);
+    expectDouble(parse("0", "1E9223372036854775807"), 0.1, 21);
 }
 
 @("DecimalFormat.parse applies Java multipliers, NaN and infinity")
@@ -88,6 +94,13 @@ unittest
     auto share = parse("0%", "5%", 0, percent);
     assert(share.kind == DecimalParseKind.doubleValue && share.doubleValue == 0.05 && share.index == 2);
     expectLong(parse("0%", "500%", 0, percent), 5, 4);
+    // Converted digits return to long when the quotient is integral, saturating like Java.
+    expectLong(parse("0%", "92233720368547758070%", 0, percent), 922_337_203_685_477_632, 21);
+    expectLong(parse("0%", "1E2147483647%", 0, percent), 0, 13);
+    expectDouble(parse("0%", "-0.000%", 0, percent), -0.0, 7);
+    DecimalParseOptions percentInteger = percent;
+    percentInteger.integerOnly = true;
+    expectLong(parse("0%", "1000000000000000000000%", 0, percentInteger), long.max, 23);
     DecimalParseOptions negated;
     negated.multiplier = -2;
     // Long.MIN_VALUE is not negated again after division, as in Java.

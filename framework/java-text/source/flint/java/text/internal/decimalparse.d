@@ -37,10 +37,11 @@
  */
 
 // Ported from openjdk 21.0.13: src/java.base/share/classes/java/text/DecimalFormat.java (parse, subparse,
-// subparseNumber) and DigitList.java (fitsIntoLong, getLong).
+// subparseNumber) and DigitList.java (fitsIntoLong, getLong, getDouble).
 // Modified by the Flint authors.
 module flint.java.text.internal.decimalparse;
 
+import flint.java.internal.math.floatingdecimal : FloatingDecimalStatus, digitListToDouble;
 import flint.java.lang.character.decimaldigits : javaDecimalDigit;
 import flint.java.text.internal.decimalfixed : DecimalFixedPattern;
 import flint.java.text.internal.decimalformatsymbols : DecimalSymbolData;
@@ -61,8 +62,6 @@ enum DecimalParseKind : ubyte
     failed,
     longValue,
     doubleValue,
-    // The digits need Java's decimal-to-binary conversion before the multiplier and sign apply.
-    decimalDigits,
     // More significant digits than the caller's buffer holds.
     capacity,
 }
@@ -405,7 +404,7 @@ void evaluate(DecimalParseOptions options, scope const(char)[] digits, ref Decim
     }
     if (!fitsIntoLong(result, digits, options.integerOnly))
     {
-        result.kind = DecimalParseKind.decimalDigits;
+        toDouble(options, digits, result);
         return;
     }
     long value = getLong(result, digits);
@@ -432,6 +431,43 @@ void evaluate(DecimalParseOptions options, scope const(char)[] digits, ref Decim
     }
     result.kind = DecimalParseKind.longValue;
     result.longValue = value;
+}
+
+// DigitList.getDouble, then the multiplier, sign and long re-narrowing of DecimalFormat.parse.
+void toDouble(DecimalParseOptions options, scope const(char)[] digits, ref DecimalParseResult result) pure nothrow @nogc
+{
+    const converted = digitListToDouble(digits[0 .. result.stored], result.count, result.decimalAt);
+    if (converted.status != FloatingDecimalStatus.ok)
+    {
+        result.kind = DecimalParseKind.capacity;
+        return;
+    }
+    double value = converted.value;
+    if (options.multiplier != 1)
+        value /= options.multiplier;
+    if (!result.positive)
+        value = -value;
+    result.doubleValue = value;
+    if (options.multiplier == 1)
+        return;
+    const narrowed = javaLong(value);
+    const negativeZero = value == 0.0 && 1 / value < 0.0;
+    if ((value != cast(double) narrowed || negativeZero) && !options.integerOnly)
+        return;
+    result.kind = DecimalParseKind.longValue;
+    result.longValue = narrowed;
+}
+
+// Java's double-to-long narrowing: NaN is zero and out-of-range values saturate.
+long javaLong(double value) pure nothrow @nogc
+{
+    if (value != value)
+        return 0;
+    if (value >= 0x1p63)
+        return long.max;
+    if (value <= -0x1p63)
+        return long.min;
+    return cast(long) value;
 }
 
 // Java long division by an int multiplier; returns true when the quotient is a double.
