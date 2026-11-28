@@ -725,6 +725,7 @@
     "flint.java.util.concurrent.internal.executoradmissions",
     "flint.java.util.concurrent.internal.managedoffload",
     "flint.java.util.concurrent.internal.executorrouting",
+    "flint.java.util.concurrent.internal.periodictask",
     "flint.java.util.concurrent.scheduledexecutorservice"
    ]
   },
