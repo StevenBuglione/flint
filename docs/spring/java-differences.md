@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,187 | 802 | 0 | 1,957 | 13,475 |
+| framework | openjdk@21.0.13 | 2,195 | 805 | 0 | 1,957 | 13,464 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2404,6 +2404,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.math.BigDecimal` | `flint.java.math.bigdecimal.BigDecimal` | [R1](api-mapping.md#r1-packages-and-names) | A null text slice follows the empty-input path under R26. Java throws NullPointerException. |
+| `java.math.BigDecimal#<init>(String)` | `flint.java.math.bigdecimal.BigDecimal.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.math.BigDecimal#toString()` | `flint.java.math.bigdecimal.BigDecimal.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.math.BigInteger#<init>(byte[])` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.math.BigInteger#<init>(byte[],int,int)` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.math.BigInteger#<init>(int,byte[])` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
@@ -11249,7 +11252,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang | 1,608 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
-| java.math | 132 | 0 |
+| java.math | 121 | 0 |
 | java.net | 552 | 0 |
 | java.net.spi | 0 | 1 |
 | java.nio | 18 | 0 |
