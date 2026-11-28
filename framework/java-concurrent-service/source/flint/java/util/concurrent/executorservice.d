@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only WITH Classpath-exception-2.0
 module flint.java.util.concurrent.executorservice;
 
-import core.atomic : atomicLoad, atomicStore, cas;
+import core.atomic : atomicLoad, atomicOp, atomicStore, cas;
 import core.lifetime : move;
 import flint.arena : ReactorError = Error, Status;
 import flint.conc : Deadline;
+import flint.conc.park : park, wakeAll;
 import flint.conc.slot : ProcessSlot;
 import flint.engine.reactor : OffloadWork, Reactor, ReactorOptions, TaskContext;
 import flint.java.lang : IllegalArgumentException, NullPointerException, RuntimeException;
@@ -156,6 +157,186 @@ interface ExecutorService : Executor
         done = true;
         return futures;
     }
+
+    /// Execute the tasks and return one result that completed successfully (R3, R9).
+    ///
+    /// As Java's `invokeAny`: every task still running is cancelled when this returns or throws, the last failure
+    /// is rethrown once no task is left running, and an empty collection is rejected. Interruption is deferred
+    /// until the `Thread` façade lands, as it is for `Future.get`.
+    T invokeAny(T)(Collection!(Callable!T) tasks)
+    {
+        return invokeAnyImpl(this, tasks, false, 0);
+    }
+
+    /// Execute the tasks and return one result that completed before `timeout` (R3, R9).
+    ///
+    /// As Java's timed `invokeAny`: `TimeoutException` is thrown when no task completes in time and every
+    /// submitted task is cancelled on the way out. Interruption is deferred until the `Thread` façade lands, as
+    /// it is for `Future.get`.
+    T invokeAny(T)(Collection!(Callable!T) tasks, long timeout, TimeUnit unit)
+    {
+        return invokeAnyImpl(this, tasks, true, toNanos(unit, timeout));
+    }
+}
+
+// The tasks `invokeAny` has submitted complete here. Each completion publishes its finished future and advances
+// `wake`, so a waiting fiber or thread parks until something completes instead of polling [R-10].
+private final class CompletionQueue(T)
+{
+    private Future!T[] ready;
+    private size_t head;
+    private shared uint wake = 0;
+
+    void add(Future!T future) @safe
+    {
+        synchronized (this)
+            ready ~= future;
+        signal();
+    }
+
+    bool poll(out Future!T future) @safe
+    {
+        synchronized (this)
+        {
+            if (head == ready.length)
+                return false;
+            future = ready[head++];
+            if (head == ready.length)
+            {
+                ready = null;
+                head = 0;
+            }
+            return true;
+        }
+    }
+
+    // Advance the word and wake every parked waiter after a completion is published.
+    void signal() nothrow @nogc
+    {
+        atomicOp!"+="(wake, 1u);
+        wakeAll(wake);
+    }
+}
+
+// Run a future and publish it only afterwards, so a waiter that sees it in the queue sees a finished future.
+private final class CompletionTask(T) : Runnable
+{
+    private FutureTask!T future;
+    private CompletionQueue!T queue;
+
+    this(FutureTask!T future, CompletionQueue!T queue)
+    {
+        this.future = future;
+        this.queue = queue;
+    }
+
+    override void run()
+    {
+        scope (exit)
+            queue.add(future);
+        future.run();
+    }
+}
+
+// Wait for the next completion, parking on the queue's word until `deadline` (`long.max` for no timeout).
+private bool awaitCompletion(T)(CompletionQueue!T queue, out Future!T future, long deadline)
+{
+    for (;;)
+    {
+        // Read the wake word before the queue: a completion between the two observations advances the word and
+        // ends the park below instead of leaving the waiter asleep.
+        const observed = atomicLoad(queue.wake);
+        if (queue.poll(future))
+            return true;
+        const remaining = remainingNanos(deadline);
+        if (remaining <= 0)
+            return false;
+        // Bound the native sleep so the untimed wait stays within every platform's timeout width; a completion
+        // wakes it immediately.
+        park(queue.wake, observed, remaining > 1_000_000_000L ? 1_000_000_000L : remaining);
+    }
+}
+
+// Cancel every future `invokeAny` submitted, leaving completed ones untouched (Java's `cancelAll`).
+private void cancelStarted(T)(ArrayList!(Future!T) futures)
+{
+    foreach (i; 0 .. futures.size())
+        futures.get(i).cancel(true);
+}
+
+// Java's `get()` inside doInvokeAny: a success returns the value, and a failure is remembered so the last one
+// can be thrown once every task has finished.
+private enum AnyOutcome
+{
+    success,
+    failed,
+}
+
+private AnyOutcome takeResult(T)(Future!T future, out T result, ref ExecutionException lastFailure)
+{
+    try
+    {
+        result = future.get();
+        return AnyOutcome.success;
+    }
+    catch (ExecutionException failure)
+        lastFailure = failure;
+    catch (RuntimeException failure)
+        lastFailure = new ExecutionException(failure);
+    return AnyOutcome.failed;
+}
+
+// Java's `AbstractExecutorService.doInvokeAny`: submit incrementally, return the first success, remember the
+// last failure, and cancel every submitted task on the way out.
+package(flint.java.util.concurrent) T invokeAnyImpl(T)(ExecutorService service,
+        Collection!(Callable!T) tasks, bool timed, long nanos)
+{
+    if (tasks is null)
+        throw new NullPointerException;
+    if (tasks.isEmpty())
+        throw new IllegalArgumentException;
+    auto queue = new CompletionQueue!T;
+    auto futures = new ArrayList!(Future!T)();
+    scope (exit)
+        cancelStarted(futures);
+
+    auto iterator = tasks.iterator();
+    const deadline = timed ? saturatingAdd(monotonicNow(), nanos) : long.max;
+    ExecutionException lastFailure;
+    int active = 0;
+
+    void submitNext()
+    {
+        auto future = new FutureTask!T(iterator.next());
+        service.execute(new CompletionTask!T(future, queue));
+        futures.add(future);
+        active++;
+    }
+
+    submitNext();
+    for (;;)
+    {
+        Future!T future;
+        if (!queue.poll(future))
+        {
+            if (iterator.hasNext())
+            {
+                submitNext();
+                continue;
+            }
+            if (active == 0)
+                break;
+            if (!awaitCompletion(queue, future, deadline))
+                throw new TimeoutException;
+        }
+        active--;
+        T result;
+        if (takeResult(future, result, lastFailure) == AnyOutcome.success)
+            return result;
+    }
+    if (lastFailure is null)
+        lastFailure = new ExecutionException(cast(Throwable) null);
+    throw lastFailure;
 }
 
 private long monotonicNow()

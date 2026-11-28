@@ -7,7 +7,7 @@ import flint.arena : Status;
 import flint.conc : Deadline;
 import flint.conc.park : park, wakeAll;
 import flint.engine.reactor : Backend, ReactorOptions;
-import flint.java.lang : NullPointerException;
+import flint.java.lang : IllegalArgumentException, NullPointerException;
 import flint.java.lang.runnable : Runnable;
 import flint.java.util : ArrayList, Collection;
 import flint.java.util.concurrent : TimeUnit;
@@ -18,11 +18,12 @@ import flint.java.util.concurrent.executor : Executor;
 import flint.java.util.concurrent.executorservice : ExecutorService, OffloadExecutorService;
 import flint.java.util.concurrent.future : Future;
 import flint.java.util.concurrent.rejectedexecutionexception : RejectedExecutionException;
+import flint.java.util.concurrent.timeoutexception : TimeoutException;
 import std.exception : assertThrown;
 
 @safe:
 
-private ReactorOptions options()
+private ReactorOptions options(uint offloadThreads = 1)
 {
     ReactorOptions result;
     version (ServiceIoUring)
@@ -32,7 +33,7 @@ private ReactorOptions options()
     result.cores = 1;
     result.fiberPoolSize = 2;
     result.mailboxCapacity = 4;
-    result.offloadThreads = 1;
+    result.offloadThreads = offloadThreads;
     return result;
 }
 
@@ -447,4 +448,110 @@ unittest
     assert(service.invokeAll(new ArrayList!(Callable!int)()).isEmpty());
     assertThrown!NullPointerException(service.invokeAll(cast(Collection!(Callable!int)) null));
     assertThrown!NullPointerException(service.invokeAll(cast(Collection!(Callable!int)) null, 1, TimeUnit.SECONDS));
+}
+
+@("invokeAny returns the successful task's result and cancels the failures")
+@system unittest
+{
+    auto host = new OffloadExecutorService(3, options(3));
+    ExecutorService service = host;
+    auto tasks = callables(new FailingCall, new Doubling(21), new FailingCall);
+
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        host.requestStop();
+        driver.join();
+    }
+
+    assert(service.invokeAny(tasks) == 42);
+}
+
+@("invokeAny returns a fast success while an earlier task is still blocked")
+@system unittest
+{
+    auto host = new OffloadExecutorService(2, options(2));
+    ExecutorService service = host;
+    auto blocked = new BlockingCall;
+    auto tasks = callables(blocked, new Doubling(3));
+
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        blocked.release();
+        host.requestStop();
+        driver.join();
+    }
+
+    const started = Deadline.afterMillis(0).monotonicNanoseconds;
+    assert(service.invokeAny(tasks) == 6);
+    const elapsed = Deadline.afterMillis(0).monotonicNanoseconds - started;
+    assert(elapsed < 5_000_000_000L);
+}
+
+@("invokeAny reports the last failure when every task fails")
+@system unittest
+{
+    auto host = new OffloadExecutorService(2, options(2));
+    ExecutorService service = host;
+    auto tasks = callables(new FailingCall, new FailingCall);
+
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        host.requestStop();
+        driver.join();
+    }
+
+    assertThrown!ExecutionException(service.invokeAny(tasks));
+}
+
+@("timed invokeAny returns a success before the deadline")
+@system unittest
+{
+    auto host = new OffloadExecutorService(2, options(2));
+    ExecutorService service = host;
+    auto tasks = callables(new FailingCall, new Doubling(5));
+
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        host.requestStop();
+        driver.join();
+    }
+
+    assert(service.invokeAny(tasks, 5, TimeUnit.SECONDS) == 10);
+}
+
+@("timed invokeAny throws TimeoutException and cancels the unfinished tasks")
+@system unittest
+{
+    auto host = new OffloadExecutorService(1, options());
+    ExecutorService service = host;
+    auto blocked = new BlockingCall;
+    auto tasks = callables(blocked);
+
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        blocked.release();
+        host.requestStop();
+        driver.join();
+    }
+
+    const started = Deadline.afterMillis(0).monotonicNanoseconds;
+    assertThrown!TimeoutException(service.invokeAny(tasks, 50, TimeUnit.MILLISECONDS));
+    const elapsed = Deadline.afterMillis(0).monotonicNanoseconds - started;
+    assert(elapsed >= 50_000_000L);
+}
+
+@("invokeAny rejects empty and null task collections and a null element")
+unittest
+{
+    ExecutorService service = new OffloadExecutorService(1, options());
+    assertThrown!IllegalArgumentException(service.invokeAny(new ArrayList!(Callable!int)()));
+    assertThrown!IllegalArgumentException(service.invokeAny(new ArrayList!(Callable!int)(), 1, TimeUnit.SECONDS));
+    assertThrown!NullPointerException(service.invokeAny(cast(Collection!(Callable!int)) null));
+    assertThrown!NullPointerException(service.invokeAny(cast(Collection!(Callable!int)) null, 1, TimeUnit.SECONDS));
+    assertThrown!NullPointerException(service.invokeAny(callables(cast(Callable!int) null)));
 }

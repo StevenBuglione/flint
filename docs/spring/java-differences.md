@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,182 | 795 | 0 | 1,957 | 13,487 |
+| framework | openjdk@21.0.13 | 2,182 | 797 | 0 | 1,957 | 13,485 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -3044,9 +3044,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.concurrent.ExecutionException#<init>(String,Throwable)` | `flint.java.util.concurrent.executionexception.ExecutionException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.concurrent.Executor` | `flint.java.util.concurrent.executor.Executor` | [R1](api-mapping.md#r1-packages-and-names) | Import the nominal interface from flint.java.util.concurrent.executor. |
 | `java.util.concurrent.Executor#execute(Runnable)` | `flint.java.util.concurrent.executor.Executor.execute` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces) | Accepts an owned @safe D delegate in addition to Runnable. Untyped null selects the original Runnable overload. |
-| `java.util.concurrent.ExecutorService` | `flint.java.util.concurrent.executorservice.ExecutorService` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Import the partial ExecutorService interface from this leaf. The contract covers execution, the three submit forms, both invokeAll forms and the shutdown lifecycle, and uses an explicit reactor driver. |
+| `java.util.concurrent.ExecutorService` | `flint.java.util.concurrent.executorservice.ExecutorService` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Import the partial ExecutorService interface from this leaf. The contract covers execution, the three submit forms, both invokeAll and invokeAny forms and the shutdown lifecycle, and uses an explicit reactor driver. |
 | `java.util.concurrent.ExecutorService#invokeAll(Collection)` | `flint.java.util.concurrent.executorservice.ExecutorService.invokeAll` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) | A D template method submits a FutureTask per Callable and waits on each future. Failures and cancellations stay in their futures, as AbstractExecutorService does. Java Thread interruption is deferred to Future.get. |
 | `java.util.concurrent.ExecutorService#invokeAll(Collection,long,TimeUnit)` | `flint.java.util.concurrent.executorservice.ExecutorService.invokeAll` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) | A D template method with AbstractExecutorService's deadline: unfinished futures are cancelled and returned, and a timeout surfaces through those futures rather than as TimeoutException. Java Thread interruption is deferred to Future.get. |
+| `java.util.concurrent.ExecutorService#invokeAny(Collection)` | `flint.java.util.concurrent.executorservice.ExecutorService.invokeAny` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) | A D template method follows AbstractExecutorService's doInvokeAny: it submits incrementally, returns the first successful result through a shared completion queue and cancels every still-running task. An empty collection raises IllegalArgumentException and a null collection or element raises NullPointerException. Java Thread interruption is deferred until the Thread facade lands, as it is for Future.get. |
+| `java.util.concurrent.ExecutorService#invokeAny(Collection,long,TimeUnit)` | `flint.java.util.concurrent.executorservice.ExecutorService.invokeAny` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) | As AbstractExecutorService's timed doInvokeAny: the deadline counts down across submission and waiting, TimeoutException reports that no task completed in time, and every submitted task is cancelled on the way out. Java Thread interruption is deferred until the Thread facade lands, as it is for Future.get. |
 | `java.util.concurrent.ExecutorService#shutdownNow()` | `flint.java.util.concurrent.executorservice.ExecutorService.shutdownNow` | [R8](api-mapping.md#r8-exceptions) | Returns the original never-started commands in a List!Runnable. Active commands remain on the offload pool until they finish. Java Thread interruption is deferred. |
 | `java.util.concurrent.ExecutorService#submit(Callable)` | `flint.java.util.concurrent.executorservice.ExecutorService.submit` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) | A D template method binds Callable!T to Future!T and runs a FutureTask through execute, as AbstractExecutorService does. A null task raises NullPointerException. |
 | `java.util.concurrent.ExecutorService#submit(Runnable)` | `flint.java.util.concurrent.executorservice.ExecutorService.submit` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R23](api-mapping.md#r23-object-typed-values) | Java's Future<?> erases to Future!Object; a completed task's result is Java's null. The default type parameter keeps this form a template, so an application that never submits a value-less task links no completion code. A null task raises NullPointerException. |
@@ -11270,7 +11272,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
 | java.util | 1,860 | 0 |
-| java.util.concurrent | 1,141 | 0 |
+| java.util.concurrent | 1,139 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 89 | 0 |
@@ -12610,8 +12612,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.concurrent.ExecutionException#<init>(Throwable)` | 2 | The cause is retained, but a custom checked Throwable.toString override is bypassed when deriving the detail. Java invokes that override. |
 | framework | `java.util.concurrent.ExecutorService#awaitTermination(long,TimeUnit)` | 2 | Requires canonical Java Thread interruption and an interruptible termination wait. |
 | framework | `java.util.concurrent.ExecutorService#close()` | 2 | Requires AutoCloseable integration and an interruptible termination wait. |
-| framework | `java.util.concurrent.ExecutorService#invokeAny(Collection)` | 2 | Requires owned Futures, timed waiting and canonical Java interruption. |
-| framework | `java.util.concurrent.ExecutorService#invokeAny(Collection,long,TimeUnit)` | 2 | Requires owned Futures, timed waiting and canonical Java interruption. |
 | framework | `java.util.concurrent.FutureTask#toString()` | 2 | D object.Object.toString is @system and no Java identity-hash helper is ported yet; the inherited D text stands. |
 | framework | `java.util.concurrent.RejectedExecutionException#<init>(Throwable)` | 2 | Preserves the cause. Exact detail derivation requires virtual rendering for arbitrary checked Throwable subclasses. |
 | framework | `java.util.concurrent.atomic.AtomicReference#updateAndGet(UnaryOperator)` | 2 | The null callback check needs a separately linkable canonical NullPointerException (R8). The current constructor retains unrelated Java module records and the callback exceeds the AtomicReference leaf budget. |
