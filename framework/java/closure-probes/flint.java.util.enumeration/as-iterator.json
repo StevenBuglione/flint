@@ -2,7 +2,8 @@
   "data": [],
   "leaves": [
     "flint.java.lang",
-    "flint.java.util"
+    "flint.java.util",
+    "flint.java.util.internal.iterator"
   ],
   "source": "closure/enumeration.d"
 }

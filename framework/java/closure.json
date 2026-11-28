@@ -3,21 +3,30 @@
     "flint.java.character": {
       "character-ascii-lower": {
         "data": [],
-        "leaves": [],
+        "leaves": [
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
+        ],
         "source": "closure/character-ascii-lower.d"
       },
       "character-category": {
         "data": [
           "flint.java.character.letterRanges"
         ],
-        "leaves": [],
+        "leaves": [
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
+        ],
         "source": "closure/character-category.d"
       },
       "character-lower": {
         "data": [
           "flint.java.character.lowerRuns"
         ],
-        "leaves": [],
+        "leaves": [
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
+        ],
         "source": "closure/character-lower.d"
       }
     },
@@ -32,7 +41,9 @@
       "bytearray-input": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/bytearray-input.d"
       }
@@ -40,17 +51,26 @@
     "flint.java.lang": {
       "double": {
         "data": [],
-        "leaves": [],
+        "leaves": [
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
+        ],
         "source": "closure/double.d"
       },
       "integer": {
         "data": [],
-        "leaves": [],
+        "leaves": [
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
+        ],
         "source": "closure/integer.d"
       },
       "long": {
         "data": [],
-        "leaves": [],
+        "leaves": [
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
+        ],
         "source": "closure/long.d"
       },
       "string-format": {
@@ -58,6 +78,7 @@
           "flint.java.character.upperRuns"
         ],
         "leaves": [
+          "flint.java.util.enumeration",
           "flint.java.util.formatter",
           "flint.java.util.internal.formatter_boolean",
           "flint.java.util.internal.formatter_character",
@@ -73,13 +94,17 @@
           "flint.java.util.internal.formatter_string",
           "flint.java.util.internal.formatter_support",
           "flint.java.util.internal.formatter_unicode",
-          "flint.java.util.internal.gregorian"
+          "flint.java.util.internal.gregorian",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/string-format.d"
       },
       "string-hash": {
         "data": [],
-        "leaves": [],
+        "leaves": [
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
+        ],
         "source": "closure/string-hash.d"
       },
       "valueof-array": {
@@ -104,7 +129,9 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
-          "flint.java.net.internal.ipv6literal"
+          "flint.java.net.internal.ipv6literal",
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/uri.d"
       }
@@ -113,7 +140,9 @@
       "charset": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/charset.d"
       }
@@ -129,7 +158,9 @@
       "sql-exception": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/sql-exception.d"
       }
@@ -139,7 +170,9 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
-          "flint.java.text.simpledateformat"
+          "flint.java.text.simpledateformat",
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/message-format.d"
       }
@@ -151,7 +184,9 @@
           "flint.java.lang",
           "flint.java.util.calendar",
           "flint.java.util.date",
+          "flint.java.util.enumeration",
           "flint.java.util.internal.gregorian",
+          "flint.java.util.internal.iterator",
           "flint.java.util.timezone"
         ],
         "source": "closure/date-format.d"
@@ -162,7 +197,9 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
-          "flint.java.time.format"
+          "flint.java.time.format",
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/localdate.d"
       }
@@ -172,7 +209,9 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
-          "flint.java.time"
+          "flint.java.time",
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/time-format.d"
       }
@@ -181,21 +220,27 @@
       "arraylist": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/arraylist.d"
       },
       "hashmap": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/hashmap.d"
       },
       "optional": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/optional.d"
       }
@@ -207,7 +252,9 @@
           "flint.java.lang",
           "flint.java.time",
           "flint.java.util.date",
+          "flint.java.util.enumeration",
           "flint.java.util.internal.gregorian",
+          "flint.java.util.internal.iterator",
           "flint.java.util.timezone"
         ],
         "source": "closure/calendar.d"
@@ -216,7 +263,10 @@
     "flint.java.util.concurrent": {
       "time-unit": {
         "data": [],
-        "leaves": [],
+        "leaves": [
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
+        ],
         "source": "closure/time-unit.d"
       }
     },
@@ -246,7 +296,9 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
-          "flint.java.time"
+          "flint.java.time",
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/date.d"
       }
@@ -255,7 +307,9 @@
       "descriptors": {
         "data": [],
         "leaves": [
-          "flint.java.util"
+          "flint.java.util",
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/descriptors.d"
       }
@@ -267,6 +321,7 @@
         ],
         "leaves": [
           "flint.java.lang",
+          "flint.java.util.enumeration",
           "flint.java.util.internal.formatter_boolean",
           "flint.java.util.internal.formatter_character",
           "flint.java.util.internal.formatter_date_time",
@@ -281,7 +336,8 @@
           "flint.java.util.internal.formatter_string",
           "flint.java.util.internal.formatter_support",
           "flint.java.util.internal.formatter_unicode",
-          "flint.java.util.internal.gregorian"
+          "flint.java.util.internal.gregorian",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/formatter.d"
       }
@@ -298,7 +354,9 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
-          "flint.java.util"
+          "flint.java.util",
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/stream.d"
       }
@@ -308,7 +366,9 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
-          "flint.java.time"
+          "flint.java.time",
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/timezone.d"
       }
@@ -317,7 +377,9 @@
       "datasource": {
         "data": [],
         "leaves": [
-          "flint.java.sql"
+          "flint.java.sql",
+          "flint.java.util.enumeration",
+          "flint.java.util.internal.iterator"
         ],
         "source": "closure/datasource.d"
       }
