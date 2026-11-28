@@ -38,8 +38,8 @@ import flint.java.nio.charset : Charset;
 import flint.java.nio.charset.codermalfunctionerror : CoderMalfunctionError;
 import flint.java.nio.charset.coderresult : CoderResult;
 import flint.java.nio.charset.codingerroraction : CodingErrorAction;
-import flint.java.nio.charset.internal.coders : checkRates, checkReplacementLength, stCoding, stEnd,
-    stFlushed, stReset, throwIllegalState, utf16Length;
+import flint.java.nio.charset.internal.coders : checkRates, checkReplacementLength, estimateCapacity,
+    grownCapacity, stCoding, stEnd, stFlushed, stReset, throwIllegalState, utf16Length;
 
 @safe:
 
@@ -199,6 +199,44 @@ abstract class CharsetDecoder
             return decodeLoop(in_, out_);
         catch (RuntimeException x)
             throw new CoderMalfunctionError(x);
+    }
+
+    /++
+    Decodes the remaining bytes of `in_` into a newly allocated character buffer, as Java's `decode(ByteBuffer)` does:
+    it resets the decoder, decodes with `endOfInput` true, flushes, grows the output on overflow, and flips the buffer
+    before returning it.
+    Throws: `MalformedInputException` or `UnmappableCharacterException` (both `CharacterCodingException`) when a REPORT
+    action stops the loop on an error.
+    +/
+    final CharBuffer decode(ByteBuffer in_)
+    {
+        if (in_ is null)
+            throw new NullPointerException();
+        int n = estimateCapacity(in_.remaining(), averageCharsPerByte_);
+        auto output = CharBuffer.allocate(n);
+        if (n == 0 && in_.remaining() == 0)
+            return output;
+        reset();
+        for (;;)
+        {
+            CoderResult cr = in_.hasRemaining() ? decode(in_, output, true) : CoderResult.UNDERFLOW;
+            if (cr.isUnderflow())
+                cr = flush(output);
+            if (cr.isUnderflow())
+                break;
+            if (cr.isOverflow())
+            {
+                n = grownCapacity(n);
+                auto grown = CharBuffer.allocate(n);
+                output.flip();
+                grown.put(output);
+                output = grown;
+                continue;
+            }
+            cr.throwException();
+        }
+        output.flip();
+        return output;
     }
 
     /++

@@ -1,0 +1,9 @@
+{
+  "source": "closure/malformed_input_exception.d",
+  "leaves": [
+    "flint.java.io",
+    "flint.java.lang",
+    "flint.java.nio.charset.charactercodingexception"
+  ],
+  "data": []
+}

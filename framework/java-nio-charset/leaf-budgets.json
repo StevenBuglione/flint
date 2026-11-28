@@ -1,4 +1,9 @@
 {
+  "flint.java.nio.charset.charactercodingexception": {
+    "incremental_linked_bytes": 3806,
+    "template_instances": 480,
+    "template_compile": "separate"
+  },
   "flint.java.nio.charset.charsetdecoder": {
     "incremental_linked_bytes": 52946,
     "template_instances": 570,
@@ -16,14 +21,24 @@
     "template_compile": "separate"
   },
   "flint.java.nio.charset.coderresult": {
-    "incremental_linked_bytes": 2130,
+    "incremental_linked_bytes": 2588,
     "template_instances": 484,
     "control": "tools/jdk-closure-controls/runtime-exception.d",
+    "template_compile": "separate"
+  },
+  "flint.java.nio.charset.malformedinputexception": {
+    "incremental_linked_bytes": 6710,
+    "template_instances": 484,
     "template_compile": "separate"
   },
   "flint.java.nio.charset.spi.charsetprovider": {
     "incremental_linked_bytes": 12246,
     "template_instances": 486,
+    "template_compile": "separate"
+  },
+  "flint.java.nio.charset.unmappablecharacterexception": {
+    "incremental_linked_bytes": 6746,
+    "template_instances": 484,
     "template_compile": "separate"
   }
 }

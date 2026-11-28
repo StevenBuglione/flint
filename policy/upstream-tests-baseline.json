@@ -6901,10 +6901,6 @@
       "java/nio/Buffer/ReachabilityTest.java",
       "java/nio/Buffer/StringCharBufferSliceTest.java"
     ],
-    "java-nio-charset": [
-      "java/nio/charset/CharsetDecoder/EmptyInput.java",
-      "java/nio/charset/CharsetDecoder/XcodeOverflow.java"
-    ],
     "java-nio-file": [
       "java/nio/file/Path/MacPathTest.java",
       "java/nio/file/Path/MacToRealPathWithSM.java",

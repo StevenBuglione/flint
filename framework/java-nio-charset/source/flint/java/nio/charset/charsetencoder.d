@@ -304,16 +304,40 @@ abstract class CharsetEncoder
         }
         onMalformedInput(CodingErrorAction.REPORT);
         onUnmappableCharacter(CodingErrorAction.REPORT);
-        return !encodeAll(cb).isError();
+        return !encodeAll(cb).result.isError();
+    }
+
+    /++
+    Encodes the remaining characters of `in_` into a newly allocated byte buffer, as Java's `encode(CharBuffer)` does:
+    it resets the encoder, encodes with `endOfInput` true, flushes, grows the output on overflow, and flips the buffer
+    before returning it.
+    Throws: `MalformedInputException` or `UnmappableCharacterException` (both `CharacterCodingException`) when a REPORT
+    action stops the loop on an error.
+    +/
+    final ByteBuffer encode(CharBuffer in_)
+    {
+        if (in_ is null)
+            throw new NullPointerException();
+        auto outcome = encodeAll(in_);
+        if (outcome.result.isError())
+            outcome.result.throwException();
+        outcome.buffer.flip();
+        return outcome.buffer;
+    }
+
+    private struct EncodeOutcome
+    {
+        CoderResult result;
+        ByteBuffer buffer;
     }
 
     // The convenience encode(CharBuffer) without its CharacterCodingException: an error result is returned.
-    private CoderResult encodeAll(CharBuffer in_)
+    private EncodeOutcome encodeAll(CharBuffer in_)
     {
         int n = estimateCapacity(in_.remaining(), averageBytesPerChar());
         auto out_ = ByteBuffer.allocate(n);
         if (n == 0 && in_.remaining() == 0)
-            return CoderResult.UNDERFLOW;
+            return EncodeOutcome(CoderResult.UNDERFLOW, out_);
         reset();
         for (;;)
         {
@@ -321,9 +345,9 @@ abstract class CharsetEncoder
             if (cr.isUnderflow())
                 cr = flush(out_);
             if (cr.isUnderflow())
-                return cr;
+                return EncodeOutcome(cr, out_);
             if (!cr.isOverflow())
-                return cr;
+                return EncodeOutcome(cr, out_);
             n = grownCapacity(n);
             auto grown = ByteBuffer.allocate(n);
             out_.flip();

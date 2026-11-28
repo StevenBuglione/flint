@@ -3,7 +3,11 @@
 module coder_result_test;
 
 import flint.java.lang : IllegalArgumentException, UnsupportedOperationException;
+import flint.java.nio.bufferoverflowexception : BufferOverflowException;
+import flint.java.nio.bufferunderflowexception : BufferUnderflowException;
 import flint.java.nio.charset.coderresult : CoderResult;
+import flint.java.nio.charset.malformedinputexception : MalformedInputException;
+import flint.java.nio.charset.unmappablecharacterexception : UnmappableCharacterException;
 import std.exception : collectException;
 
 @safe:
@@ -87,4 +91,22 @@ unittest
         auto uErr = collectException!IllegalArgumentException(CoderResult.unmappableForLength(bad));
         assert(uErr !is null && uErr.getMessage() == "Non-positive length");
     }
+}
+
+@("CoderResult.throwException maps each result to its Java 21 exception")
+unittest
+{
+    auto underflow = collectException!BufferUnderflowException(CoderResult.UNDERFLOW.throwException());
+    assert(underflow !is null && underflow.getMessage() is null);
+
+    auto overflow = collectException!BufferOverflowException(CoderResult.OVERFLOW.throwException());
+    assert(overflow !is null && overflow.getMessage() is null);
+
+    auto malformed = collectException!MalformedInputException(CoderResult.malformedForLength(3).throwException());
+    assert(malformed !is null && malformed.getInputLength() == 3 && malformed.getMessage() == "Input length = 3");
+
+    auto unmappable = collectException!UnmappableCharacterException(CoderResult.unmappableForLength(int.max)
+            .throwException());
+    assert(unmappable !is null && unmappable.getInputLength() == int.max);
+    assert(unmappable.getMessage() == "Input length = 2147483647");
 }
