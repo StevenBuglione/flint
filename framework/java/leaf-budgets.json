@@ -59,6 +59,12 @@
     "incremental_linked_bytes": 1329,
     "template_instances": 42
   },
+  "flint.java.util.nosuchelementexception": {
+    "incremental_linked_bytes": 616,
+    "template_instances": 498,
+    "control": "tools/jdk-closure-controls/runtime-exception.d",
+    "template_compile": "separate"
+  },
   "flint.java.lang.javaobject": {
     "incremental_linked_bytes": 1168,
     "template_instances": 42
