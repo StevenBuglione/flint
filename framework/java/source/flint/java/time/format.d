@@ -1233,18 +1233,14 @@ struct DateTimeFormatterBuilder
 
     /**
      * Appends the zone offset in `pattern`, or `noOffsetText` for zero. Throws `IllegalArgumentException` for a
-     * pattern Java does not define, and for the single-digit hour patterns, such as `+H:mm`, which Flint does not
-     * support yet.
+     * pattern Java does not define. The single-digit hour forms, such as `+H:mm`, print one hour digit below ten.
      */
     ref DateTimeFormatterBuilder appendOffset(string pattern, string noOffsetText) return
     {
-        static immutable string[11] supported = [
+        static immutable string[22] supported = [
             "+HH", "+HHmm", "+HH:mm", "+HHMM", "+HH:MM", "+HHMMss", "+HH:MM:ss", "+HHMMSS",
-            "+HH:MM:SS", "+HHmmss", "+HH:mm:ss"
-        ];
-        static immutable string[11] singleDigitHour = [
-            "+H", "+Hmm", "+H:mm", "+HMM", "+H:MM", "+HMMss", "+H:MM:ss", "+HMMSS", "+H:MM:SS",
-            "+Hmmss", "+H:mm:ss"
+            "+HH:MM:SS", "+HHmmss", "+HH:mm:ss", "+H", "+Hmm", "+H:mm", "+HMM", "+H:MM",
+            "+HMMss", "+H:MM:ss", "+HMMSS", "+H:MM:SS", "+Hmmss", "+H:mm:ss"
         ];
         foreach (candidate; supported)
             if (candidate == pattern)
@@ -1252,9 +1248,6 @@ struct DateTimeFormatterBuilder
                 appendElement(offsetElement(candidate, noOffsetText, false));
                 return this;
             }
-        foreach (candidate; singleDigitHour)
-            if (candidate == pattern)
-                throw new IllegalArgumentException("Offset pattern not supported by Flint yet: " ~ pattern);
         throw new IllegalArgumentException("Invalid zone offset pattern: " ~ pattern);
     }
 
@@ -1997,6 +1990,7 @@ private size_t sectionEnd(scope const(Element)[] elements, size_t start) pure no
 
 private struct OffsetShape
 {
+    bool paddedHour;
     bool minutes;
     bool minutesOptional;
     bool seconds;
@@ -2005,12 +1999,16 @@ private struct OffsetShape
 }
 
 // "+HH", "+HHmm", "+HH:mm", "+HHMM", "+HH:MM", "+HHMMss", "+HH:MM:ss", "+HHMMSS", "+HH:MM:SS", "+HHmmss",
-// "+HH:mm:ss".
+// "+HH:mm:ss", and the single-digit hour forms "+H", "+Hmm", "+H:mm", "+HMM", "+H:MM", "+HMMss", "+H:MM:ss",
+// "+HMMSS", "+H:MM:SS", "+Hmmss", "+H:mm:ss".
 private OffsetShape offsetShape(string pattern) pure nothrow @nogc
 {
     OffsetShape shape;
-    shape.colon = pattern.length > 3 && pattern[3] == ':';
-    const rest = pattern.length > 3 ? pattern[shape.colon ? 4 : 3 .. $] : "";
+    shape.paddedHour = pattern.length > 2 && pattern[2] == 'H';
+    const hourEnd = shape.paddedHour ? 3 : 2;
+    shape.colon = pattern.length > hourEnd && pattern[hourEnd] == ':';
+    const restStart = shape.colon ? hourEnd + 1 : hourEnd;
+    const rest = pattern.length > restStart ? pattern[restStart .. $] : "";
     shape.minutes = rest.length >= 2;
     shape.minutesOptional = shape.minutes && rest[0] == 'm';
     const tail = rest.length > 2 ? rest[shape.colon ? 3 : 2 .. $] : "";
@@ -2026,7 +2024,9 @@ private string formatOffset(int totalSeconds, string pattern, string noOffsetTex
     const shape = offsetShape(pattern);
     const total = totalSeconds < 0 ? -totalSeconds : totalSeconds;
     const hours = total / 3600, minutes = total / 60 % 60, seconds = total % 60;
-    auto text = (totalSeconds < 0 ? "-" : "+") ~ padded(hours, 2);
+    // As Java, a single-digit hour pattern prints one digit below 10, and two from 10.
+    const hourWidth = shape.paddedHour || hours >= 10 ? 2 : 1;
+    auto text = (totalSeconds < 0 ? "-" : "+") ~ padded(hours, hourWidth);
     const separator = shape.colon ? ":" : "";
     const printMinutes = shape.minutes && (!shape.minutesOptional || minutes != 0 || seconds != 0);
     const printSeconds = printMinutes && shape.seconds && (!shape.secondsOptional || seconds != 0);
@@ -2434,18 +2434,144 @@ private struct Parser
         if (position >= text.length || (text[position] != '+' && text[position] != '-'))
             return noOffset(e, position);
         const sign = text[position] == '-' ? -1 : 1;
-        // Java reads each group as two digits up to 59; hours 24 to 59 are then out of range.
-        const hours = twoDigits(position + 1);
-        if (hours < 0 || hours > 59)
-            return noOffset(e, position);
-        int[2] parts;
-        const end = offsetMinutesSeconds(e, position + 3, parts);
+        int[3] parts; // hours, minutes, seconds
+        const end = offsetGroups(e, position, parts);
         if (end < 0)
             return noOffset(e, position);
-        if (hours > 23)
+        if (parts[0] > 23 || parts[1] > 59 || parts[2] > 59)
             throw Fields.failed(text,
                     new DateTimeException("Value out of range: Hour[0-23], Minute[0-59], Second[0-59]"));
-        return setOffset(sign * (hours * 3600 + parts[0] * 60 + parts[1]), position, end);
+        return setOffset(sign * (parts[0] * 3600 + parts[1] * 60 + parts[2]), position, end);
+    }
+
+    // The offset groups after the sign at `position`, into hours, minutes and seconds; returns the end, or -1.
+    int offsetGroups(const Element e, int position, ref int[3] parts) scope
+    {
+        if (offsetShape(e.text).paddedHour)
+            return paddedOffset(e, position, parts);
+        return unpaddedOffset(e, position, parts);
+    }
+
+    // A two-digit hour pattern, as Java reads each group as two digits up to 59. Returns the end, or -1.
+    int paddedOffset(const Element e, int position, ref int[3] parts) scope
+    {
+        const hours = twoDigits(position + 1);
+        if (hours < 0 || hours > 59)
+            return -1;
+        int[2] ms;
+        const end = offsetMinutesSeconds(e, position + 3, ms);
+        if (end < 0)
+            return -1;
+        parts[0] = hours;
+        parts[1] = ms[0];
+        parts[2] = ms[1];
+        return end;
+    }
+
+    // A single-digit hour offset pattern, as OpenJDK's OffsetIdPrinterParser reads it: one or two hour digits, then
+    // the minutes and seconds the pattern names. `sign` is the index of the '+' or '-'; returns the end, or -1.
+    int unpaddedOffset(const Element e, int sign, ref int[3] parts) scope
+    {
+        const shape = offsetShape(e.text);
+        const lenient = e.lenient || this.lenient;
+        const start = sign + 1;
+        if (lenient)
+        {
+            // Java remaps a lenient parse to colon-separated groups when the text shows a colon, else to a
+            // variable-width 1-6 digit form.
+            const colon = shape.colon || (e.text == "+H" && text.length > start + 2
+                    && (text[start + 1] == ':' || text[start + 2] == ':'));
+            if (colon)
+                return colonOffset(start, false, true, false, parts);
+            return variableOffset(start, 1, 6, parts);
+        }
+        if (!shape.minutes)
+            return variableOffset(start, 1, 2, parts);
+        if (!shape.colon)
+        {
+            // The variable-width forms: +Hmm (1-4), +HMM (3-4), +HMMss (3-6), +HMMSS (5-6), +Hmmss (1-6).
+            int minDigits = 1, maxDigits = 6;
+            if (!shape.seconds)
+            {
+                minDigits = shape.minutesOptional ? 1 : 3;
+                maxDigits = 4;
+            }
+            else if (!shape.secondsOptional)
+            {
+                minDigits = 5;
+                maxDigits = 6;
+            }
+            else
+            {
+                minDigits = shape.minutesOptional ? 1 : 3;
+                maxDigits = 6;
+            }
+            return variableOffset(start, minDigits, maxDigits, parts);
+        }
+        // Colon forms: +H:mm (optional minute), +H:MM (mandatory), +H:MM:ss (optional second),
+        // +H:MM:SS (mandatory), +H:mm:ss (optional minute and second).
+        return colonOffset(start, !shape.minutesOptional, shape.seconds, shape.seconds
+                && !shape.secondsOptional, parts);
+    }
+
+    // A run of `minDigits` to `maxDigits` digits split into hours, minutes and seconds, as Java's
+    // parseVariableWidthDigits. Returns the end, or -1 when too few digits are present.
+    int variableOffset(int position, int minDigits, int maxDigits, ref int[3] parts) scope const pure nothrow @nogc
+    {
+        int pos = position;
+        char[6] digits;
+        int available;
+        while (available < maxDigits && pos < text.length && text[pos] >= '0' && text[pos] <= '9')
+            digits[available++] = text[pos++];
+        if (available < minDigits)
+            return -1;
+        switch (available)
+        {
+        case 1:
+            parts[0] = digits[0] - '0';
+            break;
+        case 2:
+            parts[0] = (digits[0] - '0') * 10 + (digits[1] - '0');
+            break;
+        case 3:
+            parts[0] = digits[0] - '0';
+            parts[1] = (digits[1] - '0') * 10 + (digits[2] - '0');
+            break;
+        case 4:
+            parts[0] = (digits[0] - '0') * 10 + (digits[1] - '0');
+            parts[1] = (digits[2] - '0') * 10 + (digits[3] - '0');
+            break;
+        case 5:
+            parts[0] = digits[0] - '0';
+            parts[1] = (digits[1] - '0') * 10 + (digits[2] - '0');
+            parts[2] = (digits[3] - '0') * 10 + (digits[4] - '0');
+            break;
+        default:
+            parts[0] = (digits[0] - '0') * 10 + (digits[1] - '0');
+            parts[1] = (digits[2] - '0') * 10 + (digits[3] - '0');
+            parts[2] = (digits[4] - '0') * 10 + (digits[5] - '0');
+            break;
+        }
+        return pos;
+    }
+
+    // One or two hour digits, then optional or mandatory ":MM" and ":SS" groups, as Java's parseHour followed by
+    // its colon group reads. `hasSeconds` is whether the pattern names a seconds group. Returns the end, or -1 when
+    // a mandatory group is missing.
+    int colonOffset(int position, bool mandatoryMinute, bool hasSeconds, bool mandatorySecond, ref int[3] parts) scope
+    {
+        const hourEnd = variableOffset(position, 1, 2, parts);
+        if (hourEnd < 0)
+            return -1;
+        const minuteEnd = offsetGroup(hourEnd, true, parts[1]);
+        if (minuteEnd == hourEnd)
+            return mandatoryMinute ? -1 : hourEnd;
+        if (!hasSeconds)
+            return minuteEnd;
+        const secondEnd = offsetGroup(minuteEnd, true, parts[2]);
+        if (secondEnd == minuteEnd)
+            return mandatorySecond ? -1 : minuteEnd;
+        return secondEnd;
     }
 
     // A lenient "+HH" reads colon-separated groups when the text has a colon after the hours, as Java.

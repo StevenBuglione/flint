@@ -671,6 +671,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Pad the next appended element with `padNext`.** `DateTimeFormatterBuilder.padNext(int)` and `padNext(int, char)` wrap the next appended element or section in a pad decorator, as Java's `PadPrinterParserDecorator`: printing pads on the left to the width with the pad character, and parsing skips up to the width of pad characters before the wrapped element, needing the whole width in a strict parse and treating it as a maximum in a lenient one. On venus (v4.2 toolchain) against the parent `f2e9d0841`, the Java module grows from 129,496 to 129,512 incremental linked bytes and DMD templates from 4,672 to 4,716 against the 7,350 cap.
 
+- **Read the offset shape from the pattern once, with no second table.** The single-digit hour forms share one `offsetShape` with the padded forms: the hour width comes from the pattern's second `H`, the colon and optional groups from the remaining letters. Printing pads the hour to one digit below ten and two from ten, and parsing reads one or two hour digits then the same colon or variable-width groups, so the parser adds no table per pattern and no branch on the full pattern text. On venus (v4.2 toolchain) against the parent `ed3ed12cd`, the Java module stays at 129,512 incremental linked bytes and DMD templates fall from 4,716 to 4,714 against the 7,350 cap.
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:

@@ -1472,7 +1472,7 @@ unittest
         ++count;
     }
     assert(failures == 0, report);
-    assert(count == 2975);
+    assert(count == 3452);
 }
 
 @("appendInstant(int) parses exactly its fractional digits, or up to nine for -1")
@@ -1527,24 +1527,40 @@ unittest
             .msg == "The pad width must be at least one but was 0");
 }
 
-@("DateTimeFormatterBuilder rejects the single-digit hour offset patterns Flint does not support yet")
+@("DateTimeFormatterBuilder prints and parses the single-digit hour offset patterns")
 unittest
 {
+    import std.exception : collectException;
 
-    foreach (pattern; [
-        "+H", "+Hmm", "+H:mm", "+HMM", "+H:MM", "+HMMss", "+H:MM:ss", "+HMMSS", "+H:MM:SS", "+Hmmss",
-        "+H:mm:ss"
-    ])
+    // A single-digit hour prints one digit below ten and two from ten; the description keeps the pattern.
+    auto single = DateTimeFormatterBuilder().appendPattern("uuuu-MM-dd'T'HH:mm")
+        .appendOffset("+H:mm", "Z").toFormatter();
+    assert(single.toString() == "Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)'T'"
+            ~ "Value(HourOfDay,2)':'Value(MinuteOfHour,2)Offset(+H:mm,'Z')");
+    static string printed(DateTimeFormatter formatter, int hours, int minutes)
     {
-        DateTimeFormatterBuilder b;
-        try
-        {
-            b.appendOffset(pattern, "Z");
-            assert(false, pattern);
-        }
-        catch (IllegalArgumentException e)
-            assert(e.msg == "Offset pattern not supported by Flint yet: " ~ pattern, e.msg);
+        return formatter.format(OffsetDateTime.of(2024, 3, 5, 10, 15, 0, 0, ZoneOffset.ofHoursMinutes(hours, minutes)));
     }
+
+    assert(printed(single, 1, 30) == "2024-03-05T10:15+1:30");
+    assert(printed(single, 10, 0) == "2024-03-05T10:15+10");
+    assert(printed(single, 18, 0) == "2024-03-05T10:15+18");
+    assert(printed(single, 0, 0) == "2024-03-05T10:15Z");
+    // Java's variable-width forms read a run of digits: +Hmm takes one to four, +HMM three or four.
+    auto wide = DateTimeFormatterBuilder().appendPattern("uuuu-MM-dd'T'HH:mm").appendOffset("+Hmm", "Z").toFormatter();
+    assert(OffsetDateTime.parse("2024-03-05T10:15+1", wide).toString() == "2024-03-05T10:15+01:00");
+    assert(OffsetDateTime.parse("2024-03-05T10:15+130", wide).toString() == "2024-03-05T10:15+01:30");
+    auto mandatory = DateTimeFormatterBuilder().appendPattern("uuuu-MM-dd'T'HH:mm")
+        .appendOffset("+HMM", "Z").toFormatter();
+    assert(OffsetDateTime.parse("2024-03-05T10:15+130", mandatory).toString() == "2024-03-05T10:15+01:30");
+    // A lenient "+H" reads colon-separated groups when the text shows a colon.
+    auto lenient = DateTimeFormatterBuilder().appendPattern("uuuu-MM-dd'T'HH:mm").parseLenient()
+        .appendOffset("+H", "Z").toFormatter();
+    assert(OffsetDateTime.parse("2024-03-05T10:15+1:30", lenient).toString() == "2024-03-05T10:15+01:30");
+    assert(OffsetDateTime.parse("2024-03-05T10:15+130", lenient).toString() == "2024-03-05T10:15+01:30");
+    // An undefined pattern still throws Java's message.
+    assert(collectException!IllegalArgumentException(DateTimeFormatterBuilder().appendOffset("+X",
+            "Z")).msg == "Invalid zone offset pattern: +X");
     // A case-insensitive parse folds ASCII letters only; Java folds "É" to "é" too.
     auto literal = DateTimeFormatterBuilder().parseCaseInsensitive().appendLiteral("été").toFormatter();
     try

@@ -322,6 +322,20 @@ public class GoldenFormatterBuilder {
             recipe("p:uuuu-MM-dd'T'HH:mm|o:" + pattern + ",none", k("offset"), "2024-03-05T10:15+01",
                     "2024-03-05T10:15+0130", "2024-03-05T10:15+01:30", "2024-03-05T10:15+013015",
                     "2024-03-05T10:15+01:30:15", "2024-03-05T10:15none", "2024-03-05T10:15NONE");
+        // The single-digit hour forms: one or two hour digits, and Java's variable-width digit forms.
+        for (String pattern : new String[] {"+H", "+Hmm", "+H:mm", "+HMM", "+H:MM", "+HMMss", "+H:MM:ss",
+                "+HMMSS", "+H:MM:SS", "+Hmmss", "+H:mm:ss"}) {
+            recipe("p:uuuu-MM-dd'T'HH:mm|o:" + pattern + ",none", k("offset"), "2024-03-05T10:15+1",
+                    "2024-03-05T10:15+130", "2024-03-05T10:15+1:30", "2024-03-05T10:15+13015",
+                    "2024-03-05T10:15+1:30:15", "2024-03-05T10:15+18", "2024-03-05T10:15+1830",
+                    "2024-03-05T10:15+8", "2024-03-05T10:15+0", "2024-03-05T10:15none", "2024-03-05T10:15NONE");
+            formats("p:uuuu-MM-dd'T'HH:mm|o:" + pattern + ",none", "2024-03-05T10:15+08:00",
+                    "2024-03-05T10:15-05:30", "2024-03-05T10:15+00:00", "2024-03-05T10:15+10:00",
+                    "2024-03-05T10:15+18:00", "2024-03-05T10:15+00:00:45", "2024-03-05T10:15-05:30:15");
+        }
+        recipe("p:uuuu-MM-dd'T'HH:mm|o:+H:mm,it's", k("offset"), "2024-03-05T10:15it's");
+        recipe("p:uuuu-MM-dd'T'HH:mm|lenient|o:+H,Z", k("offset"), "2024-03-05T10:15+1:30",
+                "2024-03-05T10:15+130", "2024-03-05T10:15+1", "2024-03-05T10:15+18:30:15");
         recipe("p:uuuu-MM-dd'T'HH:mm|o:+HH:MM,it's", k("offset"), "2024-03-05T10:15it's");
         recipe("p:uuuu-MM-dd'T'HH:mm|o:+HH:MM,", k("offset"), "2024-03-05T10:15", "2024-03-05T10:15+00:00");
         recipe("p:uuuu-MM-dd'T'HH:mm|lenient|o:+HH,Z", k("offset"), "2024-03-05T10:15+01:30",
