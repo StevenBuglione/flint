@@ -181,7 +181,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 254 | 397 | 0 | 0 | 15,145 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
-| data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
+| data-commons | spring-data-commons@4.2.0 | 298 | 301 | 0 | 0 | 3,383 |
 | framework | spring-framework@v7.1.0 | 3,662 | 1,549 | 0 | 4,870 | 29,753 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
@@ -924,7 +924,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.domain.AuditorAware#getCurrentAuditor()` | `flint.data.domain.AuditorAware.getCurrentAuditor` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.data.domain.DomainEvents` | `flint.data.domain.DomainEvents` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.data.domain.KeysetScrollPosition#equals(Object)` | `flint.data.domain.KeysetScrollPosition.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `org.springframework.data.domain.KeysetScrollPosition#getKeys()` | `flint.data.domain.KeysetScrollPosition.getKeys` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.data.domain.KeysetScrollPosition#hashCode()` | `flint.data.domain.KeysetScrollPosition.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.data.domain.Limit` | `flint.data.domain.Limit` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.data.domain.Limit#isUnlimited()` | `flint.data.domain.Limit.isUnlimited` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
@@ -969,10 +968,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.domain.Range.Bound#map(Function)` | `flint.data.domain.Range.Bound.map` | [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.data.domain.Range.Bound#unbounded()` | `flint.data.domain.Range.Bound.unbounded` | [R17](api-mapping.md#r17-shared-constants-of-generic-classes) |  |
 | `org.springframework.data.domain.Range.RangeBuilder` | `flint.data.domain.Range.RangeBuilder` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
-| `org.springframework.data.domain.ScrollPosition#backward(Map)` | `flint.data.domain.ScrollPosition.backward` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.data.domain.ScrollPosition#forward(Map)` | `flint.data.domain.ScrollPosition.forward` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.data.domain.ScrollPosition#keyset()` | `flint.data.domain.ScrollPosition.keyset` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.data.domain.ScrollPosition#of(Map,Direction)` | `flint.data.domain.ScrollPosition.of` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.data.domain.Slice` | `flint.data.domain.Slice` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.data.domain.Slice#getPageable()` | `flint.data.domain.Slice.getPageable` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.data.domain.Slice#map(Function)` | `flint.data.domain.Slice.map` | [R9](api-mapping.md#r9-functional-interfaces) |  |
@@ -1001,9 +997,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.domain.Sort.TypedSort#by(Recorded.ToCollectionConverter)` | `flint.data.domain.Sort.TypedSort.by` | [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.data.domain.Sort.TypedSort#by(Recorded.ToMapConverter)` | `flint.data.domain.Sort.TypedSort.by` | [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.data.domain.Window` | `flint.data.domain.Window` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.data.domain.Window#from(List,IntFunction)` | `flint.data.domain.Window.from` | [R9](api-mapping.md#r9-functional-interfaces), [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.data.domain.Window#from(List,IntFunction,boolean)` | `flint.data.domain.Window.from` | [R9](api-mapping.md#r9-functional-interfaces), [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.data.domain.Window#getContent()` | `flint.data.domain.Window.getContent` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.data.domain.Window#from(List,IntFunction)` | `flint.data.domain.Window.from` | [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `org.springframework.data.domain.Window#from(List,IntFunction,boolean)` | `flint.data.domain.Window.from` | [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.data.domain.Window#hasPosition(int)` | `flint.data.domain.Window.hasPosition` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.data.domain.Window#isLast()` | `flint.data.domain.Window.isLast` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.data.domain.Window#map(Function)` | `flint.data.domain.Window.map` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
@@ -1028,7 +1023,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.mapping.IdentifierAccessor#getRequiredIdentifier()` | `flint.data.mapping.IdentifierAccessor.getRequiredIdentifier` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.InstanceCreatorMetadata` | `flint.data.mapping.InstanceCreatorMetadata` | [D-DATA-21](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.InstanceCreatorMetadata#getParameterCount()` | `flint.data.mapping.InstanceCreatorMetadata.getParameterCount` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
-| `org.springframework.data.mapping.InstanceCreatorMetadata#getParameters()` | `flint.data.mapping.InstanceCreatorMetadata.getParameters` | [R10](api-mapping.md#r10-streams-and-collections), [D-DATA-21](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.InstanceCreatorMetadata#getParameters()` | `flint.data.mapping.InstanceCreatorMetadata.getParameters` | [D-DATA-21](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.InstanceCreatorMetadata#hasParameters()` | `flint.data.mapping.InstanceCreatorMetadata.hasParameters` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.data.mapping.InstanceCreatorMetadata#isCreatorParameter(PersistentProperty)` | `flint.data.mapping.InstanceCreatorMetadata.isCreatorParameter` | [D-DATA-19](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.InstanceCreatorMetadata#isParentParameter(Parameter)` | `flint.data.mapping.InstanceCreatorMetadata.isParentParameter` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [D-DATA-21](api-mapping.md#deviations) |  |
@@ -1130,11 +1125,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.mapping.model.EntityInstantiators` | `flint.data.mapping.model.EntityInstantiators` | [D-DATA-25](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.EntityInstantiators#<init>()` | `flint.data.mapping.model.EntityInstantiators.this` | [D-DATA-25](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.EntityInstantiators#<init>(EntityInstantiator)` | `flint.data.mapping.model.EntityInstantiators.this` | [D-DATA-25](api-mapping.md#deviations) |  |
-| `org.springframework.data.mapping.model.EntityInstantiators#<init>(EntityInstantiator,Map)` | `flint.data.mapping.model.EntityInstantiators.this` | [R4](api-mapping.md#r4-classt-parameters), [R10](api-mapping.md#r10-streams-and-collections), [D-DATA-25](api-mapping.md#deviations) |  |
-| `org.springframework.data.mapping.model.EntityInstantiators#<init>(Map)` | `flint.data.mapping.model.EntityInstantiators.this` | [R4](api-mapping.md#r4-classt-parameters), [R10](api-mapping.md#r10-streams-and-collections), [D-DATA-25](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.model.EntityInstantiators#<init>(EntityInstantiator,Map)` | `flint.data.mapping.model.EntityInstantiators.this` | [R4](api-mapping.md#r4-classt-parameters), [D-DATA-25](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.model.EntityInstantiators#<init>(Map)` | `flint.data.mapping.model.EntityInstantiators.this` | [R4](api-mapping.md#r4-classt-parameters), [D-DATA-25](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.EntityInstantiators#getInstantiatorFor(PersistentEntity)` | `flint.data.mapping.model.EntityInstantiators.getInstantiatorFor` | [D-DATA-25](api-mapping.md#deviations) |  |
-| `org.springframework.data.mapping.model.MappingInstantiationException#<init>(List,Exception)` | `flint.data.mapping.model.MappingInstantiationException.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
-| `org.springframework.data.mapping.model.MappingInstantiationException#<init>(PersistentEntity,List,Exception)` | `flint.data.mapping.model.MappingInstantiationException.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values), [D-DATA-25](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.model.MappingInstantiationException#<init>(List,Exception)` | `flint.data.mapping.model.MappingInstantiationException.this` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.model.MappingInstantiationException#<init>(PersistentEntity,List,Exception)` | `flint.data.mapping.model.MappingInstantiationException.this` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-25](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.MappingInstantiationException#getConstructorArguments()` | `flint.data.mapping.model.MappingInstantiationException.getConstructorArguments` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.model.MappingInstantiationException#getEntityCreator()` | `flint.data.mapping.model.MappingInstantiationException.getEntityCreator` | [D-DATA-21](api-mapping.md#deviations), [D-DATA-25](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.MappingInstantiationException#getEntityType()` | `flint.data.mapping.model.MappingInstantiationException.getEntityType` | [R4](api-mapping.md#r4-classt-parameters), [D-DATA-25](api-mapping.md#deviations) |  |
@@ -1234,8 +1229,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.util.Streamable#of(Supplier)` | `flint.data.util.Streamable.of` | [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.data.util.Streamable#of(T...)` | `flint.data.util.Streamable.of` | [R7](api-mapping.md#r7-overloads), [D-DATA-27](api-mapping.md#deviations) |  |
 | `org.springframework.data.util.Streamable#stream()` | `flint.data.util.Streamable.stream` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections), [D-DATA-27](api-mapping.md#deviations) |  |
-| `org.springframework.data.util.Streamable#toList()` | `flint.data.util.Streamable.toList` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.data.util.Streamable#toSet()` | `flint.data.util.Streamable.toSet` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.data.util.Streamable#toList()` | `flint.data.util.Streamable.toList` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.data.util.Streamable#toSet()` | `flint.data.util.Streamable.toSet` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.data.util.Streamable#toStreamable()` | `flint.data.util.Streamable.toStreamable` | [R10](api-mapping.md#r10-streams-and-collections), [D-DATA-27](api-mapping.md#deviations) |  |
 
 ### framework
