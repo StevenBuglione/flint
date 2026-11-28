@@ -301,7 +301,8 @@ def derive_fields(ctx, names):
                     value = bean_types.literal(d['value'], 'a constant')
                     lines += ddoc(f) + [' '.join([v for v in (visibility,) if v != 'public']
                                                  + [f'enum {dtype} {accessors.d_name(d["name"])} = {value};'])]
-                    members.append((None, element, status(rules)))
+                    if visibility != 'private':
+                        members.append((None, element, status(rules)))
                     continue
                 rules = set()
                 dtype = accessors.d_type(f['type'] + (d.get('dimensions') or ''), nullable(f), ctx.scope, rules,
