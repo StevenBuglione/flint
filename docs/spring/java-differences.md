@@ -179,7 +179,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 
 | Repo | Upstream | Ported | Adapted | By porter | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 235 | 359 | 0 | 0 | 15,202 |
+| ai | spring-ai@v2.1.0 | 246 | 392 | 0 | 0 | 15,158 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
 | framework | spring-framework@v7.1.0 | 3,662 | 1,549 | 0 | 4,870 | 29,753 |
@@ -350,6 +350,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.ai.chat.prompt.ChatOptions#builder()` | `flint.ai.chat.prompt.ChatOptions.builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getFrequencyPenalty()` | `flint.ai.chat.prompt.ChatOptions.getFrequencyPenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getMaxTokens()` | `flint.ai.chat.prompt.ChatOptions.getMaxTokens` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getModel()` | `flint.ai.chat.prompt.ChatOptions.getModel` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -358,6 +359,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.chat.prompt.ChatOptions#getTemperature()` | `flint.ai.chat.prompt.ChatOptions.getTemperature` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getTopK()` | `flint.ai.chat.prompt.ChatOptions.getTopK` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getTopP()` | `flint.ai.chat.prompt.ChatOptions.getTopP` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions#mutate()` | `flint.ai.chat.prompt.ChatOptions.mutate` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder` | `flint.ai.chat.prompt.ChatOptions.Builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder#frequencyPenalty(Double)` | `flint.ai.chat.prompt.ChatOptions.Builder.frequencyPenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder#maxTokens(Integer)` | `flint.ai.chat.prompt.ChatOptions.Builder.maxTokens` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder#model(String)` | `flint.ai.chat.prompt.ChatOptions.Builder.model` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder#presencePenalty(Double)` | `flint.ai.chat.prompt.ChatOptions.Builder.presencePenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder#temperature(Double)` | `flint.ai.chat.prompt.ChatOptions.Builder.temperature` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder#topK(Integer)` | `flint.ai.chat.prompt.ChatOptions.Builder.topK` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions.Builder#topP(Double)` | `flint.ai.chat.prompt.ChatOptions.Builder.topP` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#<init>(String,Double,Integer,Double,List,Double,Integer,Double)` | `flint.ai.chat.prompt.DefaultChatOptions.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#equals(Object)` | `flint.ai.chat.prompt.DefaultChatOptions.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getFrequencyPenalty()` | `flint.ai.chat.prompt.DefaultChatOptions.getFrequencyPenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -369,6 +379,24 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getTopK()` | `flint.ai.chat.prompt.DefaultChatOptions.getTopK` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getTopP()` | `flint.ai.chat.prompt.DefaultChatOptions.getTopP` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#hashCode()` | `flint.ai.chat.prompt.DefaultChatOptions.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptions#mutate()` | `flint.ai.chat.prompt.DefaultChatOptions.mutate` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#frequencyPenalty` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.frequencyPenalty_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#frequencyPenalty(Double)` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.frequencyPenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#maxTokens` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.maxTokens_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#maxTokens(Integer)` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.maxTokens` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#model` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.model_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#model(String)` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.model` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#presencePenalty` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.presencePenalty_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#presencePenalty(Double)` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.presencePenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#self()` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.self` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#stopSequences` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.stopSequences_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#temperature` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.temperature_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#temperature(Double)` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.temperature` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#topK` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.topK_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#topK(Integer)` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.topK` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#topP` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.topP_` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#topP(Double)` | `flint.ai.chat.prompt.DefaultChatOptionsBuilder.topP` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### org.springframework.ai.content
 
@@ -665,6 +693,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfTopPagesToSkipBeforeDelete(int)` | `flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfTopPagesToSkipBeforeDelete` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfTopTextLinesToDelete(int)` | `flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfTopTextLinesToDelete` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.reader.JsonMetadataGenerator#generate(Map)` | `flint.ai.reader.JsonMetadataGenerator.generate` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.reader.TextReader#<init>(String)` | `flint.ai.reader.TextReader.this` | [D-CORE-1](api-mapping.md#deviations) | The resource URL is resolved by DefaultResourceLoader (D-CORE-1). |
+| `org.springframework.ai.reader.TextReader#get()` | `flint.ai.reader.TextReader.get` | [D-8](api-mapping.md#deviations) | Read failures propagate from the resource unwrapped (no IOException); DocumentReader.read() delegates here (R3). |
+| `org.springframework.ai.reader.TextReader#getCharset()` | `flint.ai.reader.TextReader.getCharset` | [D-NET-2](api-mapping.md#deviations) | Returns the charset name as a string; the resource is decoded as UTF-8. |
+| `org.springframework.ai.reader.TextReader#getResourceIdentifier(Resource)` | `flint.ai.reader.TextReader.getResourceIdentifier` | [D-CORE-1](api-mapping.md#deviations) | Spring falls back to the resource URI then URL; those contracts are pending (D-CORE-1), so this returns the description when there is no filename. |
+| `org.springframework.ai.reader.TextReader#setCharset(Charset)` | `flint.ai.reader.TextReader.setCharset` | [D-NET-2](api-mapping.md#deviations) | Takes a charset name string; the resource is still decoded as UTF-8. |
 
 #### org.springframework.ai.template
 
@@ -10282,7 +10315,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.chat.metadata | 76 | 0 |
 | org.springframework.ai.chat.model | 59 | 0 |
 | org.springframework.ai.chat.observation | 73 | 0 |
-| org.springframework.ai.chat.prompt | 144 | 0 |
+| org.springframework.ai.chat.prompt | 111 | 0 |
 | org.springframework.ai.chroma.vectorstore | 0 | 128 |
 | org.springframework.ai.chroma.vectorstore.common | 0 | 5 |
 | org.springframework.ai.content | 21 | 0 |
@@ -10297,7 +10330,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.deepseek.api | 0 | 210 |
 | org.springframework.ai.deepseek.api.common | 0 | 5 |
 | org.springframework.ai.docker.compose.service.connection.typesense | 0 | 3 |
-| org.springframework.ai.document | 23 | 0 |
+| org.springframework.ai.document | 22 | 0 |
 | org.springframework.ai.document.id | 4 | 0 |
 | org.springframework.ai.elevenlabs | 0 | 61 |
 | org.springframework.ai.elevenlabs.aot | 0 | 3 |
@@ -10437,7 +10470,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.rag.retrieval.join | 6 | 0 |
 | org.springframework.ai.rag.retrieval.search | 15 | 0 |
 | org.springframework.ai.rag.util | 2 | 0 |
-| org.springframework.ai.reader | 20 | 0 |
+| org.springframework.ai.reader | 10 | 0 |
 | org.springframework.ai.reader.jsoup | 0 | 6 |
 | org.springframework.ai.reader.jsoup.config | 0 | 23 |
 | org.springframework.ai.reader.markdown | 0 | 6 |
@@ -12024,10 +12057,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 
 | Repo | Java | Phase | Reason |
 | --- | --- | --- | --- |
-| ai | `org.springframework.ai.chat.prompt.ChatOptions#builder()` | 2 | Requires the default chat options builder and its self-typed result. |
-| ai | `org.springframework.ai.chat.prompt.ChatOptions#mutate()` | 2 | Requires a builder that can preserve the concrete chat option settings. |
-| ai | `org.springframework.ai.chat.prompt.ChatOptions.Builder` | 2 | Requires the self-typed fluent builder contract and its implementations. |
-| ai | `org.springframework.ai.chat.prompt.DefaultChatOptions#mutate()` | 2 | Requires the self-typed ChatOptions builder. |
+| ai | `org.springframework.ai.chat.prompt.ChatOptions.Builder#clone()` | 2 | The self-typed builder copy and combine contract is not ported yet. |
+| ai | `org.springframework.ai.chat.prompt.ChatOptions.Builder#combineWith(ChatOptions.Builder)` | 2 | The self-typed builder copy and combine contract is not ported yet. |
+| ai | `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#clone()` | 2 | The self-typed builder copy and combine contract is not ported yet. |
+| ai | `org.springframework.ai.chat.prompt.DefaultChatOptionsBuilder#combineWith(ChatOptions.Builder)` | 2 | The self-typed builder copy and combine contract is not ported yet. |
 | ai | `org.springframework.ai.embedding.Embedding#<init>(float[],Integer)` | 2 | Requires the shared EmbeddingResultMetadata.EMPTY instance. |
 | ai | `org.springframework.ai.embedding.EmbeddingResultMetadata#EMPTY` | 2 | Requires a reviewed engine-aot helper to preserve shared metadata identity safely. |
 | boot | `org.springframework.boot.autoconfigure.AutoConfiguration#afterName` | 2 | Known defect. AOT ignores the direct afterName field when sorting auto-configurations. |

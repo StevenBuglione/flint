@@ -400,6 +400,14 @@ class Document
     private string id_;
     private DocumentText text_;
     private DocumentMetadataMap metadata_;
+    /// Creates a text document with a generated ID and a copy of its metadata.
+    this(DocumentText text, DocumentMetadataMap metadata)
+    {
+        import flint.ai.document.id : RandomIdGenerator;
+
+        this(new RandomIdGenerator().generateId(), text, metadata);
+    }
+
     /// Creates a text document with an explicit ID and a copy of its metadata.
     this(string id, DocumentText text, DocumentMetadataMap metadata)
     {

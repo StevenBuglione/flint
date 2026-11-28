@@ -940,5 +940,16 @@
 "org.springframework.ai.vertexai.embedding.**":{"status":"excluded","category":"deferred","phase":"3"},
 "org.springframework.ai.vertexai.embedding.multimodal.**":{"status":"excluded","category":"deferred","phase":"3"},
 "org.springframework.ai.vertexai.embedding.text.**":{"status":"excluded","category":"deferred","phase":"3"},
-"org.springframework.ai.writer.**":{"status":"excluded","category":"deferred","phase":"2"}
+"org.springframework.ai.writer.**":{"status":"excluded","category":"deferred","phase":"2"},
+"org.springframework.ai.document.Document#<init>(String,Map)":{"d":"flint.ai.document.Document.this","status":"ported"},
+"org.springframework.ai.reader.TextReader":{"d":"flint.ai.reader.TextReader","status":"ported"},
+"org.springframework.ai.reader.TextReader#CHARSET_METADATA":{"d":"flint.ai.reader.TextReader.CHARSET_METADATA","status":"ported"},
+"org.springframework.ai.reader.TextReader#SOURCE_METADATA":{"d":"flint.ai.reader.TextReader.SOURCE_METADATA","status":"ported"},
+"org.springframework.ai.reader.TextReader#<init>(String)":{"d":"flint.ai.reader.TextReader.this","rules":["D-CORE-1"],"note":"The resource URL is resolved by DefaultResourceLoader (D-CORE-1).","status":"adapted"},
+"org.springframework.ai.reader.TextReader#<init>(Resource)":{"d":"flint.ai.reader.TextReader.this","status":"ported"},
+"org.springframework.ai.reader.TextReader#getCharset()":{"d":"flint.ai.reader.TextReader.getCharset","rules":["D-NET-2"],"note":"Returns the charset name as a string; the resource is decoded as UTF-8.","status":"adapted"},
+"org.springframework.ai.reader.TextReader#setCharset(Charset)":{"d":"flint.ai.reader.TextReader.setCharset","rules":["D-NET-2"],"note":"Takes a charset name string; the resource is still decoded as UTF-8.","status":"adapted"},
+"org.springframework.ai.reader.TextReader#getCustomMetadata()":{"d":"flint.ai.reader.TextReader.getCustomMetadata","status":"ported"},
+"org.springframework.ai.reader.TextReader#get()":{"d":"flint.ai.reader.TextReader.get","rules":["D-8"],"note":"Read failures propagate from the resource unwrapped (no IOException); DocumentReader.read() delegates here (R3).","status":"adapted"},
+"org.springframework.ai.reader.TextReader#getResourceIdentifier(Resource)":{"d":"flint.ai.reader.TextReader.getResourceIdentifier","rules":["D-CORE-1"],"note":"Spring falls back to the resource URI then URL; those contracts are pending (D-CORE-1), so this returns the description when there is no filename.","status":"adapted"}
 }}

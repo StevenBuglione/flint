@@ -162,8 +162,24 @@
       "status": "deferred"
     },
     "org/springframework/ai/reader/TextReaderTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "ai/ai-commons/tests/text_reader_tests.d",
+      "methods": {
+        "ported": [
+          "closesTheResourceInputStream",
+          "customMetadataIsPreserved",
+          "loadEmptyText",
+          "loadTextFromByteArrayResource",
+          "loadTextWithMultipleNewlines",
+          "loadTextWithOnlyWhitespace",
+          "multipleCallsToGetReturnSameResult",
+          "resourceDescriptionHandling",
+          "resourceWithoutExtension"
+        ],
+        "skipped": {
+          "loadText": "Requires TokenTextSplitter from the deferred org.springframework.ai.transformer.splitter package."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/ai/template/NoOpTemplateRendererTests.java": {
       "d": "ai/ai-commons/tests/no_op_template_renderer_tests.d",

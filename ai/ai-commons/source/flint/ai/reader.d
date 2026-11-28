@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/reader/{ExtractedTextFormatter,JsonMetadataGenerator}.java
+// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/reader/{ExtractedTextFormatter,JsonMetadataGenerator,TextReader}.java
 // Modified by the Flint authors.
 module flint.ai.reader;
 
+import flint.ai.document : Document, DocumentReader;
+import flint.core.io : DefaultResourceLoader, Resource;
 import flint.engine.aot.any : Any;
-import flint.java.lang : NullPointerException;
-import flint.java.util : Map;
+import flint.java.lang : IllegalArgumentException, NullPointerException;
+import flint.java.util : HashMap, List, Map;
 import flint.util : StringUtils;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -319,4 +322,80 @@ interface JsonMetadataGenerator
 {
     /// Returns the fields to use as document metadata.
     JsonFields generate(JsonFields jsonMap);
+}
+
+/// Reads text from a `Resource` as a single text document.
+///
+/// Flint drops Java's `Charset` parameter: the resource is decoded as UTF-8, so the
+/// `charset` metadata is always `UTF-8` (docs/spring/java-differences.md). D has no
+/// checked exceptions, so a read failure propagates from the resource unwrapped.
+class TextReader : DocumentReader
+{
+    /// Metadata key holding the charset used to decode the resource.
+    enum string CHARSET_METADATA = "charset";
+
+    /// Metadata key holding the resource identifier (its filename, else its description).
+    enum string SOURCE_METADATA = "source";
+
+    private Resource resource_;
+    private Map!(string, Any) customMetadata_;
+    private string charset_ = "UTF-8";
+
+    mixin DocumentReader.Defaults;
+
+    /// Reads the resource loaded from `resourceUrl` by the default resource loader.
+    this(string resourceUrl)
+    {
+        this(new DefaultResourceLoader().getResource(resourceUrl));
+    }
+
+    /// Reads text from `resource`.
+    this(Resource resource)
+    {
+        if (resource is null)
+            throw new IllegalArgumentException("The Spring Resource must not be null");
+        resource_ = resource;
+        customMetadata_ = new HashMap!(string, Any)();
+    }
+
+    /// The charset name; always `UTF-8` (Java's `Charset` parameter is dropped).
+    string getCharset() const pure nothrow @nogc
+    {
+        return charset_;
+    }
+
+    /// Sets the charset name. The resource is still decoded as UTF-8 (R20).
+    void setCharset(string charset)
+    {
+        if (charset is null)
+            throw new IllegalArgumentException("The charset must not be null");
+        charset_ = charset;
+    }
+
+    /// The metadata assigned to every document this reader produces. Callers may mutate it.
+    Map!(string, Any) getCustomMetadata()
+    {
+        return customMetadata_;
+    }
+
+    /// Reads the whole resource into one document with the source and charset metadata.
+    override List!Document get()
+    {
+        const document = resource_.getContentAsString();
+        customMetadata_.put(CHARSET_METADATA, Any.of(charset_));
+        customMetadata_.put(SOURCE_METADATA, Any.of(getResourceIdentifier(resource_)));
+        return List!Document.of(new Document(Nullable!string(document), customMetadata_));
+    }
+
+    /// The resource's filename when it has one, else its description.
+    ///
+    /// Spring falls back to the URI then the URL; Flint's `Resource` excludes both
+    /// (jvm-platform), so this returns the description directly.
+    protected string getResourceIdentifier(Resource resource)
+    {
+        const filename = resource.getFilename();
+        if (filename !is null && filename.length)
+            return filename;
+        return resource.getDescription();
+    }
 }
