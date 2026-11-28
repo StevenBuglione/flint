@@ -12,7 +12,7 @@ import flint.java.util.concurrent : TimeUnit, convert, toNanos;
 import flint.java.util.concurrent.cancellationexception : CancellationException;
 import flint.java.util.concurrent.delayed : Delayed;
 import flint.java.util.concurrent.executionexception : ExecutionException;
-import flint.java.util.concurrent.executorservice : ExecutorService;
+import flint.java.util.concurrent.executorservice : ExecutorService, closeService;
 import flint.java.util.concurrent.future : Future;
 import flint.java.util.concurrent.futuretask : FutureTask;
 import flint.java.util.concurrent.scheduledfuture : RunnableScheduledFuture;
@@ -95,6 +95,16 @@ private final class Scheduler : ExecutorService
     override bool isTerminated()
     {
         return atomicLoad(finished);
+    }
+
+    override bool awaitTermination(long timeout, TimeUnit unit)
+    {
+        return isTerminated();
+    }
+
+    override void close()
+    {
+        closeService(this);
     }
 
     void schedule(Runnable command, long delayNanos)

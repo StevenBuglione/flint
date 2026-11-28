@@ -7,7 +7,7 @@ import flint.arena : Status;
 import flint.conc : Deadline;
 import flint.conc.park : park, wakeAll;
 import flint.engine.reactor : Backend, ReactorOptions;
-import flint.java.lang : NullPointerException;
+import flint.java.lang : IllegalArgumentException, NullPointerException;
 import flint.java.lang.runnable : Runnable;
 import flint.java.util : ArrayList, Collection;
 import flint.java.util.concurrent : TimeUnit;
@@ -18,11 +18,12 @@ import flint.java.util.concurrent.executor : Executor;
 import flint.java.util.concurrent.executorservice : ExecutorService, OffloadExecutorService;
 import flint.java.util.concurrent.future : Future;
 import flint.java.util.concurrent.rejectedexecutionexception : RejectedExecutionException;
+import flint.java.util.concurrent.timeoutexception : TimeoutException;
 import std.exception : assertThrown;
 
 @safe:
 
-private ReactorOptions options()
+private ReactorOptions options(uint offloadThreads = 1)
 {
     ReactorOptions result;
     version (ServiceIoUring)
@@ -32,7 +33,7 @@ private ReactorOptions options()
     result.cores = 1;
     result.fiberPoolSize = 2;
     result.mailboxCapacity = 4;
-    result.offloadThreads = 1;
+    result.offloadThreads = offloadThreads;
     return result;
 }
 
@@ -447,4 +448,295 @@ unittest
     assert(service.invokeAll(new ArrayList!(Callable!int)()).isEmpty());
     assertThrown!NullPointerException(service.invokeAll(cast(Collection!(Callable!int)) null));
     assertThrown!NullPointerException(service.invokeAll(cast(Collection!(Callable!int)) null, 1, TimeUnit.SECONDS));
+}
+
+@("invokeAny returns the successful task's result and cancels the failures")
+@system unittest
+{
+    auto host = new OffloadExecutorService(3, options());
+    ExecutorService service = host;
+    auto tasks = callables(new FailingCall, new Doubling(21), new FailingCall);
+
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        host.requestStop();
+        driver.join();
+    }
+
+    assert(service.invokeAny(tasks) == 42);
+}
+
+@("invokeAny returns a fast success while an earlier task is still blocked")
+@system unittest
+{
+    auto host = new OffloadExecutorService(2, options(2));
+    ExecutorService service = host;
+    auto blocked = new BlockingCall;
+    auto tasks = callables(blocked, new Doubling(3));
+
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        blocked.release();
+        host.requestStop();
+        driver.join();
+    }
+
+    const started = Deadline.afterMillis(0).monotonicNanoseconds;
+    assert(service.invokeAny(tasks) == 6);
+    const elapsed = Deadline.afterMillis(0).monotonicNanoseconds - started;
+    assert(elapsed < 5_000_000_000L);
+    assert(atomicLoad(blocked.started) == 1);
+}
+
+@("invokeAny reports the last failure when every task fails")
+@system unittest
+{
+    auto host = new OffloadExecutorService(2, options());
+    ExecutorService service = host;
+    auto tasks = callables(new FailingCall, new FailingCall);
+
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        host.requestStop();
+        driver.join();
+    }
+
+    assertThrown!ExecutionException(service.invokeAny(tasks));
+}
+
+@("timed invokeAny returns a success before the deadline")
+@system unittest
+{
+    auto host = new OffloadExecutorService(2, options());
+    ExecutorService service = host;
+    auto tasks = callables(new FailingCall, new Doubling(5));
+
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        host.requestStop();
+        driver.join();
+    }
+
+    assert(service.invokeAny(tasks, 5, TimeUnit.SECONDS) == 10);
+}
+
+@("timed invokeAny throws TimeoutException and cancels the unfinished tasks")
+@system unittest
+{
+    auto host = new OffloadExecutorService(1, options());
+    ExecutorService service = host;
+    auto blocked = new BlockingCall;
+    auto tasks = callables(blocked);
+
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        blocked.release();
+        host.requestStop();
+        driver.join();
+    }
+
+    const started = Deadline.afterMillis(0).monotonicNanoseconds;
+    assertThrown!TimeoutException(service.invokeAny(tasks, 50, TimeUnit.MILLISECONDS));
+    const elapsed = Deadline.afterMillis(0).monotonicNanoseconds - started;
+    assert(elapsed >= 50_000_000L);
+}
+
+@("invokeAny rejects empty and null task collections and a null element")
+unittest
+{
+    ExecutorService service = new OffloadExecutorService(1, options());
+    assertThrown!IllegalArgumentException(service.invokeAny(new ArrayList!(Callable!int)()));
+    assertThrown!IllegalArgumentException(service.invokeAny(new ArrayList!(Callable!int)(), 1, TimeUnit.SECONDS));
+    assertThrown!NullPointerException(service.invokeAny(cast(Collection!(Callable!int)) null));
+    assertThrown!NullPointerException(service.invokeAny(cast(Collection!(Callable!int)) null, 1, TimeUnit.SECONDS));
+    assertThrown!NullPointerException(service.invokeAny(callables(cast(Callable!int) null)));
+}
+
+@("invokeAny wakes and throws when another thread interrupts the waiter")
+@system unittest
+{
+    import flint.java.lang.interruptedexception : InterruptedException;
+    import flint.java.lang.thread : JavaThread = Thread;
+
+    auto host = new OffloadExecutorService(1, options());
+    ExecutorService service = host;
+    auto blocked = new BlockingCall;
+    auto tasks = callables(blocked);
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        blocked.release();
+        service.shutdownNow();
+        driver.join();
+    }
+
+    __gshared JavaThread waiter;
+    __gshared bool started;
+    __gshared bool interrupted;
+    __gshared bool flagCleared;
+    auto worker = new Thread({
+        auto self = JavaThread.currentThread();
+        waiter = self;
+        atomicStore(started, true);
+        try
+            service.invokeAny(tasks);
+        catch (InterruptedException)
+        {
+            interrupted = true;
+            flagCleared = !self.isInterrupted();
+        }
+    });
+    worker.start();
+    while (!atomicLoad(started))
+        Thread.yield();
+    while (atomicLoad(blocked.started) == 0)
+        Thread.yield();
+    waiter.interrupt();
+    worker.join();
+
+    assert(interrupted, "the waiter must observe the interrupt instead of waiting for the task");
+    assert(flagCleared, "Java clears the flag when invokeAny throws");
+}
+
+@("awaitTermination reports termination after the driven reactor exits")
+@system unittest
+{
+    auto host = new OffloadExecutorService(1, options());
+    ExecutorService service = host;
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    service.shutdown();
+    assert(service.awaitTermination(5, TimeUnit.SECONDS));
+    assert(service.isTerminated());
+    driver.join();
+}
+
+@("awaitTermination times out while the service is still running")
+@system unittest
+{
+    auto host = new OffloadExecutorService(1, options());
+    ExecutorService service = host;
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        service.shutdownNow();
+        driver.join();
+    }
+
+    const started = Deadline.afterMillis(0).monotonicNanoseconds;
+    assert(!service.awaitTermination(50, TimeUnit.MILLISECONDS));
+    const elapsed = Deadline.afterMillis(0).monotonicNanoseconds - started;
+    assert(elapsed >= 50_000_000L);
+    assert(!service.isShutdown());
+}
+
+@("awaitTermination returns at once for a terminated service")
+unittest
+{
+    auto service = new OffloadExecutorService(1, options());
+    service.shutdownNow();
+    assert(service.isTerminated());
+    assert(service.awaitTermination(0, TimeUnit.NANOSECONDS));
+    assert(service.awaitTermination(-1, TimeUnit.SECONDS));
+}
+
+@("awaitTermination throws InterruptedException when the calling thread is already interrupted")
+unittest
+{
+    import flint.java.lang.interruptedexception : InterruptedException;
+    import flint.java.lang.thread : JavaThread = Thread;
+
+    auto service = new OffloadExecutorService(1, options());
+    JavaThread.currentThread().interrupt();
+    try
+    {
+        service.awaitTermination(1, TimeUnit.SECONDS);
+        assert(false, "awaitTermination must throw InterruptedException");
+    }
+    catch (InterruptedException)
+    {
+    }
+    assert(!JavaThread.currentThread().isInterrupted());
+    service.shutdownNow();
+}
+
+@("awaitTermination wakes and throws when another thread interrupts the waiter")
+@system unittest
+{
+    import flint.java.lang.interruptedexception : InterruptedException;
+    import flint.java.lang.thread : JavaThread = Thread;
+
+    auto host = new OffloadExecutorService(1, options());
+    ExecutorService service = host;
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        service.shutdownNow();
+        driver.join();
+    }
+
+    __gshared JavaThread waiter;
+    __gshared bool started;
+    __gshared bool interrupted;
+    __gshared bool flagCleared;
+    auto worker = new Thread({
+        auto self = JavaThread.currentThread();
+        waiter = self;
+        atomicStore(started, true);
+        try
+            service.awaitTermination(10, TimeUnit.SECONDS);
+        catch (InterruptedException)
+        {
+            interrupted = true;
+            flagCleared = !self.isInterrupted();
+        }
+    });
+    worker.start();
+    while (!atomicLoad(started))
+        Thread.yield();
+    waiter.interrupt();
+    worker.join();
+
+    assert(interrupted, "the waiter must observe the interrupt instead of the timeout");
+    assert(flagCleared, "Java clears the flag when awaitTermination throws");
+    assert(!service.isTerminated());
+}
+
+@("close returns for an already terminated service")
+unittest
+{
+    auto service = new OffloadExecutorService(1, options());
+    service.shutdownNow();
+    assert(service.isTerminated());
+    service.close();
+}
+
+@("close shuts down a running service and returns after termination")
+@system unittest
+{
+    auto host = new OffloadExecutorService(1, options());
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    host.close();
+    assert(host.isShutdown() && host.isTerminated());
+    driver.join();
+}
+
+@("close escalates an interrupt to shutdownNow once and restores the flag")
+unittest
+{
+    import flint.java.lang.thread : JavaThread = Thread;
+
+    auto service = new OffloadExecutorService(1, options());
+    auto task = new Work;
+    service.execute(task);
+    JavaThread.currentThread().interrupt();
+    service.close();
+    assert(service.isShutdown() && service.isTerminated());
+    assert(JavaThread.currentThread().isInterrupted());
+    assert(JavaThread.interrupted());
+    assert(task.data is null);
 }

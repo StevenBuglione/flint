@@ -315,3 +315,54 @@ unittest
     service.shutdownNow();
     awaitTermination(service);
 }
+
+@("scheduled awaitTermination waits for the worker to finish after shutdown")
+unittest
+{
+    auto service = new OffloadScheduledExecutorService;
+    service.schedule(new Value(1), 10, TimeUnit.MILLISECONDS).get(5, TimeUnit.SECONDS);
+    service.shutdown();
+    assert(service.awaitTermination(5, TimeUnit.SECONDS));
+    assert(service.isTerminated());
+}
+
+@("scheduled awaitTermination times out while the worker is running")
+unittest
+{
+    auto service = new OffloadScheduledExecutorService;
+    scope (exit)
+        service.shutdownNow();
+    const started = Deadline.afterMillis(0).monotonicNanoseconds;
+    assert(!service.awaitTermination(50, TimeUnit.MILLISECONDS));
+    assert(Deadline.afterMillis(0).monotonicNanoseconds - started >= 50_000_000L);
+    assert(!service.isShutdown());
+}
+
+@("scheduled close shuts the worker down and returns after termination")
+unittest
+{
+    auto service = new OffloadScheduledExecutorService;
+    service.close();
+    assert(service.isShutdown() && service.isTerminated());
+}
+
+@("scheduled awaitTermination throws InterruptedException when the thread is already interrupted")
+unittest
+{
+    import flint.java.lang.interruptedexception : InterruptedException;
+    import flint.java.lang.thread : JavaThread = Thread;
+
+    auto service = new OffloadScheduledExecutorService;
+    scope (exit)
+        service.shutdownNow();
+    JavaThread.currentThread().interrupt();
+    try
+    {
+        service.awaitTermination(1, TimeUnit.SECONDS);
+        assert(false, "awaitTermination must throw InterruptedException");
+    }
+    catch (InterruptedException)
+    {
+    }
+    assert(!JavaThread.currentThread().isInterrupted());
+}

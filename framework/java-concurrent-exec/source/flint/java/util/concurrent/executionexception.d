@@ -38,6 +38,13 @@ class ExecutionException : Exception
         this(cause is null ? null : describeCause(cause), cause);
     }
 
+    /// Java's package-private `new ExecutionException()`: `AbstractExecutorService` reports "no task succeeded"
+    /// with a bare instance when nothing else failed.
+    package(flint.java.util.concurrent) static ExecutionException withoutCause()
+    {
+        return new ExecutionException();
+    }
+
     string getMessage() const pure nothrow @nogc
     {
         return msg;
