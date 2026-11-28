@@ -2189,6 +2189,7 @@
     "flint.java.util.random",
     "flint.java.util.random.random",
     "flint.java.util.random.randomgenerator",
+    "flint.java.util.scanner",
     "flint.java.util.splittablerandom",
     "flint.java.util.stringjoiner"
    ],
@@ -2210,9 +2211,9 @@
     "dmd_incremental_seconds": 0.6,
     "ldc_cold_seconds": 5.4,
     "ldc_incremental_seconds": 2.7,
-    "incremental_linked_bytes": 31850,
+    "incremental_linked_bytes": 43726,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 1347
+    "template_instances": 1600
    },
    "provisional": [
     "dmd_cold_seconds",

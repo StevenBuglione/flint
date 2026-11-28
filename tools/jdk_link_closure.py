@@ -143,6 +143,21 @@ FIRST_OBJECT_ALLOWANCES = {
             '__minfo': 8,
         },
     },
+    ('java-util', 'flint.java.util.scanner', 'tokens'): {
+        'profiles': ('O3', 'Oz'),
+        'module': 'flint.java.util.hexformat',
+        'member': 'flint.java.util.hexformat.o',
+        'referrer': 'flint.java.util.scanner.o',
+        'trigger': '_D6object__T10RTInfoImplVAmA2i49i16ZQyyG2m',
+        'sections': {
+            '.rodata._D6object__T10RTInfoImplVAmA2i49i16ZQyyG2m': 16,
+            '.data._D5flint4java4util9hexformat12__ModuleInfoZ': 36,
+            '__minfo': 8,
+            '.text._D4core10checkedint__T4muluZQgFNaNbNiNfmmKbZm': 15,
+            '.text._D4core8internal5array5utils__T12__arrayAllocTaZQrFNaNbNemZAv': 36,
+            '.eh_frame': 48,
+        },
+    },
 }
 # Keep the reviewed row and its seeding mode as history when the live allowance is retired.
 FIRST_OBJECT_ROWS = {

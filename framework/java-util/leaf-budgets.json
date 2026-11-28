@@ -11,6 +11,10 @@
     "incremental_linked_bytes": 1972,
     "template_instances": 33
   },
+  "flint.java.util.scanner": {
+    "incremental_linked_bytes": 11876,
+    "template_instances": 253
+  },
   "flint.java.util.splittablerandom": {
     "incremental_linked_bytes": 4240,
     "template_instances": 40
