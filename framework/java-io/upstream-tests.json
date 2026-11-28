@@ -986,20 +986,24 @@
       "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/SequenceInputStream/Close.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers the original Flint test covers close closing both component streams and the sequence becoming exhausted.",
+      "covered_by": "framework/java-io/tests/sequence_input_stream_contract_test.d"
     },
     "java/io/SequenceInputStream/ConstructorNull.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers the original Flint test covers the null-first-stream NullPointerException and the null-second-stream failure when it is reached.",
+      "covered_by": "framework/java-io/tests/sequence_input_stream_contract_test.d"
     },
     "java/io/SequenceInputStream/LotsOfStreams.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers the original Flint test covers ranged reads crossing the two-stream boundary without recursion; the Enumeration form is deferred with Enumeration.",
+      "covered_by": "framework/java-io/tests/sequence_input_stream_contract_test.d"
     },
     "java/io/SequenceInputStream/TransferTo.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers the original Flint test covers transferTo copying both streams, returning zero when exhausted, and rejecting a null sink only while bytes remain.",
+      "covered_by": "framework/java-io/tests/sequence_input_stream_contract_test.d"
     },
     "java/io/Serializable/ClassCastExceptionDetail/Write.java": {
       "status": "deferred",

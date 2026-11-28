@@ -2182,6 +2182,126 @@ class ByteArrayInputStream : InputStream
     }
 }
 
+/// Java's `SequenceInputStream`: the bytes of two streams in order.
+class SequenceInputStream : InputStream
+{
+    private InputStream in_;
+    private InputStream[2] sources_;
+    private size_t nextIndex_;
+    private bool hasNext_;
+
+    alias read = InputStream.read;
+
+    /// The bytes of `s1`, then `s2`. A null first stream is rejected at once.
+    this(InputStream s1, InputStream s2)
+    {
+        sources_[0] = s1;
+        sources_[1] = s2;
+        hasNext_ = true;
+        nextStream();
+    }
+
+    private void nextStream()
+    {
+        import flint.java.lang : NullPointerException;
+
+        if (in_ !is null)
+            in_.close();
+        if (!hasNext_)
+        {
+            in_ = null;
+            return;
+        }
+        in_ = sources_[nextIndex_];
+        ++nextIndex_;
+        hasNext_ = nextIndex_ < sources_.length;
+        if (in_ is null)
+            throw new NullPointerException("stream");
+    }
+
+    override int read()
+    {
+        for (;;)
+        {
+            if (in_ is null)
+                return -1;
+            const value = in_.read();
+            if (value != -1)
+                return value;
+            nextStream();
+        }
+    }
+
+    override int read(scope ubyte[] buffer, int offset, int length)
+    {
+        checkReadRange(buffer.length, offset, length);
+        if (in_ is null)
+            return -1;
+        if (length == 0)
+            return 0;
+        do
+        {
+            const count = in_.read(buffer, offset, length);
+            if (count > 0)
+                return count;
+            nextStream();
+        }
+        while (in_ !is null);
+        return -1;
+    }
+
+    /// The current stream's available count, or zero when none remains.
+    override int available()
+    {
+        if (in_ is null)
+            return 0;
+        try
+            return in_.available();
+        catch (IOException)
+            return 0;
+    }
+
+    /// Close the current stream and every stream that follows it.
+    override void close()
+    {
+        while (in_ !is null)
+        {
+            in_.close();
+            if (!hasNext_)
+            {
+                in_ = null;
+                break;
+            }
+            in_ = sources_[nextIndex_];
+            ++nextIndex_;
+            hasNext_ = nextIndex_ < sources_.length;
+        }
+    }
+
+    /// Copy the sequence to `target`; zero when it is already exhausted.
+    override long transferTo(OutputStream target)
+    {
+        if (in_ is null)
+            return 0;
+        import flint.java.lang : NullPointerException;
+
+        if (target is null)
+            throw new NullPointerException("out");
+        enum int chunkSize = 8192;
+        ubyte[chunkSize] chunk;
+        long transferred;
+        for (;;)
+        {
+            const count = read(chunk[]);
+            if (count < 0)
+                break;
+            target.write(chunk[0 .. count], 0, count);
+            transferred += count;
+        }
+        return transferred;
+    }
+}
+
 /// Java's `File`: a filesystem path.
 class File
 {
