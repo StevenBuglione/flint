@@ -74,5 +74,10 @@
   "flint.java.lang.long_": {
     "incremental_linked_bytes": 2711,
     "template_instances": 70
+  },
+  "flint.java.util.toomanylistenersexception": {
+    "incremental_linked_bytes": 2759,
+    "template_instances": 36,
+    "control": "tools/jdk-closure-controls/d-exception.d"
   }
 }
