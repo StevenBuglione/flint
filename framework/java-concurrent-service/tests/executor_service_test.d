@@ -9,8 +9,12 @@ import flint.conc.park : park, wakeAll;
 import flint.engine.reactor : Backend, ReactorOptions;
 import flint.java.lang : NullPointerException;
 import flint.java.lang.runnable : Runnable;
+import flint.java.util.concurrent.callable : Callable;
+import flint.java.util.concurrent.cancellationexception : CancellationException;
+import flint.java.util.concurrent.executionexception : ExecutionException;
 import flint.java.util.concurrent.executor : Executor;
 import flint.java.util.concurrent.executorservice : ExecutorService, OffloadExecutorService;
+import flint.java.util.concurrent.future : Future;
 import flint.java.util.concurrent.rejectedexecutionexception : RejectedExecutionException;
 import std.exception : assertThrown;
 
@@ -258,4 +262,91 @@ private void waitForStart(BlockingWork active)
     auto pending = service.shutdownNow();
     assert(pending.size() == 2 && pending.get(0) is waitingForWorker && pending.get(1) is waitingForFiber);
     assert(!service.isTerminated());
+}
+
+private final class Doubling : Callable!int
+{
+    private int input;
+
+    this(int input)
+    {
+        this.input = input;
+    }
+
+    override int call()
+    {
+        return input * 2;
+    }
+}
+
+private final class FailingCall : Callable!int
+{
+    override int call()
+    {
+        throw new Exception("callable failure");
+    }
+}
+
+@("submit returns owned futures for Callable, Runnable with a result, and Runnable")
+unittest
+{
+    auto host = new OffloadExecutorService(3, options());
+    ExecutorService service = host;
+    Future!int doubled = service.submit(new Doubling(21));
+    Future!string labelled = service.submit(new Work, "done");
+    Future!Object empty = service.submit(new Work);
+    assert(!doubled.isDone() && !labelled.isDone() && !empty.isDone());
+
+    service.shutdown();
+    assert(host.run().code == Status.ok);
+    assert(doubled.get() == 42 && labelled.get() == "done" && empty.get() is null);
+    assert(doubled.isDone() && labelled.isDone() && empty.isDone());
+}
+
+@("submit publishes a task's failure through its future")
+unittest
+{
+    auto host = new OffloadExecutorService(2, options());
+    ExecutorService service = host;
+    Future!int failed = service.submit(new FailingCall);
+    Future!Object runner = service.submit(new Work(new Exception("runner failure")));
+
+    service.shutdown();
+    assert(host.run().code == Status.ok);
+    ExecutionException caught;
+    try
+        failed.get();
+    catch (ExecutionException failure)
+        caught = failure;
+    assert(caught !is null);
+    auto cause = caught.getCause();
+    assert((cast(Exception) cause) !is null && (cast(Exception) cause).msg == "callable failure");
+    assertThrown!ExecutionException(runner.get());
+}
+
+@("a submitted future can be cancelled before its task starts")
+unittest
+{
+    auto host = new OffloadExecutorService(1, options());
+    ExecutorService service = host;
+    auto future = service.submit(new Doubling(1));
+    assert(!future.isDone());
+    assert(future.cancel(true));
+    assert(future.isCancelled());
+
+    service.shutdown();
+    assert(host.run().code == Status.ok);
+    assertThrown!CancellationException(future.get());
+    assert(future.isDone() && future.isCancelled());
+}
+
+@("submit rejects a null task and a task after shutdown")
+unittest
+{
+    auto service = new OffloadExecutorService(1, options());
+    assertThrown!NullPointerException(service.submit(cast(Callable!int) null));
+    assertThrown!NullPointerException(service.submit(cast(Runnable) null));
+    service.shutdownNow();
+    assertThrown!RejectedExecutionException(service.submit(new Doubling(1)));
+    assertThrown!RejectedExecutionException(service.submit(new Work));
 }
