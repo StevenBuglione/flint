@@ -1,5 +1,5 @@
 {
   "source": "closure/numbered-captures.d",
-  "leaves": [],
+  "leaves": ["flint.java.util.regex.internal.engine"],
   "data": []
 }
