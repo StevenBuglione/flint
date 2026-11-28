@@ -1,0 +1,8 @@
+name "probe-java-base64"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-java-base64"
+dflags "-preview=dip1000"
+dependency "flint:java-base64" path="../../.."

@@ -466,6 +466,39 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-base64": {
+   "directory": "framework/java-base64",
+   "module": "flint.java.util.base64",
+   "java_types": ["java.util.Base64"],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "engine-aot",
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-base64/bench",
+    "baseline": "framework/java-base64/bench/baseline",
+    "edit_source": "framework/java-base64/source/flint/java/util/base64.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 16540,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 312
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java-collections": {
    "directory": "framework/java-collections",
    "module": "flint.java.util.bitset",
@@ -1968,7 +2001,6 @@
    "directory": "framework/java-util",
    "module": "flint.java.util.uuid",
    "also": [
-    "flint.java.util.base64",
     "flint.java.util.hexformat",
     "flint.java.util.random",
     "flint.java.util.random.random",

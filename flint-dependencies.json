@@ -331,6 +331,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-base64": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-collections": {
       "repo": "framework",
       "version": "monorepo"

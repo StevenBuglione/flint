@@ -7086,6 +7086,12 @@
       "java/time/test/java/time/zone/TestZoneRulesProvider.java",
       "java/time/test/java/util/TestFormatter.java"
     ],
+    "java-base64": [
+      "java/util/Base64/Base64GetEncoderTest.java",
+      "java/util/Base64/TestBase64.java",
+      "java/util/Base64/TestBase64Golden.java",
+      "java/util/Base64/TestEncodingDecodingLength.java"
+    ],
     "java-util": [
       "java/util/AbstractCollection/ToArrayTest.java",
       "java/util/AbstractCollection/ToString.java",
@@ -7122,10 +7128,6 @@
       "java/util/Arrays/TimSortStackSize.java",
       "java/util/Arrays/TimSortStackSize2.java",
       "java/util/Arrays/largeMemory/ParallelPrefix.java",
-      "java/util/Base64/Base64GetEncoderTest.java",
-      "java/util/Base64/TestBase64.java",
-      "java/util/Base64/TestBase64Golden.java",
-      "java/util/Base64/TestEncodingDecodingLength.java",
       "java/util/Calendar/BuddhistCalendarTest.java",
       "java/util/Calendar/Bug4302966.java",
       "java/util/Calendar/Bug4766302.java",

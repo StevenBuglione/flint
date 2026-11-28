@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,001 | 730 | 0 | 1,921 | 13,769 |
+| framework | openjdk@21.0.13 | 2,010 | 738 | 0 | 1,921 | 13,752 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2839,6 +2839,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.AbstractList#lastIndexOf(Object)` | `flint.java.util.AbstractList.lastIndexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.ArrayList#toArray()` | `flint.java.util.ArrayList.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Arrays#toString(Object[])` | `flint.java.util.Arrays.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Base64` | `flint.java.util.base64.Base64` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import from flint.java.util.base64; flint.java.util does not re-export it until the JDK aggregate exists. Under R26, null byte-array and string slices behave as empty inputs. Java throws NullPointerException. |
+| `java.util.Base64#getMimeEncoder(int,byte[])` | `flint.java.util.base64.Base64.getMimeEncoder` | [R26](api-mapping.md#r26-null-arrays) | The encoder keeps its own copy of the separator; Java keeps the caller's array. |
+| `java.util.Base64.Decoder#decode(String)` | `flint.java.util.base64.Base64.Decoder.decode` | [R26](api-mapping.md#r26-null-arrays) | The UTF-8 string is read as Java's ISO-8859-1 bytes: a code point above U+00FF, or a malformed sequence, becomes '?'. |
+| `java.util.Base64.Decoder#decode(byte[])` | `flint.java.util.base64.Base64.Decoder.decode` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Base64.Decoder#decode(byte[],byte[])` | `flint.java.util.base64.Base64.Decoder.decode` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Base64.Encoder#encode(byte[])` | `flint.java.util.base64.Base64.Encoder.encode` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Base64.Encoder#encode(byte[],byte[])` | `flint.java.util.base64.Base64.Encoder.encode` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Base64.Encoder#encodeToString(byte[])` | `flint.java.util.base64.Base64.Encoder.encodeToString` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.BitSet` | `flint.java.util.bitset.BitSet` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.bitset. Re-exporting from the lower-tier flint.java.util module would create a DUB dependency cycle. A null array argument counts as empty under R26. Java throws NullPointerException. |
 | `java.util.BitSet#clone()` | `flint.java.util.bitset.BitSet.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.BitSet#equals(Object)` | `flint.java.util.bitset.BitSet.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -11084,7 +11092,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,878 | 0 |
+| java.util | 1,861 | 0 |
 | java.util.concurrent | 1,198 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -12353,6 +12361,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.temporal.ValueRange#checkValidValue(long,TemporalField)` | 2 | Requires TemporalField. |
 | framework | `java.util.AbstractList#subList(int,int)` | 2 | Java returns a backed range and invalidates it after structural modification of the parent. The current implementation returns a copy and throws IndexOutOfBoundsException for a reversed range. |
 | framework | `java.util.Arrays#asList(T...)` | 2 | Java returns a fixed-size view backed by the supplied array. The current fixed-size copy loses writes in both directions. A null D array counts as empty under R26. |
+| framework | `java.util.Base64.Decoder#decode(ByteBuffer)` | 2 | Needs flint:java-util to depend on flint:java-nio-buffers for flint.java.nio.bytebuffer.ByteBuffer, which java-util does not import yet. |
+| framework | `java.util.Base64.Decoder#wrap(InputStream)` | 2 | The decoding InputStream needs java.io.InputStream, whose Closeable interface is pending. |
+| framework | `java.util.Base64.Encoder#encode(ByteBuffer)` | 2 | Needs flint:java-util to depend on flint:java-nio-buffers for flint.java.nio.bytebuffer.ByteBuffer, which java-util does not import yet. |
+| framework | `java.util.Base64.Encoder#wrap(OutputStream)` | 2 | The encoding OutputStream needs java.io.OutputStream, whose Closeable and Flushable interfaces are pending. |
 | framework | `java.util.Collections#emptyList()` | 2 | Java permits no-op clear, removal of a missing element and removeIf on this empty factory result. The existing result throws UnsupportedOperationException. |
 | framework | `java.util.Collections#emptyMap()` | 2 | Java permits no-op clear and removal of a missing key on this empty factory result. The existing result throws UnsupportedOperationException. |
 | framework | `java.util.Collections#emptySet()` | 2 | Java permits no-op clear, removal of a missing element and removeIf on this empty factory result. The existing result throws UnsupportedOperationException. |

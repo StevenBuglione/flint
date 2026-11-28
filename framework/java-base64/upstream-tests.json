@@ -1,0 +1,34 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "module": "java-base64",
+  "upstream": "openjdk@21.0.13",
+  "test_packages": [
+    ":java-base64"
+  ],
+  "flint_tests": [
+    "framework/java-base64/tests/base64_test.d"
+  ],
+  "note": "Base64Oracle.java generates the Base64 encoder, decoder and MIME line-separator cases.",
+  "classes": {
+    "java/util/Base64/Base64GetEncoderTest.java": {
+      "phase": "2",
+      "reason": "Upstream jtreg file is GPL-2.0-only without the Classpath Exception. Original Flint tests cover the Base64 specification and Temurin parity (tools/Base64Oracle.java).",
+      "status": "deferred"
+    },
+    "java/util/Base64/TestBase64.java": {
+      "phase": "2",
+      "reason": "Upstream jtreg file is GPL-2.0-only without the Classpath Exception. Original Flint tests cover the Base64 specification and Temurin parity (tools/Base64Oracle.java).",
+      "status": "deferred"
+    },
+    "java/util/Base64/TestBase64Golden.java": {
+      "phase": "2",
+      "reason": "Upstream jtreg file is GPL-2.0-only without the Classpath Exception. Original Flint tests cover the Base64 specification and Temurin parity (tools/Base64Oracle.java).",
+      "status": "deferred"
+    },
+    "java/util/Base64/TestEncodingDecodingLength.java": {
+      "phase": "2",
+      "reason": "Upstream jtreg file is GPL-2.0-only without the Classpath Exception. Original Flint tests cover the Base64 specification and Temurin parity (tools/Base64Oracle.java).",
+      "status": "deferred"
+    }
+  }
+}

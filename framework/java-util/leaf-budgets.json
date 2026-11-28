@@ -24,9 +24,5 @@
     "template_instances": 634,
     "control": "framework/java-util/bench/baseline/source/app.d",
     "template_compile": "separate"
-  },
-  "flint.java.util.base64": {
-    "incremental_linked_bytes": 16540,
-    "template_instances": 312
   }
 }

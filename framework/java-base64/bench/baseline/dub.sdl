@@ -1,0 +1,7 @@
+name "probe-java-base64-baseline"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-java-base64-baseline"
+dflags "-preview=dip1000"
