@@ -18,6 +18,7 @@ import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.java.lang : IllegalArgumentException;
 import flint.java.util : Collections, LinkedHashMap, Map;
 import flint.web.util.pattern : PathPattern, PathPatternParser;
+import flint.web.util.request_path : cachedLookupPath, lookupPath;
 import std.typecons : Nullable, nullable;
 
 @safe:
@@ -859,6 +860,13 @@ class UrlBasedCorsConfigurationSource : CorsConfigurationSource
     }
 
     private Entry[] entries;
+    private bool allowInitLookupPath = true;
+
+    /// Whether `getCorsConfiguration` resolves the request's path (Spring's `setAllowInitLookupPath`).
+    void setAllowInitLookupPath(bool allowInitLookupPath) pure nothrow @nogc
+    {
+        this.allowInitLookupPath = allowInitLookupPath;
+    }
 
     /// Registers `config` for `pattern`.
     void registerCorsConfiguration(string pattern, CorsConfiguration config)
@@ -883,12 +891,7 @@ class UrlBasedCorsConfigurationSource : CorsConfigurationSource
 
     CorsConfiguration getCorsConfiguration(HttpServletRequest request)
     {
-        auto path = request.getRequestURI();
-        const contextPath = request.getContextPath();
-        const underContext = contextPath.length != 0 && path.length >= contextPath.length
-            && path[0 .. contextPath.length] == contextPath;
-        if (underContext)
-            path = path[contextPath.length .. $];
+        const path = allowInitLookupPath ? lookupPath(request) : cachedLookupPath(request);
         foreach (entry; entries)
             if (entry.pattern.matches(path))
                 return entry.config;

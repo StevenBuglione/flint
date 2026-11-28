@@ -11,13 +11,13 @@ Modified by the Flint authors: translated to D under the rulebook. CORS processi
 +/
 module flint.web.servlet.handler;
 
-import flint.engine.aot.any : Any;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.web.cors : CorsConfiguration, CorsConfigurationSource, CorsProcessor, CorsUtils, DefaultCorsProcessor;
 import flint.web.servlet : HandlerExceptionResolver, HandlerExecutionChain, HandlerInterceptor,
     HandlerMapping, ModelAndView;
 import flint.web.servlet.resource : HttpRequestHandler;
-import flint.web.util.pattern : PathContainer, PathPattern, PathPatternParser;
+import flint.web.util.pattern : PathPattern, PathPatternParser;
+public import flint.web.util.request_path : lookupPath, parsedLookupPath, pathAttribute;
 
 @safe:
 
@@ -78,47 +78,6 @@ final class MappedInterceptor : HandlerInterceptor
         interceptor.afterCompletion(request, response, handler, ex);
     }
     // dfmt on
-}
-
-/// The application-relative, still-encoded request path (Spring 6's parsed `RequestPath.pathWithinApplication()`).
-string lookupPath(HttpServletRequest request)
-{
-    const uri = request.getRequestURI();
-    const contextPath = request.getContextPath();
-    if (contextPath.length != 0 && uri.length >= contextPath.length && uri[0 .. contextPath.length] == contextPath)
-        return uri[contextPath.length .. $];
-    return uri;
-}
-
-/// The request attribute holding the parsed lookup path (Spring's `ServletRequestPathUtils.PATH_ATTRIBUTE`).
-package(flint) enum string pathAttribute = "org.springframework.web.util.ServletRequestPathUtils.PATH";
-
-/++
-The lookup path parsed into segments, once per request (Spring's `ServletRequestPathUtils.parseAndCache`): every
-pattern of every mapping matches the same parse. The parse is kept under `pathAttribute` and reused while the
-request's lookup path is unchanged, so a forward or include, which changes it, parses its own.
-+/
-package(flint) PathContainer parsedLookupPath(HttpServletRequest request)
-{
-    const path = lookupPath(request);
-    auto cached = request.getAttribute(pathAttribute);
-    if (auto holder = cast(ParsedPath) cached.asObject())
-    {
-        if (holder.parsed.raw is path || holder.parsed.raw == path)
-            return holder.parsed;
-    }
-    // One allocation per request: the parse and up to four segments live in one object, stored by reference.
-    auto holder = new ParsedPath;
-    holder.parsed = PathContainer.parsePath(path, holder.segments[]);
-    request.setAttribute(pathAttribute, Any.of(holder));
-    return holder.parsed;
-}
-
-/// A request's parsed lookup path, with room for its segments.
-private final class ParsedPath
-{
-    PathContainer parsed;
-    string[4] segments;
 }
 
 /// `AbstractHandlerMapping`: interceptors and ordering around `getHandlerInternal`.

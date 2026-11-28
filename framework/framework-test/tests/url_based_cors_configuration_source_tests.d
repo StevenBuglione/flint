@@ -3,11 +3,10 @@ Ported from spring-projects/spring-framework v7.1.0,
 spring-web/src/test/java/org/springframework/web/cors/UrlBasedCorsConfigurationSourceTests.java.
 Copyright 2002-present the original author or authors. Licensed under the Apache License, Version 2.0.
 Modified by the Flint authors: JUnit and AssertJ assertions become D unittests and asserts; each
-`@PathPatternsParameterizedTest` is one unittest that loops over the named request factories. flint.web has no
-`ServletRequestPathUtils` or `UrlPathHelper` and its source resolves the lookup path from the request itself, so
-both factories only build the request. The test lives with flint.mock.web's `MockHttpServletRequest` in
-flint:framework-test, which depends on flint:web. The case that needs `setAllowInitLookupPath` waits behind a
-version gate.
+`@PathPatternsParameterizedTest` is one unittest that loops over the named request factories. flint.web's
+`flint.web.util.request_path` is the ServletRequestPathUtils equivalent: the source resolves the lookup path from
+the request itself, and `setAllowInitLookupPath(false)` reads the path a handler mapping parsed. The test lives
+with flint.mock.web's `MockHttpServletRequest` in flint:framework-test, which depends on flint:web.
 +/
 module flint.web.url_based_cors_configuration_source_tests;
 
@@ -76,27 +75,29 @@ unittest
     assert(thrown);
 }
 
-// flint.web's UrlBasedCorsConfigurationSource always resolves the lookup path (no setAllowInitLookupPath).
-version (FlintCorsAllowInitLookupPath)
+// flint.web's UrlBasedCorsConfigurationSource resolves the lookup path by default and reads the cached parse
+// when `setAllowInitLookupPath(false)` (Spring's ServletRequestPathUtils).
+@("UrlBasedCorsConfigurationSourceTests.allowInitLookupPath")
+unittest
 {
     import flint.java.lang : IllegalArgumentException;
+    import flint.web.servlet.handler : parsedLookupPath;
 
-    @("UrlBasedCorsConfigurationSourceTests.allowInitLookupPath")
-    unittest
-    {
-        auto source = new UrlBasedCorsConfigurationSource();
-        auto config = new CorsConfiguration();
-        source.registerCorsConfiguration("/**", config);
+    auto source = new UrlBasedCorsConfigurationSource();
+    auto config = new CorsConfiguration();
+    source.registerCorsConfiguration("/**", config);
 
-        auto request = new MockHttpServletRequest("GET", "/foo");
-        assert(source.getCorsConfiguration(request) is config, "The path should be resolved lazily by default");
+    auto request = new MockHttpServletRequest("GET", "/foo");
+    assert(source.getCorsConfiguration(request) is config, "The path should be resolved lazily by default");
 
-        source.setAllowInitLookupPath(false);
-        bool thrown;
-        try
-            source.getCorsConfiguration(request);
-        catch (IllegalArgumentException)
-            thrown = true;
-        assert(thrown);
-    }
+    source.setAllowInitLookupPath(false);
+    bool thrown;
+    try
+        source.getCorsConfiguration(request);
+    catch (IllegalArgumentException)
+        thrown = true;
+    assert(thrown);
+
+    parsedLookupPath(request);
+    assert(source.getCorsConfiguration(request) is config, "The cached path is used");
 }
