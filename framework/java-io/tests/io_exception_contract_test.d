@@ -3,6 +3,8 @@
 module flint.java.io.io_exception_contract_test;
 
 import flint.java.io : FileNotFoundException, IOException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException;
+import std.exception : assertThrown;
 
 @safe:
 
@@ -16,7 +18,7 @@ unittest
     assert(failure.getCause() is null);
 
     const emptyMessage = new IOException("");
-    assert(emptyMessage.getMessage() !is null && emptyMessage.getMessage().length == 0);
+    assert(emptyMessage.getMessage() is null);
     assert(emptyMessage.getCause() is null);
 
     const explicitMessage = new IOException("outer");
@@ -33,6 +35,28 @@ unittest
     assert(noMessage.getCause() is cause);
 }
 
+@("IOException.initCause sets the cause once, as Java's Throwable does")
+unittest
+{
+    auto cause = new IOException("inner");
+    auto failure = new IOException("outer");
+    assert(failure.getCause() is null);
+    assert(failure.initCause(cause) is failure);
+    assert(failure.getCause() is cause);
+    assertThrown!IllegalStateException(failure.initCause(new IOException("again")));
+
+    auto self = new IOException("self");
+    assertThrown!IllegalArgumentException(self.initCause(self));
+
+    auto initialized = new IOException("outer", cause);
+    assertThrown!IllegalStateException(initialized.initCause(new IOException("again")));
+
+    auto nullCause = new IOException;
+    assert(nullCause.initCause(null) is nullCause);
+    assert(nullCause.getCause() is null);
+    assertThrown!IllegalStateException(nullCause.initCause(cause));
+}
+
 @("FileNotFoundException retains its IOException type and detail message")
 unittest
 {
@@ -45,4 +69,14 @@ unittest
     const missing = new FileNotFoundException("missing");
     assert(missing.getMessage() == "missing");
     assert(missing.getCause() is null);
+}
+
+@("FileNotFoundException's cause stays open for one initCause call")
+unittest
+{
+    auto cause = new IOException("inner");
+    auto missing = new FileNotFoundException("missing");
+    assert(missing.initCause(cause) is missing);
+    assert(missing.getCause() is cause);
+    assertThrown!IllegalStateException(missing.initCause(cause));
 }

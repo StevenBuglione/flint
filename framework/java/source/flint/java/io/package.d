@@ -19,12 +19,14 @@ import flint.java.lang : RuntimeException;
 class IOException : Exception
 {
     private Throwable cause_;
+    private bool causeSet_;
 
-    /// `message`, and optionally a `cause`.
+    /// `message`, and optionally a `cause`. An empty message means no detail (R26).
     this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        super(message, file, line);
+        super(message.length == 0 ? null : message, file, line);
         cause_ = cause;
+        causeSet_ = cause !is null;
     }
 
     /// The detail message; null when there is none.
@@ -37,6 +39,18 @@ class IOException : Exception
     inout(Throwable) getCause() inout pure nothrow @nogc
     {
         return cause_;
+    }
+
+    /// Sets the cause once, as Java's `Throwable.initCause`.
+    Throwable initCause(Throwable cause)
+    {
+        if (causeSet_)
+            rejectCauseSet();
+        if (cause is this)
+            rejectSelfCause();
+        cause_ = cause;
+        causeSet_ = true;
+        return this;
     }
 }
 
@@ -88,6 +102,20 @@ pragma(inline, false) private noreturn rejectNullIoArgument() pure
     import flint.java.lang : NullPointerException;
 
     throw new NullPointerException;
+}
+
+pragma(inline, false) private noreturn rejectCauseSet()
+{
+    import flint.java.lang : IllegalStateException;
+
+    throw new IllegalStateException("Can't overwrite cause");
+}
+
+pragma(inline, false) private noreturn rejectSelfCause()
+{
+    import flint.java.lang : IllegalArgumentException;
+
+    throw new IllegalArgumentException("Self-causation not permitted");
 }
 
 private dchar nextPathCodePoint(scope const(char)[] text, size_t index, out size_t width) pure nothrow @nogc
