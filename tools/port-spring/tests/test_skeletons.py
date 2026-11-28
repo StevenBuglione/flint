@@ -310,6 +310,26 @@ class SkeletonTests(unittest.TestCase):
             scope.reachable = None
         self.assertEqual(skeletons.accessors.d_type('Marker', False, scope, set()), 'Marker')
 
+    def test_an_interface_member_the_hand_interface_omits_is_pending(self):
+        # An added abstract member changes what every hand implementor must declare (an R3 default would also need
+        # `mixin Name.Defaults`). Reproducing a hand interface leaves a member it lacks pending instead of splicing
+        # something the hand ecosystem cannot implement.
+        d = skeletons.derive(self.items['Marker'], self.universe, hand_members={('describe', ())})
+        element = 'org.springframework.example.Marker#getName()'
+        self.assertEqual(d['pending'][element], 'the hand interface does not declare this member')
+        self.assertNotIn('string getName();', d['text'])
+        self.assertIn('Nullable!string describe();', d['text'])
+
+    def test_a_default_method_the_hand_interface_omits_is_pending(self):
+        d = skeletons.derive(self.items['Marker'], self.universe, hand_members={('getName', ())})
+        element = 'org.springframework.example.Marker#describe()'
+        self.assertEqual(d['pending'][element], 'the hand port does not declare this default method')
+        self.assertNotIn('Nullable!string describe()', d['text'])
+        # A hand interface that does declare it still reproduces.
+        d = skeletons.derive(self.items['Marker'], self.universe, hand_members={('getName', ()), ('describe', ())})
+        self.assertIn('Nullable!string describe();', d['text'])
+        self.assertNotIn(element, d['pending'])
+
     def test_written_bodies_carry_over_and_strip_pending_leaves_the_rest_out(self):
         increment = 'org.springframework.example.Counter#increment()'
         filled = {increment: ['this.count += STEP;', '', 'return this.count;']}

@@ -166,6 +166,7 @@ class Context:
         self.defaults = []  # R3 default method texts for an interface's `mixin template Defaults`
         self.filled = {}    # element -> the lines a lane wrote in its port:body region (emit mode)
         self.strip = False  # --strip-pending: leave out every member whose body is still the placeholder
+        self.hand_members = None  # the hand type's (member, parameter types), or None when it has no hand port
 
     def body(self, element, indent='    '):
         """The member's body region: the lane's lines when written, otherwise the placeholder, or StripPending."""
@@ -223,6 +224,13 @@ def derive_method(method, ctx, plan):
         returns = 'void' if method['type'] == 'void' else accessors.d_type(
             method['type'] + (method.get('dimensions') or ''), nullable(method), ctx.scope, rules, throwables=True)
         params = parameters_of(method, ctx.scope, rules)
+        key = (name, tuple(parameter_type(p) for p in params))
+        if ctx.java_interface and ctx.hand_members is not None and not static and key not in ctx.hand_members:
+            # An added abstract member changes what every hand implementor must declare; an R3 default would also
+            # require `mixin Name.Defaults`. Reproducing a hand interface leaves a member it lacks pending, as new
+            # declaration work for the lane, instead of splicing a member the hand ecosystem cannot implement.
+            raise accessors.Unsupported('the hand port does not declare this default method' if default
+                                        else 'the hand interface does not declare this member')
         head = f'{returns} {name}({", ".join(params)})'
     # The function attributes a lane recorded for this member in the type's port plan (`"methods"` keyed by the
     # Java signature, e.g. `"applyRelativePath(String,String)": ["pure", "nothrow"]`). A hand port's mechanical
@@ -359,7 +367,8 @@ def defaults_of(ctx, bases):
     return found
 
 
-def derive(item, universe, base_overloads=None, base_members=(), d_defaults=None, filled=None, strip=False):
+def derive(item, universe, base_overloads=None, base_members=(), d_defaults=None, filled=None, strip=False,
+           hand_members=None):
     """{'text', 'name', 'rows': {element: (status, rules)}, 'pending': {element: reason}, 'bodies': [element]}.
 
     `bodies` lists the elements whose body is still the placeholder. Emit mode passes `filled`, {element: lines} of
@@ -387,6 +396,7 @@ def derive(item, universe, base_overloads=None, base_members=(), d_defaults=None
     bases += [bean_types.base_name(i, scope) for i in accessors.split_arguments(decl.get('interfaces') or '')]
     ctx = Context(item, universe, base_overloads, base_members, interface)
     ctx.d_defaults = d_defaults  # D interface symbols declaring `mixin template Defaults`, when known
+    ctx.hand_members = hand_members  # the hand type's (member, parameter types), or None when it has no hand port
     ctx.filled, ctx.strip = filled or {}, strip
     if ctx.throwable and base_overloads is None:
         if accessors.parent_of(universe, type_id) not in accessors.D_THROWABLES:
@@ -564,12 +574,15 @@ def compare(universe, helper, scratch, compilers=None, log=None, only=None):
         reachable = {m for m, places in index.items() if any(r in roots for r, _ in places)}
         for item in group:
             item['scope'].reachable = reachable
-        overloads, members, d_defaults = base_facts(universe, group, roots, scratch, compilers[0])
+        overloads, members, d_defaults, own_members = base_facts(universe, group, roots, scratch, compilers[0],
+                                                                 own_symbols=True)
         live = []
         for item in group:
             try:
                 inputs = (overloads.get(item['type']), members.get(item['type'], ()), d_defaults)
-                derived[item['type']] = {**derive(item, universe, *inputs), 'inputs': inputs}
+                hand_members = own_members.get(item['type'])
+                derived[item['type']] = {**derive(item, universe, *inputs, hand_members=hand_members),
+                                         'inputs': inputs, 'hand_members': hand_members}
                 live.append(item)
             except accessors.Unsupported as problem:
                 types[item['type']] = {'result': 'rejected', 'reason': str(problem)}
@@ -596,10 +609,67 @@ def compare(universe, helper, scratch, compilers=None, log=None, only=None):
     return items, types, elements, derived, skipped
 
 
-def base_facts(universe, group, roots, scratch, compiler, overlay=None):
+def split_params(text):
+    """Split a D parameter list at top-level commas, counting `<>`, `()` and `[]` so `Map!(string, Any)` stays
+    whole."""
+    parts, depth, start = [], 0, 0
+    for index, char in enumerate(text):
+        if char in '<([':
+            depth += 1
+        elif char in '>)]':
+            depth -= 1
+        elif char == ',' and depth == 0:
+            parts.append(text[start:index].strip())
+            start = index + 1
+    parts.append(text[start:].strip())
+    return [p for p in parts if p]
+
+
+def parameter_type(param):
+    """The type of a spelled D parameter (`Charset encoding` or a nameless `HttpServletRequest`)."""
+    words = param.split()
+    return ' '.join(words[:-1]) if len(words) > 1 else words[0]
+
+
+ATTRIBUTES = {'public', 'private', 'protected', '@safe', '@trusted', '@system', 'pure', 'nothrow', '@nogc',
+              'virtual', 'abstract', 'static', 'final', 'override', 'const', 'immutable', 'shared', 'inout',
+              'deprecated'}
+
+
+def member_keys(description):
+    """{(D member name, parameter types)} of one D type's description (tools/port-spring/gate/porter_describe.d)."""
+    keys = set()
+    for line in description.splitlines():
+        parts = line.split()
+        if len(parts) < 2 or '.' not in parts[0] or '#' not in parts[0]:
+            continue
+        member = parts[0].split('.', 1)[1].split('#', 1)[0]
+        tokens = line.split()
+        while tokens and tokens[-1] in ATTRIBUTES:
+            tokens.pop()
+        body = ' '.join(tokens)
+        if not body.endswith(')'):
+            continue
+        depth, start = 0, None
+        for index in range(len(body) - 1, -1, -1):
+            if body[index] == ')':
+                depth += 1
+            elif body[index] == '(':
+                depth -= 1
+                if depth == 0:
+                    start = index
+                    break
+        if start is None:
+            continue
+        keys.add((member, tuple(parameter_type(p) for p in split_params(body[start + 1:-1]))))
+    return keys
+
+
+def base_facts(universe, group, roots, scratch, compiler, overlay=None, own_symbols=False):
     """({type id: D base constructor parameter lists}, {type id: member names of the D base chain}, {D interface
-    symbols that declare `mixin template Defaults`}). Emit mode passes the batch's `overlay`, so a base generated
-    in the same batch (a predicted row) is described as it will land."""
+    symbols that declare `mixin template Defaults`}, {type id: {(member, parameter types)} of the hand type}).
+    Emit mode passes the batch's `overlay`, so a base generated in the same batch (a predicted row) is described as
+    it will land; its own type has no hand declaration then, so its entry is absent."""
     bases = {}
     for item in group:
         parent = accessors.parent_of(universe, item['type'])
@@ -616,8 +686,10 @@ def base_facts(universe, group, roots, scratch, compiler, overlay=None):
             row = accessors.mapped_row(universe, full)
             if row is not None:
                 implemented.add(row['d'])
+    own = {item['type']: item.get('job', {}).get('symbol') or item.get('symbol') for item in group} \
+        if own_symbols else {}
     described = {}
-    for symbol in sorted(set(bases.values()) | implemented):
+    for symbol in sorted(set(bases.values()) | implemented | set(own.values())):
         try:
             described.update(accessors.describe(compiler, overlay, roots, [symbol], scratch))
         except ValueError:
@@ -641,7 +713,9 @@ def base_facts(universe, group, roots, scratch, compiler, overlay=None):
                             for m in re.finditer(r'^\w+\.(\w+)#\d+ (?!private)', described[s], re.M)}
     d_defaults = {symbol for symbol in implemented if symbol in described
                   and re.search(r'^\w+\.Defaults[# ]', described[symbol], re.M)}
-    return overloads, members, d_defaults
+    own_members = {type_id: member_keys(described[symbol]) for type_id, symbol in own.items()
+                   if symbol in described}
+    return overloads, members, d_defaults, own_members
 
 
 def compare_package(package, group, derived, types, elements, roots, index, scratch, compilers):
@@ -1098,8 +1172,8 @@ def emit(universe, helper, type_ids, scratch, filled=None, strip=False, passes=8
         derived, reasons = {}, {}
         for package, group in sorted(by_package.items()):
             roots = gate.import_paths(package)
-            overloads, members, d_defaults = base_facts(universe, group, roots, scratch, gate.COMPILERS[0],
-                                                        overlay if number else None)
+            overloads, members, d_defaults, _ = base_facts(universe, group, roots, scratch, gate.COMPILERS[0],
+                                                           overlay if number else None)
             reachable = {m for m, places in index.items() if any(r in roots for r, _ in places)}
             reachable |= {i['module'] for i in items.values() if i['place'][0] in roots}
             for item in group:

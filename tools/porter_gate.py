@@ -768,7 +768,7 @@ def skeleton_shape(helper, cache, summary, report, scratch):
     for item in reversed(items):
         d = derived.get(item['type'])
         if d is not None:
-            again = skeletons.derive(item, universe, *d['inputs'])
+            again = skeletons.derive(item, universe, *d['inputs'], hand_members=d.get('hand_members'))
             if again['text'] != d['text'] or again['rows'] != d['rows']:
                 failures.append(f'{item["type"]}: the skeleton differs between two runs')
     skeleton_summary = skeletons.summarise(items, types, elements, skipped)
