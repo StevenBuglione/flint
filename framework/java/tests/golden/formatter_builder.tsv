@@ -3450,3 +3450,125 @@ parse	s:\u00E9\u00E9|P:4|s:1	date	\u00E9\u00E9  1x	!Text '\u00E9\u00E9  1x' coul
 parse	s:\u00E9\u00E9|P:4|s:1	date	\u00E9\u00E9  1	!Text '\u00E9\u00E9  1' could not be parsed at index 2	2
 parse	s:\u00E9\u00E9|P:4|s:1	date	\u00E9\u00E9  12	!Text '\u00E9\u00E9  12' could not be parsed at index 6	6
 parse	s:\u00E9\u00E9|P:4|s:1	date	\u00E9\u00E9   1	!Text '\u00E9\u00E9   1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO of type java.time.format.Parsed	0
+build	p:kk:mm	-	-	Value(ClockHourOfDay,2)':'Value(MinuteOfHour,2)
+format	p:kk:mm	date	2024-03-05	!Unsupported field: ClockHourOfDay
+format	p:kk:mm	date	0001-12-31	!Unsupported field: ClockHourOfDay
+format	p:kk:mm	date	+12345-06-07	!Unsupported field: ClockHourOfDay
+format	p:kk:mm	time	10:15	10:15
+format	p:kk:mm	time	10:15:30	10:15
+format	p:kk:mm	time	10:15:30.123456789	10:15
+format	p:kk:mm	time	00:00	24:00
+format	p:kk:mm	dateTime	2024-03-05T10:15:30	10:15
+format	p:kk:mm	dateTime	2024-03-05T00:00:00.000001	24:00
+format	p:kk:mm	offset	2024-03-05T10:15:30+01:00	10:15
+format	p:kk:mm	offset	2024-03-05T10:15:30Z	10:15
+format	p:kk:mm	offset	2024-03-05T10:15:30.500-05:30:15	10:15
+format	p:kk:mm	offset	2024-03-05T10:15:30+00:00:45	10:15
+format	p:kk:mm	zoned	2024-03-05T10:15:30+02:00	10:15
+format	p:kk:mm	zoned	2024-03-05T10:15:30Z[UTC]	10:15
+format	p:kk:mm	instant	2024-03-05T10:15:30Z	!Unsupported field: ClockHourOfDay
+format	p:kk:mm	instant	2024-03-05T10:15:30.120Z	!Unsupported field: ClockHourOfDay
+parse	p:kk:mm	time	01:00	01:00
+parse	p:kk:mm	time	24:00	00:00
+parse	p:kk:mm	time	00:00	00:00
+parse	p:kk:mm	time	23:59	23:59
+parse	p:kk:mm	time	1:00	!Text '1:00' could not be parsed at index 0	0
+parse	p:kk:mm	time	001:00	!Text '001:00' could not be parsed at index 2	2
+parse	p:kk:mm	time	25:00	!Text '25:00' could not be parsed: Invalid value for ClockHourOfDay (valid values 1 - 24): 25	0
+parse	p:kk:mm	time	10:15	10:15
+build	p:k:mm a	-	-	Value(ClockHourOfDay)':'Value(MinuteOfHour,2)' 'Text(AmPmOfDay,SHORT)
+format	p:k:mm a	date	2024-03-05	!Unsupported field: ClockHourOfDay
+format	p:k:mm a	date	0001-12-31	!Unsupported field: ClockHourOfDay
+format	p:k:mm a	date	+12345-06-07	!Unsupported field: ClockHourOfDay
+format	p:k:mm a	time	10:15	10:15 AM
+format	p:k:mm a	time	10:15:30	10:15 AM
+format	p:k:mm a	time	10:15:30.123456789	10:15 AM
+format	p:k:mm a	time	00:00	24:00 AM
+format	p:k:mm a	dateTime	2024-03-05T10:15:30	10:15 AM
+format	p:k:mm a	dateTime	2024-03-05T00:00:00.000001	24:00 AM
+format	p:k:mm a	offset	2024-03-05T10:15:30+01:00	10:15 AM
+format	p:k:mm a	offset	2024-03-05T10:15:30Z	10:15 AM
+format	p:k:mm a	offset	2024-03-05T10:15:30.500-05:30:15	10:15 AM
+format	p:k:mm a	offset	2024-03-05T10:15:30+00:00:45	10:15 AM
+format	p:k:mm a	zoned	2024-03-05T10:15:30+02:00	10:15 AM
+format	p:k:mm a	zoned	2024-03-05T10:15:30Z[UTC]	10:15 AM
+format	p:k:mm a	instant	2024-03-05T10:15:30Z	!Unsupported field: ClockHourOfDay
+format	p:k:mm a	instant	2024-03-05T10:15:30.120Z	!Unsupported field: ClockHourOfDay
+parse	p:k:mm a	time	12:00 AM	!Text '12:00 AM' could not be parsed: Conflict found: Field AmPmOfDay 1 differs from AmPmOfDay 0 derived from 12:00	0
+parse	p:k:mm a	time	0:00 AM	00:00
+parse	p:k:mm a	time	1:30 PM	!Text '1:30 PM' could not be parsed: Conflict found: Field AmPmOfDay 0 differs from AmPmOfDay 1 derived from 01:30	0
+parse	p:k:mm a	time	24:00 AM	00:00
+parse	p:k:mm a	time	13:00 PM	13:00
+parse	p:k:mm a	time	10:15 AM	10:15
+build	p:KK:mm a	-	-	Value(HourOfAmPm,2)':'Value(MinuteOfHour,2)' 'Text(AmPmOfDay,SHORT)
+format	p:KK:mm a	date	2024-03-05	!Unsupported field: HourOfAmPm
+format	p:KK:mm a	date	0001-12-31	!Unsupported field: HourOfAmPm
+format	p:KK:mm a	date	+12345-06-07	!Unsupported field: HourOfAmPm
+format	p:KK:mm a	time	10:15	10:15 AM
+format	p:KK:mm a	time	10:15:30	10:15 AM
+format	p:KK:mm a	time	10:15:30.123456789	10:15 AM
+format	p:KK:mm a	time	00:00	00:00 AM
+format	p:KK:mm a	dateTime	2024-03-05T10:15:30	10:15 AM
+format	p:KK:mm a	dateTime	2024-03-05T00:00:00.000001	00:00 AM
+format	p:KK:mm a	offset	2024-03-05T10:15:30+01:00	10:15 AM
+format	p:KK:mm a	offset	2024-03-05T10:15:30Z	10:15 AM
+format	p:KK:mm a	offset	2024-03-05T10:15:30.500-05:30:15	10:15 AM
+format	p:KK:mm a	offset	2024-03-05T10:15:30+00:00:45	10:15 AM
+format	p:KK:mm a	zoned	2024-03-05T10:15:30+02:00	10:15 AM
+format	p:KK:mm a	zoned	2024-03-05T10:15:30Z[UTC]	10:15 AM
+format	p:KK:mm a	instant	2024-03-05T10:15:30Z	!Unsupported field: HourOfAmPm
+format	p:KK:mm a	instant	2024-03-05T10:15:30.120Z	!Unsupported field: HourOfAmPm
+parse	p:KK:mm a	time	00:00 AM	00:00
+parse	p:KK:mm a	time	11:59 PM	23:59
+parse	p:KK:mm a	time	12:00 AM	!Text '12:00 AM' could not be parsed: Invalid value for HourOfAmPm (valid values 0 - 11): 12	0
+parse	p:KK:mm a	time	0:00 AM	!Text '0:00 AM' could not be parsed at index 0	0
+parse	p:KK:mm a	time	1:00 pm	!Text '1:00 pm' could not be parsed at index 0	0
+parse	p:KK:mm a	time	10:15 AM	10:15
+build	p:K:mm a	-	-	Value(HourOfAmPm)':'Value(MinuteOfHour,2)' 'Text(AmPmOfDay,SHORT)
+format	p:K:mm a	date	2024-03-05	!Unsupported field: HourOfAmPm
+format	p:K:mm a	date	0001-12-31	!Unsupported field: HourOfAmPm
+format	p:K:mm a	date	+12345-06-07	!Unsupported field: HourOfAmPm
+format	p:K:mm a	time	10:15	10:15 AM
+format	p:K:mm a	time	10:15:30	10:15 AM
+format	p:K:mm a	time	10:15:30.123456789	10:15 AM
+format	p:K:mm a	time	00:00	0:00 AM
+format	p:K:mm a	dateTime	2024-03-05T10:15:30	10:15 AM
+format	p:K:mm a	dateTime	2024-03-05T00:00:00.000001	0:00 AM
+format	p:K:mm a	offset	2024-03-05T10:15:30+01:00	10:15 AM
+format	p:K:mm a	offset	2024-03-05T10:15:30Z	10:15 AM
+format	p:K:mm a	offset	2024-03-05T10:15:30.500-05:30:15	10:15 AM
+format	p:K:mm a	offset	2024-03-05T10:15:30+00:00:45	10:15 AM
+format	p:K:mm a	zoned	2024-03-05T10:15:30+02:00	10:15 AM
+format	p:K:mm a	zoned	2024-03-05T10:15:30Z[UTC]	10:15 AM
+format	p:K:mm a	instant	2024-03-05T10:15:30Z	!Unsupported field: HourOfAmPm
+format	p:K:mm a	instant	2024-03-05T10:15:30.120Z	!Unsupported field: HourOfAmPm
+parse	p:K:mm a	time	0:00 AM	00:00
+parse	p:K:mm a	time	11:59 PM	23:59
+parse	p:K:mm a	time	12:00 AM	!Text '12:00 AM' could not be parsed: Invalid value for HourOfAmPm (valid values 0 - 11): 12	0
+parse	p:K:mm a	time	9:05 PM	21:05
+parse	p:K:mm a	time	10:15 AM	10:15
+build	p:kkk	-	-	!Too many pattern letters: k
+build	p:KKK	-	-	!Too many pattern letters: K
+build	p:HH k	-	-	Value(HourOfDay,2)' 'Value(ClockHourOfDay)
+format	p:HH k	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:HH k	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:HH k	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:HH k	time	10:15	10 10
+format	p:HH k	time	10:15:30	10 10
+format	p:HH k	time	10:15:30.123456789	10 10
+format	p:HH k	time	00:00	00 24
+format	p:HH k	dateTime	2024-03-05T10:15:30	10 10
+format	p:HH k	dateTime	2024-03-05T00:00:00.000001	00 24
+format	p:HH k	offset	2024-03-05T10:15:30+01:00	10 10
+format	p:HH k	offset	2024-03-05T10:15:30Z	10 10
+format	p:HH k	offset	2024-03-05T10:15:30.500-05:30:15	10 10
+format	p:HH k	offset	2024-03-05T10:15:30+00:00:45	10 10
+format	p:HH k	zoned	2024-03-05T10:15:30+02:00	10 10
+format	p:HH k	zoned	2024-03-05T10:15:30Z[UTC]	10 10
+format	p:HH k	instant	2024-03-05T10:15:30Z	!Unsupported field: HourOfDay
+format	p:HH k	instant	2024-03-05T10:15:30.120Z	!Unsupported field: HourOfDay
+parse	p:HH k	time	13 1	!Text '13 1' could not be parsed: Conflict found: HourOfDay 13 differs from HourOfDay 1 while resolving  ClockHourOfDay	0
+parse	p:HH k	time	00 24	00:00
+parse	p:HH k	time	00 1	!Text '00 1' could not be parsed: Conflict found: HourOfDay 0 differs from HourOfDay 1 while resolving  ClockHourOfDay	0
+parse	p:HH k	time	12 12	12:00
+parse	p:HH k	time	10 10	10:00

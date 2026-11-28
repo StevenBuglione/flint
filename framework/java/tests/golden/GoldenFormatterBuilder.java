@@ -444,6 +444,15 @@ public class GoldenFormatterBuilder {
         // the non-ASCII prefix checks that the index is in UTF-16 units.
         recipe("s:\u00e9\u00e9|P:4|s:1", k("date"), "\u00e9\u00e9  1x", "\u00e9\u00e9  1",
                 "\u00e9\u00e9  12");
+        // Clock-hour letters: k is the clock-hour-of-day (1-24, so midnight prints 24) and K the hour-of-am-pm
+        // (0-11, combined with a). Both take one or two letters, and SMART accepts k's 0 as midnight.
+        recipe("p:kk:mm", k("time"), "01:00", "24:00", "00:00", "23:59", "1:00", "001:00", "25:00");
+        recipe("p:k:mm a", k("time"), "12:00 AM", "0:00 AM", "1:30 PM", "24:00 AM", "13:00 PM");
+        recipe("p:KK:mm a", k("time"), "00:00 AM", "11:59 PM", "12:00 AM", "0:00 AM", "1:00 pm");
+        recipe("p:K:mm a", k("time"), "0:00 AM", "11:59 PM", "12:00 AM", "9:05 PM");
+        recipe("p:kkk", none);
+        recipe("p:KKK", none);
+        recipe("p:HH k", k("time"), "13 1", "00 24", "00 1", "12 12");
         Files.write(Path.of(a[0]), lines);
     }
 }

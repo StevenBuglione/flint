@@ -1472,7 +1472,7 @@ unittest
         ++count;
     }
     assert(failures == 0, report);
-    assert(count == 3452);
+    assert(count == 3574);
 }
 
 @("appendInstant(int) parses exactly its fractional digits, or up to nine for -1")

@@ -260,6 +260,8 @@ private enum Field : ubyte
     dayOfWeek,
     hourOfDay,
     clockHourOfAmPm,
+    hourOfAmPm,
+    clockHourOfDay,
     minuteOfHour,
     secondOfMinute,
     nanoOfSecond,
@@ -273,8 +275,8 @@ private enum fieldCount = Field.max + 1;
 
 private immutable string[fieldCount] fieldNames = [
     "Year", "YearOfEra", "MonthOfYear", "DayOfMonth", "DayOfYear", "DayOfWeek", "HourOfDay",
-    "ClockHourOfAmPm", "MinuteOfHour", "SecondOfMinute", "NanoOfSecond", "AmPmOfDay",
-    "InstantSeconds", "WeekBasedYear", "WeekOfWeekBasedYear"
+    "ClockHourOfAmPm", "HourOfAmPm", "ClockHourOfDay", "MinuteOfHour", "SecondOfMinute",
+    "NanoOfSecond", "AmPmOfDay", "InstantSeconds", "WeekBasedYear", "WeekOfWeekBasedYear"
 ];
 
 /**
@@ -328,6 +330,8 @@ struct Fields
     {
         set(Field.hourOfDay, t.getHour());
         set(Field.clockHourOfAmPm, t.getHour() % 12 == 0 ? 12 : t.getHour() % 12);
+        set(Field.hourOfAmPm, t.getHour() % 12);
+        set(Field.clockHourOfDay, t.getHour() == 0 ? 24 : t.getHour());
         set(Field.minuteOfHour, t.getMinute());
         set(Field.secondOfMinute, t.getSecond());
         set(Field.nanoOfSecond, t.getNano());
@@ -430,6 +434,16 @@ struct Fields
         return new DateTimeParseException("Text '" ~ copy ~ "' could not be parsed: " ~ e.msg, copy, 0, e);
     }
 
+    // Java's Parsed.updateCheckConflict: two parsed sources of the same hour disagree.
+    private static DateTimeParseException conflict(scope const(char)[] text, string field,
+            long oldValue, long newValue, string target)
+    {
+        import flint.engine.aot.text : decimal;
+
+        return failed(text, new DateTimeException("Conflict found: " ~ field ~ " " ~ decimal(
+                oldValue) ~ " differs from " ~ field ~ " " ~ decimal(newValue) ~ " while resolving  " ~ target));
+    }
+
     private bool hasDate() const pure nothrow @nogc
     {
         return (has(Field.year) || (smart_ && has(Field.yearOfEra))) && ((has(Field.monthOfYear)
@@ -438,7 +452,8 @@ struct Fields
 
     private bool hasTime() const pure nothrow @nogc
     {
-        return has(Field.hourOfDay) || (has(Field.clockHourOfAmPm) && has(Field.amPmOfDay));
+        return has(Field.hourOfDay) || has(Field.clockHourOfDay) || ((has(Field.clockHourOfAmPm)
+                || has(Field.hourOfAmPm)) && has(Field.amPmOfDay));
     }
 
     /// The value these fields came from, as its `toString`; for parsed fields, Java's `Parsed` description.
@@ -563,6 +578,88 @@ struct Fields
                 ~ " differs from DayOfWeek " ~ parsed ~ " derived from " ~ date.toString()));
     }
 
+    // Java's cross-check of a parsed am/pm against the resolved time.
+    private void crossCheckTime(scope const(char)[] text, LocalTime time) const
+    {
+        import flint.engine.aot.text : decimal;
+
+        if (!has(Field.amPmOfDay))
+            return;
+        const derived = time.getHour() / 12;
+        if (derived == values_[Field.amPmOfDay])
+            return;
+        throw failed(text, new DateTimeException("Conflict found: Field AmPmOfDay " ~ decimal(
+                derived) ~ " differs from AmPmOfDay " ~ decimal(
+                values_[Field.amPmOfDay]) ~ " derived from " ~ time.toString()));
+    }
+
+    // Merges one parsed hour source into the hour, as Java's Parsed.updateCheckConflict: two sources that
+    // disagree are a conflict.
+    private static void mergeHour(scope const(char)[] text, ref bool haveHour, ref long hour, long mapped,
+            string field, string target)
+    {
+        if (haveHour && hour != mapped)
+            throw conflict(text, field, hour, mapped, target);
+        hour = mapped;
+        haveHour = true;
+    }
+
+    // The hour of am/pm the parsed hour fields give, as Java's Parsed.resolveTimeFields: a clock hour of am/pm
+    // maps to the hour of am/pm (SMART reads 0 as 12), and the am/pm field makes it an hour of the day. False
+    // when neither hour source was parsed.
+    private bool resolveAmPmHour(scope const(char)[] text, string type, out long value) const
+    {
+        bool have;
+        long hour;
+        if (has(Field.hourOfAmPm))
+        {
+            hour = values_[Field.hourOfAmPm];
+            have = true;
+        }
+        if (has(Field.clockHourOfAmPm))
+        {
+            const clock = values_[Field.clockHourOfAmPm];
+            if (!smart_ || clock != 0) // SMART reads clock hour 0 as 12
+                checkRange("ClockHourOfAmPm", clock, 1, 12);
+            mergeHour(text, have, hour, clock % 12, "HourOfAmPm", "ClockHourOfAmPm");
+        }
+        if (!have)
+            return false;
+        if (!has(Field.amPmOfDay))
+            throw unresolved(text, type);
+        checkRange("AmPmOfDay", values_[Field.amPmOfDay], 0, 1);
+        checkRange("HourOfAmPm", hour, 0, 11);
+        value = hour + 12 * values_[Field.amPmOfDay];
+        return true;
+    }
+
+    // The hour of the day the parsed hour fields give, as Java's Parsed.resolveTimeFields: a clock hour of the
+    // day maps to it (SMART reads 0 as midnight), an hour of am/pm needs am/pm, and two parsed sources that
+    // disagree are Java's conflict.
+    private long resolveHour(scope const(char)[] text, string type) const
+    {
+        bool haveHour;
+        long hour;
+        if (has(Field.hourOfDay))
+        {
+            hour = values_[Field.hourOfDay];
+            haveHour = true;
+        }
+        if (has(Field.clockHourOfDay))
+        {
+            const clock = values_[Field.clockHourOfDay];
+            if (!smart_ || clock != 0) // SMART reads clock hour 0 as midnight
+                checkRange("ClockHourOfDay", clock, 1, 24);
+            mergeHour(text, haveHour, hour, clock == 24 ? 0 : clock, "HourOfDay", "ClockHourOfDay");
+        }
+        long amPmHour;
+        if (resolveAmPmHour(text, type, amPmHour))
+            mergeHour(text, haveHour, hour, amPmHour, "HourOfDay", "AmPmOfDay");
+        if (!haveHour)
+            throw unresolved(text, type);
+        return hour;
+    }
+
     // SMART resolution reads 24:00 as midnight at the end of the day.
     private bool endOfDay() const pure nothrow @nogc
     {
@@ -584,7 +681,7 @@ struct Fields
         if (date)
             resolved = resolvedDate(text, "");
         if (time)
-            toLocalTime(text);
+            crossCheckTime(text, toLocalTime(text));
         if (date)
             crossCheck(text, resolved);
         if (date && time && endOfDay())
@@ -598,17 +695,7 @@ struct Fields
     {
         try
         {
-            long hour;
-            if (has(Field.hourOfDay))
-                hour = values_[Field.hourOfDay];
-            else if (has(Field.clockHourOfAmPm) && has(Field.amPmOfDay))
-            {
-                if (!smart_ || values_[Field.clockHourOfAmPm] != 0) // SMART reads clock hour 0 as 12
-                    checkRange("ClockHourOfAmPm", values_[Field.clockHourOfAmPm], 1, 12);
-                hour = values_[Field.clockHourOfAmPm] % 12 + 12 * values_[Field.amPmOfDay];
-            }
-            else
-                throw unresolved(text, type);
+            const hour = resolveHour(text, type);
             if (endOfDay())
                 return LocalTime.of(0, 0);
             checkRange("HourOfDay", hour, 0, 23);
@@ -1342,8 +1429,8 @@ struct DateTimeFormatterBuilder
     }
 
     /**
-     * Appends the elements of `pattern`, as `DateTimeFormatter.ofPattern` describes: `u y D M L d E a h H m s S n
-     * VV X x Z`, quoted text, `''` and `[ ]` optional sections. A `]` ends an optional section this builder
+     * Appends the elements of `pattern`, as `DateTimeFormatter.ofPattern` describes: `u y D M L d E a h H k K m s S
+     * n VV X x Z`, quoted text, `''` and `[ ]` optional sections. A `]` ends an optional section this builder
      * started; one left open stays open. Other pattern letters throw `IllegalArgumentException`.
      */
     ref DateTimeFormatterBuilder appendPattern(string pattern) return
@@ -2814,10 +2901,10 @@ private Element twoWide(Field f, char c, int count)
 
 private Element letterElement(char c, int count)
 {
-    static immutable string twoWideLetters = "dHhms";
-    static immutable Field[5] twoWideFields = [
+    static immutable string twoWideLetters = "dHhmskK";
+    static immutable Field[7] twoWideFields = [
         Field.dayOfMonth, Field.hourOfDay, Field.clockHourOfAmPm, Field.minuteOfHour,
-        Field.secondOfMinute
+        Field.secondOfMinute, Field.clockHourOfDay, Field.hourOfAmPm
     ];
     foreach (i, letter; twoWideLetters)
         if (letter == c)

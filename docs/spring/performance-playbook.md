@@ -673,6 +673,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Read the offset shape from the pattern once, with no second table.** The single-digit hour forms share one `offsetShape` with the padded forms: the hour width comes from the pattern's second `H`, the colon and optional groups from the remaining letters. Printing pads the hour to one digit below ten and two from ten, and parsing reads one or two hour digits then the same colon or variable-width groups, so the parser adds no table per pattern and no branch on the full pattern text. On venus (v4.2 toolchain) against the parent `ed3ed12cd`, the Java module stays at 129,512 incremental linked bytes and DMD templates fall from 4,716 to 4,714 against the 7,350 cap.
 
+- **Resolve every hour letter through one hour field, with Java's conflicts.** `k` (clock-hour-of-day, 1-24) and `K` (hour-of-am-pm, 0-11) reuse the existing number element and time resolution: a clock hour maps into the hour of the day, `K` combines with `a`, and two parsed hour sources, or an am/pm that disagrees with the resolved time, throw Java's `DateTimeParseException`. The mapping splits into `mergeHour` and `resolveAmPmHour` so each function stays under D-Scanner's cyclomatic limit of 20. On venus (v4.2 toolchain) against the parent `f0a6c4bc8`, the Java module stays at 129,512 incremental linked bytes (O3 129,512, Oz 122,344) and DMD templates rise from 4,714 to 4,751 against the 7,350 cap.
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:
