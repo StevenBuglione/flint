@@ -918,6 +918,357 @@ class BufferedOutputStream : FilterOutputStream
     }
 }
 
+/// Java's `DataOutput`: a portable sink of primitive Java values.
+interface DataOutput
+{
+    /// Write one byte (the low 8 bits of `b`).
+    void write(int b);
+
+    /// Write every byte of `b`.
+    void write(scope const(ubyte)[] b);
+
+    /// Write `len` bytes of `b` from `off`.
+    void write(scope const(ubyte)[] b, int off, int len);
+
+    /// Write a boolean as one byte.
+    void writeBoolean(bool v);
+
+    /// Write a byte as one byte.
+    void writeByte(int v);
+
+    /// Write a short as two bytes, high byte first.
+    void writeShort(int v);
+
+    /// Write a char as two bytes, high byte first.
+    void writeChar(int v);
+
+    /// Write an int as four bytes, high byte first.
+    void writeInt(int v);
+
+    /// Write a long as eight bytes, high byte first.
+    void writeLong(long v);
+
+    /// Write a float as four bytes, high byte first.
+    void writeFloat(float v);
+
+    /// Write a double as eight bytes, high byte first.
+    void writeDouble(double v);
+
+    /// Write each UTF-16 code unit's low eight bits.
+    void writeBytes(scope const(char)[] s);
+
+    /// Write each UTF-16 code unit as two bytes, high byte first.
+    void writeChars(scope const(char)[] s);
+
+    /// Write `s` in modified UTF-8 with a two-byte length prefix.
+    void writeUTF(scope const(char)[] s);
+}
+
+/// The canonical Java `floatToIntBits` value of `value`.
+private int javaFloatBits(float value) pure nothrow @nogc
+{
+    if (value != value)
+        return 0x7FC0_0000;
+    union Bits
+    {
+        float f;
+        uint u;
+    }
+
+    Bits bits;
+    bits.f = value;
+    return cast(int) bits.u;
+}
+
+/// The canonical Java `doubleToLongBits` value of `value`.
+private long javaDoubleBits(double value) pure nothrow @nogc
+{
+    if (value != value)
+        return 0x7FF8_0000_0000_0000L;
+    union Bits
+    {
+        double d;
+        ulong u;
+    }
+
+    Bits bits;
+    bits.d = value;
+    return cast(long) bits.u;
+}
+
+/// The next code point of `text`, advancing `index` past it.
+private dchar nextCodePoint(scope const(char)[] text, ref size_t index) pure nothrow @nogc
+{
+    import flint.engine.aot.text : decodeUtf8;
+
+    return decodeUtf8(text, index);
+}
+
+private void putUnsignedShort(scope ubyte[] buffer, int offset, int value) pure nothrow @nogc
+{
+    buffer[offset] = cast(ubyte)(value >>> 8);
+    buffer[offset + 1] = cast(ubyte) value;
+}
+
+private void putInt(scope ubyte[] buffer, int offset, int value) pure nothrow @nogc
+{
+    buffer[offset] = cast(ubyte)(value >>> 24);
+    buffer[offset + 1] = cast(ubyte)(value >>> 16);
+    buffer[offset + 2] = cast(ubyte)(value >>> 8);
+    buffer[offset + 3] = cast(ubyte) value;
+}
+
+private void putLong(scope ubyte[] buffer, int offset, long value) pure nothrow @nogc
+{
+    buffer[offset] = cast(ubyte)(value >>> 56);
+    buffer[offset + 1] = cast(ubyte)(value >>> 48);
+    buffer[offset + 2] = cast(ubyte)(value >>> 40);
+    buffer[offset + 3] = cast(ubyte)(value >>> 32);
+    buffer[offset + 4] = cast(ubyte)(value >>> 24);
+    buffer[offset + 5] = cast(ubyte)(value >>> 16);
+    buffer[offset + 6] = cast(ubyte)(value >>> 8);
+    buffer[offset + 7] = cast(ubyte) value;
+}
+
+/// Java's `DataOutputStream`: primitive values written in Java's portable form.
+class DataOutputStream : FilterOutputStream, DataOutput
+{
+    /// The number of bytes written so far, saturating at `int.max`.
+    protected int written;
+
+    private ubyte[] bytearr;
+    private ubyte[8] writeBuffer;
+
+    /// Wrap `output`.
+    this(OutputStream output)
+    {
+        super(output);
+    }
+
+    alias write = FilterOutputStream.write;
+
+    private void incCount(int value)
+    {
+        int temp = written + value;
+        if (temp < 0)
+            temp = int.max;
+        written = temp;
+    }
+
+    /// Write one byte and count it.
+    override void write(int value)
+    {
+        out_.write(value);
+        incCount(1);
+    }
+
+    /// Write every byte of `b` and count them.
+    override void write(scope const(ubyte)[] b)
+    {
+        super.write(b);
+    }
+
+    /// Write a range and count it.
+    override void write(scope const(ubyte)[] b, int off, int len)
+    {
+        out_.write(b, off, len);
+        incCount(len);
+    }
+
+    /// Flush the wrapped stream.
+    override void flush()
+    {
+        out_.flush();
+    }
+
+    /// Write a boolean as one byte.
+    final void writeBoolean(bool v)
+    {
+        out_.write(v ? 1 : 0);
+        incCount(1);
+    }
+
+    /// Write a byte as one byte.
+    final void writeByte(int v)
+    {
+        out_.write(v);
+        incCount(1);
+    }
+
+    /// Write a short as two bytes, high byte first.
+    final void writeShort(int v)
+    {
+        putUnsignedShort(writeBuffer, 0, v);
+        out_.write(writeBuffer, 0, 2);
+        incCount(2);
+    }
+
+    /// Write a char as two bytes, high byte first.
+    final void writeChar(int v)
+    {
+        putUnsignedShort(writeBuffer, 0, v);
+        out_.write(writeBuffer, 0, 2);
+        incCount(2);
+    }
+
+    /// Write an int as four bytes, high byte first.
+    final void writeInt(int v)
+    {
+        putInt(writeBuffer, 0, v);
+        out_.write(writeBuffer, 0, 4);
+        incCount(4);
+    }
+
+    /// Write a long as eight bytes, high byte first.
+    final void writeLong(long v)
+    {
+        putLong(writeBuffer, 0, v);
+        out_.write(writeBuffer, 0, 8);
+        incCount(8);
+    }
+
+    /// Write a float as four bytes, high byte first.
+    final void writeFloat(float v)
+    {
+        putInt(writeBuffer, 0, javaFloatBits(v));
+        out_.write(writeBuffer, 0, 4);
+        incCount(4);
+    }
+
+    /// Write a double as eight bytes, high byte first.
+    final void writeDouble(double v)
+    {
+        putLong(writeBuffer, 0, javaDoubleBits(v));
+        out_.write(writeBuffer, 0, 8);
+        incCount(8);
+    }
+
+    /// Write each UTF-16 code unit's low eight bits.
+    final void writeBytes(scope const(char)[] s)
+    {
+        size_t index;
+        int units;
+        while (index < s.length)
+        {
+            const c = nextCodePoint(s, index);
+            if (c > 0xFFFF)
+            {
+                const v = c - 0x10000;
+                out_.write(cast(int)(0xD800 + (v >> 10)));
+                out_.write(cast(int)(0xDC00 + (v & 0x3FF)));
+                units += 2;
+            }
+            else
+            {
+                out_.write(cast(int) c);
+                ++units;
+            }
+        }
+        incCount(units);
+    }
+
+    /// Write each UTF-16 code unit as two bytes, high byte first.
+    final void writeChars(scope const(char)[] s)
+    {
+        size_t index;
+        int units;
+        while (index < s.length)
+        {
+            const c = nextCodePoint(s, index);
+            if (c > 0xFFFF)
+            {
+                const v = c - 0x10000;
+                putUnsignedShort(writeBuffer, 0, cast(int)(0xD800 + (v >> 10)));
+                out_.write(writeBuffer, 0, 2);
+                putUnsignedShort(writeBuffer, 0, cast(int)(0xDC00 + (v & 0x3FF)));
+                out_.write(writeBuffer, 0, 2);
+                units += 2;
+            }
+            else
+            {
+                putUnsignedShort(writeBuffer, 0, cast(int) c);
+                out_.write(writeBuffer, 0, 2);
+                ++units;
+            }
+        }
+        incCount(units * 2);
+    }
+
+    /// Write `s` in modified UTF-8 with a two-byte length prefix.
+    final void writeUTF(scope const(char)[] s)
+    {
+        size_t index;
+        long length;
+        while (index < s.length)
+        {
+            const c = nextCodePoint(s, index);
+            if (c == 0)
+                length += 2;
+            else if (c < 0x80)
+                length += 1;
+            else if (c < 0x800)
+                length += 2;
+            else if (c <= 0xFFFF)
+                length += 3;
+            else
+                length += 6;
+        }
+        if (length > 0xFFFF)
+        {
+            import flint.engine.aot.text : decimal;
+
+            throw new UTFDataFormatException("encoded string too long: " ~ decimal(length) ~ " bytes");
+        }
+
+        const total = cast(int) length + 2;
+        if (bytearr.length < total)
+        {
+            bytearr = new ubyte[(cast(size_t) length * 2) + 2];
+        }
+        putUnsignedShort(bytearr, 0, cast(int) length);
+        int offset = 2;
+        index = 0;
+        while (index < s.length)
+        {
+            const c = nextCodePoint(s, index);
+            if (c != 0 && c < 0x80)
+            {
+                bytearr[offset++] = cast(ubyte) c;
+            }
+            else if (c < 0x800)
+            {
+                bytearr[offset++] = cast(ubyte)(0xC0 | (c >> 6));
+                bytearr[offset++] = cast(ubyte)(0x80 | (c & 0x3F));
+            }
+            else if (c <= 0xFFFF)
+            {
+                bytearr[offset++] = cast(ubyte)(0xE0 | (c >> 12));
+                bytearr[offset++] = cast(ubyte)(0x80 | ((c >> 6) & 0x3F));
+                bytearr[offset++] = cast(ubyte)(0x80 | (c & 0x3F));
+            }
+            else
+            {
+                const v = c - 0x10000;
+                const high = 0xD800 + (v >> 10);
+                const low = 0xDC00 + (v & 0x3FF);
+                bytearr[offset++] = cast(ubyte)(0xE0 | (high >> 12));
+                bytearr[offset++] = cast(ubyte)(0x80 | ((high >> 6) & 0x3F));
+                bytearr[offset++] = cast(ubyte)(0x80 | (high & 0x3F));
+                bytearr[offset++] = cast(ubyte)(0xE0 | (low >> 12));
+                bytearr[offset++] = cast(ubyte)(0x80 | ((low >> 6) & 0x3F));
+                bytearr[offset++] = cast(ubyte)(0x80 | (low & 0x3F));
+            }
+        }
+        write(bytearr, 0, total);
+    }
+
+    /// The number of bytes written so far.
+    final int size() pure nothrow @nogc
+    {
+        return written;
+    }
+}
+
 /// Java's `Writer`: a sink of characters (UTF-8 text in Flint).
 abstract class Writer : Closeable, Flushable
 {
@@ -1318,6 +1669,16 @@ class FileInputStream : ByteArrayInputStream
 
 /// Java's checked `EOFException`: an end of file was reached unexpectedly.
 class EOFException : IOException
+{
+    /// `message`, or null.
+    this(string message = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message, null, file, line);
+    }
+}
+
+/// Java's checked `UTFDataFormatException`: malformed modified UTF-8, or text too long for `writeUTF`.
+class UTFDataFormatException : IOException
 {
     /// `message`, or null.
     this(string message = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
