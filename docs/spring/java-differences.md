@@ -179,7 +179,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 
 | Repo | Upstream | Ported | Adapted | By porter | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 229 | 365 | 0 | 0 | 15,202 |
+| ai | spring-ai@v2.1.0 | 235 | 359 | 0 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
 | framework | spring-framework@v7.1.0 | 3,662 | 1,549 | 0 | 4,870 | 29,753 |
@@ -403,7 +403,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.ai.converter.ListOutputConverter` | `flint.ai.converter.ListOutputConverter` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.converter.MarkdownCodeBlockCleaner#clean(String)` | `flint.ai.converter.MarkdownCodeBlockCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.converter.ResponseTextCleaner#clean(String)` | `flint.ai.converter.ResponseTextCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.converter.StructuredOutputConverter#getJsonSchema()` | `flint.ai.converter.StructuredOutputConverter.getJsonSchema` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
@@ -433,11 +432,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.document.DocumentMetadata` | `flint.ai.document.DocumentMetadata` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.document.DocumentMetadata#CONTENT_REF` | `flint.ai.document.DocumentMetadata.CONTENT_REF` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.document.DocumentMetadata#DISTANCE` | `flint.ai.document.DocumentMetadata.DISTANCE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
-| `org.springframework.ai.document.DocumentReader` | `flint.ai.document.DocumentReader` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.document.DocumentReader#read()` | `flint.ai.document.DocumentReader.read` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
-| `org.springframework.ai.document.DocumentTransformer` | `flint.ai.document.DocumentTransformer` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.document.DocumentTransformer#transform(List)` | `flint.ai.document.DocumentTransformer.transform` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
-| `org.springframework.ai.document.DocumentWriter` | `flint.ai.document.DocumentWriter` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.document.DocumentWriter#write(List)` | `flint.ai.document.DocumentWriter.write` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 
 #### org.springframework.ai.document.id
@@ -464,7 +460,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.embedding.EmbeddingOptions#getDimensions()` | `flint.ai.embedding.EmbeddingOptions.getDimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.embedding.EmbeddingOptions#getModel()` | `flint.ai.embedding.EmbeddingOptions.getModel` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.embedding.EmbeddingOptions.Builder#dimensions(Integer)` | `flint.ai.embedding.EmbeddingOptions.Builder.dimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `org.springframework.ai.embedding.EmbeddingRequest` | `flint.ai.embedding.EmbeddingRequest` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.embedding.EmbeddingResultMetadata#<init>(String,ModalityType,MimeType,Object)` | `flint.ai.embedding.EmbeddingResultMetadata.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.embedding.EmbeddingResultMetadata#getDocumentData()` | `flint.ai.embedding.EmbeddingResultMetadata.getDocumentData` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.embedding.EmbeddingResultMetadata.ModalityUtils#getModalityType(MimeType)` | `flint.ai.embedding.EmbeddingResultMetadata.ModalityUtils.getModalityType` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -677,7 +672,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.ai.template.NoOpTemplateRenderer` | `flint.ai.template_.NoOpTemplateRenderer` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.ai.template.NoOpTemplateRenderer#apply(String,Map)` | `flint.ai.template_.NoOpTemplateRenderer.apply` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
-| `org.springframework.ai.template.TemplateRenderer` | `flint.ai.template_.TemplateRenderer` | [R10](api-mapping.md#r10-streams-and-collections), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.ai.template.TemplateRenderer` | `flint.ai.template_.TemplateRenderer` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.ai.template.TemplateRenderer#apply(String,Map)` | `flint.ai.template_.TemplateRenderer.apply` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.ai.template.ValidationMode` | `flint.ai.template_.ValidationMode` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 
@@ -685,7 +680,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.ai.tokenizer.TokenCountEstimator#estimate(Iterable)` | `flint.ai.tokenizer.TokenCountEstimator.estimate` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.tokenizer.TokenCountEstimator#estimate(String)` | `flint.ai.tokenizer.TokenCountEstimator.estimate` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 ### boot
