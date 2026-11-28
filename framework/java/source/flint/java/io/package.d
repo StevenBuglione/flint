@@ -2205,6 +2205,160 @@ class OutputStreamWriter : Writer
 }
 
 /++
+Java's `BufferedWriter`: UTF-16 text buffered in memory and forwarded to a wrapped `Writer`.
+
+Java buffers code units, so a surrogate pair split across two writes is kept intact (R14). A ranged write at
+least the buffer size is flushed first and passed straight through to the wrapped writer.
++/
+class BufferedWriter : Writer
+{
+    private enum int defaultBufferSize = 8192;
+
+    private Writer out_;
+    private wchar[] buffer_;
+    private size_t nextChar_;
+    private string lineSeparator_;
+
+    /// A buffered writer over `target` with the default 8192-unit buffer. A null writer is rejected.
+    this(Writer target)
+    {
+        this(target, defaultBufferSize);
+    }
+
+    /// A buffered writer over `target` with a `size`-unit buffer; a non-positive size is rejected.
+    this(Writer target, int size)
+    {
+        import flint.java.lang : IllegalArgumentException, NullPointerException, System;
+
+        if (target is null)
+            throw new NullPointerException("out");
+        if (size <= 0)
+            throw new IllegalArgumentException("Buffer size <= 0");
+        out_ = target;
+        buffer_ = new wchar[size];
+        lineSeparator_ = System.lineSeparator();
+    }
+
+    alias write = Writer.write;
+
+    private void ensureOpen()
+    {
+        if (out_ is null)
+            throw new IOException("Stream closed");
+    }
+
+    private void flushBuffer()
+    {
+        ensureOpen();
+        if (nextChar_ == 0)
+            return;
+        const pending = buffer_[0 .. nextChar_];
+        nextChar_ = 0;
+        out_.write(pending);
+    }
+
+    override void write(scope const(char)[] text)
+    {
+        import flint.engine.aot.text : decodeUtf8;
+
+        ensureOpen();
+        size_t i;
+        while (i < text.length)
+            putCodePoint(decodeUtf8(text, i));
+    }
+
+    override void write(scope const(wchar)[] text, int off, int len)
+    {
+        import flint.java.lang : IndexOutOfBoundsException;
+
+        ensureOpen();
+        if (off < 0 || len < 0 || cast(long) off + len > text.length)
+            throw new IndexOutOfBoundsException("Write range exceeds the character array");
+        if (len == 0)
+            return;
+        if (len >= cast(int) buffer_.length)
+        {
+            flushBuffer();
+            out_.write(text, off, len);
+            return;
+        }
+        int start = off;
+        const stop = off + len;
+        while (start < stop)
+        {
+            if (nextChar_ >= buffer_.length)
+                flushBuffer();
+            const room = cast(int)(buffer_.length - nextChar_);
+            const count = stop - start < room ? stop - start : room;
+            buffer_[nextChar_ .. nextChar_ + count] = text[start .. start + count];
+            nextChar_ += count;
+            start += count;
+        }
+    }
+
+    private void putCodePoint(dchar c)
+    {
+        if (c <= 0xFFFF)
+            putUnit(cast(wchar) c);
+        else
+        {
+            putUnit(cast(wchar)(0xD800 + ((c - 0x10000) >> 10)));
+            putUnit(cast(wchar)(0xDC00 + ((c - 0x10000) & 0x3FF)));
+        }
+    }
+
+    private void putUnit(wchar unit)
+    {
+        if (nextChar_ >= buffer_.length)
+            flushBuffer();
+        buffer_[nextChar_++] = unit;
+    }
+
+    /// Java's `newLine`: buffer the platform line separator.
+    void newLine()
+    {
+        ensureOpen();
+        write(lineSeparator_);
+    }
+
+    /// Flush the buffer, then the wrapped writer.
+    override void flush()
+    {
+        flushBuffer();
+        out_.flush();
+    }
+
+    /// Flush and close the wrapped writer once; later calls do nothing.
+    override void close()
+    {
+        if (out_ is null)
+            return;
+        try
+        {
+            try
+                flushBuffer();
+            catch (Exception flushFailure)
+            {
+                try
+                    out_.close();
+                catch (Exception)
+                {
+                    // Java records this close failure as a suppressed exception on flushFailure;
+                    // Flint's Throwable has no suppressed-exception API.
+                }
+                throw flushFailure;
+            }
+            out_.close();
+        }
+        finally
+        {
+            out_ = null;
+            buffer_ = null;
+        }
+    }
+}
+
+/++
 Java's `PrintWriter`: formatted text over a `Writer` or an `OutputStream`.
 
 A checked write, flush or close failure is recorded in the error state instead of escaping, as Java's methods do.

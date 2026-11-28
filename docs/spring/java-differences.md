@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,269 | 876 | 0 | 1,957 | 13,319 |
+| framework | openjdk@21.0.13 | 2,273 | 881 | 0 | 1,957 | 13,310 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -207,6 +207,10 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | Repo | Java | Flint | Note |
 | --- | --- | --- | --- |
 | framework | `io.micrometer.observation.ObservationPredicate` | `flint.micrometer.observation.ObservationPredicate` | Inherits the test method from Flint's Java BiPredicate. Its combinators are deferred with the Java provider. |
+| framework | `java.io.BufferedWriter#<init>(Writer)` | `flint.java.io.BufferedWriter.this` | A null writer is rejected during construction with NullPointerException. |
+| framework | `java.io.BufferedWriter#<init>(Writer,int)` | `flint.java.io.BufferedWriter.this` | A non-positive buffer size is rejected with IllegalArgumentException("Buffer size <= 0"), as Java does. |
+| framework | `java.io.BufferedWriter#flush()` | `flint.java.io.BufferedWriter.flush` | Flushes the buffer then the wrapped writer; after close it throws IOException "Stream closed". |
+| framework | `java.io.BufferedWriter#newLine()` | `flint.java.io.BufferedWriter.newLine` | Buffers System.lineSeparator(). |
 | framework | `java.io.ByteArrayInputStream#close()` | `flint.java.io.ByteArrayInputStream.close` | Inherits the no-op close. Repeated calls leave the read position unchanged and subsequent reads still work. |
 | framework | `java.io.ByteArrayOutputStream#<init>()` | `flint.java.io.ByteArrayOutputStream.this` | Initializes Java's 32-byte buffer and zero count. |
 | framework | `java.io.ByteArrayOutputStream#<init>(int)` | `flint.java.io.ByteArrayOutputStream.this` | Rejects a negative size with IllegalArgumentException and Java's diagnostic. |
@@ -2260,6 +2264,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.BufferedInputStream#transferTo(OutputStream)` | `flint.java.io.InputStream.transferTo` | [R1](api-mapping.md#r1-packages-and-names) | The inherited InputStream.transferTo is behaviourally identical. Java's override only avoids one copy, and its fast path tests the exact runtime class. |
 | `java.io.BufferedOutputStream` | `flint.java.io.BufferedOutputStream` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Declared in the flint.java.io aggregate; byte arrays are D ubyte slices (R26). Synchronization on the stream monitor is omitted because a Flint stream is confined to one fiber. The no-size constructor uses Java's platform-thread buffer (the 8192-byte maximum); the virtual-thread resizable buffer is not ported. |
 | `java.io.BufferedOutputStream#write(byte[],int,int)` | `flint.java.io.BufferedOutputStream.write` | [R26](api-mapping.md#r26-null-arrays) | A D ubyte slice; a null slice counts as empty under R26. A write at least the buffer size bypasses the buffer after flushing, as in Java. |
+| `java.io.BufferedWriter` | `flint.java.io.BufferedWriter` | [R1](api-mapping.md#r1-packages-and-names), [R14](api-mapping.md#r14-strings-and-text) | Declared in the flint.java.io aggregate and extends the Flint Writer. It buffers UTF-16 code units, so a surrogate pair split across two writes is kept whole, and a ranged write at least the buffer size flushes then passes straight through. Synchronization on the stream monitor is omitted because a Flint stream is confined to one fiber. |
+| `java.io.BufferedWriter#close()` | `flint.java.io.BufferedWriter.close` | [R8](api-mapping.md#r8-exceptions) | Flushes and closes the wrapped writer once and rejects later use. Java attaches a close failure to a flush failure as a suppressed exception; Flint rethrows the flush failure after the close attempt because its Throwable has no suppressed-exception API. |
+| `java.io.BufferedWriter#write(String)` | `flint.java.io.BufferedWriter.write` | [R26](api-mapping.md#r26-null-arrays) | A D UTF-8 string stands in for Java's String; a null slice counts as empty (R26). The text is decoded to UTF-16 units before buffering. |
+| `java.io.BufferedWriter#write(String,int,int)` | `flint.java.io.BufferedWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's UTF-16 range adapter over Flint's UTF-8 text; a range that splits a supplementary character writes U+FFFD for the lone half (R14) and a null string counts as empty (R26). |
+| `java.io.BufferedWriter#write(char[],int,int)` | `flint.java.io.BufferedWriter.write` | [R26](api-mapping.md#r26-null-arrays) | Buffers UTF-16 code units and preserves adjacent surrogate halves; a null array counts as empty (R26). A range at least the buffer size flushes and writes straight through, as Java documents. |
+| `java.io.BufferedWriter#write(int)` | `flint.java.io.BufferedWriter.write` | [R14](api-mapping.md#r14-strings-and-text) | Inherits Writer's single-character write: Flint writes one code point, where Java writes the low 16 bits of the int as one UTF-16 code unit; a lone surrogate writes U+FFFD. |
 | `java.io.ByteArrayInputStream` | `flint.java.io.ByteArrayInputStream` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Declared in the flint.java.io aggregate. Byte arrays are D slices (R26). The protected backing array is a const slice, so a subclass reads the caller's bytes but cannot rewrite them; Java's byte[] is mutable. Java's synchronized methods are not synchronized because a Flint stream is confined to one fiber. The Java mark field is named markpos because D forbids a field and the mark(int) method sharing a name. |
 | `java.io.ByteArrayInputStream#<init>(byte[])` | `flint.java.io.ByteArrayInputStream.this` | [R26](api-mapping.md#r26-null-arrays) | Uses the caller's backing array as an unsigned const slice, not copied, as Java does. A null slice counts as an empty array under R26. |
 | `java.io.ByteArrayInputStream#<init>(byte[],int,int)` | `flint.java.io.ByteArrayInputStream.this` | [R26](api-mapping.md#r26-null-arrays) | A D ubyte slice; a null slice counts as empty under R26. The count is min(offset + length, buf.length) and the mark starts at offset, as Java's int arithmetic does. |
@@ -11308,7 +11318,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 515 | 0 |
+| java.io | 506 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
