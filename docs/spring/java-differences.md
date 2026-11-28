@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,126 | 764 | 0 | 1,957 | 13,574 |
+| framework | openjdk@21.0.13 | 2,126 | 765 | 0 | 1,957 | 13,573 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2292,6 +2292,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.lang.Integer#valueOf(String)` | `flint.java.lang.integer.Integer.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns an int: a boxed Integer is a D int. A D null string is Java's "" here: Java reports "Cannot parse null string", where Flint reports the empty-string NumberFormatException (R5). |
 | `java.lang.Integer#valueOf(String,int)` | `flint.java.lang.integer.Integer.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns an int: a boxed Integer is a D int. A D null string is Java's "" here: Java reports "Cannot parse null string", where Flint reports the empty-string NumberFormatException (R5). |
 | `java.lang.Integer#valueOf(int)` | `flint.java.lang.integer.Integer.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns the int itself: a boxed Integer is a D int. |
+| `java.lang.Iterable#forEach(Consumer)` | `flint.java.lang.Iterable.forEach` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R5](api-mapping.md#r5-optional-and-nullable-values), [R9](api-mapping.md#r9-functional-interfaces) | Implementors opt into the default with Iterable!T.Defaults (R3); bare null is ambiguous with the R9 delegate overload and rejected at compile time (R5), while a typed null Consumer!T throws NullPointerException (R8). |
 | `java.lang.Long` | `flint.java.lang.long_.Long` | [R1](api-mapping.md#r1-packages-and-names), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Import from flint.java.lang.long_ (long is a D keyword, R19); flint.java.lang declares a smaller Long of its own until the JDK aggregate re-exports this leaf. A boxed Long is a D long (R5): valueOf and decode return the primitive, and each instance member maps to its primitive equivalent. Parsing uses Character.digit, so Unicode decimal digits and fullwidth Latin letters count. |
 | `java.lang.Long#<init>(String)` | `flint.java.lang.long_.Long.parseLong` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Deprecated for removal since Java 9. A boxed Long is the D long, so Long.parseLong(s) gives the value. |
 | `java.lang.Long#<init>(long)` | `flint.java.lang.long_.Long.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Deprecated for removal since Java 9. A boxed Long is the D long itself, as Long.valueOf(long) returns it. |
@@ -11167,7 +11168,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
 | java.io | 770 | 0 |
-| java.lang | 1,614 | 0 |
+| java.lang | 1,613 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 132 | 0 |
@@ -12208,7 +12209,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.lang.Integer#getInteger(String,int)` | 2 | Reads a JVM system property through System.getProperty, which flint.java.lang.System does not port yet, and returns a nullable boxed Integer. |
 | framework | `java.lang.Integer#parseInt(CharSequence,int,int,int)` | 2 | Takes UTF-16 begin and end indices into a CharSequence, which is not ported yet (sol-framework queue). parseInt(String, int) is ported. |
 | framework | `java.lang.Integer#parseUnsignedInt(CharSequence,int,int,int)` | 2 | Takes UTF-16 begin and end indices into a CharSequence, which is not ported yet (sol-framework queue). parseUnsignedInt(String, int) is ported. |
-| framework | `java.lang.Iterable#forEach(Consumer)` | 2 | Requires default traversal with a Consumer for iterator-only implementations. |
 | framework | `java.lang.Iterable#spliterator()` | 2 | Requires the canonical java.util.Spliterator and an iterator-backed default (R3). Java opens the iterator without advancing it and initially reports unknown size and no characteristics. |
 | framework | `java.lang.Long#getLong(String)` | 2 | Reads a JVM system property through System.getProperty, which flint.java.lang.System does not port yet, and returns a nullable boxed Long. |
 | framework | `java.lang.Long#getLong(String,Long)` | 2 | Reads a JVM system property through System.getProperty, which flint.java.lang.System does not port yet, and returns a nullable boxed Long. |
