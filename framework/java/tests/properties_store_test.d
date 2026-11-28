@@ -26,7 +26,7 @@ import std.string : indexOf;
     assert(containsText(text, "space\\ key=\\ leading" ~ separator));
     assert(containsText(text, "sep\\=key\\:colon=a\\=b\\:c\\#d\\!e" ~ separator));
     assert(containsText(text, "controls=\\t\\n\\r\\f\\\\" ~ separator));
-    assert(containsText(text, "unicode=caf\\u00E9 \\uD83D\\uDE00" ~ separator));
+    assert(containsText(text, "unicode=caf\u00e9 \U0001f600" ~ separator));
     assert(containsText(text, "empty=" ~ separator));
 
     auto loaded = new Properties;
@@ -65,27 +65,45 @@ import std.string : indexOf;
     assert(containsText(text, "own=1"));
 }
 
-@("Properties store(OutputStream) writes ISO-8859-1 bytes and leaves the stream open") unittest
+@("Properties store(OutputStream) escapes non-Latin-1 in entries but writes comments as ISO-8859-1") unittest
 {
     auto properties = new Properties;
-    properties.setProperty("key", "caf\u00e9");
+    properties.setProperty("key", "caf\u00e9 \U0001f600");
     auto output = new ByteArrayOutputStream();
     properties.store(output, "comment \u00e9");
     auto bytes = output.toByteArray();
-    bool sawLatin1;
-    bool sawUtf8;
+    string text;
+    bool sawCommentLatin1;
     foreach (index, octet; bytes)
     {
         if (octet == 0xe9)
-            sawLatin1 = true;
-        if (octet == 0xc3 && index + 1 < bytes.length && bytes[index + 1] == 0xa9)
-            sawUtf8 = true;
+            sawCommentLatin1 = true;
+        text ~= cast(char) octet;
     }
-    assert(sawLatin1 && !sawUtf8);
+    // The entry is ASCII-escaped; only the comment keeps its Latin-1 byte.
+    assert(containsText(text, "key=caf\\u00E9 \\uD83D\\uDE00"));
+    assert(sawCommentLatin1);
 
     auto loaded = new Properties;
     loaded.load(new ByteArrayInputStream(bytes));
-    assert(loaded.getProperty("key") == "caf\u00e9");
+    assert(loaded.getProperty("key") == "caf\u00e9 \U0001f600");
+}
+
+@("Properties store writes entries in Java's natural key order, not insertion order") unittest
+{
+    auto properties = new Properties;
+    properties.setProperty("zeta", "1");
+    properties.setProperty("alpha", "2");
+    properties.setProperty("Mike", "3");
+    properties.setProperty("beta", "4");
+    auto writer = new StringWriter();
+    properties.store(writer, null);
+    auto lines = splitLines(writer.toString());
+    assert(lines.length == 5);
+    assert(lines[1] == "Mike=3");
+    assert(lines[2] == "alpha=2");
+    assert(lines[3] == "beta=4");
+    assert(lines[4] == "zeta=1");
 }
 
 @("Properties store rejects a null writer or stream") unittest
