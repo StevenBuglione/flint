@@ -1,6 +1,7 @@
 {
   "source": "closure/filetime.d",
   "leaves": [
+    "flint.java.lang",
     "flint.java.time",
     "flint.java.util.concurrent"
   ],
