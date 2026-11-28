@@ -5,7 +5,8 @@
     "flint.java.io.closeable",
     "flint.java.io.flushable",
     "flint.java.lang",
-    "flint.java.lang.system"
+    "flint.java.lang.system",
+    "flint.java.nio.charset"
   ],
   "data": []
 }
