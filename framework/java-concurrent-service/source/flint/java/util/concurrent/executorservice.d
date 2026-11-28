@@ -172,8 +172,8 @@ interface ExecutorService : Executor, AutoCloseable
     /// Execute the tasks and return one result that completed successfully (R3, R9).
     ///
     /// As Java's `invokeAny`: every task still running is cancelled when this returns or throws, the last failure
-    /// is rethrown once no task is left running, and an empty collection is rejected. Interruption is deferred
-    /// until the `Thread` façade lands, as it is for `Future.get`.
+    /// is rethrown once no task is left running, and an empty collection is rejected. Interrupting the caller ends
+    /// the wait with `InterruptedException` after cancelling the tasks.
     T invokeAny(T)(Collection!(Callable!T) tasks)
     {
         return invokeAnyImpl(this, tasks, false, 0);
@@ -182,8 +182,8 @@ interface ExecutorService : Executor, AutoCloseable
     /// Execute the tasks and return one result that completed before `timeout` (R3, R9).
     ///
     /// As Java's timed `invokeAny`: `TimeoutException` is thrown when no task completes in time and every
-    /// submitted task is cancelled on the way out. Interruption is deferred until the `Thread` façade lands, as
-    /// it is for `Future.get`.
+    /// submitted task is cancelled on the way out. Interrupting the caller ends the wait with
+    /// `InterruptedException` after cancelling the tasks.
     T invokeAny(T)(Collection!(Callable!T) tasks, long timeout, TimeUnit unit)
     {
         return invokeAnyImpl(this, tasks, true, toNanos(unit, timeout));
@@ -249,22 +249,28 @@ private final class CompletionTask(T) : Runnable
     }
 }
 
-// Wait for the next completion, parking on the queue's word until `deadline` (`long.max` for no timeout).
-private bool awaitCompletion(T)(CompletionQueue!T queue, out Future!T future, long deadline)
+// Wait for the next completion, parking on the queue's word until `deadline` (`long.max` for no timeout). An
+// interrupt of the calling thread ends the wait with `InterruptedException`, as Java's completion-queue take does.
+private bool awaitCompletion(T)(CompletionQueue!T queue, out Future!T future, long deadline,
+        ref ThreadState state, ulong token)
 {
     for (;;)
     {
-        // Read the wake word before the queue: a completion between the two observations advances the word and
-        // ends the park below instead of leaving the waiter asleep.
+        // Read the wake word before the queue: a completion or interrupt between the two observations then
+        // advances the word and ends the park below, instead of leaving the waiter asleep.
         const observed = atomicLoad(queue.wake);
         if (queue.poll(future))
             return true;
-        const remaining = remainingNanos(deadline);
-        if (remaining <= 0)
+        if (state.clearInterrupted())
+            throw new InterruptedException;
+        bool expired;
+        long sleep = parkNanos(deadline, expired);
+        if (expired)
             return false;
-        // Bound the native sleep so the untimed wait stays within every platform's timeout width; a completion
-        // wakes it immediately.
-        park(queue.wake, observed, remaining > 1_000_000_000L ? 1_000_000_000L : remaining);
+        // A waiter that could not install its sink (another wait is active) still sees the flag.
+        if (token == 0 && sleep > interruptPollNanos)
+            sleep = interruptPollNanos;
+        park(queue.wake, observed, sleep);
     }
 }
 
@@ -311,6 +317,14 @@ package(flint.java.util.concurrent) T invokeAnyImpl(T)(ExecutorService service,
     scope (exit)
         cancelStarted(futures);
 
+    auto state = Thread.currentThread().state();
+    const token = state.install(InterruptSink(&queue.signal));
+    scope (exit)
+    {
+        if (token != 0)
+            state.retire(token);
+    }
+
     auto iterator = tasks.iterator();
     const deadline = timed ? saturatingAdd(monotonicNow(), nanos) : long.max;
     ExecutionException lastFailure;
@@ -337,7 +351,7 @@ package(flint.java.util.concurrent) T invokeAnyImpl(T)(ExecutorService service,
             }
             if (active == 0)
                 break;
-            if (!awaitCompletion(queue, future, deadline))
+            if (!awaitCompletion(queue, future, deadline, state, token))
                 throw new TimeoutException;
         }
         active--;

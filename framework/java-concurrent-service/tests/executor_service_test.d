@@ -556,6 +556,52 @@ unittest
     assertThrown!NullPointerException(service.invokeAny(callables(cast(Callable!int) null)));
 }
 
+@("invokeAny wakes and throws when another thread interrupts the waiter")
+@system unittest
+{
+    import flint.java.lang.interruptedexception : InterruptedException;
+    import flint.java.lang.thread : JavaThread = Thread;
+
+    auto host = new OffloadExecutorService(1, options());
+    ExecutorService service = host;
+    auto blocked = new BlockingCall;
+    auto tasks = callables(blocked);
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        blocked.release();
+        service.shutdownNow();
+        driver.join();
+    }
+
+    __gshared JavaThread waiter;
+    __gshared bool started;
+    __gshared bool interrupted;
+    __gshared bool flagCleared;
+    auto worker = new Thread({
+        auto self = JavaThread.currentThread();
+        waiter = self;
+        atomicStore(started, true);
+        try
+            service.invokeAny(tasks);
+        catch (InterruptedException)
+        {
+            interrupted = true;
+            flagCleared = !self.isInterrupted();
+        }
+    });
+    worker.start();
+    while (!atomicLoad(started))
+        Thread.yield();
+    while (atomicLoad(blocked.started) == 0)
+        Thread.yield();
+    waiter.interrupt();
+    worker.join();
+
+    assert(interrupted, "the waiter must observe the interrupt instead of waiting for the task");
+    assert(flagCleared, "Java clears the flag when invokeAny throws");
+}
+
 @("awaitTermination reports termination after the driven reactor exits")
 @system unittest
 {
