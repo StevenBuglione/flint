@@ -1,0 +1,5 @@
+{
+ "id": "D-JDK-10",
+ "deviation": "`java.util.Properties` inherits `java.util.Hashtable`, whose public methods Java synchronizes on the instance monitor. Flint's `flint.java.util.Properties` is a `LinkedHashMap`-backed port without that per-instance monitor, so callers that share one `Properties` between fibers or threads must serialize their own access. As in Java, a single accessor is atomic for the caller while a read-modify-write sequence is not.",
+ "reason": "Flint's per-fiber scheduling keeps configuration on the fiber that built it, and the collection ports are plain containers with no intrinsic lock (ADR-030, fiber-local state). Adding Hashtable's monitor to every operation would charge unsynchronized single-fiber configuration with locking and would not make Java's compound operations safe anyway; shared mutable state is protected explicitly under R-4."
+}
