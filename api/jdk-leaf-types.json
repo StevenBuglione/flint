@@ -29,6 +29,7 @@
   "java.net.SocketException": "flint.java.net.socketexception",
   "java.net.SocketTimeoutException": "flint.java.net.sockettimeoutexception",
   "java.net.StandardProtocolFamily": "flint.java.net.standardprotocolfamily",
+  "java.net.URISyntaxException": "flint.java.net.urisyntaxexception",
   "java.net.URL": "flint.java.net.url",
   "java.net.URLDecoder": "flint.java.net.urldecoder",
   "java.net.URLEncoder": "flint.java.net.urlencoder",
