@@ -1,0 +1,9 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "upstream": "openjdk@21.0.13",
+  "module": "java-text-decimal",
+  "test_packages": [
+    ":java-text-decimal"
+  ],
+  "classes": {}
+}

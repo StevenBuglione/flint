@@ -1930,6 +1930,45 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-text-decimal": {
+   "directory": "framework/java-text-decimal",
+   "module": "flint.java.text.decimalformat",
+   "also": [
+    "flint.java.text.decimalformatsymbols"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.text.DecimalFormat",
+    "java.text.DecimalFormatSymbols"
+   ],
+   "dependencies": [
+    "java",
+    "java-text"
+   ],
+   "bench": {
+    "fixture": "framework/java-text-decimal/bench",
+    "baseline": "framework/java-text-decimal/bench/baseline",
+    "edit_source": "framework/java-text-decimal/source/flint/java/text/decimalformat.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 65406,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 494
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java-time": {
    "directory": "framework/java-time",
    "module": "flint.java.time.period",

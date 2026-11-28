@@ -1,0 +1,6 @@
+name "probe-java-text-decimal"
+targetType "executable"
+targetPath "build"
+targetName "probe-java-text-decimal"
+dflags "-preview=dip1000"
+dependency "flint:java-text-decimal" path="../../.."

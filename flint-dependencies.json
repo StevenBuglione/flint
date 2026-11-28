@@ -423,11 +423,11 @@
       "repo": "framework",
       "version": "monorepo"
     },
-    "flint:java-net-unknown-service-exception": {
+    "flint:java-net-spi": {
       "repo": "framework",
       "version": "monorepo"
     },
-    "flint:java-net-spi": {
+    "flint:java-net-unknown-service-exception": {
       "repo": "framework",
       "version": "monorepo"
     },
@@ -472,6 +472,10 @@
       "version": "monorepo"
     },
     "flint:java-text": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
+    "flint:java-text-decimal": {
       "repo": "framework",
       "version": "monorepo"
     },

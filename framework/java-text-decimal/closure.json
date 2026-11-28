@@ -1,0 +1,35 @@
+{
+  "probes": {
+    "flint.java.text.decimalformatsymbols": {
+      "decimal-formats-symbols": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.text.internal.decimalformatsymbols",
+          "flint.java.util"
+        ],
+        "source": "closure/decimal-formats-symbols.d"
+      }
+    },
+    "flint.java.text.decimalformat": {
+      "decimal-format": {
+        "data": [],
+        "leaves": [
+          "flint.java.internal.math.fdbiginteger",
+          "flint.java.lang",
+          "flint.java.text.decimalformatsymbols",
+          "flint.java.text.internal.binarydecimal",
+          "flint.java.text.internal.decimaldigitlist",
+          "flint.java.text.internal.decimalexponent",
+          "flint.java.text.internal.decimalfixed",
+          "flint.java.text.internal.decimalfixedbinary",
+          "flint.java.text.internal.decimalformatsymbols",
+          "flint.java.text.internal.decimalpattern",
+          "flint.java.util"
+        ],
+        "source": "closure/decimal-format.d"
+      }
+    }
+  },
+  "schema": "flint.jdk-closure/1"
+}
