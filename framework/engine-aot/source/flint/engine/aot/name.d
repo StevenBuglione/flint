@@ -9,10 +9,72 @@ module flint.engine.aot.name;
 
 @safe:
 
-/// The canonical fully qualified name of `T`, as generated tables spell it.
+/++
+`@CanonicalName("flint.java.lang.IllegalArgumentException")`: the name `typeNameOf` and Flint AOT give a type
+declared outside the module its name belongs to, such as a type moved into an internal leaf module, so that its
+name, descriptors and displays do not change when it moves. It applies to a non-template class, struct or interface
+that declares it directly; subclasses do not inherit it. The name must be a dotted D name that still reaches the
+type, normally its public module, which re-exports it.
+
+A template instance keeps its `__traits(fullyQualifiedName)` spelling, arguments included: `Optional!Moved` names the
+moved type by its declaring module, not by its `@CanonicalName`. Generated tables spell instances the same way, so
+lookups agree; only the displayed text differs.
++/
+struct CanonicalName
+{
+    /// The fully qualified name the type keeps.
+    string name;
+}
+
+/// The canonical fully qualified name of `T`, as generated tables spell it: its `@CanonicalName` when it declares
+/// one, else its fully qualified name.
 template typeNameOf(T)
 {
-    enum string typeNameOf = canonicalTypeName(__traits(fullyQualifiedName, T));
+    static if ((is(T == class) || is(T == struct) || is(T == interface)) && !is(T == X!Args, alias X, Args...))
+    {
+        static foreach (attribute; __traits(getAttributes, T))
+        {
+            static assert(!is(attribute == CanonicalName), "@CanonicalName on " ~ __traits(fullyQualifiedName,
+                    T) ~ " needs the name: @CanonicalName(\"pkg.Type\")");
+            static if (is(typeof(attribute) == CanonicalName))
+            {
+                // A public import re-exports under the same identifier, so the name must end with it.
+                static assert(simpleTypeName(attribute.name) == __traits(identifier, T),
+                        "@CanonicalName(\"" ~ attribute.name ~ "\") must end with " ~ __traits(identifier, T));
+                static assert(isDottedName(attribute.name),
+                        "@CanonicalName(\"" ~ attribute.name ~ "\") on " ~ __traits(fullyQualifiedName,
+                            T) ~ " is not a dotted D name");
+                private enum string declared = attribute.name; // a second @CanonicalName fails here
+            }
+        }
+    }
+    static if (is(typeof(declared) == string))
+        enum string typeNameOf = declared;
+    else
+        enum string typeNameOf = canonicalTypeName(__traits(fullyQualifiedName, T));
+}
+
+/// Whether `name` is two or more D identifiers joined by dots: what a `@CanonicalName` must be.
+bool isDottedName(string name) pure nothrow @nogc
+{
+    size_t segments;
+    size_t start;
+    foreach (i; 0 .. name.length + 1)
+    {
+        if (i < name.length && name[i] != '.')
+        {
+            const c = name[i];
+            const letter = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+            if (!letter && !(c >= '0' && c <= '9' && i > start))
+                return false;
+            continue;
+        }
+        if (i == start)
+            return false;
+        ++segments;
+        start = i + 1;
+    }
+    return segments >= 2;
 }
 
 /// Remove LDC's repeated eponymous members from template instance names, at any depth:
