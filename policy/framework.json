@@ -1726,6 +1726,40 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-zip-exception": {
+   "directory": "framework/java-zip-exception",
+   "module": "flint.java.util.zip.zipexception",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.util.zip.ZipException"
+   ],
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-zip-exception/bench",
+    "baseline": "framework/java-zip-exception/bench/baseline",
+    "edit_source": "framework/java-zip-exception/source/flint/java/util/zip/zipexception.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 3586,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 480
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "jdbc": {
    "directory": "framework/jdbc",
    "module": "flint.jdbc",
