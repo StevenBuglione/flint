@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,016 | 704 | 0 | 1,915 | 13,786 |
+| framework | openjdk@21.0.13 | 2,018 | 704 | 0 | 1,915 | 13,784 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -214,6 +214,8 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.io.DataInput#readChar()` | `flint.java.io.DataInput.readChar` | Java char is D wchar, a 16-bit code unit. |
 | framework | `java.io.DataInputStream#readChar()` | `flint.java.io.DataInputStream.readChar` | Java char is D wchar, a 16-bit code unit. |
 | framework | `java.io.OutputStream` | `flint.java.io.OutputStream` | Implements Closeable and Flushable. |
+| framework | `java.io.OutputStreamWriter#<init>(OutputStream)` | `flint.java.io.OutputStreamWriter.this` | A null output stream is rejected during construction with NullPointerException, as Java's Writer lock constructor does. |
+| framework | `java.io.PrintWriter#<init>(Writer)` | `flint.java.io.PrintWriter.this` | A null writer is rejected during construction with NullPointerException. |
 | framework | `java.io.SequenceInputStream#<init>(InputStream,InputStream)` | `flint.java.io.SequenceInputStream.this` | A null first stream is rejected during construction and a null second stream when it is reached, as Java's nextStream does. |
 | framework | `java.io.StringWriter#close()` | `flint.java.io.StringWriter.close` | Inherits the no-op close. Existing text and the ability to write survive repeated calls. |
 | framework | `java.io.StringWriter#flush()` | `flint.java.io.StringWriter.flush` | Inherits the no-op flush, preserving the stored text. |
@@ -11027,7 +11029,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 589 | 0 |
+| java.io | 587 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -11940,14 +11942,12 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.IOException#<init>(Throwable)` | 2 | Missing cause-only constructor. Java initializes the cause even if it is null and derives the detail from a non-null cause's virtual toString. |
 | framework | `java.io.InterruptedIOException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.io.InterruptedIOException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
-| framework | `java.io.OutputStreamWriter#<init>(OutputStream)` | 2 | Java rejects a null output stream during construction. The existing constructor accepts one. |
 | framework | `java.io.OutputStreamWriter#close()` | 2 | Java flushes buffered output, closes once, and rejects subsequent writes and flushes. The existing method forwards every close without flushing or tracking the closed state. |
 | framework | `java.io.OutputStreamWriter#flush()` | 2 | Java drains its encoded buffer before flushing the stream and rejects flush after close. The existing writer emits bytes eagerly and forwards flush even after close. |
 | framework | `java.io.PrintWriter#<init>(File)` | 2 | The existing type has no File constructor. |
-| framework | `java.io.PrintWriter#<init>(OutputStream)` | 2 | Java rejects a null output, buffers writes and uses the charset of a PrintStream sink or the default charset. The existing constructor accepts a null sink and wraps an eager UTF-8 writer. |
+| framework | `java.io.PrintWriter#<init>(OutputStream)` | 2 | A null output is now rejected, but Java buffers writes and uses the charset of a PrintStream sink or the default charset. The existing constructor wraps an eager UTF-8 writer. |
 | framework | `java.io.PrintWriter#<init>(OutputStream,boolean)` | 2 | Missing buffered output-stream constructor with selectable auto-flush and charset inherited from a PrintStream sink or the default charset. |
 | framework | `java.io.PrintWriter#<init>(OutputStream,boolean,Charset)` | 2 | Missing buffered output-stream constructor with selectable auto-flush and explicit charset. |
-| framework | `java.io.PrintWriter#<init>(Writer)` | 2 | Java rejects a null writer during construction. The existing constructor accepts one. |
 | framework | `java.io.PrintWriter#<init>(Writer,boolean)` | 2 | Missing constructor with selectable auto-flush for println, printf and format. An ordinary print containing a newline does not trigger it. |
 | framework | `java.io.PrintWriter#append(CharSequence)` | 2 | Java appends literal null for an absent character sequence. The existing UTF-8 slice treats it as empty. The distinct nullable text contract needs R5. |
 | framework | `java.io.PrintWriter#append(CharSequence,int,int)` | 2 | Missing UTF-16 subsequence append through the virtual whole-sequence overload. Java selects from the text null when the sequence is absent. |
