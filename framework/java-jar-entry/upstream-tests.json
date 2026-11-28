@@ -1,0 +1,17 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "upstream": "openjdk@21.0.13",
+  "module": "java-jar-entry",
+  "test_packages": [
+    ":java-jar-entry"
+  ],
+  "classes": {
+    "java/util/jar/JarEntry/GetMethodsReturnClones.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: the reference case is not copied; it exercises getCertificates/getCodeSigners, which are deferred with java.security.cert (phase 3). This module's own tests cover the ported constructors, getAttributes and getRealName.",
+      "covered_by": [
+        "framework/java-jar-entry/tests/jarentry_test.d"
+      ]
+    }
+  }
+}

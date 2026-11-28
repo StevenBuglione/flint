@@ -1,0 +1,8 @@
+{
+  "source": "closure/jarentry.d",
+  "leaves": [
+    "flint.java.util.jar",
+    "flint.java.util.zip.zipentry"
+  ],
+  "data": []
+}
