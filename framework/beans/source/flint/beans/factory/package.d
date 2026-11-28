@@ -44,6 +44,7 @@ import flint.engine.aot.name : typeNameOf;
 import flint.java.lang : NullPointerException;
 import flint.java.util : LinkedHashMap, Map;
 import flint.java.util.stream : Stream;
+import flint.core.env : Environment;
 
 @safe:
 
@@ -832,3 +833,164 @@ class BeanDefinitionStoreException : FatalBeanException
         return text is null ? NullableString.init : NullableString(text);
     }
 }
+
+// port:generated port-skeleton/1 spring-framework@v7.1.0 org.springframework.beans.factory.BeanClassLoaderAware sha256:d890a7155e1f4e7608b91c7a2e50461abd7186a1e573801ef56c668485a60c31
+/// Callback that allows a bean to be aware of the bean `class loader`; that is, the class loader used by the present
+/// bean factory to load bean classes. This is mainly intended to be implemented by framework classes which have to pick
+/// up application classes by name despite themselves potentially being loaded from a shared class loader. For a list of
+/// all bean lifecycle methods, see the `BeanFactory javadocs`.
+interface BeanClassLoaderAware : Aware
+{
+    // port:pending org.springframework.beans.factory.BeanClassLoaderAware#setBeanClassLoader(ClassLoader): type java.lang.ClassLoader is excluded (jvm-runtime)
+}
+// port:end
+
+// port:generated port-skeleton/1 spring-framework@v7.1.0 org.springframework.beans.factory.BeanExpressionException sha256:4507acefa28216e7b9b5cf8ea07408a7e499f17ea9ea35c6d6bfeb399ad60626
+/// Exception that indicates an expression evaluation attempt having failed.
+class BeanExpressionException : FatalBeanException
+{
+    /// Create a new BeanExpressionException with the specified message.
+    this(string msg, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(msg, file, line);
+    }
+
+    // port:pending org.springframework.beans.factory.BeanExpressionException#<init>(String,Throwable): type java.lang.Throwable is not mapped to a D symbol
+}
+// port:end
+
+// port:generated port-skeleton/1 spring-framework@v7.1.0 org.springframework.beans.factory.BeanFactoryUtils sha256:5e9dc6346feffc126059c436dcaf284eb4cdc6c26b592f9cf26408414eb4b9a9
+/// Convenience methods operating on bean factories, in particular on the `ListableBeanFactory` interface. Returns bean
+/// counts, bean names or bean instances, taking into account the nesting hierarchy of a bean factory (which the methods
+/// defined on the ListableBeanFactory interface don't, in contrast to the methods defined on the BeanFactory
+/// interface). NOTE: It is generally preferable to use `ObjectProvider.stream()` via `BeanFactory.getBeanProvider`
+/// instead of this utility class.
+abstract class BeanFactoryUtils
+{
+    /// Separator for generated bean names. If a class name or parent name is not unique, "#1", "#2" etc will be
+    /// appended, until the name becomes unique.
+    enum string GENERATED_BEAN_NAME_SEPARATOR = "#";
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#beanNamesForAnnotationIncludingAncestors(ListableBeanFactory,Class): Class<?> needs a plan choice (R4: ClassRef or RuntimeClassRef)
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#beanNamesForTypeIncludingAncestors(ListableBeanFactory,Class): Class<?> needs a plan choice (R4: ClassRef or RuntimeClassRef)
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#beanNamesForTypeIncludingAncestors(ListableBeanFactory,Class,boolean,boolean): Class<?> needs a plan choice (R4: ClassRef or RuntimeClassRef)
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#beanNamesForTypeIncludingAncestors(ListableBeanFactory,ResolvableType): type org.springframework.core.ResolvableType is excluded (runtime-reflection)
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#beanNamesForTypeIncludingAncestors(ListableBeanFactory,ResolvableType,boolean,boolean): type org.springframework.core.ResolvableType is excluded (runtime-reflection)
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#beanNamesIncludingAncestors(ListableBeanFactory): the body is not written yet (--strip-pending)
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#beanOfType(ListableBeanFactory,Class): a generic method
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#beanOfType(ListableBeanFactory,Class,boolean,boolean): a generic method
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#beanOfTypeIncludingAncestors(ListableBeanFactory,Class): a generic method
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#beanOfTypeIncludingAncestors(ListableBeanFactory,Class,boolean,boolean): a generic method
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#beansOfTypeIncludingAncestors(ListableBeanFactory,Class): a generic method
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#beansOfTypeIncludingAncestors(ListableBeanFactory,Class,boolean,boolean): a generic method
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#countBeansIncludingAncestors(ListableBeanFactory): the body is not written yet (--strip-pending)
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#isFactoryDereference(String): the body is not written yet (--strip-pending)
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#isGeneratedBeanName(String): the body is not written yet (--strip-pending)
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#mergeNamesWithParent(String,String,HierarchicalBeanFactory): the body is not written yet (--strip-pending)
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#originalBeanName(String): the body is not written yet (--strip-pending)
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#transformedBeanName(String): the body is not written yet (--strip-pending)
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#transformedBeanNameCache: a constant whose initializer is not a literal
+
+    // port:pending org.springframework.beans.factory.BeanFactoryUtils#uniqueBean(Class,Map): a generic method
+}
+// port:end
+
+// port:generated port-skeleton/1 spring-framework@v7.1.0 org.springframework.beans.factory.BeanRegistrar sha256:10390410e36505a2410c89cae1921329cc101f90092c14b53b0399084be1fa74
+/// Contract for registering beans programmatically. Implementations use the `BeanRegistry` and `Environment` to
+/// register beans: <pre class="code"> class MyBeanRegistrar implements BeanRegistrar { &#064;Override public void
+/// register(BeanRegistry registry, Environment env) { registry.registerBean("foo", Foo.class);
+/// registry.registerBean("bar", Bar.class, spec -> spec .prototype() .lazyInit() .description("Custom description")
+/// .supplier(context -> new Bar(context.bean(Foo.class)))); if (env.matchesProfiles("baz")) {
+/// registry.registerBean(Baz.class, spec -> spec .supplier(context -> new Baz("Hello World!"))); } } } `BeanRegistrar`
+/// implementations are not Spring components: they must have a no-arg constructor and cannot rely on dependency
+/// injection or any other component-model feature. They can be used in two distinct ways depending on the application
+/// context setup. <h3>With the `@Configuration` model</h3> A `BeanRegistrar` must be imported via `@Import` on a
+/// `@Configuration` class: <pre class="code"> &#064;Configuration &#064;Import(MyBeanRegistrar.class) class
+/// MyConfiguration { } This is the only mechanism that triggers bean registration in the annotation-based configuration
+/// model. Annotating an implementation with `@Configuration` or `@Component`, or returning an instance from a `@Bean`
+/// method, registers it as a bean but does not invoke its `Environment) register` method. When imported, the registrar
+/// is invoked in the order it is encountered during configuration class processing. It can therefore check for and
+/// build on beans that have already been defined, but has no visibility into beans that will be registered by classes
+/// processed later. <h3>Programmatic usage</h3> A `BeanRegistrar` can also be applied directly to a
+/// `org.springframework.context.support.GenericApplicationContext`: <pre class="code"> GenericApplicationContext
+/// context = new GenericApplicationContext(); context.register(new MyBeanRegistrar()); context.registerBean("myBean",
+/// MyBean.class); context.refresh(); This mode is primarily intended for fully programmatic application context setups.
+/// Registrars applied this way are invoked before any `@Configuration` class is processed. They can therefore observe
+/// beans registered programmatically (e.g., via one of the `GenericApplicationContext#registerBean` methods), but will
+/// not see any beans defined in `@Configuration` classes also registered with the context. A `BeanRegistrar`
+/// implementing `org.springframework.context.annotation.ImportAware` can optionally introspect import metadata when
+/// used in an import scenario; otherwise the `setImportMetadata` method is not called. In Kotlin, it is recommended to
+/// use `BeanRegistrarDsl` instead of implementing `BeanRegistrar`.
+interface BeanRegistrar
+{
+    /// Register beans on the given `BeanRegistry` in a programmatic way.
+    void register(BeanRegistry registry, Environment env);
+}
+// port:end
+
+// port:generated port-skeleton/1 spring-framework@v7.1.0 org.springframework.beans.factory.BeanRegistry sha256:82d5578ebfd245eb071b77c587647826fa3eebcd19c60de0ad96995454f7ec62
+/// Used in `Environment)` to expose programmatic bean registration capabilities.
+interface BeanRegistry
+{
+    /// Register beans using the given `BeanRegistrar`.
+    void register(BeanRegistrar registrar);
+
+    /// Given a name, register an alias for it.
+    void registerAlias(string name, string alias_);
+
+    /// Determine whether a bean of the given name is already registered.
+    bool containsBean(string name);
+
+    // port:pending org.springframework.beans.factory.BeanRegistry#containsBean(Class): Class<?> needs a plan choice (R4: ClassRef or RuntimeClassRef)
+
+    // port:pending org.springframework.beans.factory.BeanRegistry#containsBean(ParameterizedTypeReference): a generic method
+
+    // port:pending org.springframework.beans.factory.BeanRegistry#registerBean(Class): a generic method
+
+    // port:pending org.springframework.beans.factory.BeanRegistry#registerBean(Class,Consumer): a generic method
+
+    // port:pending org.springframework.beans.factory.BeanRegistry#registerBean(ParameterizedTypeReference): a generic method
+
+    // port:pending org.springframework.beans.factory.BeanRegistry#registerBean(ParameterizedTypeReference,Consumer): a generic method
+
+    // port:pending org.springframework.beans.factory.BeanRegistry#registerBean(String,Class): a generic method
+
+    // port:pending org.springframework.beans.factory.BeanRegistry#registerBean(String,Class,Consumer): a generic method
+
+    // port:pending org.springframework.beans.factory.BeanRegistry#registerBean(String,ParameterizedTypeReference): a generic method
+
+    // port:pending org.springframework.beans.factory.BeanRegistry#registerBean(String,ParameterizedTypeReference,Consumer): a generic method
+
+    // port:pending org.springframework.beans.factory.BeanRegistry.Spec: a nested interface (R13)
+
+    // port:pending org.springframework.beans.factory.BeanRegistry.SupplierContext: a nested interface (R13)
+}
+// port:end
+
+// port:generated port-skeleton/1 spring-framework@v7.1.0 org.springframework.beans.factory.NamedBean sha256:879e6fb6b2256ea50e97e556bfc282c2c202d00ce697a367671e34d36617de4c
+/// Counterpart of `BeanNameAware`. Returns the bean name of an object. This interface can be introduced to avoid a
+/// brittle dependence on bean name in objects used with Spring IoC and Spring AOP.
+interface NamedBean
+{
+    /// Return the name of this bean in a Spring bean factory, if known.
+    string getBeanName();
+}
+// port:end
