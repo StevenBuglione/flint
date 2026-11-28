@@ -471,34 +471,42 @@
     },
     "java/lang/Double/BitwiseConversion.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/double_float_test.d cover doubleToRawLongBits, doubleToLongBits, longBitsToDouble and the float bit conversions.",
       "status": "deferred"
     },
     "java/lang/Double/Constants.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/double_float_test.d cover the MIN/MAX/NORMAL constants, PRECISION, SIZE, BYTES and the exponent bounds.",
       "status": "deferred"
     },
     "java/lang/Double/Extrema.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/double_float_test.d cover max and min, including NaN and signed zero.",
       "status": "deferred"
     },
     "java/lang/Double/NaNInfinityParsing.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/double_float_test.d cover parsing NaN, Infinity and -Infinity and the isNaN/isInfinite classification.",
       "status": "deferred"
     },
     "java/lang/Double/ParseDouble.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/double_float_test.d cover decimal and hexadecimal parseDouble, the f/F/d/D suffix, Java whitespace, overflow to infinity, underflow to zero and the NumberFormatException messages.",
       "status": "deferred"
     },
     "java/lang/Double/ParseHexFloatingPoint.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/double_float_test.d cover the hexadecimal forms 0x1.8p1, 0x1.8p+1, 0x1.8p-1 and 0x1p3.",
       "status": "deferred"
     },
     "java/lang/Double/ToHexString.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/double_float_test.d cover toHexString for zero, normals, subnormals, infinity and NaN.",
       "status": "deferred"
     },
     "java/lang/Double/ToString.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/double_float_test.d cover toString for 0.0, -0.0, normals, large exponents, infinity and NaN.",
       "status": "deferred"
     },
     "java/lang/Enum/ValueOf.java": {
@@ -507,30 +515,37 @@
     },
     "java/lang/Float/Binary16Conversion.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/double_float_test.d cover float16ToFloat and floatToFloat16 across zeros, normals, subnormals, infinity and round-to-nearest-even ties.",
       "status": "deferred"
     },
     "java/lang/Float/Binary16ConversionNaN.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/double_float_test.d cover floatToFloat16(NaN) and float16ToFloat(0x7e00) staying NaN.",
       "status": "deferred"
     },
     "java/lang/Float/BitwiseConversion.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/double_float_test.d cover floatToRawIntBits, floatToIntBits and intBitsToFloat.",
       "status": "deferred"
     },
     "java/lang/Float/Constants.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/double_float_test.d cover the MIN/MAX/NORMAL constants, PRECISION, SIZE, BYTES and the exponent bounds.",
       "status": "deferred"
     },
     "java/lang/Float/Extrema.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/double_float_test.d cover max and min, including NaN and signed zero.",
       "status": "deferred"
     },
     "java/lang/Float/NaNInfinityParsing.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/double_float_test.d cover parsing NaN, Infinity and -Infinity and the isNaN/isInfinite classification.",
       "status": "deferred"
     },
     "java/lang/Float/ParseFloat.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/double_float_test.d cover decimal and hexadecimal parseFloat, the f/F/d/D suffix, overflow to infinity, underflow to zero and the NumberFormatException messages.",
       "status": "deferred"
     },
     "java/lang/HashCode.java": {

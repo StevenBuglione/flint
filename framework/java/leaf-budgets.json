@@ -99,5 +99,13 @@
   "flint.java.lang.long_": {
     "incremental_linked_bytes": 2711,
     "template_instances": 70
+  },
+  "flint.java.lang.double_": {
+    "incremental_linked_bytes": 32714,
+    "template_instances": 259
+  },
+  "flint.java.lang.float_": {
+    "incremental_linked_bytes": 33964,
+    "template_instances": 267
   }
 }
