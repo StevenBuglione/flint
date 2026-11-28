@@ -473,6 +473,25 @@ public class GoldenFormatterBuilder {
         recipe("p:uuuu-MM-dd F", k("date"), "2024-03-05 1", "2024-03-05 2", "2024-03-05 5",
                 "2024-03-05 0");
         recipe("p:uuuu-MM-dd F|s:x", k("date"), "2024-03-05 1x", "2024-03-05 2x");
+        // Whole-of-day letters: A is the milli-of-day and N the nano-of-day, each one to many number letters. Both
+        // resolve a single value into the hour, minute, second and nano, and a second source that disagrees is a
+        // conflict, as Java's Parsed merges them (A through second-of-day and milli-of-second).
+        recipe("p:A", k("time", "dateTime", "date"), "3661001", "0", "86399999", "86400000", "1", "07");
+        recipe("p:AA", k("time", "dateTime"), "7", "07", "3661001");
+        recipe("p:AAA", k("time", "dateTime"), "3661001");
+        recipe("p:N", k("time", "dateTime", "date"), "3661001000000", "0", "86399999999999",
+                "86400000000000", "1000000");
+        recipe("p:NN", k("time", "dateTime"), "1000000", "0001000000");
+        recipe("p:A HH", k("time", "dateTime"), "3661001 01", "3661001 02", "3661001 00");
+        recipe("p:N HH", k("time", "dateTime"), "3661001000000 01", "3661001000000 02");
+        recipe("p:A mm", k("time", "dateTime"), "3661001 01", "3661001 02");
+        recipe("p:A.n", k("time", "dateTime"), "3661001.001", "3661001.002", "3661001.999999999");
+        recipe("p:N.n", k("time", "dateTime"), "3661001000000.001", "3661001000000.1000001");
+        recipe("p:uuuu-MM-dd A", k("date", "dateTime"), "2024-03-05 3661001", "2024-03-05 0");
+        recipe("p:uuuu-MM-dd N", k("date", "dateTime"), "2024-03-05 3661001000000", "2024-03-05 0");
+        recipe("p:uuuu-MM-dd A HH:mm:ss", k("dateTime"), "2024-03-05 3661001 01:01:01",
+                "2024-03-05 3661001 00:00:00");
+        recipe("p:A N", k("time", "dateTime"), "3661001 3661001000000", "3661001 3661002000000");
         Files.write(Path.of(a[0]), lines);
     }
 }

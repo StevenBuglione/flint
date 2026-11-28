@@ -4080,3 +4080,478 @@ parse	p:uuuu-MM-dd F|s:x	date	2024-03-05 1x	2024-03-05
 parse	p:uuuu-MM-dd F|s:x	date	2024-03-05 2x	!Text '2024-03-05 2x' could not be parsed: Conflict found: Field AlignedWeekOfMonth 1 differs from AlignedWeekOfMonth 2 derived from 2024-03-05	0
 parse	p:uuuu-MM-dd F|s:x	date	0001-12-31 5x	0001-12-31
 parse	p:uuuu-MM-dd F|s:x	date	+12345-06-07 1x	+12345-06-07
+build	p:A	-	-	Value(MilliOfDay,1,19,NOT_NEGATIVE)
+format	p:A	date	2024-03-05	!Unsupported field: MilliOfDay
+format	p:A	date	0001-12-31	!Unsupported field: MilliOfDay
+format	p:A	date	+12345-06-07	!Unsupported field: MilliOfDay
+format	p:A	time	10:15	36900000
+format	p:A	time	10:15:30	36930000
+format	p:A	time	10:15:30.123456789	36930123
+format	p:A	time	00:00	0
+format	p:A	dateTime	2024-03-05T10:15:30	36930000
+format	p:A	dateTime	2024-03-05T00:00:00.000001	0
+format	p:A	offset	2024-03-05T10:15:30+01:00	36930000
+format	p:A	offset	2024-03-05T10:15:30Z	36930000
+format	p:A	offset	2024-03-05T10:15:30.500-05:30:15	36930500
+format	p:A	offset	2024-03-05T10:15:30+00:00:45	36930000
+format	p:A	zoned	2024-03-05T10:15:30+02:00	36930000
+format	p:A	zoned	2024-03-05T10:15:30Z[UTC]	36930000
+format	p:A	instant	2024-03-05T10:15:30Z	!Unsupported field: MilliOfDay
+format	p:A	instant	2024-03-05T10:15:30.120Z	!Unsupported field: MilliOfDay
+parse	p:A	time	3661001	01:01:01.001
+parse	p:A	dateTime	3661001	!Text '3661001' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 01:01:01.001 of type java.time.format.Parsed	0
+parse	p:A	date	3661001	!Text '3661001' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 01:01:01.001 of type java.time.format.Parsed	0
+parse	p:A	time	0	00:00
+parse	p:A	dateTime	0	!Text '0' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:A	date	0	!Text '0' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:A	time	86399999	23:59:59.999
+parse	p:A	dateTime	86399999	!Text '86399999' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 23:59:59.999 of type java.time.format.Parsed	0
+parse	p:A	date	86399999	!Text '86399999' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 23:59:59.999 of type java.time.format.Parsed	0
+parse	p:A	time	86400000	!Text '86400000' could not be parsed: Invalid value for MilliOfDay (valid values 0 - 86399999): 86400000	0
+parse	p:A	dateTime	86400000	!Text '86400000' could not be parsed: Invalid value for MilliOfDay (valid values 0 - 86399999): 86400000	0
+parse	p:A	date	86400000	!Text '86400000' could not be parsed: Invalid value for MilliOfDay (valid values 0 - 86399999): 86400000	0
+parse	p:A	time	1	00:00:00.001
+parse	p:A	dateTime	1	!Text '1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00:00.001 of type java.time.format.Parsed	0
+parse	p:A	date	1	!Text '1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:00:00.001 of type java.time.format.Parsed	0
+parse	p:A	time	07	00:00:00.007
+parse	p:A	dateTime	07	!Text '07' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00:00.007 of type java.time.format.Parsed	0
+parse	p:A	date	07	!Text '07' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:00:00.007 of type java.time.format.Parsed	0
+parse	p:A	time	36900000	10:15
+parse	p:A	dateTime	36900000	!Text '36900000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15 of type java.time.format.Parsed	0
+parse	p:A	date	36900000	!Text '36900000' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 10:15 of type java.time.format.Parsed	0
+parse	p:A	time	36930000	10:15:30
+parse	p:A	dateTime	36930000	!Text '36930000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30 of type java.time.format.Parsed	0
+parse	p:A	date	36930000	!Text '36930000' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 10:15:30 of type java.time.format.Parsed	0
+parse	p:A	time	36930123	10:15:30.123
+parse	p:A	dateTime	36930123	!Text '36930123' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.123 of type java.time.format.Parsed	0
+parse	p:A	date	36930123	!Text '36930123' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 10:15:30.123 of type java.time.format.Parsed	0
+parse	p:A	time	36930500	10:15:30.500
+parse	p:A	dateTime	36930500	!Text '36930500' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.500 of type java.time.format.Parsed	0
+parse	p:A	date	36930500	!Text '36930500' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 10:15:30.500 of type java.time.format.Parsed	0
+build	p:AA	-	-	Value(MilliOfDay,2,19,NOT_NEGATIVE)
+format	p:AA	date	2024-03-05	!Unsupported field: MilliOfDay
+format	p:AA	date	0001-12-31	!Unsupported field: MilliOfDay
+format	p:AA	date	+12345-06-07	!Unsupported field: MilliOfDay
+format	p:AA	time	10:15	36900000
+format	p:AA	time	10:15:30	36930000
+format	p:AA	time	10:15:30.123456789	36930123
+format	p:AA	time	00:00	00
+format	p:AA	dateTime	2024-03-05T10:15:30	36930000
+format	p:AA	dateTime	2024-03-05T00:00:00.000001	00
+format	p:AA	offset	2024-03-05T10:15:30+01:00	36930000
+format	p:AA	offset	2024-03-05T10:15:30Z	36930000
+format	p:AA	offset	2024-03-05T10:15:30.500-05:30:15	36930500
+format	p:AA	offset	2024-03-05T10:15:30+00:00:45	36930000
+format	p:AA	zoned	2024-03-05T10:15:30+02:00	36930000
+format	p:AA	zoned	2024-03-05T10:15:30Z[UTC]	36930000
+format	p:AA	instant	2024-03-05T10:15:30Z	!Unsupported field: MilliOfDay
+format	p:AA	instant	2024-03-05T10:15:30.120Z	!Unsupported field: MilliOfDay
+parse	p:AA	time	7	!Text '7' could not be parsed at index 0	0
+parse	p:AA	dateTime	7	!Text '7' could not be parsed at index 0	0
+parse	p:AA	time	07	00:00:00.007
+parse	p:AA	dateTime	07	!Text '07' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00:00.007 of type java.time.format.Parsed	0
+parse	p:AA	time	3661001	01:01:01.001
+parse	p:AA	dateTime	3661001	!Text '3661001' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 01:01:01.001 of type java.time.format.Parsed	0
+parse	p:AA	time	36900000	10:15
+parse	p:AA	dateTime	36900000	!Text '36900000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15 of type java.time.format.Parsed	0
+parse	p:AA	time	36930000	10:15:30
+parse	p:AA	dateTime	36930000	!Text '36930000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30 of type java.time.format.Parsed	0
+parse	p:AA	time	36930123	10:15:30.123
+parse	p:AA	dateTime	36930123	!Text '36930123' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.123 of type java.time.format.Parsed	0
+parse	p:AA	time	00	00:00
+parse	p:AA	dateTime	00	!Text '00' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:AA	time	36930500	10:15:30.500
+parse	p:AA	dateTime	36930500	!Text '36930500' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.500 of type java.time.format.Parsed	0
+build	p:AAA	-	-	Value(MilliOfDay,3,19,NOT_NEGATIVE)
+format	p:AAA	date	2024-03-05	!Unsupported field: MilliOfDay
+format	p:AAA	date	0001-12-31	!Unsupported field: MilliOfDay
+format	p:AAA	date	+12345-06-07	!Unsupported field: MilliOfDay
+format	p:AAA	time	10:15	36900000
+format	p:AAA	time	10:15:30	36930000
+format	p:AAA	time	10:15:30.123456789	36930123
+format	p:AAA	time	00:00	000
+format	p:AAA	dateTime	2024-03-05T10:15:30	36930000
+format	p:AAA	dateTime	2024-03-05T00:00:00.000001	000
+format	p:AAA	offset	2024-03-05T10:15:30+01:00	36930000
+format	p:AAA	offset	2024-03-05T10:15:30Z	36930000
+format	p:AAA	offset	2024-03-05T10:15:30.500-05:30:15	36930500
+format	p:AAA	offset	2024-03-05T10:15:30+00:00:45	36930000
+format	p:AAA	zoned	2024-03-05T10:15:30+02:00	36930000
+format	p:AAA	zoned	2024-03-05T10:15:30Z[UTC]	36930000
+format	p:AAA	instant	2024-03-05T10:15:30Z	!Unsupported field: MilliOfDay
+format	p:AAA	instant	2024-03-05T10:15:30.120Z	!Unsupported field: MilliOfDay
+parse	p:AAA	time	3661001	01:01:01.001
+parse	p:AAA	dateTime	3661001	!Text '3661001' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 01:01:01.001 of type java.time.format.Parsed	0
+parse	p:AAA	time	36900000	10:15
+parse	p:AAA	dateTime	36900000	!Text '36900000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15 of type java.time.format.Parsed	0
+parse	p:AAA	time	36930000	10:15:30
+parse	p:AAA	dateTime	36930000	!Text '36930000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30 of type java.time.format.Parsed	0
+parse	p:AAA	time	36930123	10:15:30.123
+parse	p:AAA	dateTime	36930123	!Text '36930123' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.123 of type java.time.format.Parsed	0
+parse	p:AAA	time	000	00:00
+parse	p:AAA	dateTime	000	!Text '000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:AAA	time	36930500	10:15:30.500
+parse	p:AAA	dateTime	36930500	!Text '36930500' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.500 of type java.time.format.Parsed	0
+build	p:N	-	-	Value(NanoOfDay,1,19,NOT_NEGATIVE)
+format	p:N	date	2024-03-05	!Unsupported field: NanoOfDay
+format	p:N	date	0001-12-31	!Unsupported field: NanoOfDay
+format	p:N	date	+12345-06-07	!Unsupported field: NanoOfDay
+format	p:N	time	10:15	36900000000000
+format	p:N	time	10:15:30	36930000000000
+format	p:N	time	10:15:30.123456789	36930123456789
+format	p:N	time	00:00	0
+format	p:N	dateTime	2024-03-05T10:15:30	36930000000000
+format	p:N	dateTime	2024-03-05T00:00:00.000001	1000
+format	p:N	offset	2024-03-05T10:15:30+01:00	36930000000000
+format	p:N	offset	2024-03-05T10:15:30Z	36930000000000
+format	p:N	offset	2024-03-05T10:15:30.500-05:30:15	36930500000000
+format	p:N	offset	2024-03-05T10:15:30+00:00:45	36930000000000
+format	p:N	zoned	2024-03-05T10:15:30+02:00	36930000000000
+format	p:N	zoned	2024-03-05T10:15:30Z[UTC]	36930000000000
+format	p:N	instant	2024-03-05T10:15:30Z	!Unsupported field: NanoOfDay
+format	p:N	instant	2024-03-05T10:15:30.120Z	!Unsupported field: NanoOfDay
+parse	p:N	time	3661001000000	01:01:01.001
+parse	p:N	dateTime	3661001000000	!Text '3661001000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 01:01:01.001 of type java.time.format.Parsed	0
+parse	p:N	date	3661001000000	!Text '3661001000000' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 01:01:01.001 of type java.time.format.Parsed	0
+parse	p:N	time	0	00:00
+parse	p:N	dateTime	0	!Text '0' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:N	date	0	!Text '0' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:N	time	86399999999999	23:59:59.999999999
+parse	p:N	dateTime	86399999999999	!Text '86399999999999' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 23:59:59.999999999 of type java.time.format.Parsed	0
+parse	p:N	date	86399999999999	!Text '86399999999999' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 23:59:59.999999999 of type java.time.format.Parsed	0
+parse	p:N	time	86400000000000	!Text '86400000000000' could not be parsed: Invalid value for NanoOfDay (valid values 0 - 86399999999999): 86400000000000	0
+parse	p:N	dateTime	86400000000000	!Text '86400000000000' could not be parsed: Invalid value for NanoOfDay (valid values 0 - 86399999999999): 86400000000000	0
+parse	p:N	date	86400000000000	!Text '86400000000000' could not be parsed: Invalid value for NanoOfDay (valid values 0 - 86399999999999): 86400000000000	0
+parse	p:N	time	1000000	00:00:00.001
+parse	p:N	dateTime	1000000	!Text '1000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00:00.001 of type java.time.format.Parsed	0
+parse	p:N	date	1000000	!Text '1000000' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:00:00.001 of type java.time.format.Parsed	0
+parse	p:N	time	36900000000000	10:15
+parse	p:N	dateTime	36900000000000	!Text '36900000000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15 of type java.time.format.Parsed	0
+parse	p:N	date	36900000000000	!Text '36900000000000' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 10:15 of type java.time.format.Parsed	0
+parse	p:N	time	36930000000000	10:15:30
+parse	p:N	dateTime	36930000000000	!Text '36930000000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30 of type java.time.format.Parsed	0
+parse	p:N	date	36930000000000	!Text '36930000000000' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 10:15:30 of type java.time.format.Parsed	0
+parse	p:N	time	36930123456789	10:15:30.123456789
+parse	p:N	dateTime	36930123456789	!Text '36930123456789' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.123456789 of type java.time.format.Parsed	0
+parse	p:N	date	36930123456789	!Text '36930123456789' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 10:15:30.123456789 of type java.time.format.Parsed	0
+parse	p:N	time	1000	00:00:00.000001
+parse	p:N	dateTime	1000	!Text '1000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00:00.000001 of type java.time.format.Parsed	0
+parse	p:N	date	1000	!Text '1000' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:00:00.000001 of type java.time.format.Parsed	0
+parse	p:N	time	36930500000000	10:15:30.500
+parse	p:N	dateTime	36930500000000	!Text '36930500000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.500 of type java.time.format.Parsed	0
+parse	p:N	date	36930500000000	!Text '36930500000000' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 10:15:30.500 of type java.time.format.Parsed	0
+build	p:NN	-	-	Value(NanoOfDay,2,19,NOT_NEGATIVE)
+format	p:NN	date	2024-03-05	!Unsupported field: NanoOfDay
+format	p:NN	date	0001-12-31	!Unsupported field: NanoOfDay
+format	p:NN	date	+12345-06-07	!Unsupported field: NanoOfDay
+format	p:NN	time	10:15	36900000000000
+format	p:NN	time	10:15:30	36930000000000
+format	p:NN	time	10:15:30.123456789	36930123456789
+format	p:NN	time	00:00	00
+format	p:NN	dateTime	2024-03-05T10:15:30	36930000000000
+format	p:NN	dateTime	2024-03-05T00:00:00.000001	1000
+format	p:NN	offset	2024-03-05T10:15:30+01:00	36930000000000
+format	p:NN	offset	2024-03-05T10:15:30Z	36930000000000
+format	p:NN	offset	2024-03-05T10:15:30.500-05:30:15	36930500000000
+format	p:NN	offset	2024-03-05T10:15:30+00:00:45	36930000000000
+format	p:NN	zoned	2024-03-05T10:15:30+02:00	36930000000000
+format	p:NN	zoned	2024-03-05T10:15:30Z[UTC]	36930000000000
+format	p:NN	instant	2024-03-05T10:15:30Z	!Unsupported field: NanoOfDay
+format	p:NN	instant	2024-03-05T10:15:30.120Z	!Unsupported field: NanoOfDay
+parse	p:NN	time	1000000	00:00:00.001
+parse	p:NN	dateTime	1000000	!Text '1000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00:00.001 of type java.time.format.Parsed	0
+parse	p:NN	time	0001000000	00:00:00.001
+parse	p:NN	dateTime	0001000000	!Text '0001000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00:00.001 of type java.time.format.Parsed	0
+parse	p:NN	time	36900000000000	10:15
+parse	p:NN	dateTime	36900000000000	!Text '36900000000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15 of type java.time.format.Parsed	0
+parse	p:NN	time	36930000000000	10:15:30
+parse	p:NN	dateTime	36930000000000	!Text '36930000000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30 of type java.time.format.Parsed	0
+parse	p:NN	time	36930123456789	10:15:30.123456789
+parse	p:NN	dateTime	36930123456789	!Text '36930123456789' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.123456789 of type java.time.format.Parsed	0
+parse	p:NN	time	00	00:00
+parse	p:NN	dateTime	00	!Text '00' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:NN	time	1000	00:00:00.000001
+parse	p:NN	dateTime	1000	!Text '1000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00:00.000001 of type java.time.format.Parsed	0
+parse	p:NN	time	36930500000000	10:15:30.500
+parse	p:NN	dateTime	36930500000000	!Text '36930500000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.500 of type java.time.format.Parsed	0
+build	p:A HH	-	-	Value(MilliOfDay,1,19,NOT_NEGATIVE)' 'Value(HourOfDay,2)
+format	p:A HH	date	2024-03-05	!Unsupported field: MilliOfDay
+format	p:A HH	date	0001-12-31	!Unsupported field: MilliOfDay
+format	p:A HH	date	+12345-06-07	!Unsupported field: MilliOfDay
+format	p:A HH	time	10:15	36900000 10
+format	p:A HH	time	10:15:30	36930000 10
+format	p:A HH	time	10:15:30.123456789	36930123 10
+format	p:A HH	time	00:00	0 00
+format	p:A HH	dateTime	2024-03-05T10:15:30	36930000 10
+format	p:A HH	dateTime	2024-03-05T00:00:00.000001	0 00
+format	p:A HH	offset	2024-03-05T10:15:30+01:00	36930000 10
+format	p:A HH	offset	2024-03-05T10:15:30Z	36930000 10
+format	p:A HH	offset	2024-03-05T10:15:30.500-05:30:15	36930500 10
+format	p:A HH	offset	2024-03-05T10:15:30+00:00:45	36930000 10
+format	p:A HH	zoned	2024-03-05T10:15:30+02:00	36930000 10
+format	p:A HH	zoned	2024-03-05T10:15:30Z[UTC]	36930000 10
+format	p:A HH	instant	2024-03-05T10:15:30Z	!Unsupported field: MilliOfDay
+format	p:A HH	instant	2024-03-05T10:15:30.120Z	!Unsupported field: MilliOfDay
+parse	p:A HH	time	3661001 01	01:01:01.001
+parse	p:A HH	dateTime	3661001 01	!Text '3661001 01' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 01:01:01.001 of type java.time.format.Parsed	0
+parse	p:A HH	time	3661001 02	!Text '3661001 02' could not be parsed: Conflict found: HourOfDay 2 differs from HourOfDay 1 while resolving  SecondOfDay	0
+parse	p:A HH	dateTime	3661001 02	!Text '3661001 02' could not be parsed: Conflict found: HourOfDay 2 differs from HourOfDay 1 while resolving  SecondOfDay	0
+parse	p:A HH	time	3661001 00	!Text '3661001 00' could not be parsed: Conflict found: HourOfDay 0 differs from HourOfDay 1 while resolving  SecondOfDay	0
+parse	p:A HH	dateTime	3661001 00	!Text '3661001 00' could not be parsed: Conflict found: HourOfDay 0 differs from HourOfDay 1 while resolving  SecondOfDay	0
+parse	p:A HH	time	36900000 10	10:15
+parse	p:A HH	dateTime	36900000 10	!Text '36900000 10' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15 of type java.time.format.Parsed	0
+parse	p:A HH	time	36930000 10	10:15:30
+parse	p:A HH	dateTime	36930000 10	!Text '36930000 10' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30 of type java.time.format.Parsed	0
+parse	p:A HH	time	36930123 10	10:15:30.123
+parse	p:A HH	dateTime	36930123 10	!Text '36930123 10' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.123 of type java.time.format.Parsed	0
+parse	p:A HH	time	0 00	00:00
+parse	p:A HH	dateTime	0 00	!Text '0 00' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:A HH	time	36930500 10	10:15:30.500
+parse	p:A HH	dateTime	36930500 10	!Text '36930500 10' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.500 of type java.time.format.Parsed	0
+build	p:N HH	-	-	Value(NanoOfDay,1,19,NOT_NEGATIVE)' 'Value(HourOfDay,2)
+format	p:N HH	date	2024-03-05	!Unsupported field: NanoOfDay
+format	p:N HH	date	0001-12-31	!Unsupported field: NanoOfDay
+format	p:N HH	date	+12345-06-07	!Unsupported field: NanoOfDay
+format	p:N HH	time	10:15	36900000000000 10
+format	p:N HH	time	10:15:30	36930000000000 10
+format	p:N HH	time	10:15:30.123456789	36930123456789 10
+format	p:N HH	time	00:00	0 00
+format	p:N HH	dateTime	2024-03-05T10:15:30	36930000000000 10
+format	p:N HH	dateTime	2024-03-05T00:00:00.000001	1000 00
+format	p:N HH	offset	2024-03-05T10:15:30+01:00	36930000000000 10
+format	p:N HH	offset	2024-03-05T10:15:30Z	36930000000000 10
+format	p:N HH	offset	2024-03-05T10:15:30.500-05:30:15	36930500000000 10
+format	p:N HH	offset	2024-03-05T10:15:30+00:00:45	36930000000000 10
+format	p:N HH	zoned	2024-03-05T10:15:30+02:00	36930000000000 10
+format	p:N HH	zoned	2024-03-05T10:15:30Z[UTC]	36930000000000 10
+format	p:N HH	instant	2024-03-05T10:15:30Z	!Unsupported field: NanoOfDay
+format	p:N HH	instant	2024-03-05T10:15:30.120Z	!Unsupported field: NanoOfDay
+parse	p:N HH	time	3661001000000 01	01:01:01.001
+parse	p:N HH	dateTime	3661001000000 01	!Text '3661001000000 01' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 01:01:01.001 of type java.time.format.Parsed	0
+parse	p:N HH	time	3661001000000 02	!Text '3661001000000 02' could not be parsed: Conflict found: HourOfDay 2 differs from HourOfDay 1 while resolving  NanoOfDay	0
+parse	p:N HH	dateTime	3661001000000 02	!Text '3661001000000 02' could not be parsed: Conflict found: HourOfDay 2 differs from HourOfDay 1 while resolving  NanoOfDay	0
+parse	p:N HH	time	36900000000000 10	10:15
+parse	p:N HH	dateTime	36900000000000 10	!Text '36900000000000 10' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15 of type java.time.format.Parsed	0
+parse	p:N HH	time	36930000000000 10	10:15:30
+parse	p:N HH	dateTime	36930000000000 10	!Text '36930000000000 10' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30 of type java.time.format.Parsed	0
+parse	p:N HH	time	36930123456789 10	10:15:30.123456789
+parse	p:N HH	dateTime	36930123456789 10	!Text '36930123456789 10' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.123456789 of type java.time.format.Parsed	0
+parse	p:N HH	time	0 00	00:00
+parse	p:N HH	dateTime	0 00	!Text '0 00' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:N HH	time	1000 00	00:00:00.000001
+parse	p:N HH	dateTime	1000 00	!Text '1000 00' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00:00.000001 of type java.time.format.Parsed	0
+parse	p:N HH	time	36930500000000 10	10:15:30.500
+parse	p:N HH	dateTime	36930500000000 10	!Text '36930500000000 10' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.500 of type java.time.format.Parsed	0
+build	p:A mm	-	-	Value(MilliOfDay,1,19,NOT_NEGATIVE)' 'Value(MinuteOfHour,2)
+format	p:A mm	date	2024-03-05	!Unsupported field: MilliOfDay
+format	p:A mm	date	0001-12-31	!Unsupported field: MilliOfDay
+format	p:A mm	date	+12345-06-07	!Unsupported field: MilliOfDay
+format	p:A mm	time	10:15	36900000 15
+format	p:A mm	time	10:15:30	36930000 15
+format	p:A mm	time	10:15:30.123456789	36930123 15
+format	p:A mm	time	00:00	0 00
+format	p:A mm	dateTime	2024-03-05T10:15:30	36930000 15
+format	p:A mm	dateTime	2024-03-05T00:00:00.000001	0 00
+format	p:A mm	offset	2024-03-05T10:15:30+01:00	36930000 15
+format	p:A mm	offset	2024-03-05T10:15:30Z	36930000 15
+format	p:A mm	offset	2024-03-05T10:15:30.500-05:30:15	36930500 15
+format	p:A mm	offset	2024-03-05T10:15:30+00:00:45	36930000 15
+format	p:A mm	zoned	2024-03-05T10:15:30+02:00	36930000 15
+format	p:A mm	zoned	2024-03-05T10:15:30Z[UTC]	36930000 15
+format	p:A mm	instant	2024-03-05T10:15:30Z	!Unsupported field: MilliOfDay
+format	p:A mm	instant	2024-03-05T10:15:30.120Z	!Unsupported field: MilliOfDay
+parse	p:A mm	time	3661001 01	01:01:01.001
+parse	p:A mm	dateTime	3661001 01	!Text '3661001 01' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 01:01:01.001 of type java.time.format.Parsed	0
+parse	p:A mm	time	3661001 02	!Text '3661001 02' could not be parsed: Conflict found: MinuteOfHour 2 differs from MinuteOfHour 1 while resolving  SecondOfDay	0
+parse	p:A mm	dateTime	3661001 02	!Text '3661001 02' could not be parsed: Conflict found: MinuteOfHour 2 differs from MinuteOfHour 1 while resolving  SecondOfDay	0
+parse	p:A mm	time	36900000 15	10:15
+parse	p:A mm	dateTime	36900000 15	!Text '36900000 15' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15 of type java.time.format.Parsed	0
+parse	p:A mm	time	36930000 15	10:15:30
+parse	p:A mm	dateTime	36930000 15	!Text '36930000 15' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30 of type java.time.format.Parsed	0
+parse	p:A mm	time	36930123 15	10:15:30.123
+parse	p:A mm	dateTime	36930123 15	!Text '36930123 15' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.123 of type java.time.format.Parsed	0
+parse	p:A mm	time	0 00	00:00
+parse	p:A mm	dateTime	0 00	!Text '0 00' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:A mm	time	36930500 15	10:15:30.500
+parse	p:A mm	dateTime	36930500 15	!Text '36930500 15' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.500 of type java.time.format.Parsed	0
+build	p:A.n	-	-	Value(MilliOfDay,1,19,NOT_NEGATIVE)'.'Value(NanoOfSecond,1,19,NOT_NEGATIVE)
+format	p:A.n	date	2024-03-05	!Unsupported field: MilliOfDay
+format	p:A.n	date	0001-12-31	!Unsupported field: MilliOfDay
+format	p:A.n	date	+12345-06-07	!Unsupported field: MilliOfDay
+format	p:A.n	time	10:15	36900000.0
+format	p:A.n	time	10:15:30	36930000.0
+format	p:A.n	time	10:15:30.123456789	36930123.123456789
+format	p:A.n	time	00:00	0.0
+format	p:A.n	dateTime	2024-03-05T10:15:30	36930000.0
+format	p:A.n	dateTime	2024-03-05T00:00:00.000001	0.1000
+format	p:A.n	offset	2024-03-05T10:15:30+01:00	36930000.0
+format	p:A.n	offset	2024-03-05T10:15:30Z	36930000.0
+format	p:A.n	offset	2024-03-05T10:15:30.500-05:30:15	36930500.500000000
+format	p:A.n	offset	2024-03-05T10:15:30+00:00:45	36930000.0
+format	p:A.n	zoned	2024-03-05T10:15:30+02:00	36930000.0
+format	p:A.n	zoned	2024-03-05T10:15:30Z[UTC]	36930000.0
+format	p:A.n	instant	2024-03-05T10:15:30Z	!Unsupported field: MilliOfDay
+format	p:A.n	instant	2024-03-05T10:15:30.120Z	!Unsupported field: MilliOfDay
+parse	p:A.n	time	3661001.001	!Text '3661001.001' could not be parsed: Conflict found: NanoOfSecond 1 differs from NanoOfSecond 1000001 while resolving  MilliOfSecond	0
+parse	p:A.n	dateTime	3661001.001	!Text '3661001.001' could not be parsed: Conflict found: NanoOfSecond 1 differs from NanoOfSecond 1000001 while resolving  MilliOfSecond	0
+parse	p:A.n	time	3661001.002	!Text '3661001.002' could not be parsed: Conflict found: NanoOfSecond 2 differs from NanoOfSecond 1000002 while resolving  MilliOfSecond	0
+parse	p:A.n	dateTime	3661001.002	!Text '3661001.002' could not be parsed: Conflict found: NanoOfSecond 2 differs from NanoOfSecond 1000002 while resolving  MilliOfSecond	0
+parse	p:A.n	time	3661001.999999999	!Text '3661001.999999999' could not be parsed: Conflict found: NanoOfSecond 999999999 differs from NanoOfSecond 1999999 while resolving  MilliOfSecond	0
+parse	p:A.n	dateTime	3661001.999999999	!Text '3661001.999999999' could not be parsed: Conflict found: NanoOfSecond 999999999 differs from NanoOfSecond 1999999 while resolving  MilliOfSecond	0
+parse	p:A.n	time	36900000.0	10:15
+parse	p:A.n	dateTime	36900000.0	!Text '36900000.0' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15 of type java.time.format.Parsed	0
+parse	p:A.n	time	36930000.0	10:15:30
+parse	p:A.n	dateTime	36930000.0	!Text '36930000.0' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30 of type java.time.format.Parsed	0
+parse	p:A.n	time	36930123.123456789	10:15:30.123456789
+parse	p:A.n	dateTime	36930123.123456789	!Text '36930123.123456789' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.123456789 of type java.time.format.Parsed	0
+parse	p:A.n	time	0.0	00:00
+parse	p:A.n	dateTime	0.0	!Text '0.0' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:A.n	time	0.1000	00:00:00.000001
+parse	p:A.n	dateTime	0.1000	!Text '0.1000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00:00.000001 of type java.time.format.Parsed	0
+parse	p:A.n	time	36930500.500000000	10:15:30.500
+parse	p:A.n	dateTime	36930500.500000000	!Text '36930500.500000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.500 of type java.time.format.Parsed	0
+build	p:N.n	-	-	Value(NanoOfDay,1,19,NOT_NEGATIVE)'.'Value(NanoOfSecond,1,19,NOT_NEGATIVE)
+format	p:N.n	date	2024-03-05	!Unsupported field: NanoOfDay
+format	p:N.n	date	0001-12-31	!Unsupported field: NanoOfDay
+format	p:N.n	date	+12345-06-07	!Unsupported field: NanoOfDay
+format	p:N.n	time	10:15	36900000000000.0
+format	p:N.n	time	10:15:30	36930000000000.0
+format	p:N.n	time	10:15:30.123456789	36930123456789.123456789
+format	p:N.n	time	00:00	0.0
+format	p:N.n	dateTime	2024-03-05T10:15:30	36930000000000.0
+format	p:N.n	dateTime	2024-03-05T00:00:00.000001	1000.1000
+format	p:N.n	offset	2024-03-05T10:15:30+01:00	36930000000000.0
+format	p:N.n	offset	2024-03-05T10:15:30Z	36930000000000.0
+format	p:N.n	offset	2024-03-05T10:15:30.500-05:30:15	36930500000000.500000000
+format	p:N.n	offset	2024-03-05T10:15:30+00:00:45	36930000000000.0
+format	p:N.n	zoned	2024-03-05T10:15:30+02:00	36930000000000.0
+format	p:N.n	zoned	2024-03-05T10:15:30Z[UTC]	36930000000000.0
+format	p:N.n	instant	2024-03-05T10:15:30Z	!Unsupported field: NanoOfDay
+format	p:N.n	instant	2024-03-05T10:15:30.120Z	!Unsupported field: NanoOfDay
+parse	p:N.n	time	3661001000000.001	!Text '3661001000000.001' could not be parsed: Conflict found: NanoOfSecond 1 differs from NanoOfSecond 1000000 while resolving  NanoOfDay	0
+parse	p:N.n	dateTime	3661001000000.001	!Text '3661001000000.001' could not be parsed: Conflict found: NanoOfSecond 1 differs from NanoOfSecond 1000000 while resolving  NanoOfDay	0
+parse	p:N.n	time	3661001000000.1000001	!Text '3661001000000.1000001' could not be parsed: Conflict found: NanoOfSecond 1000001 differs from NanoOfSecond 1000000 while resolving  NanoOfDay	0
+parse	p:N.n	dateTime	3661001000000.1000001	!Text '3661001000000.1000001' could not be parsed: Conflict found: NanoOfSecond 1000001 differs from NanoOfSecond 1000000 while resolving  NanoOfDay	0
+parse	p:N.n	time	36900000000000.0	10:15
+parse	p:N.n	dateTime	36900000000000.0	!Text '36900000000000.0' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15 of type java.time.format.Parsed	0
+parse	p:N.n	time	36930000000000.0	10:15:30
+parse	p:N.n	dateTime	36930000000000.0	!Text '36930000000000.0' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30 of type java.time.format.Parsed	0
+parse	p:N.n	time	36930123456789.123456789	10:15:30.123456789
+parse	p:N.n	dateTime	36930123456789.123456789	!Text '36930123456789.123456789' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.123456789 of type java.time.format.Parsed	0
+parse	p:N.n	time	0.0	00:00
+parse	p:N.n	dateTime	0.0	!Text '0.0' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:N.n	time	1000.1000	00:00:00.000001
+parse	p:N.n	dateTime	1000.1000	!Text '1000.1000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00:00.000001 of type java.time.format.Parsed	0
+parse	p:N.n	time	36930500000000.500000000	10:15:30.500
+parse	p:N.n	dateTime	36930500000000.500000000	!Text '36930500000000.500000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.500 of type java.time.format.Parsed	0
+build	p:uuuu-MM-dd A	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)' 'Value(MilliOfDay,1,19,NOT_NEGATIVE)
+format	p:uuuu-MM-dd A	date	2024-03-05	!Unsupported field: MilliOfDay
+format	p:uuuu-MM-dd A	date	0001-12-31	!Unsupported field: MilliOfDay
+format	p:uuuu-MM-dd A	date	+12345-06-07	!Unsupported field: MilliOfDay
+format	p:uuuu-MM-dd A	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd A	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd A	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd A	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd A	dateTime	2024-03-05T10:15:30	2024-03-05 36930000
+format	p:uuuu-MM-dd A	dateTime	2024-03-05T00:00:00.000001	2024-03-05 0
+format	p:uuuu-MM-dd A	offset	2024-03-05T10:15:30+01:00	2024-03-05 36930000
+format	p:uuuu-MM-dd A	offset	2024-03-05T10:15:30Z	2024-03-05 36930000
+format	p:uuuu-MM-dd A	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05 36930500
+format	p:uuuu-MM-dd A	offset	2024-03-05T10:15:30+00:00:45	2024-03-05 36930000
+format	p:uuuu-MM-dd A	zoned	2024-03-05T10:15:30+02:00	2024-03-05 36930000
+format	p:uuuu-MM-dd A	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05 36930000
+format	p:uuuu-MM-dd A	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd A	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd A	date	2024-03-05 3661001	2024-03-05
+parse	p:uuuu-MM-dd A	dateTime	2024-03-05 3661001	2024-03-05T01:01:01.001
+parse	p:uuuu-MM-dd A	date	2024-03-05 0	2024-03-05
+parse	p:uuuu-MM-dd A	dateTime	2024-03-05 0	2024-03-05T00:00
+parse	p:uuuu-MM-dd A	date	2024-03-05 36930000	2024-03-05
+parse	p:uuuu-MM-dd A	dateTime	2024-03-05 36930000	2024-03-05T10:15:30
+parse	p:uuuu-MM-dd A	date	2024-03-05 36930500	2024-03-05
+parse	p:uuuu-MM-dd A	dateTime	2024-03-05 36930500	2024-03-05T10:15:30.500
+build	p:uuuu-MM-dd N	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)' 'Value(NanoOfDay,1,19,NOT_NEGATIVE)
+format	p:uuuu-MM-dd N	date	2024-03-05	!Unsupported field: NanoOfDay
+format	p:uuuu-MM-dd N	date	0001-12-31	!Unsupported field: NanoOfDay
+format	p:uuuu-MM-dd N	date	+12345-06-07	!Unsupported field: NanoOfDay
+format	p:uuuu-MM-dd N	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd N	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd N	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd N	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd N	dateTime	2024-03-05T10:15:30	2024-03-05 36930000000000
+format	p:uuuu-MM-dd N	dateTime	2024-03-05T00:00:00.000001	2024-03-05 1000
+format	p:uuuu-MM-dd N	offset	2024-03-05T10:15:30+01:00	2024-03-05 36930000000000
+format	p:uuuu-MM-dd N	offset	2024-03-05T10:15:30Z	2024-03-05 36930000000000
+format	p:uuuu-MM-dd N	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05 36930500000000
+format	p:uuuu-MM-dd N	offset	2024-03-05T10:15:30+00:00:45	2024-03-05 36930000000000
+format	p:uuuu-MM-dd N	zoned	2024-03-05T10:15:30+02:00	2024-03-05 36930000000000
+format	p:uuuu-MM-dd N	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05 36930000000000
+format	p:uuuu-MM-dd N	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd N	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd N	date	2024-03-05 3661001000000	2024-03-05
+parse	p:uuuu-MM-dd N	dateTime	2024-03-05 3661001000000	2024-03-05T01:01:01.001
+parse	p:uuuu-MM-dd N	date	2024-03-05 0	2024-03-05
+parse	p:uuuu-MM-dd N	dateTime	2024-03-05 0	2024-03-05T00:00
+parse	p:uuuu-MM-dd N	date	2024-03-05 36930000000000	2024-03-05
+parse	p:uuuu-MM-dd N	dateTime	2024-03-05 36930000000000	2024-03-05T10:15:30
+parse	p:uuuu-MM-dd N	date	2024-03-05 1000	2024-03-05
+parse	p:uuuu-MM-dd N	dateTime	2024-03-05 1000	2024-03-05T00:00:00.000001
+parse	p:uuuu-MM-dd N	date	2024-03-05 36930500000000	2024-03-05
+parse	p:uuuu-MM-dd N	dateTime	2024-03-05 36930500000000	2024-03-05T10:15:30.500
+build	p:uuuu-MM-dd A HH:mm:ss	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)' 'Value(MilliOfDay,1,19,NOT_NEGATIVE)' 'Value(HourOfDay,2)':'Value(MinuteOfHour,2)':'Value(SecondOfMinute,2)
+format	p:uuuu-MM-dd A HH:mm:ss	date	2024-03-05	!Unsupported field: MilliOfDay
+format	p:uuuu-MM-dd A HH:mm:ss	date	0001-12-31	!Unsupported field: MilliOfDay
+format	p:uuuu-MM-dd A HH:mm:ss	date	+12345-06-07	!Unsupported field: MilliOfDay
+format	p:uuuu-MM-dd A HH:mm:ss	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd A HH:mm:ss	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd A HH:mm:ss	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd A HH:mm:ss	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd A HH:mm:ss	dateTime	2024-03-05T10:15:30	2024-03-05 36930000 10:15:30
+format	p:uuuu-MM-dd A HH:mm:ss	dateTime	2024-03-05T00:00:00.000001	2024-03-05 0 00:00:00
+format	p:uuuu-MM-dd A HH:mm:ss	offset	2024-03-05T10:15:30+01:00	2024-03-05 36930000 10:15:30
+format	p:uuuu-MM-dd A HH:mm:ss	offset	2024-03-05T10:15:30Z	2024-03-05 36930000 10:15:30
+format	p:uuuu-MM-dd A HH:mm:ss	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05 36930500 10:15:30
+format	p:uuuu-MM-dd A HH:mm:ss	offset	2024-03-05T10:15:30+00:00:45	2024-03-05 36930000 10:15:30
+format	p:uuuu-MM-dd A HH:mm:ss	zoned	2024-03-05T10:15:30+02:00	2024-03-05 36930000 10:15:30
+format	p:uuuu-MM-dd A HH:mm:ss	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05 36930000 10:15:30
+format	p:uuuu-MM-dd A HH:mm:ss	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd A HH:mm:ss	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd A HH:mm:ss	dateTime	2024-03-05 3661001 01:01:01	2024-03-05T01:01:01.001
+parse	p:uuuu-MM-dd A HH:mm:ss	dateTime	2024-03-05 3661001 00:00:00	!Text '2024-03-05 3661001 00:00:00' could not be parsed: Conflict found: HourOfDay 0 differs from HourOfDay 1 while resolving  SecondOfDay	0
+parse	p:uuuu-MM-dd A HH:mm:ss	dateTime	2024-03-05 36930000 10:15:30	2024-03-05T10:15:30
+parse	p:uuuu-MM-dd A HH:mm:ss	dateTime	2024-03-05 0 00:00:00	2024-03-05T00:00
+parse	p:uuuu-MM-dd A HH:mm:ss	dateTime	2024-03-05 36930500 10:15:30	2024-03-05T10:15:30.500
+build	p:A N	-	-	Value(MilliOfDay,1,19,NOT_NEGATIVE)' 'Value(NanoOfDay,1,19,NOT_NEGATIVE)
+format	p:A N	date	2024-03-05	!Unsupported field: MilliOfDay
+format	p:A N	date	0001-12-31	!Unsupported field: MilliOfDay
+format	p:A N	date	+12345-06-07	!Unsupported field: MilliOfDay
+format	p:A N	time	10:15	36900000 36900000000000
+format	p:A N	time	10:15:30	36930000 36930000000000
+format	p:A N	time	10:15:30.123456789	36930123 36930123456789
+format	p:A N	time	00:00	0 0
+format	p:A N	dateTime	2024-03-05T10:15:30	36930000 36930000000000
+format	p:A N	dateTime	2024-03-05T00:00:00.000001	0 1000
+format	p:A N	offset	2024-03-05T10:15:30+01:00	36930000 36930000000000
+format	p:A N	offset	2024-03-05T10:15:30Z	36930000 36930000000000
+format	p:A N	offset	2024-03-05T10:15:30.500-05:30:15	36930500 36930500000000
+format	p:A N	offset	2024-03-05T10:15:30+00:00:45	36930000 36930000000000
+format	p:A N	zoned	2024-03-05T10:15:30+02:00	36930000 36930000000000
+format	p:A N	zoned	2024-03-05T10:15:30Z[UTC]	36930000 36930000000000
+format	p:A N	instant	2024-03-05T10:15:30Z	!Unsupported field: MilliOfDay
+format	p:A N	instant	2024-03-05T10:15:30.120Z	!Unsupported field: MilliOfDay
+parse	p:A N	time	3661001 3661001000000	01:01:01.001
+parse	p:A N	dateTime	3661001 3661001000000	!Text '3661001 3661001000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 01:01:01.001 of type java.time.format.Parsed	0
+parse	p:A N	time	3661001 3661002000000	!Text '3661001 3661002000000' could not be parsed: Conflict found: NanoOfSecond 2000000 differs from NanoOfSecond 1000000 while resolving  MilliOfSecond	0
+parse	p:A N	dateTime	3661001 3661002000000	!Text '3661001 3661002000000' could not be parsed: Conflict found: NanoOfSecond 2000000 differs from NanoOfSecond 1000000 while resolving  MilliOfSecond	0
+parse	p:A N	time	36900000 36900000000000	10:15
+parse	p:A N	dateTime	36900000 36900000000000	!Text '36900000 36900000000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15 of type java.time.format.Parsed	0
+parse	p:A N	time	36930000 36930000000000	10:15:30
+parse	p:A N	dateTime	36930000 36930000000000	!Text '36930000 36930000000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30 of type java.time.format.Parsed	0
+parse	p:A N	time	36930123 36930123456789	10:15:30.123456789
+parse	p:A N	dateTime	36930123 36930123456789	!Text '36930123 36930123456789' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.123456789 of type java.time.format.Parsed	0
+parse	p:A N	time	0 0	00:00
+parse	p:A N	dateTime	0 0	!Text '0 0' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:A N	time	0 1000	00:00:00.000001
+parse	p:A N	dateTime	0 1000	!Text '0 1000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00:00.000001 of type java.time.format.Parsed	0
+parse	p:A N	time	36930500 36930500000000	10:15:30.500
+parse	p:A N	dateTime	36930500 36930500000000	!Text '36930500 36930500000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.500 of type java.time.format.Parsed	0

@@ -677,6 +677,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Derive quarter and aligned-week fields from the date, with Java's text styles.** `Q`/`q` print and parse the quarter-of-year as a number or as the English SHORT, FULL or NARROW text, and `F` prints and parses the aligned week-of-month. Both fields come from the date's own month and day, and a parsed value is cross-checked against the resolved date as Java's `Parsed.crossCheck` does. On venus (v4.2 toolchain) against the parent `1c7a1b2b3`, the Java module stays at 129,512 incremental linked bytes (O3 129,512, Oz 122,344) and DMD templates rise from 4,751 to 4,775 against the 7,350 cap (measured at `88ac5614c`; the code is identical).
 
+- **Expand a whole-of-day value into the time once, as Java's `Parsed` does.** `A` (milli-of-day) and `N` (nano-of-day) reuse the existing number element; on parse one value fills the hour, minute, second and nano through `mergeField`, which throws Java's conflict when another source disagrees, naming the target field Java names (milli-of-day goes through second-of-day and milli-of-second). The value is validated against `0 - 86399999` and `0 - 86399999999999`. The fields are derived from the time on print and add no template instantiations. On venus (v4.2 toolchain) against the parent `91eae3bce`, the Java module stays at 129,512 incremental linked bytes (O3 129,512, Oz 122,344) and DMD templates stay at 4,775 against the 7,350 cap (measured at `186ead32f`; the code is identical).
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:

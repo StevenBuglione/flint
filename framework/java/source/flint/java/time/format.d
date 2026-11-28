@@ -267,6 +267,8 @@ private enum Field : ubyte
     minuteOfHour,
     secondOfMinute,
     nanoOfSecond,
+    milliOfDay,
+    nanoOfDay,
     amPmOfDay,
     instantSeconds,
     weekBasedYear, // Java's IsoFields.WEEK_BASED_YEAR
@@ -278,8 +280,8 @@ private enum fieldCount = Field.max + 1;
 private immutable string[fieldCount] fieldNames = [
     "Year", "YearOfEra", "MonthOfYear", "DayOfMonth", "DayOfYear", "DayOfWeek", "QuarterOfYear",
     "AlignedWeekOfMonth", "HourOfDay", "ClockHourOfAmPm", "HourOfAmPm", "ClockHourOfDay",
-    "MinuteOfHour", "SecondOfMinute", "NanoOfSecond", "AmPmOfDay", "InstantSeconds",
-    "WeekBasedYear", "WeekOfWeekBasedYear"
+    "MinuteOfHour", "SecondOfMinute", "NanoOfSecond", "MilliOfDay", "NanoOfDay", "AmPmOfDay",
+    "InstantSeconds", "WeekBasedYear", "WeekOfWeekBasedYear"
 ];
 
 /**
@@ -340,6 +342,10 @@ struct Fields
         set(Field.minuteOfHour, t.getMinute());
         set(Field.secondOfMinute, t.getSecond());
         set(Field.nanoOfSecond, t.getNano());
+        set(Field.milliOfDay, cast(long) t.getHour() * 3_600_000 + t.getMinute() * 60_000 + t.getSecond()
+                * 1_000 + t.getNano() / 1_000_000);
+        set(Field.nanoOfDay, (cast(long) t.getHour() * 3_600 + t.getMinute() * 60 + t.getSecond())
+                * 1_000_000_000L + t.getNano());
         set(Field.amPmOfDay, t.getHour() / 12);
     }
 
@@ -457,8 +463,8 @@ struct Fields
 
     private bool hasTime() const pure nothrow @nogc
     {
-        return has(Field.hourOfDay) || has(Field.clockHourOfDay) || ((has(Field.clockHourOfAmPm)
-                || has(Field.hourOfAmPm)) && has(Field.amPmOfDay));
+        return has(Field.hourOfDay) || has(Field.clockHourOfDay) || has(Field.milliOfDay)
+            || has(Field.nanoOfDay) || ((has(Field.clockHourOfAmPm) || has(Field.hourOfAmPm)) && has(Field.amPmOfDay));
     }
 
     /// The value these fields came from, as its `toString`; for parsed fields, Java's `Parsed` description.
@@ -688,6 +694,58 @@ struct Fields
     private long value(Field f) const pure nothrow @nogc
     {
         return has(f) ? values_[f] : 0;
+    }
+
+    // Java's `Parsed.resolveTimeFields` for NANO_OF_DAY and MILLI_OF_DAY: one whole-of-day value expands into the
+    // hour, minute, second and nano of the day, and a second source that disagrees is Java's conflict. Runs before
+    // the other time resolution, as Java merges these fields there.
+    private void resolveWholeDay(scope const(char)[] text)
+    {
+        try
+        {
+            if (has(Field.nanoOfDay))
+                expandNanoOfDay(text);
+            if (has(Field.milliOfDay))
+                expandMilliOfDay(text);
+        }
+        catch (DateTimeParseException e)
+            throw e;
+        catch (DateTimeException e)
+            throw failed(text, e);
+    }
+
+    private void expandNanoOfDay(scope const(char)[] text)
+    {
+        const nod = values_[Field.nanoOfDay];
+        checkRange("NanoOfDay", nod, 0, 86_399_999_999_999L);
+        mergeField(text, Field.hourOfDay, nod / 3_600_000_000_000L, "NanoOfDay");
+        mergeField(text, Field.minuteOfHour, (nod / 60_000_000_000L) % 60, "NanoOfDay");
+        mergeField(text, Field.secondOfMinute, (nod / 1_000_000_000L) % 60, "NanoOfDay");
+        mergeField(text, Field.nanoOfSecond, nod % 1_000_000_000L, "NanoOfDay");
+    }
+
+    // Java resolves MILLI_OF_DAY into second-of-day (then hour, minute and second) and milli-of-second (then nano).
+    private void expandMilliOfDay(scope const(char)[] text)
+    {
+        const lod = values_[Field.milliOfDay];
+        checkRange("MilliOfDay", lod, 0, 86_399_999);
+        const secondOfDay = lod / 1_000;
+        mergeField(text, Field.hourOfDay, secondOfDay / 3_600, "SecondOfDay");
+        mergeField(text, Field.minuteOfHour, (secondOfDay / 60) % 60, "SecondOfDay");
+        mergeField(text, Field.secondOfMinute, secondOfDay % 60, "SecondOfDay");
+        const milliOfSecond = lod % 1_000;
+        const nano = has(Field.nanoOfSecond) ? milliOfSecond * 1_000_000L
+            + values_[Field.nanoOfSecond] % 1_000_000L : milliOfSecond * 1_000_000L;
+        mergeField(text, Field.nanoOfSecond, nano, "MilliOfSecond");
+    }
+
+    // Java's `Parsed.updateCheckConflict`: a field already set to another value is a conflict naming the target.
+    private void mergeField(scope const(char)[] text, Field f, long newValue, string target)
+    {
+        if (has(f) && values_[f] != newValue)
+            throw conflict(text, fieldNames[f], values_[f], newValue, target);
+        values_[f] = newValue;
+        present_ |= 1u << f;
     }
 
     // Resolves every parsed field, as Java's parse does whatever the queried type: the date, the time, the
@@ -1179,6 +1237,7 @@ struct DateTimeFormatter
         if (hasZone_ && !fields.zoneId_.length)
             fields.addZone(zone_);
         fields.resolveWeekDate(text);
+        fields.resolveWholeDay(text);
         fields.resolveAll(text);
         return fields;
     }
@@ -3057,6 +3116,10 @@ private Element timeLetter(char c, int count)
         return fraction(count, count, false);
     case 'n':
         return num(Field.nanoOfSecond, count, 19, SignStyle.NOT_NEGATIVE);
+    case 'A':
+        return num(Field.milliOfDay, count, 19, SignStyle.NOT_NEGATIVE);
+    case 'N':
+        return num(Field.nanoOfDay, count, 19, SignStyle.NOT_NEGATIVE);
     default:
         return zoneLetter(c, count);
     }
