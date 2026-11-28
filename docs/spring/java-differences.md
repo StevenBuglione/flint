@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,273 | 881 | 0 | 1,957 | 13,310 |
+| framework | openjdk@21.0.13 | 2,283 | 887 | 0 | 1,957 | 13,294 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -215,6 +215,13 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.io.ByteArrayOutputStream#<init>()` | `flint.java.io.ByteArrayOutputStream.this` | Initializes Java's 32-byte buffer and zero count. |
 | framework | `java.io.ByteArrayOutputStream#<init>(int)` | `flint.java.io.ByteArrayOutputStream.this` | Rejects a negative size with IllegalArgumentException and Java's diagnostic. |
 | framework | `java.io.ByteArrayOutputStream#close()` | `flint.java.io.ByteArrayOutputStream.close` | Inherits the no-op close. Repeated calls preserve the buffered bytes and writes remain valid. |
+| framework | `java.io.CharArrayWriter#<init>()` | `flint.java.io.CharArrayWriter.this` | Starts empty with Java's 32-code-unit capacity. |
+| framework | `java.io.CharArrayWriter#<init>(int)` | `flint.java.io.CharArrayWriter.this` | Accepts zero and rejects a negative initial size with IllegalArgumentException. |
+| framework | `java.io.CharArrayWriter#close()` | `flint.java.io.CharArrayWriter.close` | Java's no-op close; existing text and the ability to write survive. |
+| framework | `java.io.CharArrayWriter#flush()` | `flint.java.io.CharArrayWriter.flush` | Java's no-op flush, preserving the stored text. |
+| framework | `java.io.CharArrayWriter#toCharArray()` | `flint.java.io.CharArrayWriter.toCharArray` | A copy of the buffered code units; later writes do not change it. |
+| framework | `java.io.CharArrayWriter#toString()` | `flint.java.io.CharArrayWriter.toString` | The buffered text; the buffer is confined to one fiber. |
+| framework | `java.io.CharArrayWriter#writeTo(Writer)` | `flint.java.io.CharArrayWriter.writeTo` | Writes the buffered code units to the sink and keeps them; a null sink throws NullPointerException before writing. Java's monitor is omitted because a Flint stream is confined to one fiber. |
 | framework | `java.io.DataInput#readChar()` | `flint.java.io.DataInput.readChar` | Java char is D wchar, a 16-bit code unit. |
 | framework | `java.io.DataInputStream#readChar()` | `flint.java.io.DataInputStream.readChar` | Java char is D wchar, a 16-bit code unit. |
 | framework | `java.io.File#getAbsolutePath()` | `flint.java.io.File.getAbsolutePath` | An empty pathname resolves to the startup working directory. |
@@ -2310,6 +2317,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.ByteArrayOutputStream#write(byte[],int,int)` | `flint.java.io.ByteArrayOutputStream.write` | [R26](api-mapping.md#r26-null-arrays) | A D ubyte slice; a null slice counts as empty under R26 and the range is checked first. The stream monitor is omitted because a Flint stream is confined to one fiber. |
 | `java.io.ByteArrayOutputStream#writeBytes(byte[])` | `flint.java.io.ByteArrayOutputStream.writeBytes` | [R26](api-mapping.md#r26-null-arrays) | Added in Java 11. A D ubyte slice; a null slice counts as empty under R26. |
 | `java.io.ByteArrayOutputStream#writeTo(OutputStream)` | `flint.java.io.ByteArrayOutputStream.writeTo` | [R1](api-mapping.md#r1-packages-and-names) | Copies the accumulated bytes and writes the copy whole, as Java 21 does for virtual threads, so a reactor fiber can suspend in the sink. The bytes stay in the buffer. A null sink is rejected. Java's platform-thread path writes the buffer under the monitor; a Flint stream is confined to one fiber and is not monitored. |
+| `java.io.CharArrayWriter` | `flint.java.io.CharArrayWriter` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Declared in the flint.java.io aggregate; the protected capacity buffer is a D wchar slice for Java's char[] code units, and a null slice counts as empty under R26. Synchronization on the stream monitor is omitted because a Flint stream is confined to one fiber. |
+| `java.io.CharArrayWriter#append(char)` | `flint.java.io.CharArrayWriter.append` | [R14](api-mapping.md#r14-strings-and-text) | Writes one UTF-16 code unit through the single-character write and returns the CharArrayWriter; a lone surrogate stores U+FFFD (R14). |
+| `java.io.CharArrayWriter#buf` | `flint.java.io.CharArrayWriter.buf` | [R26](api-mapping.md#r26-null-arrays) | A protected D wchar slice standing in for Java's char[]; a null slice counts as empty under R26. |
+| `java.io.CharArrayWriter#write(String,int,int)` | `flint.java.io.CharArrayWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's UTF-16 range adapter; a split surrogate pair writes U+FFFD for each lone half (R14) and a null string is empty (R26). |
+| `java.io.CharArrayWriter#write(char[],int,int)` | `flint.java.io.CharArrayWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's UTF-16 array adapter; a lone half stores U+FFFD (R14), a null array is empty (R26), and the range is checked first. |
+| `java.io.CharArrayWriter#write(int)` | `flint.java.io.CharArrayWriter.write` | [R14](api-mapping.md#r14-strings-and-text) | Flint's single-character write takes a code point; a lone surrogate stores U+FFFD (R14). |
 | `java.io.DataInput` | `flint.java.io.DataInput` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Declared in the flint.java.io aggregate. Byte arrays are D ubyte slices and String results are D UTF-8 slices, so a null slice counts as empty under R26. |
 | `java.io.DataInput#readFully(byte[])` | `flint.java.io.DataInput.readFully` | [R26](api-mapping.md#r26-null-arrays) | A D ubyte slice; a null slice counts as empty under R26. |
 | `java.io.DataInput#readFully(byte[],int,int)` | `flint.java.io.DataInput.readFully` | [R26](api-mapping.md#r26-null-arrays) | A D ubyte slice; a null slice counts as empty under R26. |
@@ -11342,7 +11355,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 504 | 0 |
+| java.io | 488 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -12228,6 +12241,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `jakarta.servlet.ServletException#<init>(Throwable)` | 2 | Missing cause-only constructor: Java initializes the cause, even to null, and derives the message from a non-null cause. Java leaves the cause open to one later initCause call; the D ServletException has one merged (message, rootCause) constructor over the plain Exception base, with no initCause, so an omitted and an explicit null cause are indistinguishable. Pending web-http's (msg)/(msg, cause)/(cause) split. |
 | framework | `jakarta.validation.Validation#byDefaultProvider()` | 2 | Flint's byDefaultProvider() returns the Configuration itself; GenericBootstrap is deferred. |
 | framework | `jakarta.validation.spi.ValidationProvider#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
+| framework | `java.io.CharArrayWriter#append(CharSequence)` | 2 | Java appends the text null for an absent sequence and returns CharArrayWriter. The inherited D method accepts a plain slice and returns Writer; CharSequence is not ported yet. |
+| framework | `java.io.CharArrayWriter#append(CharSequence,int,int)` | 2 | Missing UTF-16 sequence range append with a CharArrayWriter result; CharSequence is not ported yet. |
 | framework | `java.io.File#<init>(URI)` | 2 | The URI overload, file URI validation and conversion to a platform pathname are pending. |
 | framework | `java.io.File#canRead()` | 2 | The existing method checks existence. Java checks read access and can reject an existing unreadable file. |
 | framework | `java.io.File#exists()` | 2 | POSIX tests cover existing, absent and invalid paths. On Windows the Java implementation resolves reparse points before testing existence. The current metadata query uses the attributes of the reparse point itself. |
