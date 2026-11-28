@@ -22,6 +22,33 @@
         "leaves": ["flint.java.lang"],
         "data": []
       }
+    },
+    "flint.java.math.mathcontext": {
+      "numeric": {
+        "source": "closure/mathcontext-numeric.d",
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.math.roundingmode"
+        ],
+        "data": []
+      },
+      "text": {
+        "source": "closure/mathcontext-text.d",
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.math.roundingmode",
+          "flint.java.lang.character",
+          "flint.java.lang.character.decimaldigits",
+          "flint.java.lang.internal.asciidigits",
+          "flint.java.lang.internal.bmpdigits",
+          "flint.java.lang.internal.unicodedigits",
+          "flint.java.math.internal.mathcontextparse",
+          "flint.java.math.internal.radixparse"
+        ],
+        "data": [
+          "flint.java.lang.internal.data.supplementarydigits"
+        ]
+      }
     }
   }
 }

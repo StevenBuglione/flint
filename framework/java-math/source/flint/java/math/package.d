@@ -4,4 +4,5 @@ module flint.java.math;
 @safe:
 
 public import flint.java.math.biginteger : BigInteger;
+public import flint.java.math.mathcontext : MathContext;
 public import flint.java.math.roundingmode : RoundingMode;

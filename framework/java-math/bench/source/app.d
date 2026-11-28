@@ -2,6 +2,7 @@ module app;
 
 import core.stdc.stdio : printf;
 import flint.java.math.biginteger : BigInteger;
+import flint.java.math.mathcontext : MathContext;
 import flint.java.math.roundingmode : name, valueOf, values;
 
 @safe:
@@ -26,6 +27,9 @@ int main(string[] args) @system
     const int roundingCode = (cast(ubyte) last) & 7;
     const rounding = valueOf(roundingCode);
     if (valueOf(rounding.name()) != rounding || values()[roundingCode] != rounding)
+        return 1;
+    auto context = new MathContext(roundingCode, rounding);
+    if (!new MathContext(context.toString()).equals(context))
         return 1;
     printf("%d %d\n", cast(int) bytes.length, cast(int) bytes[$ - 1]);
     return 0;
