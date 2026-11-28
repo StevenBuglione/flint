@@ -404,13 +404,7 @@ unittest
     }
     catch (DateTimeException e)
         assert(e.msg[0 .. 30] == "Unknown time-zone ID: Europe/P");
-    try
-    {
-        DateTimeFormatter.ofPattern("G yyyy");
-        assert(false);
-    }
-    catch (IllegalArgumentException e)
-        assert(e.msg == "Pattern letter not supported by Flint yet: G");
+    assert(DateTimeFormatter.ofPattern("G yyyy").format(LocalDate.of(2024, 3, 5)) == "AD 2024");
     try
     {
         LocalDate.parse("2010-13-01");
@@ -1472,7 +1466,7 @@ unittest
         ++count;
     }
     assert(failures == 0, report);
-    assert(count == 4716);
+    assert(count == 5100);
 }
 
 @("appendInstant(int) parses exactly its fractional digits, or up to nine for -1")

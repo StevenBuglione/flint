@@ -4714,3 +4714,387 @@ parse	p:g E	date	40587 Thu	1970-01-01
 parse	p:g E	date	40587 Wed	!Text '40587 Wed' could not be parsed: Conflict found: Field DayOfWeek 4 differs from DayOfWeek 3 derived from 1970-01-01	0
 parse	p:g E	date	-678211 Mon	0001-12-31
 parse	p:g E	date	3830135 Thu	+12345-06-07
+build	p:G	-	-	Text(Era,SHORT)
+format	p:G	date	2024-03-05	AD
+format	p:G	date	0001-12-31	AD
+format	p:G	date	+12345-06-07	AD
+format	p:G	time	10:15	!Unsupported field: Era
+format	p:G	time	10:15:30	!Unsupported field: Era
+format	p:G	time	10:15:30.123456789	!Unsupported field: Era
+format	p:G	time	00:00	!Unsupported field: Era
+format	p:G	dateTime	2024-03-05T10:15:30	AD
+format	p:G	dateTime	2024-03-05T00:00:00.000001	AD
+format	p:G	offset	2024-03-05T10:15:30+01:00	AD
+format	p:G	offset	2024-03-05T10:15:30Z	AD
+format	p:G	offset	2024-03-05T10:15:30.500-05:30:15	AD
+format	p:G	offset	2024-03-05T10:15:30+00:00:45	AD
+format	p:G	zoned	2024-03-05T10:15:30+02:00	AD
+format	p:G	zoned	2024-03-05T10:15:30Z[UTC]	AD
+format	p:G	instant	2024-03-05T10:15:30Z	!Unsupported field: Era
+format	p:G	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Era
+parse	p:G	date	AD	!Text 'AD' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:G	dateTime	AD	!Text 'AD' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:G	date	BC	!Text 'BC' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:G	dateTime	BC	!Text 'BC' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:G	date	Anno Domini	!Text 'Anno Domini' could not be parsed at index 0	0
+parse	p:G	dateTime	Anno Domini	!Text 'Anno Domini' could not be parsed at index 0	0
+parse	p:G	date	Before Christ	!Text 'Before Christ' could not be parsed at index 0	0
+parse	p:G	dateTime	Before Christ	!Text 'Before Christ' could not be parsed at index 0	0
+parse	p:G	date	A	!Text 'A' could not be parsed at index 0	0
+parse	p:G	dateTime	A	!Text 'A' could not be parsed at index 0	0
+parse	p:G	date	B	!Text 'B' could not be parsed at index 0	0
+parse	p:G	dateTime	B	!Text 'B' could not be parsed at index 0	0
+parse	p:G	date	ad	!Text 'ad' could not be parsed at index 0	0
+parse	p:G	dateTime	ad	!Text 'ad' could not be parsed at index 0	0
+parse	p:G	date	bc	!Text 'bc' could not be parsed at index 0	0
+parse	p:G	dateTime	bc	!Text 'bc' could not be parsed at index 0	0
+build	p:GG	-	-	Text(Era,SHORT)
+format	p:GG	date	2024-03-05	AD
+format	p:GG	date	0001-12-31	AD
+format	p:GG	date	+12345-06-07	AD
+format	p:GG	time	10:15	!Unsupported field: Era
+format	p:GG	time	10:15:30	!Unsupported field: Era
+format	p:GG	time	10:15:30.123456789	!Unsupported field: Era
+format	p:GG	time	00:00	!Unsupported field: Era
+format	p:GG	dateTime	2024-03-05T10:15:30	AD
+format	p:GG	dateTime	2024-03-05T00:00:00.000001	AD
+format	p:GG	offset	2024-03-05T10:15:30+01:00	AD
+format	p:GG	offset	2024-03-05T10:15:30Z	AD
+format	p:GG	offset	2024-03-05T10:15:30.500-05:30:15	AD
+format	p:GG	offset	2024-03-05T10:15:30+00:00:45	AD
+format	p:GG	zoned	2024-03-05T10:15:30+02:00	AD
+format	p:GG	zoned	2024-03-05T10:15:30Z[UTC]	AD
+format	p:GG	instant	2024-03-05T10:15:30Z	!Unsupported field: Era
+format	p:GG	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Era
+parse	p:GG	date	AD	!Text 'AD' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GG	dateTime	AD	!Text 'AD' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GG	date	BC	!Text 'BC' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GG	dateTime	BC	!Text 'BC' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GG	date	Anno Domini	!Text 'Anno Domini' could not be parsed at index 0	0
+parse	p:GG	dateTime	Anno Domini	!Text 'Anno Domini' could not be parsed at index 0	0
+parse	p:GG	date	Before Christ	!Text 'Before Christ' could not be parsed at index 0	0
+parse	p:GG	dateTime	Before Christ	!Text 'Before Christ' could not be parsed at index 0	0
+parse	p:GG	date	A	!Text 'A' could not be parsed at index 0	0
+parse	p:GG	dateTime	A	!Text 'A' could not be parsed at index 0	0
+parse	p:GG	date	B	!Text 'B' could not be parsed at index 0	0
+parse	p:GG	dateTime	B	!Text 'B' could not be parsed at index 0	0
+parse	p:GG	date	ad	!Text 'ad' could not be parsed at index 0	0
+parse	p:GG	dateTime	ad	!Text 'ad' could not be parsed at index 0	0
+parse	p:GG	date	bc	!Text 'bc' could not be parsed at index 0	0
+parse	p:GG	dateTime	bc	!Text 'bc' could not be parsed at index 0	0
+build	p:GGG	-	-	Text(Era,SHORT)
+format	p:GGG	date	2024-03-05	AD
+format	p:GGG	date	0001-12-31	AD
+format	p:GGG	date	+12345-06-07	AD
+format	p:GGG	time	10:15	!Unsupported field: Era
+format	p:GGG	time	10:15:30	!Unsupported field: Era
+format	p:GGG	time	10:15:30.123456789	!Unsupported field: Era
+format	p:GGG	time	00:00	!Unsupported field: Era
+format	p:GGG	dateTime	2024-03-05T10:15:30	AD
+format	p:GGG	dateTime	2024-03-05T00:00:00.000001	AD
+format	p:GGG	offset	2024-03-05T10:15:30+01:00	AD
+format	p:GGG	offset	2024-03-05T10:15:30Z	AD
+format	p:GGG	offset	2024-03-05T10:15:30.500-05:30:15	AD
+format	p:GGG	offset	2024-03-05T10:15:30+00:00:45	AD
+format	p:GGG	zoned	2024-03-05T10:15:30+02:00	AD
+format	p:GGG	zoned	2024-03-05T10:15:30Z[UTC]	AD
+format	p:GGG	instant	2024-03-05T10:15:30Z	!Unsupported field: Era
+format	p:GGG	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Era
+parse	p:GGG	date	AD	!Text 'AD' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GGG	dateTime	AD	!Text 'AD' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GGG	date	BC	!Text 'BC' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GGG	dateTime	BC	!Text 'BC' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GGG	date	Anno Domini	!Text 'Anno Domini' could not be parsed at index 0	0
+parse	p:GGG	dateTime	Anno Domini	!Text 'Anno Domini' could not be parsed at index 0	0
+parse	p:GGG	date	Before Christ	!Text 'Before Christ' could not be parsed at index 0	0
+parse	p:GGG	dateTime	Before Christ	!Text 'Before Christ' could not be parsed at index 0	0
+parse	p:GGG	date	A	!Text 'A' could not be parsed at index 0	0
+parse	p:GGG	dateTime	A	!Text 'A' could not be parsed at index 0	0
+parse	p:GGG	date	B	!Text 'B' could not be parsed at index 0	0
+parse	p:GGG	dateTime	B	!Text 'B' could not be parsed at index 0	0
+parse	p:GGG	date	ad	!Text 'ad' could not be parsed at index 0	0
+parse	p:GGG	dateTime	ad	!Text 'ad' could not be parsed at index 0	0
+parse	p:GGG	date	bc	!Text 'bc' could not be parsed at index 0	0
+parse	p:GGG	dateTime	bc	!Text 'bc' could not be parsed at index 0	0
+build	p:GGGG	-	-	Text(Era)
+format	p:GGGG	date	2024-03-05	Anno Domini
+format	p:GGGG	date	0001-12-31	Anno Domini
+format	p:GGGG	date	+12345-06-07	Anno Domini
+format	p:GGGG	time	10:15	!Unsupported field: Era
+format	p:GGGG	time	10:15:30	!Unsupported field: Era
+format	p:GGGG	time	10:15:30.123456789	!Unsupported field: Era
+format	p:GGGG	time	00:00	!Unsupported field: Era
+format	p:GGGG	dateTime	2024-03-05T10:15:30	Anno Domini
+format	p:GGGG	dateTime	2024-03-05T00:00:00.000001	Anno Domini
+format	p:GGGG	offset	2024-03-05T10:15:30+01:00	Anno Domini
+format	p:GGGG	offset	2024-03-05T10:15:30Z	Anno Domini
+format	p:GGGG	offset	2024-03-05T10:15:30.500-05:30:15	Anno Domini
+format	p:GGGG	offset	2024-03-05T10:15:30+00:00:45	Anno Domini
+format	p:GGGG	zoned	2024-03-05T10:15:30+02:00	Anno Domini
+format	p:GGGG	zoned	2024-03-05T10:15:30Z[UTC]	Anno Domini
+format	p:GGGG	instant	2024-03-05T10:15:30Z	!Unsupported field: Era
+format	p:GGGG	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Era
+parse	p:GGGG	date	AD	!Text 'AD' could not be parsed at index 0	0
+parse	p:GGGG	dateTime	AD	!Text 'AD' could not be parsed at index 0	0
+parse	p:GGGG	date	BC	!Text 'BC' could not be parsed at index 0	0
+parse	p:GGGG	dateTime	BC	!Text 'BC' could not be parsed at index 0	0
+parse	p:GGGG	date	Anno Domini	!Text 'Anno Domini' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GGGG	dateTime	Anno Domini	!Text 'Anno Domini' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GGGG	date	Before Christ	!Text 'Before Christ' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GGGG	dateTime	Before Christ	!Text 'Before Christ' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GGGG	date	A	!Text 'A' could not be parsed at index 0	0
+parse	p:GGGG	dateTime	A	!Text 'A' could not be parsed at index 0	0
+parse	p:GGGG	date	B	!Text 'B' could not be parsed at index 0	0
+parse	p:GGGG	dateTime	B	!Text 'B' could not be parsed at index 0	0
+parse	p:GGGG	date	ad	!Text 'ad' could not be parsed at index 0	0
+parse	p:GGGG	dateTime	ad	!Text 'ad' could not be parsed at index 0	0
+parse	p:GGGG	date	bc	!Text 'bc' could not be parsed at index 0	0
+parse	p:GGGG	dateTime	bc	!Text 'bc' could not be parsed at index 0	0
+build	p:GGGGG	-	-	Text(Era,NARROW)
+format	p:GGGGG	date	2024-03-05	A
+format	p:GGGGG	date	0001-12-31	A
+format	p:GGGGG	date	+12345-06-07	A
+format	p:GGGGG	time	10:15	!Unsupported field: Era
+format	p:GGGGG	time	10:15:30	!Unsupported field: Era
+format	p:GGGGG	time	10:15:30.123456789	!Unsupported field: Era
+format	p:GGGGG	time	00:00	!Unsupported field: Era
+format	p:GGGGG	dateTime	2024-03-05T10:15:30	A
+format	p:GGGGG	dateTime	2024-03-05T00:00:00.000001	A
+format	p:GGGGG	offset	2024-03-05T10:15:30+01:00	A
+format	p:GGGGG	offset	2024-03-05T10:15:30Z	A
+format	p:GGGGG	offset	2024-03-05T10:15:30.500-05:30:15	A
+format	p:GGGGG	offset	2024-03-05T10:15:30+00:00:45	A
+format	p:GGGGG	zoned	2024-03-05T10:15:30+02:00	A
+format	p:GGGGG	zoned	2024-03-05T10:15:30Z[UTC]	A
+format	p:GGGGG	instant	2024-03-05T10:15:30Z	!Unsupported field: Era
+format	p:GGGGG	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Era
+parse	p:GGGGG	date	AD	!Text 'AD' could not be parsed, unparsed text found at index 1	1
+parse	p:GGGGG	dateTime	AD	!Text 'AD' could not be parsed, unparsed text found at index 1	1
+parse	p:GGGGG	date	BC	!Text 'BC' could not be parsed, unparsed text found at index 1	1
+parse	p:GGGGG	dateTime	BC	!Text 'BC' could not be parsed, unparsed text found at index 1	1
+parse	p:GGGGG	date	Anno Domini	!Text 'Anno Domini' could not be parsed, unparsed text found at index 1	1
+parse	p:GGGGG	dateTime	Anno Domini	!Text 'Anno Domini' could not be parsed, unparsed text found at index 1	1
+parse	p:GGGGG	date	Before Christ	!Text 'Before Christ' could not be parsed, unparsed text found at index 1	1
+parse	p:GGGGG	dateTime	Before Christ	!Text 'Before Christ' could not be parsed, unparsed text found at index 1	1
+parse	p:GGGGG	date	A	!Text 'A' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GGGGG	dateTime	A	!Text 'A' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GGGGG	date	B	!Text 'B' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GGGGG	dateTime	B	!Text 'B' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:GGGGG	date	ad	!Text 'ad' could not be parsed at index 0	0
+parse	p:GGGGG	dateTime	ad	!Text 'ad' could not be parsed at index 0	0
+parse	p:GGGGG	date	bc	!Text 'bc' could not be parsed at index 0	0
+parse	p:GGGGG	dateTime	bc	!Text 'bc' could not be parsed at index 0	0
+build	p:GGGGGG	-	-	!Too many pattern letters: G
+build	ci|p:G	-	-	ParseCaseSensitive(false)Text(Era,SHORT)
+format	ci|p:G	date	2024-03-05	AD
+format	ci|p:G	date	0001-12-31	AD
+format	ci|p:G	date	+12345-06-07	AD
+format	ci|p:G	time	10:15	!Unsupported field: Era
+format	ci|p:G	time	10:15:30	!Unsupported field: Era
+format	ci|p:G	time	10:15:30.123456789	!Unsupported field: Era
+format	ci|p:G	time	00:00	!Unsupported field: Era
+format	ci|p:G	dateTime	2024-03-05T10:15:30	AD
+format	ci|p:G	dateTime	2024-03-05T00:00:00.000001	AD
+format	ci|p:G	offset	2024-03-05T10:15:30+01:00	AD
+format	ci|p:G	offset	2024-03-05T10:15:30Z	AD
+format	ci|p:G	offset	2024-03-05T10:15:30.500-05:30:15	AD
+format	ci|p:G	offset	2024-03-05T10:15:30+00:00:45	AD
+format	ci|p:G	zoned	2024-03-05T10:15:30+02:00	AD
+format	ci|p:G	zoned	2024-03-05T10:15:30Z[UTC]	AD
+format	ci|p:G	instant	2024-03-05T10:15:30Z	!Unsupported field: Era
+format	ci|p:G	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Era
+parse	ci|p:G	date	ad	!Text 'ad' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	ci|p:G	date	bc	!Text 'bc' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	ci|p:G	date	AD	!Text 'AD' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:G yyyy-MM-dd	-	-	Text(Era,SHORT)' 'Value(YearOfEra,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)
+format	p:G yyyy-MM-dd	date	2024-03-05	AD 2024-03-05
+format	p:G yyyy-MM-dd	date	0001-12-31	AD 0001-12-31
+format	p:G yyyy-MM-dd	date	+12345-06-07	AD +12345-06-07
+format	p:G yyyy-MM-dd	time	10:15	!Unsupported field: Era
+format	p:G yyyy-MM-dd	time	10:15:30	!Unsupported field: Era
+format	p:G yyyy-MM-dd	time	10:15:30.123456789	!Unsupported field: Era
+format	p:G yyyy-MM-dd	time	00:00	!Unsupported field: Era
+format	p:G yyyy-MM-dd	dateTime	2024-03-05T10:15:30	AD 2024-03-05
+format	p:G yyyy-MM-dd	dateTime	2024-03-05T00:00:00.000001	AD 2024-03-05
+format	p:G yyyy-MM-dd	offset	2024-03-05T10:15:30+01:00	AD 2024-03-05
+format	p:G yyyy-MM-dd	offset	2024-03-05T10:15:30Z	AD 2024-03-05
+format	p:G yyyy-MM-dd	offset	2024-03-05T10:15:30.500-05:30:15	AD 2024-03-05
+format	p:G yyyy-MM-dd	offset	2024-03-05T10:15:30+00:00:45	AD 2024-03-05
+format	p:G yyyy-MM-dd	zoned	2024-03-05T10:15:30+02:00	AD 2024-03-05
+format	p:G yyyy-MM-dd	zoned	2024-03-05T10:15:30Z[UTC]	AD 2024-03-05
+format	p:G yyyy-MM-dd	instant	2024-03-05T10:15:30Z	!Unsupported field: Era
+format	p:G yyyy-MM-dd	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Era
+parse	p:G yyyy-MM-dd	date	AD 2024-03-05	2024-03-05
+parse	p:G yyyy-MM-dd	date	BC 0001-03-05	0000-03-05
+parse	p:G yyyy-MM-dd	date	BC 0002-03-05	-0001-03-05
+parse	p:G yyyy-MM-dd	date	AD 0001-03-05	0001-03-05
+parse	p:G yyyy-MM-dd	date	AD 0000-03-05	!Text 'AD 0000-03-05' could not be parsed: Invalid value for YearOfEra (valid values 1 - 999999999/1000000000): 0	0
+parse	p:G yyyy-MM-dd	date	BC 0000-03-05	!Text 'BC 0000-03-05' could not be parsed: Invalid value for YearOfEra (valid values 1 - 999999999/1000000000): 0	0
+parse	p:G yyyy-MM-dd	date	BC 2024-03-05	-2023-03-05
+parse	p:G yyyy-MM-dd	date	AD 2024-03-05 10:15	!Text 'AD 2024-03-05 10:15' could not be parsed, unparsed text found at index 13	13
+parse	p:G yyyy-MM-dd	date	AD 0001-12-31	0001-12-31
+parse	p:G yyyy-MM-dd	date	AD +12345-06-07	+12345-06-07
+build	p:G yyyy-DDD	-	-	Text(Era,SHORT)' 'Value(YearOfEra,4,19,EXCEEDS_PAD)'-'Value(DayOfYear,3)
+format	p:G yyyy-DDD	date	2024-03-05	AD 2024-065
+format	p:G yyyy-DDD	date	0001-12-31	AD 0001-365
+format	p:G yyyy-DDD	date	+12345-06-07	AD +12345-158
+format	p:G yyyy-DDD	time	10:15	!Unsupported field: Era
+format	p:G yyyy-DDD	time	10:15:30	!Unsupported field: Era
+format	p:G yyyy-DDD	time	10:15:30.123456789	!Unsupported field: Era
+format	p:G yyyy-DDD	time	00:00	!Unsupported field: Era
+format	p:G yyyy-DDD	dateTime	2024-03-05T10:15:30	AD 2024-065
+format	p:G yyyy-DDD	dateTime	2024-03-05T00:00:00.000001	AD 2024-065
+format	p:G yyyy-DDD	offset	2024-03-05T10:15:30+01:00	AD 2024-065
+format	p:G yyyy-DDD	offset	2024-03-05T10:15:30Z	AD 2024-065
+format	p:G yyyy-DDD	offset	2024-03-05T10:15:30.500-05:30:15	AD 2024-065
+format	p:G yyyy-DDD	offset	2024-03-05T10:15:30+00:00:45	AD 2024-065
+format	p:G yyyy-DDD	zoned	2024-03-05T10:15:30+02:00	AD 2024-065
+format	p:G yyyy-DDD	zoned	2024-03-05T10:15:30Z[UTC]	AD 2024-065
+format	p:G yyyy-DDD	instant	2024-03-05T10:15:30Z	!Unsupported field: Era
+format	p:G yyyy-DDD	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Era
+parse	p:G yyyy-DDD	date	BC 0001-060	0000-02-29
+parse	p:G yyyy-DDD	date	AD 0004-060	0004-02-29
+parse	p:G yyyy-DDD	date	BC 0001-366	0000-12-31
+parse	p:G yyyy-DDD	date	AD 2024-065	2024-03-05
+parse	p:G yyyy-DDD	date	AD 0001-365	0001-12-31
+parse	p:G yyyy-DDD	date	AD +12345-158	+12345-06-07
+build	p:G yyyy	-	-	Text(Era,SHORT)' 'Value(YearOfEra,4,19,EXCEEDS_PAD)
+format	p:G yyyy	date	2024-03-05	AD 2024
+format	p:G yyyy	date	0001-12-31	AD 0001
+format	p:G yyyy	date	+12345-06-07	AD +12345
+format	p:G yyyy	time	10:15	!Unsupported field: Era
+format	p:G yyyy	time	10:15:30	!Unsupported field: Era
+format	p:G yyyy	time	10:15:30.123456789	!Unsupported field: Era
+format	p:G yyyy	time	00:00	!Unsupported field: Era
+format	p:G yyyy	dateTime	2024-03-05T10:15:30	AD 2024
+format	p:G yyyy	dateTime	2024-03-05T00:00:00.000001	AD 2024
+format	p:G yyyy	offset	2024-03-05T10:15:30+01:00	AD 2024
+format	p:G yyyy	offset	2024-03-05T10:15:30Z	AD 2024
+format	p:G yyyy	offset	2024-03-05T10:15:30.500-05:30:15	AD 2024
+format	p:G yyyy	offset	2024-03-05T10:15:30+00:00:45	AD 2024
+format	p:G yyyy	zoned	2024-03-05T10:15:30+02:00	AD 2024
+format	p:G yyyy	zoned	2024-03-05T10:15:30Z[UTC]	AD 2024
+format	p:G yyyy	instant	2024-03-05T10:15:30Z	!Unsupported field: Era
+format	p:G yyyy	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Era
+parse	p:G yyyy	date	BC 0001	!Text 'BC 0001' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:G yyyy	date	AD 2024	!Text 'AD 2024' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:G yyyy	date	AD 0001	!Text 'AD 0001' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:G yyyy	date	AD +12345	!Text 'AD +12345' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:G yyyy-MM	-	-	Text(Era,SHORT)' 'Value(YearOfEra,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)
+format	p:G yyyy-MM	date	2024-03-05	AD 2024-03
+format	p:G yyyy-MM	date	0001-12-31	AD 0001-12
+format	p:G yyyy-MM	date	+12345-06-07	AD +12345-06
+format	p:G yyyy-MM	time	10:15	!Unsupported field: Era
+format	p:G yyyy-MM	time	10:15:30	!Unsupported field: Era
+format	p:G yyyy-MM	time	10:15:30.123456789	!Unsupported field: Era
+format	p:G yyyy-MM	time	00:00	!Unsupported field: Era
+format	p:G yyyy-MM	dateTime	2024-03-05T10:15:30	AD 2024-03
+format	p:G yyyy-MM	dateTime	2024-03-05T00:00:00.000001	AD 2024-03
+format	p:G yyyy-MM	offset	2024-03-05T10:15:30+01:00	AD 2024-03
+format	p:G yyyy-MM	offset	2024-03-05T10:15:30Z	AD 2024-03
+format	p:G yyyy-MM	offset	2024-03-05T10:15:30.500-05:30:15	AD 2024-03
+format	p:G yyyy-MM	offset	2024-03-05T10:15:30+00:00:45	AD 2024-03
+format	p:G yyyy-MM	zoned	2024-03-05T10:15:30+02:00	AD 2024-03
+format	p:G yyyy-MM	zoned	2024-03-05T10:15:30Z[UTC]	AD 2024-03
+format	p:G yyyy-MM	instant	2024-03-05T10:15:30Z	!Unsupported field: Era
+format	p:G yyyy-MM	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Era
+parse	p:G yyyy-MM	date	BC 0001-03	!Text 'BC 0001-03' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:G yyyy-MM	date	AD 2024-03	!Text 'AD 2024-03' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:G yyyy-MM	date	AD 0001-12	!Text 'AD 0001-12' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:G yyyy-MM	date	AD +12345-06	!Text 'AD +12345-06' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:G yy-MM-dd	-	-	Text(Era,SHORT)' 'ReducedValue(YearOfEra,2,2,2000-01-01)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)
+format	p:G yy-MM-dd	date	2024-03-05	AD 24-03-05
+format	p:G yy-MM-dd	date	0001-12-31	AD 01-12-31
+format	p:G yy-MM-dd	date	+12345-06-07	AD 45-06-07
+format	p:G yy-MM-dd	time	10:15	!Unsupported field: Era
+format	p:G yy-MM-dd	time	10:15:30	!Unsupported field: Era
+format	p:G yy-MM-dd	time	10:15:30.123456789	!Unsupported field: Era
+format	p:G yy-MM-dd	time	00:00	!Unsupported field: Era
+format	p:G yy-MM-dd	dateTime	2024-03-05T10:15:30	AD 24-03-05
+format	p:G yy-MM-dd	dateTime	2024-03-05T00:00:00.000001	AD 24-03-05
+format	p:G yy-MM-dd	offset	2024-03-05T10:15:30+01:00	AD 24-03-05
+format	p:G yy-MM-dd	offset	2024-03-05T10:15:30Z	AD 24-03-05
+format	p:G yy-MM-dd	offset	2024-03-05T10:15:30.500-05:30:15	AD 24-03-05
+format	p:G yy-MM-dd	offset	2024-03-05T10:15:30+00:00:45	AD 24-03-05
+format	p:G yy-MM-dd	zoned	2024-03-05T10:15:30+02:00	AD 24-03-05
+format	p:G yy-MM-dd	zoned	2024-03-05T10:15:30Z[UTC]	AD 24-03-05
+format	p:G yy-MM-dd	instant	2024-03-05T10:15:30Z	!Unsupported field: Era
+format	p:G yy-MM-dd	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Era
+parse	p:G yy-MM-dd	date	AD 24-03-05	2024-03-05
+parse	p:G yy-MM-dd	date	BC 24-03-05	-2023-03-05
+parse	p:G yy-MM-dd	date	AD 01-12-31	2001-12-31
+parse	p:G yy-MM-dd	date	AD 45-06-07	2045-06-07
+build	p:uuuu-MM-dd G	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)' 'Text(Era,SHORT)
+format	p:uuuu-MM-dd G	date	2024-03-05	2024-03-05 AD
+format	p:uuuu-MM-dd G	date	0001-12-31	0001-12-31 AD
+format	p:uuuu-MM-dd G	date	+12345-06-07	+12345-06-07 AD
+format	p:uuuu-MM-dd G	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd G	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd G	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd G	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd G	dateTime	2024-03-05T10:15:30	2024-03-05 AD
+format	p:uuuu-MM-dd G	dateTime	2024-03-05T00:00:00.000001	2024-03-05 AD
+format	p:uuuu-MM-dd G	offset	2024-03-05T10:15:30+01:00	2024-03-05 AD
+format	p:uuuu-MM-dd G	offset	2024-03-05T10:15:30Z	2024-03-05 AD
+format	p:uuuu-MM-dd G	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05 AD
+format	p:uuuu-MM-dd G	offset	2024-03-05T10:15:30+00:00:45	2024-03-05 AD
+format	p:uuuu-MM-dd G	zoned	2024-03-05T10:15:30+02:00	2024-03-05 AD
+format	p:uuuu-MM-dd G	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05 AD
+format	p:uuuu-MM-dd G	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd G	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd G	date	2024-03-05 AD	2024-03-05
+parse	p:uuuu-MM-dd G	date	2024-03-05 BC	!Text '2024-03-05 BC' could not be parsed: Conflict found: Field Era 1 differs from Era 0 derived from 2024-03-05	0
+parse	p:uuuu-MM-dd G	date	0000-03-05 BC	0000-03-05
+parse	p:uuuu-MM-dd G	date	-0001-03-05 BC	-0001-03-05
+parse	p:uuuu-MM-dd G	date	-0001-03-05 AD	!Text '-0001-03-05 AD' could not be parsed: Conflict found: Field Era 0 differs from Era 1 derived from -0001-03-05	0
+parse	p:uuuu-MM-dd G	date	0001-12-31 AD	0001-12-31
+parse	p:uuuu-MM-dd G	date	+12345-06-07 AD	+12345-06-07
+build	p:G uuuu y	-	-	Text(Era,SHORT)' 'Value(Year,4,19,EXCEEDS_PAD)' 'Value(YearOfEra)
+format	p:G uuuu y	date	2024-03-05	AD 2024 2024
+format	p:G uuuu y	date	0001-12-31	AD 0001 1
+format	p:G uuuu y	date	+12345-06-07	AD +12345 12345
+format	p:G uuuu y	time	10:15	!Unsupported field: Era
+format	p:G uuuu y	time	10:15:30	!Unsupported field: Era
+format	p:G uuuu y	time	10:15:30.123456789	!Unsupported field: Era
+format	p:G uuuu y	time	00:00	!Unsupported field: Era
+format	p:G uuuu y	dateTime	2024-03-05T10:15:30	AD 2024 2024
+format	p:G uuuu y	dateTime	2024-03-05T00:00:00.000001	AD 2024 2024
+format	p:G uuuu y	offset	2024-03-05T10:15:30+01:00	AD 2024 2024
+format	p:G uuuu y	offset	2024-03-05T10:15:30Z	AD 2024 2024
+format	p:G uuuu y	offset	2024-03-05T10:15:30.500-05:30:15	AD 2024 2024
+format	p:G uuuu y	offset	2024-03-05T10:15:30+00:00:45	AD 2024 2024
+format	p:G uuuu y	zoned	2024-03-05T10:15:30+02:00	AD 2024 2024
+format	p:G uuuu y	zoned	2024-03-05T10:15:30Z[UTC]	AD 2024 2024
+format	p:G uuuu y	instant	2024-03-05T10:15:30Z	!Unsupported field: Era
+format	p:G uuuu y	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Era
+parse	p:G uuuu y	date	AD 2024 2024	!Text 'AD 2024 2024' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:G uuuu y	date	AD 2024 2025	!Text 'AD 2024 2025' could not be parsed: Conflict found: Year 2024 differs from Year 2025	0
+parse	p:G uuuu y	date	BC 2024 2025	!Text 'BC 2024 2025' could not be parsed: Conflict found: Year 2024 differs from Year -2024	0
+parse	p:G uuuu y	date	AD 0001 1	!Text 'AD 0001 1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:G uuuu y	date	AD +12345 12345	!Text 'AD +12345 12345' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:uuuu y	-	-	Value(Year,4,19,EXCEEDS_PAD)' 'Value(YearOfEra)
+format	p:uuuu y	date	2024-03-05	2024 2024
+format	p:uuuu y	date	0001-12-31	0001 1
+format	p:uuuu y	date	+12345-06-07	+12345 12345
+format	p:uuuu y	time	10:15	!Unsupported field: Year
+format	p:uuuu y	time	10:15:30	!Unsupported field: Year
+format	p:uuuu y	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu y	time	00:00	!Unsupported field: Year
+format	p:uuuu y	dateTime	2024-03-05T10:15:30	2024 2024
+format	p:uuuu y	dateTime	2024-03-05T00:00:00.000001	2024 2024
+format	p:uuuu y	offset	2024-03-05T10:15:30+01:00	2024 2024
+format	p:uuuu y	offset	2024-03-05T10:15:30Z	2024 2024
+format	p:uuuu y	offset	2024-03-05T10:15:30.500-05:30:15	2024 2024
+format	p:uuuu y	offset	2024-03-05T10:15:30+00:00:45	2024 2024
+format	p:uuuu y	zoned	2024-03-05T10:15:30+02:00	2024 2024
+format	p:uuuu y	zoned	2024-03-05T10:15:30Z[UTC]	2024 2024
+format	p:uuuu y	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu y	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu y	date	2024 2024	!Text '2024 2024' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:uuuu y	date	2024 24	!Text '2024 24' could not be parsed: Conflict found: Year 2024 differs from Year 24	0
+parse	p:uuuu y	date	0000 1	!Text '0000 1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:uuuu y	date	0000 2	!Text '0000 2' could not be parsed: Conflict found: Year 0 differs from Year -1	0
+parse	p:uuuu y	date	-0001 1	!Text '-0001 1' could not be parsed: Conflict found: Year -1 differs from Year 0	0
+parse	p:uuuu y	date	-0001 2	!Text '-0001 2' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:uuuu y	date	0001 1	!Text '0001 1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:uuuu y	date	+12345 12345	!Text '+12345 12345' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0

@@ -504,6 +504,24 @@ public class GoldenFormatterBuilder {
                 "2024-03-05 0");
         recipe("p:g HH:mm", k("date", "dateTime"), "40587 10:15", "60374 10:15", "40587 24:00");
         recipe("p:g E", k("date"), "60374 Tue", "60374 Mon", "40587 Thu", "40587 Wed");
+        // Era text: G is one to three SHORT letters, four FULL and five NARROW, and more is an error. A parse
+        // resolves YEAR_OF_ERA with the era, cross-checks the era against a date built from YEAR, and reports a
+        // differing YEAR_OF_ERA and YEAR as Java's "Conflict found: Year <old> differs from Year <new>".
+        for (String pattern : new String[] {"G", "GG", "GGG", "GGGG", "GGGGG"})
+            recipe("p:" + pattern, k("date", "dateTime"), "AD", "BC", "Anno Domini", "Before Christ", "A", "B",
+                    "ad", "bc");
+        recipe("p:GGGGGG", none);
+        recipe("ci|p:G", k("date"), "ad", "bc");
+        recipe("p:G yyyy-MM-dd", k("date"), "AD 2024-03-05", "BC 0001-03-05", "BC 0002-03-05",
+                "AD 0001-03-05", "AD 0000-03-05", "BC 0000-03-05", "BC 2024-03-05", "AD 2024-03-05 10:15");
+        recipe("p:G yyyy-DDD", k("date"), "BC 0001-060", "AD 0004-060", "BC 0001-366");
+        recipe("p:G yyyy", k("date"), "BC 0001", "AD 2024");
+        recipe("p:G yyyy-MM", k("date"), "BC 0001-03", "AD 2024-03");
+        recipe("p:G yy-MM-dd", k("date"), "AD 24-03-05", "BC 24-03-05");
+        recipe("p:uuuu-MM-dd G", k("date"), "2024-03-05 AD", "2024-03-05 BC", "0000-03-05 BC",
+                "-0001-03-05 BC", "-0001-03-05 AD");
+        recipe("p:G uuuu y", k("date"), "AD 2024 2024", "AD 2024 2025", "BC 2024 2025");
+        recipe("p:uuuu y", k("date"), "2024 2024", "2024 24", "0000 1", "0000 2", "-0001 1", "-0001 2");
         Files.write(Path.of(a[0]), lines);
     }
 }

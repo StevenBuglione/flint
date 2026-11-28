@@ -274,6 +274,7 @@ private enum Field : ubyte
     modifiedJulianDay, // Java's JulianFields.MODIFIED_JULIAN_DAY
     weekBasedYear, // Java's IsoFields.WEEK_BASED_YEAR
     weekOfWeekBasedYear, // IsoFields.WEEK_OF_WEEK_BASED_YEAR
+    era, // ChronoField.ERA: 0 is BC, 1 is CE
 }
 
 private enum fieldCount = Field.max + 1;
@@ -282,7 +283,7 @@ private immutable string[fieldCount] fieldNames = [
     "Year", "YearOfEra", "MonthOfYear", "DayOfMonth", "DayOfYear", "DayOfWeek", "QuarterOfYear",
     "AlignedWeekOfMonth", "HourOfDay", "ClockHourOfAmPm", "HourOfAmPm", "ClockHourOfDay",
     "MinuteOfHour", "SecondOfMinute", "NanoOfSecond", "MilliOfDay", "NanoOfDay", "AmPmOfDay",
-    "InstantSeconds", "ModifiedJulianDay", "WeekBasedYear", "WeekOfWeekBasedYear"
+    "InstantSeconds", "ModifiedJulianDay", "WeekBasedYear", "WeekOfWeekBasedYear", "Era"
 ];
 
 /**
@@ -326,6 +327,7 @@ struct Fields
     {
         set(Field.year, d.getYear());
         set(Field.yearOfEra, d.getYear() >= 1 ? d.getYear() : 1 - cast(long) d.getYear());
+        set(Field.era, d.getYear() >= 1 ? 1 : 0);
         set(Field.monthOfYear, d.getMonthValue());
         set(Field.dayOfMonth, d.getDayOfMonth());
         set(Field.dayOfYear, d.getDayOfYear());
@@ -458,8 +460,8 @@ struct Fields
 
     private bool hasDate() const pure nothrow @nogc
     {
-        return (has(Field.year) || (smart_ && has(Field.yearOfEra))) && ((has(Field.monthOfYear)
-                && has(Field.dayOfMonth)) || has(Field.dayOfYear));
+        return (has(Field.year) || ((smart_ || has(Field.era)) && has(Field.yearOfEra)))
+            && ((has(Field.monthOfYear) && has(Field.dayOfMonth)) || has(Field.dayOfYear));
     }
 
     private bool hasTime() const pure nothrow @nogc
@@ -564,40 +566,84 @@ struct Fields
     // The date the year, month, day-of-month and day-of-year fields give: Java's `ChronoField` resolution.
     private LocalDate chronoDate(scope const(char)[] text, string type) const
     {
-        long year;
-        if (has(Field.year))
-            year = values_[Field.year];
-        else if (smart_ && has(Field.yearOfEra)) // STRICT does not invent an era
-            year = values_[Field.yearOfEra];
-        else
+        const resolvesYearOfEra = has(Field.yearOfEra) && (smart_ || has(Field.era) || has(Field.year));
+        if (!has(Field.year) && !resolvesYearOfEra)
             throw unresolved(text, type);
         try
         {
-            if (!has(Field.year))
-                checkVariable("YearOfEra", year, "999999999/1000000000", 1_000_000_000);
+            const year = eraYear(resolvesYearOfEra);
             checkRange("Year", year, -999_999_999, 999_999_999);
             if (has(Field.monthOfYear) && has(Field.dayOfMonth))
-            {
-                checkRange("MonthOfYear", values_[Field.monthOfYear], 1, 12);
-                checkVariable("DayOfMonth", values_[Field.dayOfMonth], "28/31", 31);
-                const month = cast(int) values_[Field.monthOfYear];
-                int day = cast(int) values_[Field.dayOfMonth];
-                if (smart_ && day > 28)
-                {
-                    const last = LocalDate.of(cast(int) year, month, 1).lengthOfMonth();
-                    day = day > last ? last : day;
-                }
-                return LocalDate.of(cast(int) year, month, day);
-            }
+                return calendarDate(year);
             if (has(Field.dayOfYear))
-            {
-                checkVariable("DayOfYear", values_[Field.dayOfYear], "365/366", 366);
-                return LocalDate.ofYearDay(cast(int) year, cast(int) values_[Field.dayOfYear]);
-            }
+                return ordinalDate(year);
         }
         catch (DateTimeException e)
             throw failed(text, e);
         throw unresolved(text, type);
+    }
+
+    // The proleptic year the parsed year, year-of-era and era give. An era with a year-of-era gives the year; STRICT
+    // only refuses to invent an era when neither an era nor a year was parsed; and a year-of-era that resolves to a
+    // different year than a parsed year is Java's Year conflict.
+    private long eraYear(bool resolvesYearOfEra) const
+    {
+        if (!resolvesYearOfEra)
+        {
+            if (has(Field.era))
+                checkRange("Era", values_[Field.era], 0, 1);
+            return values_[Field.year];
+        }
+        const yearOfEra = values_[Field.yearOfEra];
+        checkVariable("YearOfEra", yearOfEra, "999999999/1000000000", 1_000_000_000);
+        long year;
+        if (has(Field.era))
+        {
+            checkRange("Era", values_[Field.era], 0, 1);
+            year = values_[Field.era] == 1 ? yearOfEra : 1 - yearOfEra;
+        }
+        else if (has(Field.year))
+        {
+            const old = values_[Field.year];
+            checkRange("Year", old, -999_999_999, 999_999_999);
+            year = old >= 1 ? yearOfEra : 1 - yearOfEra;
+        }
+        else // SMART invents the last era, CE
+            year = yearOfEra;
+        if (has(Field.year) && values_[Field.year] != year)
+            throw new DateTimeException("Conflict found: Year " ~ signedDecimal(
+                    values_[Field.year]) ~ " differs from Year " ~ signedDecimal(year));
+        return year;
+    }
+
+    // The date from the parsed month and day-of-month; SMART moves an invalid day 29-31 to the end of the month.
+    private LocalDate calendarDate(long year) const
+    {
+        checkRange("MonthOfYear", values_[Field.monthOfYear], 1, 12);
+        checkVariable("DayOfMonth", values_[Field.dayOfMonth], "28/31", 31);
+        const month = cast(int) values_[Field.monthOfYear];
+        int day = cast(int) values_[Field.dayOfMonth];
+        if (smart_ && day > 28)
+        {
+            const last = LocalDate.of(cast(int) year, month, 1).lengthOfMonth();
+            day = day > last ? last : day;
+        }
+        return LocalDate.of(cast(int) year, month, day);
+    }
+
+    // The date from the parsed day-of-year.
+    private LocalDate ordinalDate(long year) const
+    {
+        checkVariable("DayOfYear", values_[Field.dayOfYear], "365/366", 366);
+        return LocalDate.ofYearDay(cast(int) year, cast(int) values_[Field.dayOfYear]);
+    }
+
+    // Java's decimal text for a signed long, used by the Year conflict.
+    private static string signedDecimal(long value) pure nothrow
+    {
+        import flint.engine.aot.text : decimal;
+
+        return decimal(value);
     }
 
     // Java's range check of a field whose maximum depends on the month or year, such as `1 - 28/31`.
@@ -622,6 +668,8 @@ struct Fields
         if (has(Field.quarterOfYear))
             crossCheckField(text, "QuarterOfYear", (date.getMonthValue() - 1) / 3 + 1,
                     values_[Field.quarterOfYear], date);
+        if (has(Field.era))
+            crossCheckField(text, "Era", date.getYear() >= 1 ? 1 : 0, values_[Field.era], date);
     }
 
     private static void crossCheckField(scope const(char)[] text, string field, long derived,
@@ -1557,7 +1605,7 @@ struct DateTimeFormatterBuilder
 
     /**
      * Appends the elements of `pattern`, as `DateTimeFormatter.ofPattern` describes: `u y D M L d E a h H k K m s S
-     * n VV X x Z`, quoted text, `''` and `[ ]` optional sections. A `]` ends an optional section this builder
+     * n VV X x Z G`, quoted text, `''` and `[ ]` optional sections. A `]` ends an optional section this builder
      * started; one left open stays open. Other pattern letters throw `IllegalArgumentException`.
      */
     ref DateTimeFormatterBuilder appendPattern(string pattern) return
@@ -2089,6 +2137,9 @@ private struct Printer
             output ~= style == "full" ? quarterFull[value - 1] : style == "narrow"
                 ? quarterNarrow[value - 1] : quarterShort[value - 1];
             break;
+        case Field.era:
+            output ~= style == "full" ? eraFull[value] : style == "narrow" ? eraNarrow[value] : eraShort[value];
+            break;
         default:
             output ~= value == 0 ? "AM" : "PM";
             break;
@@ -2218,6 +2269,31 @@ private immutable string[4] quarterFull = [
 ];
 private immutable string[4] quarterShort = ["Q1", "Q2", "Q3", "Q4"];
 private immutable string[4] quarterNarrow = ["1", "2", "3", "4"];
+// The English era names of Java's `DateTimeTextProvider`, indexed by ChronoField.ERA: 0 is BC and 1 is CE.
+private immutable string[2] eraFull = ["Before Christ", "Anno Domini"];
+private immutable string[2] eraShort = ["BC", "AD"];
+private immutable string[2] eraNarrow = ["B", "A"];
+private immutable string[2] amPmNames = ["AM", "PM"];
+
+// The names a text element matches: its field's style table, or the two am/pm names.
+private const(string)[] textNames(Field f, string style) pure nothrow @nogc
+{
+    if (f == Field.quarterOfYear)
+        return style == "full" ? quarterFull[] : style == "narrow" ? quarterNarrow[] : quarterShort[];
+    if (f == Field.era)
+        return style == "full" ? eraFull[] : style == "narrow" ? eraNarrow[] : eraShort[];
+    if (f == Field.monthOfYear)
+        return monthFull[];
+    if (f == Field.dayOfWeek)
+        return dayFull[];
+    return amPmNames[];
+}
+
+// The value a matched text name sets: the array index, or the index plus one where the field counts from one.
+private long textValue(Field f, size_t index) pure nothrow @nogc
+{
+    return f == Field.amPmOfDay || f == Field.era ? cast(long) index : cast(long) index + 1;
+}
 
 // The index of the end matching the optionalStart, groupStart or padStart at `start`, or the end of the list.
 private size_t sectionEnd(scope const(Element)[] elements, size_t start) pure nothrow @nogc
@@ -2632,24 +2708,16 @@ private struct Parser
 
     int parseText(const Element e, int position) scope
     {
-        const style = normalStyle(e.text), full = style == "full";
-        static immutable string[2] amPm = ["AM", "PM"];
-        const(string)[] names;
-        if (e.field == Field.quarterOfYear)
-            names = style == "full" ? quarterFull[] : style == "narrow" ? quarterNarrow[] : quarterShort[];
-        else if (e.field == Field.monthOfYear)
-            names = monthFull[];
-        else if (e.field == Field.dayOfWeek)
-            names = dayFull[];
-        else
-            names = amPm[];
+        const style = normalStyle(e.text);
+        const names = textNames(e.field, style);
+        const whole = style == "full" || e.field == Field.amPmOfDay
+            || e.field == Field.quarterOfYear || e.field == Field.era;
         foreach (i, name; names)
         {
-            const whole = full || e.field == Field.amPmOfDay || e.field == Field.quarterOfYear;
             const candidate = whole ? name : name[0 .. 3];
             if (matches(candidate, position))
             {
-                fields.set(e.field, e.field == Field.amPmOfDay ? cast(long) i : cast(long) i + 1);
+                fields.set(e.field, textValue(e.field, i));
                 return position + cast(int) candidate.length;
             }
         }
@@ -3139,6 +3207,18 @@ private Element modifiedJulianLetter(int count)
     return num(Field.modifiedJulianDay, count, 19, SignStyle.NORMAL);
 }
 
+// The era text: one to three letters SHORT, four FULL and five NARROW; more is Java's widths error.
+private Element eraLetter(int count)
+{
+    if (count > 5)
+        throw new IllegalArgumentException("Too many pattern letters: G");
+    Element e;
+    e.op = Op.text;
+    e.field = Field.era;
+    e.text = count <= 3 ? "short" : count == 4 ? "full" : "narrow";
+    return e;
+}
+
 private Element dateLetter(char c, int count)
 {
     switch (c)
@@ -3159,8 +3239,6 @@ private Element dateLetter(char c, int count)
         return quarterLetter(c == 'q', count);
     case 'F':
         return alignedWeekLetter(count);
-    case 'g':
-        return modifiedJulianLetter(count);
     default:
         return timeLetter(c, count);
     }
@@ -3184,6 +3262,10 @@ private Element timeLetter(char c, int count)
         return num(Field.milliOfDay, count, 19, SignStyle.NOT_NEGATIVE);
     case 'N':
         return num(Field.nanoOfDay, count, 19, SignStyle.NOT_NEGATIVE);
+    case 'g':
+        return modifiedJulianLetter(count);
+    case 'G':
+        return eraLetter(count);
     default:
         return zoneLetter(c, count);
     }

@@ -681,6 +681,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Resolve a parsed modified Julian day through epoch-day, sharing the date path.** `g` reuses the existing number element and a `modifiedJulianDay` field; printing derives the value from the date and parsing resolves it with the existing `LocalDate.ofEpochDay`, so a full date plus a differing `g` reports Java's "Fields resolved to two different dates" before any new code. A value without a date reports `EpochDay`, the field Java's `JulianFields` reads. The field adds no new printing or parsing tables. On venus (v4.2 toolchain) against the parent `38a1ce9b0`, the Java module stays at 129,512 incremental linked bytes (O3 129,512, Oz 122,344) and DMD templates rise from 4,775 to 4,781 against the 7,350 cap (measured at `f95204c78`; the code is identical).
 
+- **Read a parsed era as an ordinal and fold it into year-of-era resolution.** `G` reuses the existing text element and a one-byte `era` field (0 BC, 1 CE); printing indexes two-entry name tables and parsing matches the names, so the only new code is the ordinal. The proleptic year comes from the year-of-era and the era with integer arithmetic, and a derived year that disagrees with a parsed year reports Java's "Conflict found: Year ... differs from Year ...". The era also cross-checks against the resolved date through the existing conflict path. On venus (v4.2 toolchain) against the parent `42d27f532`, the Java module stays at 129,512 incremental linked bytes (O3 129,512, Oz 122,344) and DMD templates rise from 4,781 to 4,787 against the 7,350 cap (measured at `c77db98d1`).
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:
