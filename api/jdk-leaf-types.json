@@ -112,6 +112,7 @@
   "java.util.concurrent.CancellationException": "flint.java.util.concurrent.cancellationexception",
   "java.util.concurrent.CompletionException": "flint.java.util.concurrent.completionexception",
   "java.util.concurrent.CopyOnWriteArrayList": "flint.java.util.concurrent.copyonwritearraylist",
+  "java.util.concurrent.CopyOnWriteArraySet": "flint.java.util.concurrent.copyonwritearrayset",
   "java.util.concurrent.Delayed": "flint.java.util.concurrent.delayed",
   "java.util.concurrent.ExecutionException": "flint.java.util.concurrent.executionexception",
   "java.util.concurrent.Executor": "flint.java.util.concurrent.executor",

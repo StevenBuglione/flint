@@ -725,6 +725,27 @@
   "java.util.concurrent.CopyOnWriteArrayList#size()",
   "java.util.concurrent.CopyOnWriteArrayList#sort(Comparator)",
   "java.util.concurrent.CopyOnWriteArrayList#toArray()",
-  "java.util.concurrent.FutureTask#<init>(Runnable,V)"
+  "java.util.concurrent.CopyOnWriteArraySet",
+  "java.util.concurrent.CopyOnWriteArraySet#<init>()",
+  "java.util.concurrent.CopyOnWriteArraySet#<init>(Collection)",
+  "java.util.concurrent.CopyOnWriteArraySet#add(E)",
+  "java.util.concurrent.CopyOnWriteArraySet#addAll(Collection)",
+  "java.util.concurrent.CopyOnWriteArraySet#clear()",
+  "java.util.concurrent.CopyOnWriteArraySet#contains(Object)",
+  "java.util.concurrent.CopyOnWriteArraySet#containsAll(Collection)",
+  "java.util.concurrent.CopyOnWriteArraySet#equals(Object)",
+  "java.util.concurrent.CopyOnWriteArraySet#isEmpty()",
+  "java.util.concurrent.CopyOnWriteArraySet#iterator()",
+  "java.util.concurrent.CopyOnWriteArraySet#remove(Object)",
+  "java.util.concurrent.CopyOnWriteArraySet#removeAll(Collection)",
+  "java.util.concurrent.CopyOnWriteArraySet#removeIf(Predicate)",
+  "java.util.concurrent.CopyOnWriteArraySet#retainAll(Collection)",
+  "java.util.concurrent.CopyOnWriteArraySet#size()",
+  "java.util.concurrent.CopyOnWriteArraySet#toArray()",
+  "java.util.concurrent.FutureTask#<init>(Runnable,V)",
+  "java.util.zip.Adler32#update(ByteBuffer)",
+  "java.util.zip.CRC32#update(ByteBuffer)",
+  "java.util.zip.CRC32C#update(ByteBuffer)",
+  "java.util.zip.Checksum#update(ByteBuffer)"
  ]
 }

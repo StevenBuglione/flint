@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,126 | 764 | 0 | 1,957 | 13,574 |
+| framework | openjdk@21.0.13 | 2,143 | 768 | 0 | 1,957 | 13,553 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2984,6 +2984,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.concurrent.CopyOnWriteArrayList#lastIndexOf(Object)` | `flint.java.util.concurrent.copyonwritearraylist.CopyOnWriteArrayList.lastIndexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.concurrent.CopyOnWriteArrayList#remove(Object)` | `flint.java.util.concurrent.copyonwritearraylist.CopyOnWriteArrayList.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.concurrent.CopyOnWriteArrayList#toArray()` | `flint.java.util.concurrent.copyonwritearraylist.CopyOnWriteArrayList.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.concurrent.CopyOnWriteArraySet` | `flint.java.util.concurrent.copyonwritearrayset.CopyOnWriteArraySet` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.concurrent.copyonwritearrayset; flint.java.util.concurrent does not re-export it until the JDK aggregate exists. |
+| `java.util.concurrent.CopyOnWriteArraySet#contains(Object)` | `flint.java.util.concurrent.copyonwritearrayset.CopyOnWriteArraySet.contains` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.concurrent.CopyOnWriteArraySet#remove(Object)` | `flint.java.util.concurrent.copyonwritearrayset.CopyOnWriteArraySet.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.concurrent.CopyOnWriteArraySet#toArray()` | `flint.java.util.concurrent.copyonwritearrayset.CopyOnWriteArraySet.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.concurrent.Delayed` | `flint.java.util.concurrent.delayed.Delayed` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Import from flint.java.util.concurrent.delayed until the JDK aggregate is available. |
 | `java.util.concurrent.Delayed#getDelay(TimeUnit)` | `flint.java.util.concurrent.delayed.Delayed.getDelay` | [R5](api-mapping.md#r5-optional-and-nullable-values) | TimeUnit is a value enum, so a null unit is rejected at compile time. |
 | `java.util.concurrent.ExecutionException` | `flint.java.util.concurrent.executionexception.ExecutionException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Import the checked exception from flint.java.util.concurrent.executionexception. An empty detail is absent in Flint. Java preserves an explicitly empty String. |
@@ -11193,7 +11197,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
 | java.util | 1,858 | 0 |
-| java.util.concurrent | 1,177 | 0 |
+| java.util.concurrent | 1,160 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 89 | 0 |
@@ -11202,7 +11206,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.regex | 67 | 0 |
 | java.util.spi | 0 | 43 |
 | java.util.stream | 287 | 0 |
-| java.util.zip | 232 | 0 |
+| java.util.zip | 228 | 0 |
 | javax.crypto | 279 | 0 |
 | javax.crypto.interfaces | 0 | 13 |
 | javax.crypto.spec | 101 | 0 |
