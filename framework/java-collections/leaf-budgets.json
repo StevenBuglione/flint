@@ -1,7 +1,7 @@
 {
   "flint.java.util.bitset": {
-    "incremental_linked_bytes": 15476,
-    "template_instances": 306,
+    "incremental_linked_bytes": 17692,
+    "template_instances": 308,
     "template_compile": "separate"
   }
 }
