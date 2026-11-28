@@ -1,7 +1,8 @@
 /// Java SE 21 regular-expression compilation and whole-input matching.
 module flint.java.util.regex.pattern;
 
-import flint.java.lang : IllegalArgumentException, IllegalStateException, IndexOutOfBoundsException, NullPointerException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException, IndexOutOfBoundsException,
+    NullPointerException;
 import flint.java.util.function_ : Function;
 import flint.java.util.regex.internal.engine : Regex, RegexFlag, RegexSyntaxException, compileRegex;
 import flint.java.util.regex.matchresult : MatchResult;

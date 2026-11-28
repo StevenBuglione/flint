@@ -5,7 +5,8 @@ and a Java rejection (`error`) must throw the same broad exception class here.
 +/
 module flint.java.util.regex.search_replace_test;
 
-import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, IllegalStateException, NullPointerException;
+import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, IllegalStateException,
+    NullPointerException;
 import flint.java.util.function_ : Function;
 import flint.java.util.regex.matchresult : MatchResult;
 import flint.java.util.regex.pattern : Matcher, Pattern;
@@ -112,7 +113,8 @@ private Function!(MatchResult, string) replacerFor(string kind)
     case "wrap":
         return Function!(MatchResult, string).of((MatchResult r) => "[" ~ r.group.get ~ "]");
     case "span":
-        return Function!(MatchResult, string).of((MatchResult r) => r.start.to!string ~ "," ~ r.end.to!string ~ "=" ~ r.group.get);
+        return Function!(MatchResult, string).of(
+                (MatchResult r) => r.start.to!string ~ "," ~ r.end.to!string ~ "=" ~ r.group.get);
     case "null":
         return Function!(MatchResult, string).of((MatchResult r) { return cast(string) null; });
     default:
