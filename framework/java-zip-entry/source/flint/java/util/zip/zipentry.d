@@ -46,33 +46,33 @@ import std.typecons : Nullable;
 private enum long UPPER_DOSTIME_BOUND = 128L * 365 * 24 * 60 * 60 * 1000;
 
 // Extra-field tags (ZipConstants64).
-private enum int EXTID_ZIP64 = 0x0001;  // Zip64
-private enum int EXTID_NTFS = 0x000a;   // NTFS
-private enum int EXTID_EXTT = 0x5455;   // Info-ZIP Extended Timestamp
+private enum int EXTID_ZIP64 = 0x0001; // Zip64
+private enum int EXTID_NTFS = 0x000a; // NTFS
+private enum int EXTID_EXTT = 0x5455; // Info-ZIP Extended Timestamp
 private enum long ZIP64_MAGICVAL = 0xFFFFFFFFL;
 private enum long WINDOWS_TIME_NOT_AVAILABLE = long.min;
 // used to adjust values between Windows and java epoch
-private enum long WINDOWS_EPOCH_IN_MICROSECONDS = -11644473600000000L;
+private enum long WINDOWS_EPOCH_IN_MICROSECONDS = -11_644_473_600_000_000L;
 
 /// This class is used to represent a ZIP file entry.
 class ZipEntry
 {
-    package(flint.java.util.zip) string name;        // entry name
+    package(flint.java.util.zip) string name; // entry name
     package(flint.java.util.zip) long xdostime = -1; // last modification time (in extended DOS time,
-                                                     // where milliseconds lost in conversion might
-                                                     // be encoded into the upper half)
+    // where milliseconds lost in conversion might
+    // be encoded into the upper half)
     package(flint.java.util.zip) Nullable!FileTime mtime; // last modification time, from extra field data
     package(flint.java.util.zip) Nullable!FileTime atime; // last access time, from extra field data
     package(flint.java.util.zip) Nullable!FileTime ctime; // creation time, from extra field data
-    package(flint.java.util.zip) long crc = -1;      // crc-32 of entry data
-    package(flint.java.util.zip) long size = -1;     // uncompressed size of entry data
-    package(flint.java.util.zip) long csize = -1;    // compressed size of entry data
+    package(flint.java.util.zip) long crc = -1; // crc-32 of entry data
+    package(flint.java.util.zip) long size = -1; // uncompressed size of entry data
+    package(flint.java.util.zip) long csize = -1; // compressed size of entry data
     package(flint.java.util.zip) bool csizeSet = false; // Only true if csize was explicitly set by
-                                                        // a call to setCompressedSize()
-    package(flint.java.util.zip) int method = -1;    // compression method
-    package(flint.java.util.zip) int flag = 0;       // general purpose flag
-    package(flint.java.util.zip) byte[] extra;       // optional extra field data for entry
-    package(flint.java.util.zip) string comment;     // optional comment string for entry
+    // a call to setCompressedSize()
+    package(flint.java.util.zip) int method = -1; // compression method
+    package(flint.java.util.zip) int flag = 0; // general purpose flag
+    package(flint.java.util.zip) byte[] extra; // optional extra field data for entry
+    package(flint.java.util.zip) string comment; // optional comment string for entry
     package(flint.java.util.zip) int extraAttributes = -1; // e.g. POSIX permissions, sym links.
 
     /// Compression method for uncompressed entries.
@@ -159,20 +159,15 @@ class ZipEntry
         }
         else
         {
-            const dos = (cast(long) year << 25)
-                    | (cast(long) time.getMonthValue() << 21)
-                    | (cast(long) time.getDayOfMonth() << 16)
-                    | (cast(long) time.getHour() << 11)
-                    | (cast(long) time.getMinute() << 5)
-                    | (cast(long) second >> 1);
-            this.xdostime = (dos & 0xffffffffL)
-                    + (cast(long)(((second & 0x1) * 1000) + time.getNano() / 1_000_000) << 32);
+            const dos = (cast(long) year << 25) | (cast(long) time.getMonthValue() << 21) | (
+                    cast(long) time.getDayOfMonth() << 16) | (cast(long) time.getHour() << 11) | (
+                    cast(long) time.getMinute() << 5) | (cast(long) second >> 1);
+            this.xdostime = (dos & 0xffffffffL) + (cast(long)(((second & 0x1) * 1000) + time.getNano() / 1_000_000) << 32);
         }
         if (xdostime != DOSTIME_BEFORE_1980 && year <= 0x7f)
             this.mtime = Nullable!FileTime.init;
         else
-            this.mtime = Nullable!FileTime(FileTime.from(
-                    ZonedDateTime.of(time, ZoneId.systemDefault()).toInstant()));
+            this.mtime = Nullable!FileTime(FileTime.from(ZonedDateTime.of(time, ZoneId.systemDefault()).toInstant()));
     }
 
     /// Returns the last modification time of the entry in local date-time.
@@ -182,12 +177,9 @@ class ZipEntry
             return LocalDateTime.ofInstant(mtime.get.toInstant(), ZoneId.systemDefault());
         const ms = cast(int)(xdostime >> 32);
         return LocalDateTime.of(cast(int)(((xdostime >> 25) & 0x7f) + 1980),
-                cast(int)((xdostime >> 21) & 0x0f),
-                cast(int)((xdostime >> 16) & 0x1f),
-                cast(int)((xdostime >> 11) & 0x1f),
-                cast(int)((xdostime >> 5) & 0x3f),
-                cast(int)((xdostime << 1) & 0x3e) + ms / 1000,
-                (ms % 1000) * 1_000_000);
+                cast(int)((xdostime >> 21) & 0x0f), cast(int)((xdostime >> 16) & 0x1f),
+                cast(int)((xdostime >> 11) & 0x1f), cast(int)((xdostime >> 5) & 0x3f),
+                cast(int)((xdostime << 1) & 0x3e) + ms / 1000, (ms % 1000) * 1_000_000);
     }
 
     /// Sets the last modification time of the entry.
@@ -347,7 +339,7 @@ class ZipEntry
                     break;
                 case EXTID_NTFS:
                     if (sz < 32) // reserved 4 bytes + tag 2 bytes + size 2 bytes
-                        break;   // m[a|c]time 24 bytes
+                        break; // m[a|c]time 24 bytes
                     const pos = off + 4; // reserved 4 bytes
                     if (get16(extra, pos) != 0x0001 || get16(extra, pos + 2) != 24)
                         break;
@@ -471,12 +463,9 @@ private long javaToExtendedDosTime(long time)
 
 private long javaToDosTime(LocalDateTime ldt)
 {
-    const dos = (cast(long)(ldt.getYear() - 1980) << 25)
-            | (cast(long) ldt.getMonthValue() << 21)
-            | (cast(long) ldt.getDayOfMonth() << 16)
-            | (cast(long) ldt.getHour() << 11)
-            | (cast(long) ldt.getMinute() << 5)
-            | (cast(long) ldt.getSecond() >> 1);
+    const dos = (cast(long)(ldt.getYear() - 1980) << 25) | (cast(long) ldt.getMonthValue() << 21) | (
+            cast(long) ldt.getDayOfMonth() << 16) | (cast(long) ldt.getHour() << 11) | (
+            cast(long) ldt.getMinute() << 5) | (cast(long) ldt.getSecond() >> 1);
     return dos & 0xffffffffL;
 }
 

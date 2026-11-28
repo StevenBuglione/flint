@@ -116,7 +116,10 @@ unittest
     auto entry = new ZipEntry("x");
     assert(entry.getExtra() is null);
 
-    byte[] extra = [cast(byte) 0xAA, cast(byte) 0xBB, cast(byte) 0x02, cast(byte) 0x00, cast(byte) 0x01, cast(byte) 0x02];
+    byte[] extra = [
+        cast(byte) 0xAA, cast(byte) 0xBB, cast(byte) 0x02, cast(byte) 0x00, cast(byte) 0x01,
+        cast(byte) 0x02
+    ];
     entry.setExtra(extra);
     assert(entry.getExtra() == extra);
 

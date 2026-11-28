@@ -22,9 +22,9 @@ pragma(inline, false) private long exercise(string name, long millis)
     entry.setComment(name);
     const local = entry.getTimeLocal();
     const modified = entry.getLastModifiedTime;
-    return entry.getTime() + entry.getSize() + entry.getCompressedSize() + entry.getCrc()
-            + (modified.isNull ? 0 : modified.get.toMillis()) + local.getYear() + local.getSecond()
-            + entry.getName().length + entry.hashCode();
+    return entry.getTime() + entry.getSize() + entry.getCompressedSize() + entry.getCrc() + (modified.isNull
+            ? 0 : modified.get.toMillis()) + local.getYear() + local.getSecond() + entry.getName()
+        .length + entry.hashCode();
 }
 
 int main(string[] args)

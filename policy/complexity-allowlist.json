@@ -163,6 +163,15 @@
     "file": "pgjdbc/src/main/java/org/postgresql/jdbc/TypeInfoCache.java",
     "method": "getDisplaySize"
    }
+  },
+  {
+   "file": "framework/java-zip-entry/source/flint/java/util/zip/zipentry.d",
+   "function": "setExtra0",
+   "upstream": {
+    "project": "openjdk",
+    "file": "src/java.base/share/classes/java/util/zip/ZipEntry.java",
+    "method": "setExtra0"
+   }
   }
  ]
 }
