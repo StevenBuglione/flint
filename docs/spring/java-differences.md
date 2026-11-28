@@ -2952,7 +2952,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Objects#toString(Object)` | `flint.java.util.Objects.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Objects#toString(Object,String)` | `flint.java.util.Objects.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Optional` | `flint.java.util.Optional` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `java.util.Properties` | `flint.java.util.Properties` | [R26](api-mapping.md#r26-null-arrays) | A null string slice passed as a property key or as a value to setProperty counts as empty. |
+| `java.util.Properties` | `flint.java.util.Properties` | [R26](api-mapping.md#r26-null-arrays), [D-JDK-10](api-mapping.md#deviations) | A null string slice passed as a property key or as a value to setProperty counts as empty. Java's Hashtable methods synchronize on the instance monitor; this port does not (D-JDK-10). |
 | `java.util.Properties#elements()` | `flint.java.util.Properties.elements` | [R23](api-mapping.md#r23-object-typed-values) | This set's own values, without the defaults, in insertion order; Java's Hashtable order is unspecified. The result is a snapshot. |
 | `java.util.Properties#getProperty(String)` | `flint.java.util.Properties.getProperty` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Properties#getProperty(String,String)` | `flint.java.util.Properties.getProperty` | [R26](api-mapping.md#r26-null-arrays) |  |
