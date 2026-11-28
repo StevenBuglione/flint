@@ -3177,18 +3177,22 @@ class Properties : LinkedHashMap!(string, string)
         return result;
     }
 
+    /// The platform line separator, evaluated at compile time so linking this aggregate does not retain the
+    /// `System` leaf in every probe.
+    private enum lineSeparator = System.lineSeparator();
+
     private string render(string comments, bool escapeUnicode)
     {
         string text;
         if (comments !is null)
             text ~= commentsText(comments);
-        text ~= "#" ~ new Date().toString() ~ System.lineSeparator();
+        text ~= "#" ~ new Date().toString() ~ lineSeparator;
         // Java 21 writes the stock entry set in the natural order of its keys.
         auto keys = keySet().toArray();
         stableSort(keys, (string a, string b) => utf16Compare(a, b));
         foreach (key; keys)
             text ~= saveConvert(key, true, escapeUnicode) ~ "=" ~ saveConvert(get(key), false,
-                    escapeUnicode) ~ System.lineSeparator();
+                    escapeUnicode) ~ lineSeparator;
         return text;
     }
 
@@ -3225,7 +3229,7 @@ class Properties : LinkedHashMap!(string, string)
                     text ~= "\\u" ~ hexUnit(unit);
                 else
                 {
-                    text ~= System.lineSeparator();
+                    text ~= lineSeparator;
                     if (unit == '\r' && current + 1 != units.length && units[current + 1] == '\n')
                         current++;
                     if (current + 1 == units.length || (units[current + 1] != '#' && units[current + 1] != '!'))
@@ -3237,7 +3241,7 @@ class Properties : LinkedHashMap!(string, string)
         }
         if (last != current)
             text ~= latin1Text(units[last .. current]);
-        text ~= System.lineSeparator();
+        text ~= lineSeparator;
         return text;
     }
 
