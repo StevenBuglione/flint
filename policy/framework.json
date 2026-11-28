@@ -465,13 +465,17 @@
     "ldc_cold_seconds",
     "ldc_incremental_seconds",
     "compiler_peak_rss_bytes"
+   ],
+   "unsafe": [
+    "flint.java.lang.sys"
    ]
   },
   "java-sys": {
    "directory": "framework/java-sys",
    "module": "flint.java.nativethreadlocal",
    "also": [
-    "flint.java.lang.sys.threadtable"
+    "flint.java.lang.sys.threadtable",
+    "flint.java.nativethreadidentity"
    ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
@@ -511,6 +515,9 @@
    "dependencies": [
     "java",
     "engine-reactor"
+   ],
+   "also": [
+    "flint.java.fiberthreadidentity"
    ],
    "bench": {
     "fixture": "framework/java-fiber/bench",
