@@ -33,7 +33,7 @@ Overall: types 283/1303 (22%), members 2451/15191 (16%); 0 of the done elements 
 | `java.time.format` | sol-jdk-time-text | 2 / 8 | 9 / 133 | 7% |  |  |  |
 | `java.time.temporal` | sol-jdk-time-text | 3 / 16 | 69 / 169 | 41% |  |  | 3 |
 | `java.time.zone` | sol-jdk-time-text | 4 / 6 | 51 / 63 | 81% |  |  | 3 |
-| `java.util` | sol-jdk-core, sol-ai, sol-aop, sol-jdk-math-regex, sol-jdk-time-text (Locale) | 49 / 133 | 484 / 2216 | 22% |  | 319 | 18 |
+| `java.util` | sol-jdk-core, sol-ai, sol-aop, sol-jdk-math-regex, sol-jdk-time-text (Locale) | 49 / 133 | 484 / 2216 | 22% |  | 314 | 24 |
 | `java.util.concurrent` | sol-jdk-concurrent-io, sol-observability | 15 / 79 | 56 / 1190 | 5% |  |  | 13 |
 | `java.util.concurrent.atomic` | sol-observability | 4 / 16 | 51 / 319 | 16% |  |  | 1 |
 | `java.util.concurrent.locks` | sol-observability | 3 / 14 | 15 / 201 | 7% |  |  |  |
@@ -158,6 +158,9 @@ Each is adapted R1 with a note naming its leaf module until the JDK aggregate re
 - `java.util.BitSet`: declared in `flint.java.util.bitset`
 - `java.util.DuplicateFormatFlagsException`: declared in `flint.java.util.formatter`
 - `java.util.EnumSet`: declared in `flint.java.util.enumset`
+- `java.util.Enumeration`: declared in `flint.java.util.enumeration`
+- `java.util.EventListener`: declared in `flint.java.util.eventlistener`
+- `java.util.EventObject`: declared in `flint.java.util.eventobject`
 - `java.util.FormatFlagsConversionMismatchException`: declared in `flint.java.util.formatter`
 - `java.util.HexFormat`: declared in `flint.java.util.hexformat`
 - `java.util.IllegalFormatCodePointException`: declared in `flint.java.util.formatter`
@@ -166,13 +169,16 @@ Each is adapted R1 with a note naming its leaf module until the JDK aggregate re
 - `java.util.IllegalFormatFlagsException`: declared in `flint.java.util.formatter`
 - `java.util.IllegalFormatPrecisionException`: declared in `flint.java.util.formatter`
 - `java.util.IllegalFormatWidthException`: declared in `flint.java.util.formatter`
+- `java.util.InputMismatchException`: declared in `flint.java.util.inputmismatchexception`
 - `java.util.MissingFormatArgumentException`: declared in `flint.java.util.formatter`
 - `java.util.MissingFormatWidthException`: declared in `flint.java.util.formatter`
 - `java.util.Random`: declared in `flint.java.util.random.random`
 - `java.util.SplittableRandom`: declared in `flint.java.util.splittablerandom`
 - `java.util.StringJoiner`: declared in `flint.java.util.stringjoiner`
+- `java.util.StringTokenizer`: declared in `flint.java.util.stringtokenizer`
 - `java.util.UUID`: declared in `flint.java.util.uuid`
 - `java.util.UnknownFormatConversionException`: declared in `flint.java.util.formatter`
+- `java.util.UnknownFormatFlagsException`: declared in `flint.java.util.formatter`
 - `java.util.concurrent.BrokenBarrierException`: declared in `flint.java.util.concurrent.brokenbarrierexception`
 - `java.util.concurrent.Callable`: declared in `flint.java.util.concurrent.callable`
 - `java.util.concurrent.CancellationException`: declared in `flint.java.util.concurrent.cancellationexception`
