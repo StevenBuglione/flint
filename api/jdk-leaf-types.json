@@ -21,6 +21,7 @@
   "java.net.ProtocolFamily": "flint.java.net.protocolfamily",
   "java.net.Proxy": "flint.java.net.proxy",
   "java.net.SocketAddress": "flint.java.net.socketaddress",
+  "java.net.SocketException": "flint.java.net.socketexception",
   "java.net.SocketTimeoutException": "flint.java.net.sockettimeoutexception",
   "java.net.StandardProtocolFamily": "flint.java.net.standardprotocolfamily",
   "java.net.URL": "flint.java.net.url",

@@ -1,0 +1,4 @@
+name "probe-java-net-socket-exception-baseline"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"
