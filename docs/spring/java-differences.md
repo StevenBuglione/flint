@@ -182,7 +182,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | ai | spring-ai@v2.1.0 | 229 | 365 | 0 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,656 | 1,555 | 0 | 4,870 | 29,753 |
+| framework | spring-framework@v7.1.0 | 3,662 | 1,549 | 0 | 4,870 | 29,753 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
@@ -5090,7 +5090,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.web.servlet.DispatcherServlet#resolveViewName(String,Map,Locale,HttpServletRequest)` | `flint.web.servlet.DispatcherServlet.resolveViewName` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.HandlerExecutionChain#<init>(Object,List)` | `flint.web.servlet.HandlerExecutionChain` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.HandlerInterceptor` | `flint.web.servlet.HandlerInterceptor` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.web.servlet.HandlerInterceptor#afterCompletion(HttpServletRequest,HttpServletResponse,Object,Exception)` | `flint.web.servlet.HandlerInterceptor.afterCompletion` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
@@ -5100,16 +5099,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.web.servlet.ModelAndView#<init>()` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#<init>(String)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#<init>(String,HttpStatusCode)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.web.servlet.ModelAndView#<init>(String,Map)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.web.servlet.ModelAndView#<init>(String,Map,HttpStatusCode)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#<init>(String,String,Object)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#<init>(View)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.web.servlet.ModelAndView#<init>(View,Map)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#<init>(View,String,Object)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#addObject(Object)` | `flint.web.servlet.ModelAndView.addObject` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#addObject(String,Object)` | `flint.web.servlet.ModelAndView.addObject` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#clear()` | `flint.web.servlet.ModelAndView.clear` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.web.servlet.ModelAndView#getModel()` | `flint.web.servlet.ModelAndView.getModel` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#getStatus()` | `flint.web.servlet.ModelAndView.getStatus` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#getView()` | `flint.web.servlet.ModelAndView.getView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#getViewName()` | `flint.web.servlet.ModelAndView.getViewName` | [R10](api-mapping.md#r10-streams-and-collections) |  |
@@ -5125,7 +5120,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.web.servlet.View#RESPONSE_STATUS_ATTRIBUTE` | `flint.web.servlet.View.RESPONSE_STATUS_ATTRIBUTE` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.View#SELECTED_CONTENT_TYPE` | `flint.web.servlet.View.SELECTED_CONTENT_TYPE` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.View#getContentType()` | `flint.web.servlet.View.getContentType` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.web.servlet.View#render(Map,HttpServletRequest,HttpServletResponse)` | `flint.web.servlet.View.render` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### org.springframework.web.servlet.config.annotation
 
