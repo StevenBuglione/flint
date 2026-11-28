@@ -182,7 +182,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | ai | spring-ai@v2.1.0 | 229 | 365 | 0 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,717 | 1,559 | 65 | 4,870 | 29,688 |
+| framework | spring-framework@v7.1.0 | 3,739 | 1,560 | 88 | 4,870 | 29,665 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
@@ -3458,6 +3458,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.beans.factory.annotation.Qualifier#value` | `flint.beans.factory.annotation.Qualifier.value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.beans.factory.annotation.Value` | `flint.beans.factory.annotation.Value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.beans.factory.annotation.Value#value` | `flint.beans.factory.annotation.Value.value` | [R2](api-mapping.md#r2-annotations) |  |
+
+#### org.springframework.beans.factory.aot
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.beans.factory.aot.AutowiredArguments#toArray()` | `flint.beans.factory.aot.AutowiredArguments.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 
 #### org.springframework.beans.factory.config
 
@@ -11070,7 +11076,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.beans | 324 | 0 |
 | org.springframework.beans.factory | 127 | 0 |
 | org.springframework.beans.factory.annotation | 103 | 0 |
-| org.springframework.beans.factory.aot | 123 | 0 |
+| org.springframework.beans.factory.aot | 100 | 0 |
 | org.springframework.beans.factory.config | 486 | 0 |
 | org.springframework.beans.factory.parsing | 133 | 0 |
 | org.springframework.beans.factory.serviceloader | 19 | 0 |
