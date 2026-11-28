@@ -8509,7 +8509,7 @@
 "java.util.Optional#orElseThrow(Supplier)":{"d":"flint.java.util.Optional.orElseThrow","status":"ported"},
 "java.util.Optional#stream()":{"d":"flint.java.util.Optional.stream","status":"ported"},
 "java.util.Optional#toString()":{"d":"flint.java.util.Optional.toString","status":"ported"},
-"java.util.Properties":{"d":"flint.java.util.Properties","status":"adapted","rules":["R26"],"note":"A null string slice passed as a property key or as a value to setProperty counts as empty."},
+"java.util.Properties":{"d":"flint.java.util.Properties","status":"adapted","rules":["R26","D-JDK-10"],"note":"A null string slice passed as a property key or as a value to setProperty counts as empty. Java's Hashtable methods synchronize on the instance monitor; this port does not (D-JDK-10)."},
 "java.util.Properties#<init>()":{"d":"flint.java.util.Properties.this","status":"ported"},
 "java.util.Properties#<init>(Properties)":{"d":"flint.java.util.Properties.this","status":"ported"},
 "java.util.Properties#defaults":{"d":"flint.java.util.Properties.defaults","status":"ported"},
