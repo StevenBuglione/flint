@@ -12,6 +12,7 @@ public import flint.java.io.closeable : Closeable;
 public import flint.java.io.flushable : Flushable;
 
 import flint.java.lang : RuntimeException, javaToString;
+import flint.java.nio.charset : Charset, StandardCharsets;
 
 @safe:
 
@@ -2277,29 +2278,157 @@ class CharArrayWriter : Writer
     }
 }
 
-/// A `Writer` encoding UTF-8 text onto an `OutputStream`.
+/++
+A `Writer` encoding text in a named charset onto an `OutputStream`.
+
+The code-unit-to-byte mapping is Java's for the charsets Flint names: UTF-8, US-ASCII, ISO-8859-1, UTF-16 (big-endian
+with one leading byte-order mark), UTF-16BE and UTF-16LE. A code point the charset cannot represent is `?`, and a lone
+surrogate reaches the encoder as U+FFFD (R14).
++/
 class OutputStreamWriter : Writer
 {
-    private OutputStream output;
-    private bool closed_;
+    private enum Encoding
+    {
+        utf8,
+        ascii,
+        latin1,
+        utf16,
+        utf16be,
+        utf16le,
+    }
 
-    /// A writer over `output`. A null stream is rejected, as Java's lock constructor does.
+    private OutputStream output;
+    private Encoding encoding_ = Encoding.utf8;
+    private string encodingName_;
+    private bool closed_;
+    private bool bomWritten_;
+    private ubyte[] scratch_;
+
+    /// A UTF-8 writer over `output`. A null stream is rejected, as Java's lock constructor does.
     this(OutputStream output)
+    {
+        this(output, StandardCharsets.UTF_8);
+    }
+
+    /// A writer over `output` in `charset`. A null stream, or a charset that names none, is rejected.
+    this(OutputStream output, Charset charset)
     {
         import flint.java.lang : NullPointerException;
 
         if (output is null)
             throw new NullPointerException("out");
+        if (charset == Charset.init)
+            throw new NullPointerException("cs");
         this.output = output;
+        this.encodingName_ = charset.name();
+        if (charset == StandardCharsets.US_ASCII)
+            encoding_ = Encoding.ascii;
+        else if (charset == StandardCharsets.ISO_8859_1)
+            encoding_ = Encoding.latin1;
+        else if (charset == StandardCharsets.UTF_16)
+            encoding_ = Encoding.utf16;
+        else if (charset == StandardCharsets.UTF_16BE)
+            encoding_ = Encoding.utf16be;
+        else if (charset == StandardCharsets.UTF_16LE)
+            encoding_ = Encoding.utf16le;
+        else
+            encoding_ = Encoding.utf8; // the only remaining known charset is UTF-8
+    }
+
+    /// A writer over `output` in the charset named `charsetName` (or one of its aliases).
+    this(OutputStream output, string charsetName)
+    {
+        this(output, Charset.forName(charsetName));
+        this.encodingName_ = charsetName;
     }
 
     alias write = Writer.write;
+
+    /// Java's `getEncoding`: the name the stream was created with, as Java returns its historical name, or the
+    /// canonical name when it was created from a `Charset`.
+    string getEncoding() const pure nothrow @nogc
+    {
+        return encodingName_;
+    }
 
     override void write(scope const(char)[] text)
     {
         if (closed_)
             throw new IOException("Stream closed");
-        output.write(cast(const(ubyte)[]) text);
+        if (encoding_ == Encoding.utf8)
+        {
+            output.write(cast(const(ubyte)[]) text);
+            return;
+        }
+        encode(text);
+    }
+
+    private void encode(scope const(char)[] text)
+    {
+        import flint.engine.aot.text : decodeUtf8;
+
+        if (text.length == 0)
+            return;
+        const worst = text.length * 2 + 2; // two bytes per code unit, plus a UTF-16 mark
+        if (scratch_.length < worst)
+            scratch_ = new ubyte[worst];
+        size_t n;
+        final switch (encoding_)
+        {
+        case Encoding.utf8: // handled by `write`
+            break;
+        case Encoding.ascii:
+            for (size_t i = 0; i < text.length;)
+            {
+                const dchar c = decodeUtf8(text, i);
+                scratch_[n++] = c < 0x80 ? cast(ubyte) c : cast(ubyte) '?';
+            }
+            break;
+        case Encoding.latin1:
+            for (size_t i = 0; i < text.length;)
+            {
+                const dchar c = decodeUtf8(text, i);
+                scratch_[n++] = c <= 0xFF ? cast(ubyte) c : cast(ubyte) '?';
+            }
+            break;
+        case Encoding.utf16:
+        case Encoding.utf16be:
+        case Encoding.utf16le:
+            const bool little = encoding_ == Encoding.utf16le;
+            if (encoding_ == Encoding.utf16 && !bomWritten_)
+            {
+                putUnit(n, 0xFEFF, little);
+                bomWritten_ = true;
+            }
+            for (size_t i = 0; i < text.length;)
+            {
+                const dchar c = decodeUtf8(text, i);
+                if (c <= 0xFFFF)
+                    putUnit(n, cast(uint) c, little);
+                else
+                {
+                    const uint offset = c - 0x10000;
+                    putUnit(n, cast(uint)(0xD800 + (offset >> 10)), little);
+                    putUnit(n, cast(uint)(0xDC00 + (offset & 0x3FF)), little);
+                }
+            }
+            break;
+        }
+        output.write(scratch_[0 .. n]);
+    }
+
+    private void putUnit(ref size_t n, uint unit, bool little) nothrow @nogc
+    {
+        if (little)
+        {
+            scratch_[n++] = cast(ubyte)(unit & 0xFF);
+            scratch_[n++] = cast(ubyte)(unit >> 8);
+        }
+        else
+        {
+            scratch_[n++] = cast(ubyte)(unit >> 8);
+            scratch_[n++] = cast(ubyte)(unit & 0xFF);
+        }
     }
 
     override void flush()
@@ -2515,11 +2644,18 @@ class PrintWriter : Writer
     /// encoded text is buffered in a `BufferedWriter` around a UTF-8 `OutputStreamWriter`. A null stream is rejected.
     this(OutputStream output, bool autoFlush)
     {
+        this(output, autoFlush, StandardCharsets.UTF_8);
+    }
+
+    /// A print writer over `output` in `charset`; `autoFlush` flushes after every `println`. A null stream, or a
+    /// charset that names none, is rejected. The encoded text is buffered in a `BufferedWriter`, as Java buffers it.
+    this(OutputStream output, bool autoFlush, Charset charset)
+    {
         import flint.java.lang : NullPointerException;
 
         if (output is null)
             throw new NullPointerException("out");
-        out_ = new BufferedWriter(new OutputStreamWriter(output));
+        out_ = new BufferedWriter(new OutputStreamWriter(output, charset));
         autoFlush_ = autoFlush;
     }
 
