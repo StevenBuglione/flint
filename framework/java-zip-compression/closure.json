@@ -20,9 +20,11 @@
         "source": "closure/inflater.d",
         "leaves": [
           "flint.java.lang",
-          "flint.java.lang.runtimeexception",
           "flint.java.lang.nullpointerexception",
+          "flint.java.lang.runtimeexception",
           "flint.java.util.zip.dataformatexception",
+          "flint.java.util.zip.deflater",
+          "flint.java.util.zip.ffi.deflate",
           "flint.java.util.zip.ffi.inflate",
           "flint.java.util.zip.ffi.stream",
           "flint.java.util.zip.internal.exceptions"
