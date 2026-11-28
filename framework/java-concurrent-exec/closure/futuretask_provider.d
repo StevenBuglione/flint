@@ -1,7 +1,9 @@
-module futuretask_provider;
+module flint.java.util.concurrent.internal.futuretaskcontrol;
 
-import core.atomic : atomicLoad, atomicStore, cas;
+import core.atomic : atomicLoad, atomicOp, atomicStore, cas;
 import flint.conc.park : park, wakeAll;
+import flint.java.lang.interruptedexception : InterruptedException;
+import flint.java.lang.thread : InterruptSink, Thread, ThreadState;
 import flint.java.util.concurrent : TimeUnit, toNanos;
 import flint.java.util.concurrent.timeoutexception : TimeoutException;
 
@@ -19,6 +21,7 @@ private enum long maxParkNanos = 86_400_000_000_000L;
 private final class Station
 {
     private shared uint status = NEW;
+    private shared uint wake = 0;
     private int result;
 
     this(int result) pure nothrow @nogc
@@ -33,7 +36,7 @@ private final class Station
         if (!cas(&status, RUNNING, COMPLETING))
             return;
         atomicStore(status, NORMAL);
-        wakeAll(status);
+        signal();
     }
 
     bool cancel()
@@ -45,7 +48,7 @@ private final class Station
             {
                 if (cas(&status, current, CANCELLED))
                 {
-                    wakeAll(status);
+                    signal();
                     return true;
                 }
                 continue;
@@ -74,11 +77,21 @@ private final class Station
             const available = long.max - 1 - now;
             deadline = timeoutNanos >= available ? long.max - 1 : now + timeoutNanos;
         }
+        auto state = Thread.currentThread().state();
+        const token = state.install(InterruptSink(&this.signal));
+        scope (exit)
+        {
+            if (token != 0)
+                state.retire(token);
+        }
         for (;;)
         {
+            const observed = atomicLoad(wake);
             const current = atomicLoad(status);
             if (current >= NORMAL)
                 break;
+            if (state.clearInterrupted())
+                throw new InterruptedException;
             long sleep = maxParkNanos;
             if (deadline != long.max)
             {
@@ -95,11 +108,17 @@ private final class Station
             }
             if (sleep < 1)
                 sleep = 1;
-            park(status, current, sleep);
+            park(wake, observed, sleep);
         }
         if (atomicLoad(status) == CANCELLED)
             throw new Exception("cancelled");
         return result;
+    }
+
+    private void signal() nothrow @nogc
+    {
+        atomicOp!"+="(wake, 1u);
+        wakeAll(wake);
     }
 
     private static long monotonicNow()

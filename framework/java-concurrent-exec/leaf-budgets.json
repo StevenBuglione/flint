@@ -10,16 +10,17 @@
     "control": "framework/java-concurrent-exec/closure/completionexception_provider.d"
   },
   "flint.java.util.concurrent.executionexception": {
-    "incremental_linked_bytes": 7480,
-    "template_instances": 494
+    "incremental_linked_bytes": 308,
+    "template_instances": 256,
+    "control": "framework/java-concurrent-exec/closure/executionexception_provider.d"
   },
   "flint.java.util.concurrent.future": {
-    "incremental_linked_bytes": 933,
+    "incremental_linked_bytes": 932,
     "template_instances": 270,
     "control": "framework/java-concurrent-exec/closure/future_provider.d"
   },
   "flint.java.util.concurrent.futuretask": {
-    "incremental_linked_bytes": 13073,
+    "incremental_linked_bytes": 9869,
     "template_instances": 539,
     "control": "framework/java-concurrent-exec/closure/futuretask_provider.d"
   },

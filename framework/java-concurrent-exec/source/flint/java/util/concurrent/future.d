@@ -65,6 +65,8 @@ interface Future(V)
                 return this.get();
             catch (imported!"flint.java.util.concurrent.executionexception".ExecutionException failure)
                 throw new imported!"flint.java.lang".IllegalStateException("Task completed with exception", failure);
+            catch (imported!"flint.java.lang.interruptedexception".InterruptedException)
+                throw new imported!"flint.java.lang".IllegalStateException("Task was interrupted");
         }
 
         Throwable exceptionNow()
@@ -77,6 +79,8 @@ interface Future(V)
                 this.get();
             catch (imported!"flint.java.util.concurrent.executionexception".ExecutionException failure)
                 return failure.getCause();
+            catch (imported!"flint.java.lang.interruptedexception".InterruptedException)
+                throw new imported!"flint.java.lang".IllegalStateException("Task was interrupted");
             throw new imported!"flint.java.lang".IllegalStateException("Task completed with a result");
         }
 
@@ -90,6 +94,8 @@ interface Future(V)
                     this.get();
                 catch (imported!"flint.java.util.concurrent.executionexception".ExecutionException failure)
                     return typeof(this).State.FAILED;
+                catch (imported!"flint.java.lang.interruptedexception".InterruptedException)
+                    throw new imported!"flint.java.lang".IllegalStateException("Task was interrupted");
                 return typeof(this).State.SUCCESS;
             }
             return typeof(this).State.RUNNING;

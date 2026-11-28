@@ -1,5 +1,8 @@
 {
   "source": "closure/completionexception.d",
-  "leaves": ["flint.java.lang"],
+  "leaves": [
+    "flint.java.lang",
+    "flint.java.lang.runtimeexception"
+  ],
   "data": []
 }

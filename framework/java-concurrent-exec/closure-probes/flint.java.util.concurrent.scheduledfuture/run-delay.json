@@ -2,11 +2,12 @@
   "source": "closure/scheduledfuture.d",
   "leaves": [
     "flint.java.lang",
+    "flint.java.lang.runnable",
+    "flint.java.lang.runtimeexception",
     "flint.java.util.concurrent",
     "flint.java.util.concurrent.delayed",
     "flint.java.util.concurrent.executionexception",
-    "flint.java.util.concurrent.future",
-    "flint.java.lang.runnable"
+    "flint.java.util.concurrent.future"
   ],
   "data": []
 }

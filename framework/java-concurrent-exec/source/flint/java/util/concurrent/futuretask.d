@@ -2,10 +2,12 @@
 /// Java SE 21 FutureTask, implemented from the public contract.
 module flint.java.util.concurrent.futuretask;
 
-import core.atomic : atomicLoad, atomicStore, cas;
+import core.atomic : atomicLoad, atomicOp, atomicStore, cas;
 import flint.conc.park : park, wakeAll;
 import flint.java.lang : NullPointerException, RuntimeException;
+import flint.java.lang.interruptedexception : InterruptedException;
 import flint.java.lang.runnable : Runnable;
+import flint.java.lang.thread : InterruptSink, Thread, ThreadState;
 import flint.java.util.concurrent : TimeUnit, toNanos;
 import flint.java.util.concurrent.callable : Callable;
 import flint.java.util.concurrent.cancellationexception : CancellationException;
@@ -18,9 +20,12 @@ import flint.java.util.concurrent.timeoutexception : TimeoutException;
 /++
 Java's `FutureTask`: the cancellable result of a `Runnable` or `Callable` that is run once.
 
-The task's state is a single 32-bit word shared between the running thread and its waiters. A waiter parks on that
-word with `flint.conc.park`, so an owner fiber yields to its reactor instead of spinning. The result and the failure
-are published before the state word, and every reader observes them through the acquire in `atomicLoad` [R-193].
+The task's state is a single 32-bit word shared between the running thread and its waiters. A waiter parks on a
+separate wake word with `flint.conc.park`, so an owner fiber yields to its reactor instead of spinning. Completion,
+cancellation and an installed interrupt each advance the wake word, so none of them can be lost between a waiter's
+check and its park. The result and the failure are published before the state word, and every reader observes them
+through the acquire in `atomicLoad` [R-193]. An interruptible `get` installs a `ThreadState.InterruptSink`; on waking
+it re-checks the state first, then clears the interrupt flag and throws `InterruptedException`, as Java does.
 +/
 final class FutureTask(V) : RunnableFuture!V
 {
@@ -36,7 +41,12 @@ final class FutureTask(V) : RunnableFuture!V
     // Bound a single park so a platform timeout that takes a 32-bit millisecond count cannot overflow.
     private enum long maxParkNanos = 86_400_000_000_000L;
 
+    // A thread that cannot install its interrupt sink because another wait is active still polls the flag.
+    private enum long interruptPollNanos = 10_000_000L;
+
     private shared uint status = NEW;
+    // Advanced by completion, cancellation and an installed interrupt; the word a waiter parks on.
+    private shared uint wake = 0;
     private Callable!V callable;
     private Runnable runnable;
     private V runnableResult;
@@ -77,7 +87,7 @@ final class FutureTask(V) : RunnableFuture!V
             {
                 failure = new RuntimeException("task failed");
                 atomicStore(status, EXCEPTIONAL);
-                wakeAll(status);
+                signal();
             }
         }
         try
@@ -102,7 +112,7 @@ final class FutureTask(V) : RunnableFuture!V
         value = produced;
         this.failure = thrown;
         atomicStore(status, succeeded ? NORMAL : EXCEPTIONAL);
-        wakeAll(status);
+        signal();
     }
 
     /// Cancel before the result is published. Java's thread interruption is deferred until the `Thread` façade lands.
@@ -118,7 +128,7 @@ final class FutureTask(V) : RunnableFuture!V
                 return false;
             if (cas(&status, current, CANCELLED))
             {
-                wakeAll(status);
+                signal();
                 return true;
             }
         }
@@ -136,17 +146,18 @@ final class FutureTask(V) : RunnableFuture!V
         return atomicLoad(status) >= NORMAL;
     }
 
-    /// Wait for completion and return the result or throw `ExecutionException`.
+    /// Wait for completion and return the result or throw `ExecutionException`/`InterruptedException`.
     override V get()
     {
-        awaitDone(long.max, false);
+        awaitDone(long.max, false, true);
         return report();
     }
 
-    /// Wait at most `timeout` of `unit` and return the result or throw `ExecutionException`/`TimeoutException`.
+    /// Wait at most `timeout` of `unit` and return the result or throw `ExecutionException`/`TimeoutException`/
+    /// `InterruptedException`.
     override V get(long timeout, TimeUnit unit)
     {
-        if (!awaitDone(toNanos(unit, timeout), true))
+        if (!awaitDone(toNanos(unit, timeout), true, true))
             throw new TimeoutException;
         return report();
     }
@@ -162,7 +173,8 @@ final class FutureTask(V) : RunnableFuture!V
     }
 
     // Java's `get` and `get(timeout)`: `timed` selects the bounded form, and a nonpositive timeout times out at once.
-    private bool awaitDone(long timeoutNanos, bool timed)
+    // `interruptible` installs the calling thread's interrupt sink for the whole wait.
+    private bool awaitDone(long timeoutNanos, bool timed, bool interruptible)
     {
         long deadline = long.max;
         if (timed)
@@ -174,26 +186,62 @@ final class FutureTask(V) : RunnableFuture!V
             deadline = timeoutNanos >= available ? long.max - 1 : now + timeoutNanos;
         }
 
+        ThreadState state;
+        ulong token;
+        if (interruptible)
+        {
+            state = Thread.currentThread().state();
+            token = state.install(InterruptSink(&this.signal));
+        }
+        scope (exit)
+        {
+            if (token != 0)
+                state.retire(token);
+        }
+
         for (;;)
         {
+            // Read the wake word before the state: a completion or interrupt between the two observations then
+            // advances the word and ends the park below, instead of leaving the waiter asleep.
+            const observed = atomicLoad(wake);
             const current = atomicLoad(status);
             if (current >= NORMAL)
                 return true;
+            if (interruptible && state.clearInterrupted())
+                throw new InterruptedException;
 
-            long sleep = maxParkNanos;
-            if (deadline != long.max)
-            {
-                const now = monotonicNow();
-                if (now >= deadline)
-                    return atomicLoad(status) >= NORMAL;
-                const remaining = deadline - now;
-                if (remaining < sleep)
-                    sleep = remaining;
-            }
-            if (sleep < 1)
-                sleep = 1;
-            park(status, current, sleep);
+            bool expired;
+            long sleep = parkNanos(deadline, expired);
+            if (expired)
+                return atomicLoad(status) >= NORMAL;
+            // A waiter that could not install its sink (another wait is active) still sees the flag.
+            if (interruptible && token == 0 && sleep > interruptPollNanos)
+                sleep = interruptPollNanos;
+            park(wake, observed, sleep);
         }
+    }
+
+    // Advance the wake word and end every waiter's park. Called after the outcome is published.
+    private void signal() nothrow @nogc
+    {
+        atomicOp!"+="(wake, 1u);
+        wakeAll(wake);
+    }
+
+    // The next bounded park, or `expired` once a timed wait has reached its deadline.
+    private static long parkNanos(long deadline, out bool expired) nothrow @nogc
+    {
+        expired = false;
+        if (deadline == long.max)
+            return maxParkNanos;
+        const now = monotonicNow();
+        if (now >= deadline)
+        {
+            expired = true;
+            return 0;
+        }
+        const remaining = deadline - now;
+        return remaining < maxParkNanos ? remaining : maxParkNanos;
     }
 
     private static long monotonicNow()
