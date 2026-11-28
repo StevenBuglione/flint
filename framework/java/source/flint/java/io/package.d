@@ -359,6 +359,76 @@ private void checkReadRange(size_t capacity, int offset, int length)
         throw new IndexOutOfBoundsException("Read range exceeds the byte array");
 }
 
+/// Java's `FilterInputStream`: an input stream that delegates to a wrapped one.
+class FilterInputStream : InputStream
+{
+    /// The wrapped stream. Java declares it `volatile`; a Flint stream is confined to one fiber.
+    protected InputStream in_;
+
+    /// Wrap `input`.
+    protected this(InputStream input)
+    {
+        in_ = input;
+    }
+
+    alias read = InputStream.read;
+
+    /// Delegate to the wrapped stream.
+    override int read()
+    {
+        return in_.read();
+    }
+
+    /// Delegate to the wrapped stream.
+    override int read(scope ubyte[] buffer)
+    {
+        const length = buffer.length > int.max ? int.max : cast(int) buffer.length;
+        return read(buffer, 0, length);
+    }
+
+    /// Delegate to the wrapped stream.
+    override int read(scope ubyte[] buffer, int offset, int length)
+    {
+        return in_.read(buffer, offset, length);
+    }
+
+    /// Delegate to the wrapped stream.
+    override long skip(long count)
+    {
+        return in_.skip(count);
+    }
+
+    /// Delegate to the wrapped stream.
+    override int available()
+    {
+        return in_.available();
+    }
+
+    /// Close the wrapped stream.
+    override void close()
+    {
+        in_.close();
+    }
+
+    /// Mark the wrapped stream.
+    override void mark(int readLimit)
+    {
+        in_.mark(readLimit);
+    }
+
+    /// Reset the wrapped stream.
+    override void reset()
+    {
+        in_.reset();
+    }
+
+    /// Whether the wrapped stream supports marks.
+    override bool markSupported()
+    {
+        return in_.markSupported();
+    }
+}
+
 /// Java's `OutputStream`: a sink of bytes.
 abstract class OutputStream : Closeable, Flushable
 {
@@ -440,6 +510,81 @@ class ByteArrayOutputStream : OutputStream
     override string toString() const
     {
         return cast(string) bytes.idup;
+    }
+}
+
+/// Java's `FilterOutputStream`: an output stream that delegates to a wrapped one.
+class FilterOutputStream : OutputStream
+{
+    /// The wrapped stream. Java names it `out`; `out` is a D keyword.
+    protected OutputStream out_;
+
+    private bool closed_;
+    private Object closeLock;
+
+    /// Wrap `output`.
+    this(OutputStream output)
+    {
+        out_ = output;
+        closeLock = new Object;
+    }
+
+    alias write = OutputStream.write;
+
+    /// Delegate to the wrapped stream.
+    override void write(int value)
+    {
+        out_.write(value);
+    }
+
+    /// Delegate to the wrapped stream.
+    override void write(scope const(ubyte)[] b)
+    {
+        for (; b.length > int.max; b = b[int.max .. $])
+            write(b[0 .. int.max], 0, int.max);
+        write(b, 0, cast(int) b.length);
+    }
+
+    /// Check the range, then write each byte through `write(int)`, as Java does.
+    override void write(scope const(ubyte)[] b, int off, int len)
+    {
+        foreach (value; b[off .. byteWriteEnd(b.length, off, len)])
+            write(cast(int) value);
+    }
+
+    /// Flush the wrapped stream.
+    override void flush()
+    {
+        out_.flush();
+    }
+
+    /// Flush and close the wrapped stream once.
+    override void close()
+    {
+        if (closed_)
+            return;
+        synchronized (closeLock)
+        {
+            if (closed_)
+                return;
+            closed_ = true;
+        }
+        try
+        {
+            flush();
+        }
+        catch (Exception flushFailure)
+        {
+            try
+                out_.close();
+            catch (Exception)
+            {
+                // Java records this close failure as a suppressed exception on flushFailure;
+                // Flint's Throwable has no suppressed-exception API.
+            }
+            throw flushFailure;
+        }
+        out_.close();
     }
 }
 
@@ -838,5 +983,15 @@ class FileInputStream : ByteArrayInputStream
         if (bytes is null)
             throw new FileNotFoundException(file.getPath() ~ " (" ~ describe(error) ~ ")");
         super(bytes);
+    }
+}
+
+/// Java's checked `EOFException`: an end of file was reached unexpectedly.
+class EOFException : IOException
+{
+    /// `message`, or null.
+    this(string message = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message, null, file, line);
     }
 }
