@@ -31,6 +31,8 @@ public abstract class Counter implements Marker {
 
     private static final long serialVersionUID = 1L;
 
+    private static final int HIDDEN = 3;
+
     protected final String name;
 
     private int count;
@@ -188,6 +190,9 @@ class SkeletonTests(unittest.TestCase):
         self.assertIn('    mixin Marker.Defaults;\n\n    mixin JavaObject;\n', text)
         self.assertIn('    /// The default step.\n    enum int STEP = 2;\n', text)
         self.assertNotIn('serialVersionUID', text)
+        # A private constant is state the bodies may use, but it is not API and takes no mapping row.
+        self.assertIn('    private enum int HIDDEN = 3;\n', text)
+        self.assertNotIn('org.springframework.example.Counter#HIDDEN', self.counter['rows'])
         self.assertIn('    private string name_;\n    private int count;\n    private Nullable!string label;', text)
         # R24: a protected final field is a final accessor over a private field.
         self.assertIn('    protected final string name() => name_;', text)
