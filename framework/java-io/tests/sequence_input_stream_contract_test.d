@@ -93,8 +93,7 @@ unittest
 @("SequenceInputStream ranged reads cross the stream boundary and skip empty streams")
 unittest
 {
-    auto sequence = new SequenceInputStream(
-            new TrackingInput(cast(const(ubyte)[]) ""),
+    auto sequence = new SequenceInputStream(new TrackingInput(cast(const(ubyte)[]) ""),
             new TrackingInput(cast(const(ubyte)[]) "xyz"));
     ubyte[2] buffer;
     assert(sequence.read(buffer[], 0, 2) == 2);
@@ -134,16 +133,14 @@ unittest
 @("SequenceInputStream transferTo copies both streams and rejects a null sink")
 unittest
 {
-    auto sequence = new SequenceInputStream(
-            new TrackingInput(cast(const(ubyte)[]) "ab"),
+    auto sequence = new SequenceInputStream(new TrackingInput(cast(const(ubyte)[]) "ab"),
             new TrackingInput(cast(const(ubyte)[]) "cd"));
     auto sink = new CollectingSink;
     assert(sequence.transferTo(sink) == 4);
     assert(sink.data == cast(const(ubyte)[]) "abcd");
     assert(sequence.transferTo(sink) == 0);
 
-    auto emptied = new SequenceInputStream(
-            new TrackingInput(cast(const(ubyte)[]) ""),
+    auto emptied = new SequenceInputStream(new TrackingInput(cast(const(ubyte)[]) ""),
             new TrackingInput(cast(const(ubyte)[]) ""));
     emptied.close();
     assert(emptied.transferTo(null) == 0);
