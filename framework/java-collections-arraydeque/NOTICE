@@ -1,0 +1,9 @@
+Flint Java Collections
+Copyright 2026 The Flint authors
+
+This package ports Java SE 21 collection implementations from OpenJDK.
+Ported source files retain their original copyright and license notices.
+Its original conformance fixtures use the public Java SE 21 API as a reference.
+
+SPDX-License-Identifier: GPL-2.0-only WITH Classpath-exception-2.0
+See LICENSE for the license and Classpath Exception.

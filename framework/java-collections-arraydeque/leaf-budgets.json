@@ -1,0 +1,6 @@
+{
+  "flint.java.util.arraydeque": {
+    "incremental_linked_bytes": 2048,
+    "template_instances": 480
+  }
+}

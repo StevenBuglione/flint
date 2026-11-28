@@ -96,6 +96,7 @@
   "java.time.zone.ZoneOffsetTransition": "flint.java.time.zone.zoneoffsettransition",
   "java.time.zone.ZoneOffsetTransitionRule": "flint.java.time.zone.zoneoffsettransitionrule",
   "java.time.zone.ZoneRules": "flint.java.time.zone.zonerules",
+  "java.util.ArrayDeque": "flint.java.util.arraydeque",
   "java.util.Base64": "flint.java.util.base64",
   "java.util.BitSet": "flint.java.util.bitset",
   "java.util.Deque": "flint.java.util.deque",
