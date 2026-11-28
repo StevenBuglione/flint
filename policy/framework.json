@@ -1730,7 +1730,11 @@
    "directory": "framework/java-zip-compression",
    "module": "flint.java.util.zip.deflater",
    "also": [
-    "flint.java.util.zip.inflater"
+    "flint.java.util.zip.inflater",
+    "flint.java.util.zip.ffi.deflate",
+    "flint.java.util.zip.ffi.inflate",
+    "flint.java.util.zip.ffi.stream",
+    "flint.java.util.zip.internal.exceptions"
    ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
