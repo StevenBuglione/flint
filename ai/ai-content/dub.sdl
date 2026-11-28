@@ -1,0 +1,20 @@
+name "ai-content"
+description "Spring AI's spring-ai-commons content for Flint"
+license "Apache-2.0"
+targetType "library"
+sourcePaths "source"
+importPaths "source"
+dflags "-preview=dip1000"
+dependency "flint:core" version="*"
+dependency "flint:engine-aot" version="*"
+dependency "flint:java" version="*"
+dependency "flint:java-util" version="*"
+
+configuration "library" {
+    targetType "library"
+}
+configuration "unittest" {
+    targetType "library"
+    sourcePaths "source" "tests"
+    importPaths "source" "tests"
+}
