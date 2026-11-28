@@ -172,8 +172,9 @@
       "covered_by": "framework/java-io/tests/data_input_stream_contract_test.d"
     },
     "java/io/DataInputStream/ReadLinePushback.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers readLine returning lines, a lone carriage return, and pushing a byte back for the next read.",
+      "covered_by": "framework/java-io/tests/data_input_stream_contract_test.d"
     },
     "java/io/DataInputStream/ReadUTF.java": {
       "status": "excluded",
@@ -843,24 +844,29 @@
       "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/PushbackInputStream/Available.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers available counting the pushed-back bytes plus the wrapped stream.",
+      "covered_by": "framework/java-io/tests/pushback_stream_contract_test.d"
     },
     "java/io/PushbackInputStream/ClosedStream.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers read, unread, available, skip and reset failing after close, and close being idempotent.",
+      "covered_by": "framework/java-io/tests/pushback_stream_contract_test.d"
     },
     "java/io/PushbackInputStream/MarkReset.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers markSupported false, mark doing nothing and reset throwing.",
+      "covered_by": "framework/java-io/tests/pushback_stream_contract_test.d"
     },
     "java/io/PushbackInputStream/Skip.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers skip consuming pushed-back bytes before the wrapped stream.",
+      "covered_by": "framework/java-io/tests/pushback_stream_contract_test.d"
     },
     "java/io/PushbackInputStream/TransferTo.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers transferTo copying the pushed-back and wrapped bytes.",
+      "covered_by": "framework/java-io/tests/pushback_stream_contract_test.d"
     },
     "java/io/PushbackReader/MarkReset.java": {
       "status": "deferred",
