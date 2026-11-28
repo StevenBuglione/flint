@@ -151,6 +151,17 @@
         "source": "closure/runtimeexception_leaf.d"
       }
     },
+    "flint.java.lang.virtualmachineerror": {
+      "virtual-machine-error-leaf": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.lang.error",
+          "flint.java.lang.runtimeexception"
+        ],
+        "source": "closure/virtualmachineerror_leaf.d"
+      }
+    },
     "flint.java.net": {
       "uri": {
         "data": [],
