@@ -55,11 +55,11 @@ final class UUID : Comparable!UUID
             if (codeUnit != '-')
                 continue;
             if (found == dashes.length)
-                throw new IllegalArgumentException("Invalid UUID string: " ~ name);
+                invalidUuidString(name);
             dashes[found++] = index;
         }
         if (found != dashes.length)
-            throw new IllegalArgumentException("Invalid UUID string: " ~ name);
+            invalidUuidString(name);
 
         const first = parseHexField(name[0 .. dashes[0]]);
         const second = parseHexField(name[dashes[0] + 1 .. dashes[1]]);
@@ -290,16 +290,51 @@ private noreturn fieldError(string field, size_t index)
 {
     import flint.java.lang : NumberFormatException;
 
-    char[20] number = void;
-    size_t at = number.length;
+    throw new NumberFormatException(fieldErrorMessage(field, index));
+}
+
+// The message in one exact-sized buffer, with no shared append instantiations in the leaf.
+private string fieldErrorMessage(string field, size_t index) pure nothrow
+{
+    enum prefix = "Error at index ";
+    enum separator = " in: \"";
+    char[20] digits = void;
+    size_t at = digits.length;
     size_t value = index;
     do
     {
-        number[--at] = cast(char)('0' + value % 10);
+        digits[--at] = cast(char)('0' + value % 10);
         value /= 10;
     }
     while (value);
-    throw new NumberFormatException("Error at index " ~ number[at .. $].idup ~ " in: \"" ~ field ~ "\"");
+
+    const separatorStart = prefix.length + digits.length - at;
+    const fieldStart = separatorStart + separator.length;
+    auto message = new char[fieldStart + field.length + 1];
+    message[0 .. prefix.length] = prefix;
+    message[prefix.length .. separatorStart] = digits[at .. $];
+    message[separatorStart .. fieldStart] = separator;
+    message[fieldStart .. $ - 1] = field;
+    message[$ - 1] = '"';
+    return message;
+}
+
+// Java's `IllegalArgumentException("Invalid UUID string: " + name)`.
+private noreturn invalidUuidString(string name)
+{
+    import flint.java.lang : IllegalArgumentException;
+
+    throw new IllegalArgumentException(invalidUuidMessage(name));
+}
+
+// The message in one exact-sized buffer, with no shared append instantiations in the leaf.
+private string invalidUuidMessage(string name) pure nothrow
+{
+    enum prefix = "Invalid UUID string: ";
+    auto message = new char[prefix.length + name.length];
+    message[0 .. prefix.length] = prefix;
+    message[prefix.length .. $] = name;
+    return message;
 }
 
 private char[] renderUuid(ulong most, ulong least) pure nothrow
