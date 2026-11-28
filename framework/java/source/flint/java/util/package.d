@@ -3106,7 +3106,7 @@ class Properties : LinkedHashMap!(string, string)
     {
         if (output is null)
             throw new NullPointerException();
-        auto text = render(comments);
+        auto text = render(comments, true);
         import flint.engine.aot.text : decodeUtf8;
 
         // The rendered text is ASCII or Latin-1, so each code point is one ISO-8859-1 byte.
@@ -3124,19 +3124,37 @@ class Properties : LinkedHashMap!(string, string)
     {
         if (writer is null)
             throw new NullPointerException();
-        writer.write(render(comments));
+        writer.write(render(comments, false));
         writer.flush();
     }
 
-    private string render(string comments)
+    private string render(string comments, bool escapeUnicode)
     {
         string text;
         if (comments !is null)
             text ~= commentsText(comments);
         text ~= "#" ~ new Date().toString() ~ System.lineSeparator();
-        foreach (key; keySet().toArray())
-            text ~= saveConvert(key, true) ~ "=" ~ saveConvert(get(key), false) ~ System.lineSeparator();
+        // Java 21 writes the stock entry set in the natural order of its keys.
+        auto keys = keySet().toArray();
+        stableSort(keys, (string a, string b) => utf16Compare(a, b));
+        foreach (key; keys)
+            text ~= saveConvert(key, true, escapeUnicode) ~ "=" ~ saveConvert(get(key), false,
+                    escapeUnicode) ~ System.lineSeparator();
         return text;
+    }
+
+    /// Compare two strings by UTF-16 code unit, as Java's natural `String` order does.
+    private static int utf16Compare(scope const(char)[] a, scope const(char)[] b)
+    {
+        const left = utf16Units(a);
+        const right = utf16Units(b);
+        const common = left.length < right.length ? left.length : right.length;
+        foreach (i; 0 .. common)
+        {
+            if (left[i] != right[i])
+                return left[i] < right[i] ? -1 : 1;
+        }
+        return left.length == right.length ? 0 : (left.length < right.length ? -1 : 1);
     }
 
     /// Java's `writeComments`: a leading `#`, non-Latin-1 units as `\uXXXX`, and a `#` on each continuation line
@@ -3174,19 +3192,23 @@ class Properties : LinkedHashMap!(string, string)
         return text;
     }
 
-    /// Java's `saveConvert`: escape a key or value for the `.properties` format.
-    private static string saveConvert(scope const(char)[] text, bool escapeSpace)
+    /// Java's `saveConvert`: escape a key or value for the `.properties` format. `escapeUnicode` is false for the
+    /// `Writer` form and true for the `OutputStream` form, as Java passes it.
+    private static string saveConvert(scope const(char)[] text, bool escapeSpace, bool escapeUnicode)
     {
         const units = utf16Units(text);
         string result;
-        foreach (position, unit; units)
+        size_t position;
+        while (position < units.length)
         {
+            const unit = units[position];
             if (unit > 61 && unit < 127)
             {
                 if (unit == '\\')
                     result ~= "\\\\";
                 else
                     result ~= cast(char) unit;
+                position++;
                 continue;
             }
             switch (unit)
@@ -3216,13 +3238,36 @@ class Properties : LinkedHashMap!(string, string)
                 result ~= cast(char) unit;
                 break;
             default:
-                if (unit < 0x20 || unit > 0x7e)
-                    result ~= "\\u" ~ hexUnit(unit);
-                else
-                    result ~= cast(char) unit;
+                result ~= convertedUnit(unit, units, position, escapeUnicode);
             }
+            position++;
         }
         return result;
+    }
+
+    /// The default arm of Java's `saveConvert`: a control or non-ASCII unit, escaped for the stream form and raw
+    /// (as the code point's UTF-8) for the writer form.
+    private static string convertedUnit(ushort unit, const(ushort)[] units, ref size_t position, bool escapeUnicode)
+    {
+        import flint.engine.aot.text : utf8;
+
+        if (escapeUnicode && (unit < 0x20 || unit > 0x7e))
+            return "\\u" ~ hexUnit(unit);
+        if (unit <= 0x7e)
+        {
+            char[1] buffer = cast(char) unit;
+            return buffer.idup;
+        }
+        // Java appends the raw UTF-16 units; D's string needs the code point's UTF-8 form.
+        dchar codePoint = unit;
+        if (unit >= 0xd800 && unit <= 0xdbff && position + 1 < units.length
+                && units[position + 1] >= 0xdc00 && units[position + 1] <= 0xdfff)
+        {
+            codePoint = 0x10000 + ((unit - 0xd800) << 10) + (units[position + 1] - 0xdc00);
+            position++;
+        }
+        const encoded = utf8(codePoint);
+        return encoded is null ? "\uFFFD" : encoded;
     }
 
     /// The UTF-16 code units of `text`, as Java's `String.charAt` sees them.
