@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,010 | 739 | 0 | 1,921 | 13,751 |
+| framework | openjdk@21.0.13 | 2,010 | 739 | 0 | 1,957 | 13,715 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -7622,12 +7622,68 @@ These Java elements have no Flint counterpart, for the reason the category gives
 
 | Java | Reason | Note |
 | --- | --- | --- |
+| `java.net.Authenticator` | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.Authenticator.**` (3 elements) | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CacheRequest` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.CacheRequest.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.CacheResponse` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.CacheResponse.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.ContentHandler` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.ContentHandler.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.ContentHandlerFactory` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.ContentHandlerFactory.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.CookieHandler` | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CookieHandler.**` (0 elements) | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CookieManager` | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CookieManager.**` (0 elements) | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CookiePolicy` | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CookiePolicy.**` (0 elements) | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CookieStore` | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CookieStore.**` (0 elements) | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.DatagramSocket` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.DatagramSocket.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.DatagramSocketImpl` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.DatagramSocketImpl.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.DatagramSocketImplFactory` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.DatagramSocketImplFactory.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.FileNameMap` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.FileNameMap.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.HttpURLConnection` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.HttpURLConnection.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.IDN` | `jvm-platform` | Internationalized domain names are not part of the JDK port's scope (docs/spring/phase2/jdk-port.md). |
+| `java.net.IDN.**` (0 elements) | `jvm-platform` | Internationalized domain names are not part of the JDK port's scope (docs/spring/phase2/jdk-port.md). |
+| `java.net.JarURLConnection` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.JarURLConnection.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.MulticastSocket` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.MulticastSocket.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
 | `java.net.NetPermission` | `jvm-platform` |  |
 | `java.net.NetPermission#**` (2 elements) | `jvm-platform` |  |
 | `java.net.NetPermission.**` (0 elements) | `jvm-platform` |  |
+| `java.net.NetworkInterface` | `jvm-platform` | Network interface enumeration is not part of the JDK port's scope (docs/spring/phase2/jdk-port.md). |
+| `java.net.NetworkInterface.**` (0 elements) | `jvm-platform` | Network interface enumeration is not part of the JDK port's scope (docs/spring/phase2/jdk-port.md). |
+| `java.net.ProxySelector` | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.ProxySelector.**` (0 elements) | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.ResponseCache` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.ResponseCache.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.SecureCacheResponse` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.SecureCacheResponse.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.ServerSocket` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.ServerSocket.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.Socket` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.Socket.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketImpl` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketImpl.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketImplFactory` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketImplFactory.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketOption` | `jvm-platform` | Socket options belong to the socket APIs, which use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketOption.**` (0 elements) | `jvm-platform` | Socket options belong to the socket APIs, which use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketOptions` | `jvm-platform` | Socket options belong to the socket APIs, which use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketOptions.**` (0 elements) | `jvm-platform` | Socket options belong to the socket APIs, which use Flint's engines (docs/spring/phase2/jdk-port.md). |
 | `java.net.SocketPermission` | `jvm-platform` |  |
 | `java.net.SocketPermission#**` (6 elements) | `jvm-platform` |  |
 | `java.net.SocketPermission.**` (0 elements) | `jvm-platform` |  |
+| `java.net.StandardSocketOptions` | `jvm-platform` | Socket options belong to the socket APIs, which use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.StandardSocketOptions.**` (0 elements) | `jvm-platform` | Socket options belong to the socket APIs, which use Flint's engines (docs/spring/phase2/jdk-port.md). |
 | `java.net.URL#getContent()` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; network I/O uses Flint engines. |
 | `java.net.URL#getContent(Class[])` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; network I/O uses Flint engines. |
 | `java.net.URL#openConnection()` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; network I/O uses Flint engines. |
@@ -7637,9 +7693,24 @@ These Java elements have no Flint counterpart, for the reason the category gives
 | `java.net.URLClassLoader` | `jvm-runtime` |  |
 | `java.net.URLClassLoader#**` (16 elements) | `jvm-runtime` |  |
 | `java.net.URLClassLoader.**` (0 elements) | `jvm-runtime` |  |
+| `java.net.URLConnection` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.URLConnection.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
 | `java.net.URLPermission` | `jvm-platform` |  |
 | `java.net.URLPermission#**` (6 elements) | `jvm-platform` |  |
 | `java.net.URLPermission.**` (0 elements) | `jvm-platform` |  |
+| `java.net.URLStreamHandler` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.URLStreamHandler.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.URLStreamHandlerFactory` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.URLStreamHandlerFactory.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.UnixDomainSocketAddress` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.UnixDomainSocketAddress.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+
+#### java.net.spi
+
+| Java | Reason | Note |
+| --- | --- | --- |
+| `java.net.spi.URLStreamHandlerProvider` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.spi.URLStreamHandlerProvider.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
 
 #### java.security
 
@@ -11072,8 +11143,8 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
-| java.net | 587 | 0 |
-| java.net.spi | 0 | 2 |
+| java.net | 552 | 0 |
+| java.net.spi | 0 | 1 |
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |
 | java.nio.channels.spi | 0 | 53 |
