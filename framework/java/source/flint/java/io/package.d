@@ -108,8 +108,8 @@ private dchar nextPathCodePoint(scope const(char)[] text, size_t index, out size
         }
         else if ((c & 0xF8) == 0xF0 && index + 3 < text.length)
         {
-            c = ((c & 0x07) << 18) | ((text[index + 1] & 0x3F) << 12) | ((text[index + 2] & 0x3F) << 6) |
-                (text[index + 3] & 0x3F);
+            c = ((c & 0x07) << 18) | ((text[index + 1] & 0x3F) << 12) | (
+                    (text[index + 2] & 0x3F) << 6) | (text[index + 3] & 0x3F);
             width = 4;
         }
     }
@@ -674,8 +674,8 @@ class File
     {
         import flint.engine.aot.objects : objectToString;
 
-        return other is this || (other !is null && File.classinfo.isBaseOf(other.classinfo) &&
-            path_ == objectToString(other));
+        return other is this || (other !is null && File.classinfo.isBaseOf(other.classinfo)
+                && path_ == objectToString(other));
     }
 
     /// Java's `String.hashCode` of the pathname.
