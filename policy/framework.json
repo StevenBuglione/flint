@@ -697,7 +697,8 @@
     "java",
     "java-concurrent",
     "java-concurrent-exec",
-    "java-concurrent-rejection"
+    "java-concurrent-rejection",
+    "java-concurrent-sync"
    ],
    "bench": {
     "fixture": "framework/java-concurrent-service/bench",
@@ -723,7 +724,8 @@
    "also": [
     "flint.java.util.concurrent.internal.executoradmissions",
     "flint.java.util.concurrent.internal.managedoffload",
-    "flint.java.util.concurrent.internal.executorrouting"
+    "flint.java.util.concurrent.internal.executorrouting",
+    "flint.java.util.concurrent.scheduledexecutorservice"
    ]
   },
   "java-concurrent-sync": {

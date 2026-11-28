@@ -12,6 +12,7 @@ dependency "flint:java" version="*"
 dependency "flint:java-concurrent" version="*"
 dependency "flint:java-concurrent-exec" version="*"
 dependency "flint:java-concurrent-rejection" version="*"
+dependency "flint:java-concurrent-sync" version="*"
 
 configuration "library" {
     targetType "library"
