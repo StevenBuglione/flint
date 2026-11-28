@@ -178,6 +178,20 @@ class CorsRegistration
         return this;
     }
 
+    /// `allowPrivateNetwork`.
+    CorsRegistration allowPrivateNetwork(bool allowPrivateNetwork)
+    {
+        config.setAllowPrivateNetwork(allowPrivateNetwork);
+        return this;
+    }
+
+    /// `combine`: merges `other` into this registration's configuration, as Spring's `CorsRegistration.combine`.
+    CorsRegistration combine(CorsConfiguration other)
+    {
+        config = config.combine(other);
+        return this;
+    }
+
     package(flint) string getPathPattern() const pure nothrow @nogc
     {
         return pathPattern;

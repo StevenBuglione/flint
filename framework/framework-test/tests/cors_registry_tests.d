@@ -7,8 +7,7 @@ field becomes the registry that `setup` returns. flint.web.servlet's `CorsRegist
 `WebMvcConfigurationSupport` a `UrlBasedCorsConfigurationSource` (`null` when nothing is mapped) instead of the
 `getCorsConfigurations()` map, so `noMapping` checks for no source and the other cases look each mapping's
 configuration up through the source with a flint.mock.web `MockHttpServletRequest` for the mapped path. The test
-lives with flint.mock.web in flint:framework-test. Cases that need `CorsRegistration.allowPrivateNetwork` or
-`combine` wait behind a version gate.
+lives with flint.mock.web in flint:framework-test.
 +/
 module flint.web.cors_registry_tests;
 
@@ -54,26 +53,21 @@ unittest
     assert(foo !is bar);
 }
 
-// flint.web.servlet's CorsRegistration has no allowPrivateNetwork or combine, and CorsConfiguration no
-// getAllowPrivateNetwork.
-version (FlintCorsRegistrationComplete)
+@("CorsRegistryTests.customizedMapping")
+unittest
 {
-    @("CorsRegistryTests.customizedMapping")
-    unittest
-    {
-        auto registry = setup();
-        registry.addMapping("/foo").allowedOrigins("https://domain2.com", "https://domain2.com")
-            .allowedMethods("DELETE").allowCredentials(true).allowPrivateNetwork(true)
-            .allowedHeaders("header1", "header2").exposedHeaders("header3", "header4").maxAge(3600);
-        const config = configurationFor(registry, "/foo");
-        assert(config.getAllowedOrigins() == ["https://domain2.com", "https://domain2.com"]);
-        assert(config.getAllowedMethods() == ["DELETE"]);
-        assert(config.getAllowedHeaders() == ["header1", "header2"]);
-        assert(config.getExposedHeaders() == ["header3", "header4"]);
-        assert(config.getAllowCredentials().get);
-        assert(config.getAllowPrivateNetwork().get);
-        assert(config.getMaxAge().get == 3600);
-    }
+    auto registry = setup();
+    registry.addMapping("/foo").allowedOrigins("https://domain2.com", "https://domain2.com")
+        .allowedMethods("DELETE").allowCredentials(true).allowPrivateNetwork(true)
+        .allowedHeaders("header1", "header2").exposedHeaders("header3", "header4").maxAge(3600);
+    const config = configurationFor(registry, "/foo");
+    assert(config.getAllowedOrigins() == ["https://domain2.com", "https://domain2.com"]);
+    assert(config.getAllowedMethods() == ["DELETE"]);
+    assert(config.getAllowedHeaders() == ["header1", "header2"]);
+    assert(config.getExposedHeaders() == ["header3", "header4"]);
+    assert(config.getAllowCredentials().get);
+    assert(config.getAllowPrivateNetwork().get);
+    assert(config.getMaxAge().get == 3600);
 }
 
 @("CorsRegistryTests.allowCredentials")
@@ -85,26 +79,23 @@ unittest
     assert(config.getAllowedOrigins() == ["*"], "Globally origins=\"*\" and allowCredentials=true should be possible");
 }
 
-version (FlintCorsRegistrationComplete)
+@("CorsRegistryTests.combine")
+unittest
 {
-    @("CorsRegistryTests.combine")
-    unittest
-    {
-        auto registry = setup();
-        auto otherConfig = new CorsConfiguration();
-        otherConfig.addAllowedOrigin("http://localhost:3000");
-        otherConfig.addAllowedMethod("*");
-        otherConfig.applyPermitDefaultValues();
+    auto registry = setup();
+    auto otherConfig = new CorsConfiguration();
+    otherConfig.addAllowedOrigin("http://localhost:3000");
+    otherConfig.addAllowedMethod("*");
+    otherConfig.applyPermitDefaultValues();
 
-        registry.addMapping("/api/**").combine(otherConfig);
+    registry.addMapping("/api/**").combine(otherConfig);
 
-        const config = configurationFor(registry, "/api/**");
-        assert(config.getAllowedOrigins() == ["http://localhost:3000"]);
-        assert(config.getAllowedMethods() == ["*"]);
-        assert(config.getAllowedHeaders() == ["*"]);
-        assert(config.getExposedHeaders().length == 0);
-        assert(config.getAllowCredentials().isNull);
-        assert(config.getAllowPrivateNetwork().isNull);
-        assert(config.getMaxAge().get == 1800);
-    }
+    const config = configurationFor(registry, "/api/**");
+    assert(config.getAllowedOrigins() == ["http://localhost:3000"]);
+    assert(config.getAllowedMethods() == ["*"]);
+    assert(config.getAllowedHeaders() == ["*"]);
+    assert(config.getExposedHeaders().length == 0);
+    assert(config.getAllowCredentials().isNull);
+    assert(config.getAllowPrivateNetwork().isNull);
+    assert(config.getMaxAge().get == 1800);
 }
