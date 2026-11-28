@@ -249,6 +249,88 @@ public class GoldenRegex {
             writeReplacementCases(Path.of(args[2]), Path.of(args[3]), Path.of(args[4]));
         if (args.length > 5)
             writeSplitDelimiterCases(Path.of(args[5]));
+        if (args.length > 6)
+            writeRegionCases(Path.of(args[6]));
+    }
+
+    // One row per (expression, flags, input, region, anchoring, transparent): the result of matches() and
+    // lookingAt(), then the sequence of find() results as start,end,group0 separated by ';' (or "none").
+    private static void writeRegionCases(Path output) throws Exception {
+        Object[][] cases = {
+            {"b", 0, "abc", 1, 2, true, false},
+            {"b", 0, "abc", 1, 2, false, false},
+            {"^b", 0, "ab", 1, 2, true, false},
+            {"^b", 0, "ab", 1, 2, false, false},
+            {"a$", 0, "ab", 0, 1, true, false},
+            {"a$", 0, "ab", 0, 1, false, false},
+            {"^b$", 0, "abc", 1, 2, true, false},
+            {"^b$", 0, "abc", 1, 2, false, false},
+            {"\\Ab\\z", 0, "abc", 1, 2, true, false},
+            {"\\Ab\\z", 0, "abc", 1, 2, false, false},
+            {"a(?=b)", 0, "ab", 0, 1, true, false},
+            {"a(?=b)", 0, "ab", 0, 1, true, true},
+            {"(?<=a)b", 0, "ab", 1, 2, true, false},
+            {"(?<=a)b", 0, "ab", 1, 2, true, true},
+            {"(?<!a)b", 0, "ab", 1, 2, true, false},
+            {"(?<!a)b", 0, "ab", 1, 2, true, true},
+            {"\\Bb", 0, "ab", 1, 2, true, false},
+            {"\\Bb", 0, "ab", 1, 2, true, true},
+            {"\\ba", 0, "ab", 1, 2, true, false},
+            {"\\ba", 0, "ab", 1, 2, true, true},
+            {"a", 0, "aba", 1, 3, true, false},
+            {"a", 0, "aba", 0, 1, true, false},
+            {"x*", 0, "ax", 1, 1, true, false},
+            {"x*", 0, "ax", 2, 2, true, false},
+            {"", 0, "abc", 2, 2, true, false},
+            {"\\d+", 0, "a12b345c", 0, 8, true, false},
+            {"\\d+", 0, "a12b345c", 1, 7, true, false},
+            {"\\d+", 0, "a12b345c", 2, 7, true, false},
+            {"a", 0, "a😀a", 0, 4, true, false},
+            {"a", 0, "a😀a", 3, 4, true, false},
+            {"😀", 0, "a😀b", 1, 3, true, false},
+            {"^a$\\n^b$", Pattern.MULTILINE, "a\nb", 0, 3, true, false},
+            {"^a$\\n^b$", Pattern.MULTILINE, "a\nb", 0, 3, false, false},
+            {"(?m)^a$\\n^b$", 0, "xa\nb", 1, 4, true, false},
+            {"\\bab\\b", 0, "xabx", 1, 3, true, false},
+            {"\\bab\\b", 0, "xabx", 1, 3, false, false},
+            {"(a)(b)", 0, "ab", 0, 2, true, false},
+            {"a|ab", 0, "zab", 1, 3, true, false},
+            {"(?<=foo)bar", 0, "foobar", 3, 6, true, false},
+            {"(?<=foo)bar", 0, "foobar", 3, 6, true, true},
+        };
+        var rows = new ArrayList<String>();
+        for (Object[] c : cases) {
+            String regex = (String) c[0];
+            int flags = (Integer) c[1];
+            String input = (String) c[2];
+            int start = (Integer) c[3];
+            int end = (Integer) c[4];
+            boolean anchoring = (Boolean) c[5];
+            boolean transparent = (Boolean) c[6];
+            Pattern pattern = Pattern.compile(regex, flags);
+
+            var finder = pattern.matcher(input).region(start, end)
+                .useAnchoringBounds(anchoring).useTransparentBounds(transparent);
+            var sequence = new StringBuilder();
+            while (finder.find()) {
+                if (sequence.length() > 0) sequence.append(';');
+                sequence.append(finder.start()).append(',').append(finder.end()).append(',')
+                    .append(esc(finder.group()));
+            }
+            if (sequence.length() == 0) sequence.append("none");
+
+            var wholeMatcher = pattern.matcher(input).region(start, end)
+                .useAnchoringBounds(anchoring).useTransparentBounds(transparent);
+            boolean whole = wholeMatcher.matches();
+            var prefixMatcher = pattern.matcher(input).region(start, end)
+                .useAnchoringBounds(anchoring).useTransparentBounds(transparent);
+            boolean prefix = prefixMatcher.lookingAt();
+
+            rows.add(esc(regex) + "\t" + flags + "\t" + esc(input) + "\t" + start + "\t" + end + "\t"
+                + (anchoring ? 1 : 0) + "\t" + (transparent ? 1 : 0) + "\t" + whole + "\t" + prefix + "\t"
+                + sequence);
+        }
+        Files.write(output, rows, StandardCharsets.UTF_8);
     }
 
     private static String replaceOnce(Pattern pattern, String input, String replacement, boolean first) {

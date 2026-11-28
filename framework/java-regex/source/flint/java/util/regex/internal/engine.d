@@ -79,6 +79,28 @@ final class RegexBudgetException : Exception
     }
 }
 
+/// `Matcher`'s region, in Unicode code-point indices. `anchoring` makes `^ $ \A \Z \z` treat the region
+/// boundaries as the input boundaries; `transparent` lets look-around and boundaries see outside the region.
+struct Region
+{
+    /// The first position a match may use.
+    int from;
+    /// One past the last position a match may use. The default covers the whole input.
+    int to = int.max;
+    /// Whether anchors match the region boundaries.
+    bool anchoring = true;
+    /// Whether look-around and boundaries see the whole input.
+    bool transparent;
+
+    /// The default region over an input of `length` code points.
+    static Region whole(int length) pure nothrow @nogc
+    {
+        Region region;
+        region.to = length;
+        return region;
+    }
+}
+
 /// A compiled pattern.
 struct Regex
 {
@@ -111,19 +133,19 @@ struct Regex
     /// `Pattern.matcher(input).matches()`: whether the whole input matches.
     bool matches(scope const(char)[] input) const
     {
-        return match(input, null, true);
+        return match(input, null, true, Region.init);
     }
 
-    /// Save numbered captures as pairs of Unicode code-point indices.
-    bool captureMatch(scope const(char)[] input, scope int[] result, bool wholeInput) const
+    /// Save numbered captures as pairs of Unicode code-point indices, within `region`.
+    bool captureMatch(scope const(char)[] input, Region region, scope int[] result, bool wholeInput) const
     {
         assert(result.length == 2 * (groups + 1));
-        return match(input, result, wholeInput);
+        return match(input, result, wholeInput, region);
     }
 
-    /// `Matcher.find()`: the leftmost match that starts at or after code point `from`. Captures are saved as pairs of
-    /// Unicode code-point indices; `result[0]` is the match start, not zero.
-    bool searchMatch(scope const(char)[] input, int from, scope int[] result) const
+    /// `Matcher.find()`: the leftmost match that starts at or after code point `from`, within `region`. Captures are
+    /// saved as pairs of Unicode code-point indices; `result[0]` is the match start, not zero.
+    bool searchMatch(scope const(char)[] input, Region region, int from, scope int[] result) const
     {
         assert(result.length == 2 * (groups + 1));
         dchar[256] smallText = void;
@@ -134,21 +156,24 @@ struct Regex
         const captureCount = 2 * (groups + 1);
         const stateCount = captureCount + registers;
         scope int[] state = stateCount <= smallState.length ? smallState[0 .. stateCount] : new int[stateCount];
-        const start = from < 0 ? 0 : from;
-        if (start > text.length)
+        const regionEnd = region.to < 0 ? 0 : (region.to > text.length ? cast(int) text.length : region.to);
+        const regionFrom = region.from < 0 ? 0 : (region.from > regionEnd ? regionEnd : region.from);
+        const effective = Region(regionFrom, regionEnd, region.anchoring, region.transparent);
+        const start = from < regionFrom ? regionFrom : from;
+        if (start > regionEnd)
             return false;
-        foreach (pos; start .. text.length + 1)
+        foreach (pos; start .. regionEnd + 1)
         {
             state[] = -1;
-            scope vm = Matcher(code, sets, text, state[0 .. captureCount], state[captureCount .. $]);
-            const end = vm.run(0, cast(int) pos, -1);
-            if (end >= 0)
+            scope vm = Matcher(code, sets, text, state[0 .. captureCount], state[captureCount .. $], effective);
+            const reached = vm.run(0, cast(int) pos, -1);
+            if (reached >= 0)
             {
                 if (result.length)
                 {
                     result[] = state[0 .. captureCount];
                     result[0] = cast(int) pos;
-                    result[1] = end;
+                    result[1] = reached;
                 }
                 return true;
             }
@@ -156,7 +181,7 @@ struct Regex
         return false;
     }
 
-    private bool match(scope const(char)[] input, scope int[] result, bool wholeInput) const
+    private bool match(scope const(char)[] input, scope int[] result, bool wholeInput, Region region) const
     {
         // A request's value is short: its code points, captures and loop registers live on the (fiber) stack, and
         // only a long input or a pattern with many groups allocates.
@@ -169,12 +194,16 @@ struct Regex
         const stateCount = captureCount + registers;
         scope int[] state = stateCount <= smallState.length ? smallState[0 .. stateCount] : new int[stateCount];
         state[] = -1;
-        scope vm = Matcher(code, sets, text, state[0 .. captureCount], state[captureCount .. $]);
-        const end = vm.run(0, 0, wholeInput ? cast(int) text.length : -1);
+        const regionFrom = region.from < 0 ? 0 : (region.from > text.length ? cast(int) text.length : region.from);
+        const regionTo = region.to < regionFrom ? regionFrom : (region.to > text.length
+                ? cast(int) text.length : region.to);
+        const effective = Region(regionFrom, regionTo, region.anchoring, region.transparent);
+        scope vm = Matcher(code, sets, text, state[0 .. captureCount], state[captureCount .. $], effective);
+        const end = vm.run(0, regionFrom, wholeInput ? regionTo : -1);
         if (end >= 0 && result.length)
         {
             result[] = state[0 .. captureCount];
-            result[0] = 0;
+            result[0] = regionFrom;
             result[1] = end;
         }
         return end >= 0;
@@ -1569,16 +1598,18 @@ private struct Matcher
     int[] captures;
     int[] registers;
     long steps;
+    Region region;
 
     // Over the caller's buffers: `captures` and `registers` start at -1.
     this(const(Inst)[] code, const(CharSet)[] sets, return scope const(dchar)[] text,
-            return scope int[] captures, return scope int[] registers) pure nothrow @nogc
+            return scope int[] captures, return scope int[] registers, Region region) pure nothrow @nogc
     {
         this.code = code;
         this.sets = sets;
         this.text = text;
         this.captures = captures;
         this.registers = registers;
+        this.region = region;
     }
 
     // Runs from `pc` at `pos`; returns the end position of the first match the program reaches, -1 when none. With
@@ -1657,19 +1688,21 @@ private struct Matcher
     {
         const start = pos;
         const op = cast(I) inst.y;
+        const limit = region.to < text.length ? region.to : cast(int) text.length;
         if (op == I.set)
         {
             // A class's run: ASCII from its table inline, the rest through its terms.
             const ascii = sets[inst.x].ascii;
-            foreach (c; text[pos .. $])
-            {
-                if (c < 0x80 ? ((ascii[c >> 6] >> (c & 63)) & 1) == 0 : !contains(sets, inst.x, c))
-                    break;
-                ++pos;
-            }
+            if (pos < limit)
+                foreach (c; text[pos .. limit])
+                {
+                    if (c < 0x80 ? ((ascii[c >> 6] >> (c & 63)) & 1) == 0 : !contains(sets, inst.x, c))
+                        break;
+                    ++pos;
+                }
         }
         else
-            while (pos < text.length && accepts(op, inst.c, inst.x, text[pos]))
+            while (pos < limit && accepts(op, inst.c, inst.x, text[pos]))
                 ++pos;
         steps += pos - start; // the step budget still bounds the characters a match examines
         if (pos > start)
@@ -1680,7 +1713,7 @@ private struct Matcher
     // char_, charCI, any and set: one code point.
     private bool consume(ref const Inst inst, ref int pos) const scope pure nothrow @nogc
     {
-        if (pos >= text.length)
+        if (pos >= region.to || pos >= text.length)
             return false;
         return accepts(inst.op, inst.c, inst.x, text[pos++]);
     }
@@ -1768,15 +1801,20 @@ private struct Matcher
         const behind = (inst.c & 1) != 0;
         const negative = (inst.c & 2) != 0;
         const before = captures.dup;
+        const savedEnd = region.to;
+        if (!behind && region.transparent)
+            region.to = cast(int) text.length;
         bool found;
         if (!behind)
             found = run(inst.x, pos, -1) >= 0;
         else
         {
-            const earliest = inst.max < 0 ? 0 : pos - inst.max;
+            const floor = region.transparent ? 0 : region.from;
+            const earliest = inst.max < 0 ? floor : (pos - inst.max < floor ? floor : pos - inst.max);
             for (int start = pos - inst.min; start >= earliest && start >= 0 && !found; --start)
                 found = run(inst.x, start, pos) >= 0;
         }
+        region.to = savedEnd;
         if (found && !negative)
             keepCaptures(before, stack);
         else
@@ -1790,7 +1828,7 @@ private struct Matcher
             return false;
         const from = captures[2 * group], to = captures[2 * group + 1];
         const length = to - from;
-        if (pos + length > text.length)
+        if (pos + length > region.to || pos + length > text.length)
             return false;
         foreach (i; 0 .. length)
         {
@@ -1805,55 +1843,66 @@ private struct Matcher
     private bool anchorHolds(Anchor anchor, int pos, bool unixLines) const scope pure nothrow @nogc
     {
         const n = cast(int) text.length;
+        const boundaryStart = region.anchoring ? region.from : 0;
+        const boundaryEnd = region.anchoring ? region.to : n;
         final switch (anchor)
         {
         case Anchor.inputStart:
-            return pos == 0;
+            return pos == boundaryStart;
         case Anchor.inputEnd:
-            return pos == n;
+            return pos == boundaryEnd;
         case Anchor.inputEndOrTerminator:
-            return pos == n || finalTerminatorAt(pos, unixLines);
+            return pos == boundaryEnd || finalTerminatorAt(pos, unixLines, boundaryEnd);
         case Anchor.lineStart:
-            return lineStartAt(pos, unixLines);
+            return lineStartAt(pos, unixLines, boundaryStart, boundaryEnd);
         case Anchor.lineEnd:
-            return lineEndAt(pos, unixLines);
+            return lineEndAt(pos, unixLines, boundaryEnd);
         case Anchor.wordBoundary:
         case Anchor.notWordBoundary:
-            const left = pos > 0 && isAsciiWord(text[pos - 1]);
-            const right = pos < n && isAsciiWord(text[pos]);
-            return (left != right) == (anchor == Anchor.wordBoundary);
+            return wordBoundaryHolds(pos,
+                    anchor == Anchor.wordBoundary);
         case Anchor.linebreak:
             return false;
         }
     }
 
-    // MULTILINE `^`: the start, or after a line terminator that is not the input's last character (never between
-    // \r and \n).
-    private bool lineStartAt(int pos, bool unixLines) const scope pure nothrow @nogc
+    // `\b` (or `\B` when `expected` is false). Transparent bounds may look outside the region.
+    private bool wordBoundaryHolds(int pos, bool expected) const scope pure nothrow @nogc
     {
-        if (pos == 0)
+        const wordStart = region.transparent ? 0 : region.from;
+        const wordEnd = region.transparent ? cast(int) text.length : region.to;
+        const left = pos > wordStart && isAsciiWord(text[pos - 1]);
+        const right = pos < wordEnd && isAsciiWord(text[pos]);
+        return (left != right) == expected;
+    }
+
+    // MULTILINE `^`: the region start, or after a line terminator that is not the end (never between \r and \n).
+    private bool lineStartAt(int pos, bool unixLines, int startIndex, int endIndex) const scope pure nothrow @nogc
+    {
+        if (pos == endIndex)
+            return false;
+        if (pos == startIndex)
             return true;
-        if (pos == text.length || !isLineTerminator(text[pos - 1], unixLines))
+        if (pos < startIndex || !isLineTerminator(text[pos - 1], unixLines))
             return false;
         return !(text[pos - 1] == '\r' && text[pos] == '\n');
     }
 
     // MULTILINE `$`: the end, or before a line terminator (never between \r and \n).
-    private bool lineEndAt(int pos, bool unixLines) const scope pure nothrow @nogc
+    private bool lineEndAt(int pos, bool unixLines, int endIndex) const scope pure nothrow @nogc
     {
-        if (pos == text.length)
+        if (pos == endIndex)
             return true;
-        if (!isLineTerminator(text[pos], unixLines))
+        if (pos > endIndex || !isLineTerminator(text[pos], unixLines))
             return false;
         return unixLines || !(text[pos] == '\n' && pos > 0 && text[pos - 1] == '\r');
     }
 
-    // Whether only a final line terminator (\n, \r\n, ...) follows `pos`.
-    private bool finalTerminatorAt(int pos, bool unixLines) const scope pure nothrow @nogc
+    // Whether only a final line terminator (\n, \r\n, ...) follows `pos` before `endIndex`.
+    private bool finalTerminatorAt(int pos, bool unixLines, int endIndex) const scope pure nothrow @nogc
     {
-        const n = cast(int) text.length;
-        if (pos == n - 1)
+        if (pos == endIndex - 1)
             return isLineTerminator(text[pos], unixLines);
-        return !unixLines && pos == n - 2 && text[pos] == '\r' && text[pos + 1] == '\n';
+        return !unixLines && pos == endIndex - 2 && text[pos] == '\r' && text[pos + 1] == '\n';
     }
 }

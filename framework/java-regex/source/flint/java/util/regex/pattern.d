@@ -4,7 +4,7 @@ module flint.java.util.regex.pattern;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, IndexOutOfBoundsException,
     NullPointerException;
 import flint.java.util.function_ : Function, Predicate;
-import flint.java.util.regex.internal.engine : Regex, RegexFlag, RegexSyntaxException, compileRegex;
+import flint.java.util.regex.internal.engine : Region, Regex, RegexFlag, RegexSyntaxException, compileRegex;
 import flint.java.util.regex.matchresult : MatchResult;
 import std.typecons : Nullable;
 
@@ -318,11 +318,16 @@ final class Matcher : NumberedMatch
 {
     private Pattern compiled;
     private int searchFrom; // in Unicode code points
+    private int regionStartUnit; // Java's region start, in UTF-16 units
+    private int regionEndUnit; // Java's region end, in UTF-16 units
+    private bool anchoringBounds = true;
+    private bool transparentBounds;
 
     private this(Pattern compiled, string input)
     {
         super(input, compiled.program.groupCount(), compiled.program.nameTable());
         this.compiled = compiled;
+        this.regionEndUnit = utf16Length(input);
     }
 
     /// The compiled expression associated with this matcher.
@@ -382,14 +387,68 @@ final class Matcher : NumberedMatch
         return findFrom(searchFrom);
     }
 
-    /// Find the first match at or after the given UTF-16 offset.
+    /// Find the first match at or after the given UTF-16 offset, over the entire input (R3, R26).
     bool find(int start)
     {
         if (start < 0 || start > utf16Length(input))
             throw new IndexOutOfBoundsException("Illegal start index");
-        matched = false;
+        reset();
         searchFrom = codePointIndex(input, start);
         return findFrom(searchFrom);
+    }
+
+    /// Set the region searched and matched by this matcher, in UTF-16 offsets (R3, R26).
+    Matcher region(int start, int end)
+    {
+        const length = utf16Length(input);
+        if (start < 0 || start > length)
+            throw new IndexOutOfBoundsException("start");
+        if (end < 0 || end > length)
+            throw new IndexOutOfBoundsException("end");
+        if (start > end)
+            throw new IndexOutOfBoundsException("start > end");
+        reset();
+        regionStartUnit = start;
+        regionEndUnit = end;
+        return this;
+    }
+
+    /// The first UTF-16 offset of the region a match may use (R3).
+    int regionStart() const pure nothrow @nogc
+    {
+        return regionStartUnit;
+    }
+
+    /// One past the last UTF-16 offset of the region a match may use (R3).
+    int regionEnd() const pure nothrow @nogc
+    {
+        return regionEndUnit;
+    }
+
+    /// Whether look-around and boundaries may see outside the region (R3).
+    bool hasTransparentBounds() const pure nothrow @nogc
+    {
+        return transparentBounds;
+    }
+
+    /// Set whether look-around and boundaries may see outside the region (R3).
+    Matcher useTransparentBounds(bool value) pure nothrow @nogc
+    {
+        transparentBounds = value;
+        return this;
+    }
+
+    /// Whether anchors treat the region boundaries as the input boundaries (R3).
+    bool hasAnchoringBounds() const pure nothrow @nogc
+    {
+        return anchoringBounds;
+    }
+
+    /// Set whether anchors treat the region boundaries as the input boundaries (R3).
+    Matcher useAnchoringBounds(bool value) pure nothrow @nogc
+    {
+        anchoringBounds = value;
+        return this;
     }
 
     /// Replace every match with Java's replacement syntax: `$g`, `${name}` and `\` escapes (R5, R26).
@@ -431,12 +490,14 @@ final class Matcher : NumberedMatch
         return result;
     }
 
-    /// Clear the match state while keeping the current input and compiled expression.
+    /// Clear the match state while keeping the current input, expression and bounds policy (R3).
     Matcher reset() pure nothrow @nogc
     {
         matched = false;
         stale = false;
         searchFrom = 0;
+        regionStartUnit = 0;
+        regionEndUnit = utf16Length(input);
         return this;
     }
 
@@ -454,8 +515,8 @@ final class Matcher : NumberedMatch
         if (groupCount() && !capturePoints.length)
             capturePoints = new int[2 * (groupCount() + 1)];
         scope int[] result = capturePoints.length ? capturePoints[0 .. 2 * (groupCount() + 1)] : wholeMatch[];
-        matched = compiled.program.captureMatch(input, result, wholeInput);
-        searchFrom = matched ? result[1] : 0;
+        matched = compiled.program.captureMatch(input, engineRegion(), result, wholeInput);
+        searchFrom = matched ? (result[1] == result[0] ? result[1] + 1 : result[1]) : 0;
         return matched;
     }
 
@@ -466,9 +527,22 @@ final class Matcher : NumberedMatch
         if (groupCount() && !capturePoints.length)
             capturePoints = new int[2 * (groupCount() + 1)];
         scope int[] result = capturePoints.length ? capturePoints[0 .. 2 * (groupCount() + 1)] : wholeMatch[];
-        matched = compiled.program.searchMatch(input, from, result);
+        matched = compiled.program.searchMatch(input, engineRegion(), from, result);
         searchFrom = matched ? (result[1] == result[0] ? result[1] + 1 : result[1]) : 0;
         return matched;
+    }
+
+    /// The stored UTF-16 region as the engine's code-point bounds and bounds policy.
+    private Region engineRegion() const pure nothrow @nogc
+    {
+        import flint.java.util.regex.internal.engine : Region;
+
+        Region region;
+        region.from = codePointIndex(input, regionStartUnit);
+        region.to = codePointIndex(input, regionEndUnit);
+        region.anchoring = anchoringBounds;
+        region.transparent = transparentBounds;
+        return region;
     }
 
     private string replaceMatches(string replacement, bool firstOnly)
