@@ -11,7 +11,7 @@ module flint.java.io;
 public import flint.java.io.closeable : Closeable;
 public import flint.java.io.flushable : Flushable;
 
-import flint.java.lang : RuntimeException, javaToString;
+import flint.java.lang : RuntimeException, javaToString, JavaObject;
 
 @safe:
 
@@ -126,6 +126,60 @@ pragma(inline, false) private noreturn rejectNullIoArgument() pure
     import flint.java.lang : NullPointerException;
 
     throw new NullPointerException;
+}
+
+private dchar nextPathCodePoint(scope const(char)[] text, size_t index, out size_t width) pure nothrow @nogc
+{
+    dchar c = text[index];
+    width = 1;
+    if (c >= 0x80)
+    {
+        if ((c & 0xE0) == 0xC0 && index + 1 < text.length)
+        {
+            c = ((c & 0x1F) << 6) | (text[index + 1] & 0x3F);
+            width = 2;
+        }
+        else if ((c & 0xF0) == 0xE0 && index + 2 < text.length)
+        {
+            c = ((c & 0x0F) << 12) | ((text[index + 1] & 0x3F) << 6) | (text[index + 2] & 0x3F);
+            width = 3;
+        }
+        else if ((c & 0xF8) == 0xF0 && index + 3 < text.length)
+        {
+            c = ((c & 0x07) << 18) | ((text[index + 1] & 0x3F) << 12) | ((text[index + 2] & 0x3F) << 6) |
+                (text[index + 3] & 0x3F);
+            width = 4;
+        }
+    }
+    return c;
+}
+
+private int comparePathnames(scope const(char)[] left, scope const(char)[] right) pure nothrow @nogc
+{
+    size_t i;
+    size_t j;
+    while (i < left.length && j < right.length)
+    {
+        size_t leftWidth;
+        size_t rightWidth;
+        const a = nextPathCodePoint(left, i, leftWidth);
+        const b = nextPathCodePoint(right, j, rightWidth);
+        if (a != b)
+        {
+            const aHigh = a >= 0x10000 ? cast(int)(0xD800 + ((a - 0x10000) >> 10)) : cast(int) a;
+            const bHigh = b >= 0x10000 ? cast(int)(0xD800 + ((b - 0x10000) >> 10)) : cast(int) b;
+            if (aHigh != bHigh)
+                return aHigh < bHigh ? -1 : 1;
+            if (a < 0x10000 || b < 0x10000)
+                return 0;
+            const aLow = cast(int)(0xDC00 + ((a - 0x10000) & 0x3FF));
+            const bLow = cast(int)(0xDC00 + ((b - 0x10000) & 0x3FF));
+            return aLow < bLow ? -1 : aLow > bLow ? 1 : 0;
+        }
+        i += leftWidth;
+        j += rightWidth;
+    }
+    return i < left.length ? 1 : j < right.length ? -1 : 0;
 }
 
 /// Java's `InputStream`: a source of bytes.
@@ -652,6 +706,31 @@ class File
             return null;
         return end == 1 ? "/" : path_[0 .. end - 1];
     }
+
+    /// Whether `other` is a `File` with the same pathname.
+    bool equals(Object other)
+    {
+        auto that = cast(File) other;
+        return that !is null && path_ == that.path_;
+    }
+
+    /// Java's `String.hashCode` of the pathname.
+    int hashCode() const pure nothrow @nogc
+    {
+        import flint.java.lang : stringHashCode;
+
+        return stringHashCode(path_);
+    }
+
+    /// Java's pathname order: the pathname strings compared by UTF-16 code unit.
+    int compareTo(File other) pure
+    {
+        if (other is null)
+            rejectNullIoArgument();
+        return comparePathnames(path_, other.path_);
+    }
+
+    mixin JavaObject;
 
     /// The absolute path.
     string getAbsolutePath() const
