@@ -326,12 +326,47 @@ def generated_body(port_source):
     return found[0][5]
 
 
+NESTED_TYPE = re.compile(r'\s*(?:(?:@[\w.]+(?:\(.*\))?|deprecated(?:\(.*\))?|final|abstract|static|extern\(\w+\))\s*)*'
+                         r'(?:struct|class|interface|enum|union)\b')
+
+
+def carried_nested_types(declaration, generated):
+    """Nested type declarations the skeleton cannot emit yet (R13), kept from the hand type.
+
+    The skeleton leaves a nested type out with a pending row, but an outer member it also leaves pending
+    (a `mutate()` returning the nested type, say) or the hand's other types still name it. Replacing the whole
+    declaration would delete it and the spliced module would not compile, turning every element into a spurious
+    compile divergence. The nested types stay out of the comparison, as the pending rows say they should. Only a
+    declaration with a body counts: D's `enum NAME = value;` is a manifest constant, not a nested enum type.
+    """
+    tokens = scan(declaration)
+    opening = next(i for i, token in enumerate(tokens) if token[0] == '{')
+    closing = matching(tokens, opening)
+    inner = declaration[tokens[opening][1] + 1:tokens[closing][1]]
+    carried = []
+    for nested, (start, end) in declarations(inner).items():
+        piece = inner[start:end]
+        if not NESTED_TYPE.match(piece) or not any(token[0] == '{' for token in scan(piece)):
+            continue
+        if re.search(rf'\b(?:struct|class|interface|enum|union)\s+{re.escape(nested)}\b', generated):
+            continue
+        carried.append(piece.strip())
+    return ''.join('\n\n    ' + piece for piece in carried)
+
+
 def splice_one(hand, name, text):
     """The hand module with its top-level declaration `name` replaced by `text`."""
     existing = declarations(hand)
     if name not in existing:
         raise ValueError(f'the hand module declares no top-level {name}')
     start, end = existing[name]
+    carried = carried_nested_types(hand[start:end], text)
+    if carried:
+        tokens = scan(text)
+        opening = next(i for i, token in enumerate(tokens) if token[0] == '{')
+        closing = matching(tokens, opening)
+        cut = tokens[closing][1]
+        text = text[:cut] + carried + '\n' + text[cut:]
     return hand[:start] + text + hand[end:]
 
 

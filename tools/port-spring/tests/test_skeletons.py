@@ -13,7 +13,9 @@ import unittest
 from test_annotations import HELPER
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import skeletons  # noqa: E402
+import porter_gate  # noqa: E402
 from accessors import Unsupported  # noqa: E402
 
 COUNTER = """package org.springframework.example;
@@ -336,6 +338,25 @@ class SkeletonTests(unittest.TestCase):
                          '@safe:\n\nclass Hand {}\n\n' + new_a + '\nvoid tail() {}\n\n' + new_b)
         self.assertTrue(skeletons.hand_declares(text, 'x.B', 'Hand'))
         self.assertFalse(skeletons.hand_declares(text, 'x.B', 'B'))  # its own region doesn't count
+
+    def test_splicing_keeps_nested_types_the_skeleton_cannot_emit(self):
+        # R13 leaves a nested type pending; replacing the outer declaration must not delete it, or the hand's
+        # other types (and a pending `mutate()` returning it) stop compiling and every element becomes a
+        # spurious compile divergence.
+        hand = ('module flint.example;\n\n@safe:\n\ninterface Outer\n{\n    Builder mutate();\n\n'
+                '    enum SYSTEM = "system";\n\n'
+                '    interface Builder\n    {\n        Outer build();\n    }\n}\n')
+        generated = 'interface Outer\n{\n    enum SYSTEM = "system";\n\n    int getValue();\n}'
+        text = porter_gate.splice_one(hand, 'Outer', generated)
+        self.assertIn('    int getValue();', text)
+        self.assertIn('    interface Builder\n    {\n        Outer build();\n    }', text)
+        self.assertEqual(text.count('interface Builder'), 1)
+        # D's `enum NAME = value;` is a manifest constant the skeleton also emits, not a nested enum type.
+        self.assertEqual(text.count('enum SYSTEM'), 1)
+        # A skeleton that does declare the nested type is not duplicated.
+        with_nested = ('interface Outer\n{\n    enum SYSTEM = "system";\n\n    int getValue();\n\n'
+                       '    interface Builder\n    {\n    }\n}')
+        self.assertEqual(porter_gate.splice_one(hand, 'Outer', with_nested).count('interface Builder'), 1)
 
     def test_mapping_rows_merge_line_by_line(self):
         with tempfile.TemporaryDirectory() as directory:
