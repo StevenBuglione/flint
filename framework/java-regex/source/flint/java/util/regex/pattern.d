@@ -1,7 +1,8 @@
 /// Java SE 21 regular-expression compilation and whole-input matching.
 module flint.java.util.regex.pattern;
 
-import flint.java.lang : IllegalArgumentException, IllegalStateException, IndexOutOfBoundsException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException, IndexOutOfBoundsException, NullPointerException;
+import flint.java.util.function_ : Function;
 import flint.java.util.regex.internal.engine : Regex, RegexFlag, RegexSyntaxException, compileRegex;
 import flint.java.util.regex.matchresult : MatchResult;
 import std.typecons : Nullable;
@@ -347,6 +348,18 @@ final class Matcher : NumberedMatch
         return replaceMatches(replacement, true);
     }
 
+    /// Replace every match with the text the replacer returns for the live MatchResult (R3, R26).
+    string replaceAll(Function!(MatchResult, string) replacer)
+    {
+        return replaceFunctional(replacer, false);
+    }
+
+    /// Replace the first match with the text the replacer returns (R3, R26).
+    string replaceFirst(Function!(MatchResult, string) replacer)
+    {
+        return replaceFunctional(replacer, true);
+    }
+
     /// Quote literal text so it can be used as a replacement (R5, R26).
     static string quoteReplacement(string text)
     {
@@ -422,6 +435,42 @@ final class Matcher : NumberedMatch
         }
         if (!any)
             return input;
+        output ~= input[byteCursor .. $];
+        return output;
+    }
+
+    /// Java's `replaceAll` and `replaceFirst` over a replacer function. The returned text is appended verbatim, and
+    /// a null return raises the null-pointer exception Java's `appendReplacement` raises.
+    private string replaceFunctional(Function!(MatchResult, string) replacer, bool firstOnly)
+    {
+        import flint.engine.aot.text : decodeUtf8;
+
+        if (replacer is null)
+            throw new NullPointerException();
+        reset();
+        if (!find())
+            return input;
+        string output;
+        size_t byteCursor;
+        int unitCursor;
+        do
+        {
+            const matchStart = start();
+            const segmentStart = byteCursor;
+            while (unitCursor < matchStart)
+                unitCursor += decodeUtf8(input, byteCursor) > wchar.max ? 2 : 1;
+            output ~= input[segmentStart .. byteCursor];
+            const replacement = replacer.apply(this);
+            if (replacement is null)
+                throw new NullPointerException();
+            output ~= replacement;
+            const matchEnd = end();
+            while (unitCursor < matchEnd)
+                unitCursor += decodeUtf8(input, byteCursor) > wchar.max ? 2 : 1;
+            if (firstOnly)
+                break;
+        }
+        while (find());
         output ~= input[byteCursor .. $];
         return output;
     }

@@ -5,7 +5,9 @@ and a Java rejection (`error`) must throw the same broad exception class here.
 +/
 module flint.java.util.regex.search_replace_test;
 
-import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, IllegalStateException;
+import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, IllegalStateException, NullPointerException;
+import flint.java.util.function_ : Function;
+import flint.java.util.regex.matchresult : MatchResult;
 import flint.java.util.regex.pattern : Matcher, Pattern;
 import std.conv : to;
 import std.string : splitLines;
@@ -101,6 +103,54 @@ unittest
         ++rows;
     }
     assert(rows == 31);
+}
+
+private Function!(MatchResult, string) replacerFor(string kind)
+{
+    switch (kind)
+    {
+    case "wrap":
+        return Function!(MatchResult, string).of((MatchResult r) => "[" ~ r.group.get ~ "]");
+    case "span":
+        return Function!(MatchResult, string).of((MatchResult r) => r.start.to!string ~ "," ~ r.end.to!string ~ "=" ~ r.group.get);
+    case "null":
+        return Function!(MatchResult, string).of((MatchResult r) { return cast(string) null; });
+    default:
+        throw new IllegalArgumentException(kind);
+    }
+}
+
+@("Matcher.replaceAll and replaceFirst over a replacer function agree with Java SE 21")
+unittest
+{
+    size_t rows;
+    foreach (line; import("replace_function.tsv").splitLines())
+    {
+        if (line.length == 0)
+            continue;
+        auto row = fields(line);
+        auto replacer = replacerFor(row[2]);
+        string all, first;
+        bool threwAll, threwFirst;
+        try
+            all = Pattern.compile(row[0]).matcher(row[1]).replaceAll(replacer);
+        catch (NullPointerException)
+            threwAll = true;
+        try
+            first = Pattern.compile(row[0]).matcher(row[1]).replaceFirst(replacer);
+        catch (NullPointerException)
+            threwFirst = true;
+        if (row[3] == "npe")
+            assert(threwAll, line);
+        else
+            assert(!threwAll && all == row[3], line ~ " => " ~ all);
+        if (row[4] == "npe")
+            assert(threwFirst, line);
+        else
+            assert(!threwFirst && first == row[4], line ~ " => " ~ first);
+        ++rows;
+    }
+    assert(rows == 13);
 }
 
 @("Matcher and MatchResult named capture access agrees with Java SE 21")

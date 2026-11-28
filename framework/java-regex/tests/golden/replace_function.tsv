@@ -1,0 +1,13 @@
+(\\d+)	a12b345c	wrap	a[12]b[345]c	a[12]b345c
+(\\d+)	a12b345c	span	a1,3=12b4,7=345c	a1,3=12b345c
+a	aba	wrap	[a]b[a]	[a]ba
+a	aba	span	0,1=ab2,3=a	0,1=aba
+	ab	wrap	[]a[]b[]	[]ab
+(a)(b)?	ab a	wrap	[ab] [a]	[ab] a
+(?<year>\\d{4})-(?<month>\\d{2})	2026-11	span	0,7=2026-11	0,7=2026-11
+x	abc	wrap	abc	abc
+x	abc	null	abc	abc
+a	aba	null	npe	npe
+\\s+	a  b\tc	span	a1,3=  b4,5=\tc	a1,3=  b\tc
+[é😀]	aé😀z	span	a1,2=é2,4=😀z	a1,2=é😀z
+\\p{L}+	aé😀z	wrap	[aé]😀[z]	[aé]😀z
