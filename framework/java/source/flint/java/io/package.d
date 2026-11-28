@@ -2304,10 +2304,11 @@ class OutputStreamWriter : Writer
     private bool bomWritten_;
     private ubyte[] scratch_;
 
-    /// A UTF-8 writer over `output`. A null stream is rejected, as Java's lock constructor does.
+    /// A writer over `output` in its own charset when it is a `PrintStream`, or UTF-8 otherwise. A null stream is
+    /// rejected, as Java's lock constructor does.
     this(OutputStream output)
     {
-        this(output, StandardCharsets.UTF_8);
+        this(output, inheritedCharset(output));
     }
 
     /// A writer over `output` in `charset`. A null stream, or a charset that names none, is rejected.
@@ -2616,6 +2617,7 @@ class PrintWriter : Writer
     protected Writer out_;
     private bool autoFlush_;
     private bool trouble_;
+    private PrintStream psOut_;
 
     /// A print writer over `target`, without automatic flushing. A null writer is rejected.
     this(Writer target)
@@ -2634,17 +2636,18 @@ class PrintWriter : Writer
         autoFlush_ = autoFlush;
     }
 
-    /// A print writer over `output`, encoding UTF-8, without automatic flushing. A null stream is rejected.
+    /// A print writer over `output`, without automatic flushing. A null stream is rejected.
     this(OutputStream output)
     {
         this(output, false);
     }
 
     /// A print writer over `output`; `autoFlush` flushes after every `println`. As Java's constructor does, the
-    /// encoded text is buffered in a `BufferedWriter` around a UTF-8 `OutputStreamWriter`. A null stream is rejected.
+    /// encoded text is buffered in a `BufferedWriter` around an `OutputStreamWriter` in the sink's charset when the
+    /// sink is a `PrintStream`, or UTF-8 otherwise. A null stream is rejected.
     this(OutputStream output, bool autoFlush)
     {
-        this(output, autoFlush, StandardCharsets.UTF_8);
+        this(output, autoFlush, inheritedCharset(output));
     }
 
     /// A print writer over `output` in `charset`; `autoFlush` flushes after every `println`. A null stream, or a
@@ -2657,6 +2660,8 @@ class PrintWriter : Writer
             throw new NullPointerException("out");
         out_ = new BufferedWriter(new OutputStreamWriter(output, charset));
         autoFlush_ = autoFlush;
+        if (auto stream = cast(PrintStream) output)
+            psOut_ = stream;
     }
 
     alias write = Writer.write;
@@ -2799,13 +2804,18 @@ class PrintWriter : Writer
         return this;
     }
 
-    /// Java's `checkError`: flush while open, then this writer's or a nested writer's error.
+    /// Java's `checkError`: flush while open, then this writer's, a nested writer's or the wrapped print stream's
+    /// error.
     bool checkError()
     {
         if (out_ !is null)
             flush();
         const nested = out_ is null ? -1 : out_.nestedCheckError();
-        return nested >= 0 ? nested != 0 : trouble_;
+        if (nested >= 0)
+            return nested != 0;
+        if (psOut_ !is null)
+            return psOut_.checkError();
+        return trouble_;
     }
 
     override protected int nestedCheckError()
@@ -2849,6 +2859,325 @@ class PrintWriter : Writer
         }
         catch (IOException)
             trouble_ = true;
+    }
+}
+
+// The charset of `output`: its own when it is a `PrintStream`, UTF-8 otherwise, as Java's `PrintStream` and
+// `OutputStreamWriter` inherit a print stream's charset.
+private Charset inheritedCharset(OutputStream output) pure nothrow @nogc
+{
+    if (auto stream = cast(PrintStream) output)
+        return stream.charset();
+    return StandardCharsets.UTF_8;
+}
+
+/++
+Java's `PrintStream`: formatted byte output with a recorded error state.
+
+Ported from OpenJDK 21.0.13 `src/java.base/share/classes/java/io/PrintStream.java`; modified by the Flint authors:
+D text is UTF-8, the `Writer` pipeline is Flint's `BufferedWriter` over `OutputStreamWriter`, and the per-thread
+interrupt flag is absent, so an `InterruptedIOException` is recorded in the error state (D-IO-2). A checked write,
+flush or close failure never escapes; it sets the error state, as Java's methods do. The file constructors,
+`format`/`printf` and the `CharSequence` appends are deferred.
++/
+class PrintStream : FilterOutputStream
+{
+    private bool autoFlush_;
+    private bool trouble_;
+    private Charset charset_;
+    private BufferedWriter textOut_;
+    private OutputStreamWriter charOut_;
+    private bool closing_;
+
+    private static OutputStream requireOutput(OutputStream output)
+    {
+        import flint.java.lang : NullPointerException;
+
+        if (output is null)
+            throw new NullPointerException("Null output stream");
+        return output;
+    }
+
+    /// A print stream over `output` without automatic flushing, in the sink's charset when it is a `PrintStream`.
+    this(OutputStream output)
+    {
+        this(output, false);
+    }
+
+    /// A print stream over `output`; `autoFlush` flushes after a byte array write, a newline or a `println`.
+    this(OutputStream output, bool autoFlush)
+    {
+        this(requireOutput(output), autoFlush, inheritedCharset(output));
+    }
+
+    /// A print stream over `output` in `charset`; `autoFlush` flushes after a byte array write, a newline or a
+    /// `println`. A null stream, or a charset that names none, is rejected.
+    this(OutputStream output, bool autoFlush, Charset charset)
+    {
+        import flint.java.lang : NullPointerException;
+
+        super(requireOutput(output));
+        if (charset == Charset.init)
+            throw new NullPointerException("charset");
+        autoFlush_ = autoFlush;
+        charset_ = charset;
+        charOut_ = new OutputStreamWriter(this, charset);
+        textOut_ = new BufferedWriter(charOut_);
+    }
+
+    /// A print stream over `output` in the charset named `encoding`. An unknown name is `UnsupportedCharsetException`
+    /// and an empty one `IllegalCharsetNameException`, as Flint's `OutputStreamWriter` resolves names.
+    this(OutputStream output, bool autoFlush, string encoding)
+    {
+        this(requireOutput(output), autoFlush, Charset.forName(encoding));
+    }
+
+    /// The charset this stream encodes text in.
+    Charset charset() const pure nothrow @nogc
+    {
+        return charset_;
+    }
+
+    override void write(int b)
+    {
+        if (out_ is null)
+        {
+            trouble_ = true;
+            return;
+        }
+        try
+        {
+            out_.write(b);
+            if (b == '\n' && autoFlush_)
+                out_.flush();
+        }
+        catch (IOException)
+            trouble_ = true;
+    }
+
+    override void write(scope const(ubyte)[] b)
+    {
+        write(b, 0, cast(int) b.length);
+    }
+
+    override void write(scope const(ubyte)[] b, int off, int len)
+    {
+        if (out_ is null)
+        {
+            trouble_ = true;
+            return;
+        }
+        byteWriteEnd(b.length, off, len);
+        try
+        {
+            out_.write(b, off, len);
+            if (autoFlush_)
+                out_.flush();
+        }
+        catch (IOException)
+            trouble_ = true;
+    }
+
+    /// Java's `writeBytes`: write every byte as given.
+    void writeBytes(scope const(ubyte)[] b)
+    {
+        write(b, 0, cast(int) b.length);
+    }
+
+    private void writeText(scope const(char)[] text)
+    {
+        if (out_ is null)
+        {
+            trouble_ = true;
+            return;
+        }
+        try
+        {
+            textOut_.write(text);
+            textOut_.flushBuffer();
+            if (autoFlush_)
+            {
+                foreach (c; text)
+                    if (c == '\n')
+                    {
+                        out_.flush();
+                        break;
+                    }
+            }
+        }
+        catch (IOException)
+            trouble_ = true;
+    }
+
+    private void writeText(scope const(wchar)[] text)
+    {
+        if (out_ is null)
+        {
+            trouble_ = true;
+            return;
+        }
+        try
+        {
+            textOut_.write(text, 0, cast(int) text.length);
+            textOut_.flushBuffer();
+            if (autoFlush_)
+            {
+                foreach (c; text)
+                    if (c == '\n')
+                    {
+                        out_.flush();
+                        break;
+                    }
+            }
+        }
+        catch (IOException)
+            trouble_ = true;
+    }
+
+    private void newLine()
+    {
+        if (out_ is null)
+        {
+            trouble_ = true;
+            return;
+        }
+        try
+        {
+            textOut_.newLine();
+            textOut_.flushBuffer();
+            if (autoFlush_)
+                out_.flush();
+        }
+        catch (IOException)
+            trouble_ = true;
+    }
+
+    /// Java's `print(String)`. A null slice counts as empty (R26); the faithful `Nullable!string` overload is
+    /// pending the R5 API decision.
+    void print(scope const(char)[] text)
+    {
+        writeText(text);
+    }
+
+    /// Java's `print(char[])`: one UTF-16 unit array; a null array is empty (R26).
+    void print(scope const(wchar)[] text)
+    {
+        writeText(text);
+    }
+
+    /// Java's `print(char)`: one UTF-16 code unit; a lone surrogate writes U+FFFD (R14).
+    void print(C)(C c) if (is(C == wchar))
+    {
+        wchar[1] unit = [c];
+        writeText(utf16ToUtf8(unit[]));
+    }
+
+    /// Java's `print` of any value: `String.valueOf(value)`.
+    void print(T)(T value) if (!is(T : const(char)[]) && !is(T : const(wchar)[]) && !is(T == wchar))
+    {
+        import flint.java.lang : valueOf;
+
+        writeText(valueOf(value));
+    }
+
+    /// Java's `println()`: the platform line separator.
+    void println()
+    {
+        newLine();
+    }
+
+    /// Java's `println(String)`; a null slice counts as empty (R26).
+    void println(scope const(char)[] text)
+    {
+        writeText(text);
+        newLine();
+    }
+
+    /// Java's `println(char[])`; a null array is empty (R26).
+    void println(scope const(wchar)[] text)
+    {
+        writeText(text);
+        newLine();
+    }
+
+    /// Java's `println(char)`; a lone surrogate writes U+FFFD (R14).
+    void println(C)(C c) if (is(C == wchar))
+    {
+        print(c);
+        newLine();
+    }
+
+    /// Java's `println` of any value.
+    void println(T)(T value) if (!is(T : const(char)[]) && !is(T : const(wchar)[]) && !is(T == wchar))
+    {
+        print(value);
+        newLine();
+    }
+
+    /// Java's `append(CharSequence)`: write the text and return this stream.
+    PrintStream append(scope const(char)[] text)
+    {
+        writeText(text);
+        return this;
+    }
+
+    /// Java's `append(char)`: one UTF-16 code unit (R14), then this stream.
+    PrintStream append(C)(C c) if (is(C == wchar))
+    {
+        print(c);
+        return this;
+    }
+
+    /// Java's `checkError`: flush while open, then this stream's or a wrapped `PrintStream`'s error.
+    bool checkError()
+    {
+        if (out_ !is null)
+            flush();
+        if (auto stream = cast(PrintStream) out_)
+            return stream.checkError();
+        return trouble_;
+    }
+
+    /// Java's protected `setError`.
+    protected void setError()
+    {
+        trouble_ = true;
+    }
+
+    /// Java's protected `clearError`.
+    protected void clearError()
+    {
+        trouble_ = false;
+    }
+
+    override void flush()
+    {
+        if (out_ is null)
+        {
+            trouble_ = true;
+            return;
+        }
+        try
+            out_.flush();
+        catch (IOException)
+            trouble_ = true;
+    }
+
+    override void close()
+    {
+        if (closing_)
+            return;
+        closing_ = true;
+        try
+        {
+            textOut_.close();
+            out_.close();
+        }
+        catch (IOException)
+            trouble_ = true;
+        textOut_ = null;
+        charOut_ = null;
+        out_ = null;
     }
 }
 
