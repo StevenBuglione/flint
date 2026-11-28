@@ -182,7 +182,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | ai | spring-ai@v2.1.0 | 229 | 365 | 0 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,662 | 1,549 | 0 | 4,870 | 29,753 |
+| framework | spring-framework@v7.1.0 | 3,770 | 1,554 | 113 | 4,870 | 29,640 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
@@ -3534,6 +3534,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.beans.factory.annotation.Value` | `flint.beans.factory.annotation.Value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.beans.factory.annotation.Value#value` | `flint.beans.factory.annotation.Value.value` | [R2](api-mapping.md#r2-annotations) |  |
 
+#### org.springframework.beans.factory.aot
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.beans.factory.aot.AutowiredArguments#toArray()` | `flint.beans.factory.aot.AutowiredArguments.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
+
 #### org.springframework.beans.factory.config
 
 | Java | Flint | Rules | Note |
@@ -4640,6 +4646,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.jdbc.support.KeyHolder#getKeyAs(Class)` | `flint.jdbc.support.KeyHolder.getKeyAs` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.jdbc.support.KeyHolder#getKeyList()` | `flint.jdbc.support.KeyHolder.getKeyList` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.jdbc.support.KeyHolder#getKeys()` | `flint.jdbc.support.KeyHolder.getKeys` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+
+#### org.springframework.jdbc.support.incrementer
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.jdbc.support.incrementer.AbstractColumnMaxValueIncrementer#getColumnName()` | `flint.jdbc.support.incrementer.AbstractColumnMaxValueIncrementer.getColumnName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.jdbc.support.incrementer.AbstractColumnMaxValueIncrementer#setColumnName(String)` | `flint.jdbc.support.incrementer.AbstractColumnMaxValueIncrementer.setColumnName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.jdbc.support.incrementer.AbstractDataFieldMaxValueIncrementer#getIncrementerName()` | `flint.jdbc.support.incrementer.AbstractDataFieldMaxValueIncrementer.getIncrementerName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.jdbc.support.incrementer.AbstractDataFieldMaxValueIncrementer#setIncrementerName(String)` | `flint.jdbc.support.incrementer.AbstractDataFieldMaxValueIncrementer.setIncrementerName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### org.springframework.mock.web
 
@@ -11136,7 +11151,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.beans | 324 | 0 |
 | org.springframework.beans.factory | 127 | 0 |
 | org.springframework.beans.factory.annotation | 103 | 0 |
-| org.springframework.beans.factory.aot | 123 | 0 |
+| org.springframework.beans.factory.aot | 100 | 0 |
 | org.springframework.beans.factory.config | 486 | 0 |
 | org.springframework.beans.factory.parsing | 133 | 0 |
 | org.springframework.beans.factory.serviceloader | 19 | 0 |
@@ -11173,7 +11188,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.core.convert.support | 15 | 0 |
 | org.springframework.core.env | 29 | 0 |
 | org.springframework.core.io | 70 | 0 |
-| org.springframework.core.io.buffer | 0 | 277 |
+| org.springframework.core.io.buffer | 0 | 269 |
 | org.springframework.core.io.support | 133 | 0 |
 | org.springframework.core.log | 56 | 0 |
 | org.springframework.core.metrics | 16 | 0 |
@@ -11203,7 +11218,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.format.number.money | 16 | 0 |
 | org.springframework.format.support | 30 | 0 |
 | org.springframework.http | 215 | 9 |
-| org.springframework.http.client | 143 | 0 |
+| org.springframework.http.client | 126 | 0 |
 | org.springframework.http.client.observation | 31 | 0 |
 | org.springframework.http.client.reactive | 0 | 107 |
 | org.springframework.http.client.support | 36 | 0 |
@@ -11242,7 +11257,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.jdbc.datasource.lookup | 45 | 0 |
 | org.springframework.jdbc.object | 174 | 0 |
 | org.springframework.jdbc.support | 95 | 0 |
-| org.springframework.jdbc.support.incrementer | 119 | 0 |
+| org.springframework.jdbc.support.incrementer | 54 | 0 |
 | org.springframework.jdbc.support.lob | 55 | 0 |
 | org.springframework.jdbc.support.rowset | 147 | 0 |
 | org.springframework.jms | 34 | 0 |
