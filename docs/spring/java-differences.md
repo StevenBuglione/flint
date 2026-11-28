@@ -182,7 +182,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | ai | spring-ai@v2.1.0 | 229 | 365 | 0 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,770 | 1,554 | 113 | 4,870 | 29,640 |
+| framework | spring-framework@v7.1.0 | 3,778 | 1,554 | 121 | 4,870 | 29,632 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
@@ -11452,7 +11452,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.web.server.i18n | 0 | 17 |
 | org.springframework.web.server.session | 0 | 50 |
 | org.springframework.web.service.annotation | 41 | 0 |
-| org.springframework.web.service.invoker | 171 | 29 |
+| org.springframework.web.service.invoker | 163 | 29 |
 | org.springframework.web.service.registry | 70 | 0 |
 | org.springframework.web.servlet | 143 | 0 |
 | org.springframework.web.servlet.config | 37 | 0 |
