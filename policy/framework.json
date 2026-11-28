@@ -2115,9 +2115,7 @@
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
    "upstream": "openjdk@21.0.13",
-   "dependencies": [
-    "java"
-   ],
+   "dependencies": [],
    "unsafe": [
     "flint.java.util.zip.ffi"
    ],
