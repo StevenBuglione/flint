@@ -1,0 +1,8 @@
+{
+  "source": "closure/copyonwritearraylist.d",
+  "leaves": [
+    "flint.java.lang",
+    "flint.java.util"
+  ],
+  "data": []
+}

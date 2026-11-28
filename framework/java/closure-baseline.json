@@ -2457,6 +2457,28 @@
     "link|java|flint.javax.sql|datasource|Oz|undeclared module records flint.java.util.timezone"
   ],
   "groups": {
+    "java-concurrent-copyonwrite-module-records": {
+      "decision": "523bd5bd92ef255ad83efdaa4253b42197271e8a",
+      "reason": "Decision 523bd5bd (2026-11-28): a brand-new JDK leaf inherits the RTInfo/first-object module metadata records of the batch it lands in. CopyOnWriteArrayList is a new separate package (S-159 split, Base64 ad1d767e7 precedent) whose probe otherwise reports flint.java.character/sql/text.simpledateformat/time(.format)/util(.calendar/.date/.timezone) as undeclared; none of those are real imports (only flint.java.lang and flint.java.util are). Drop this whole group when the first-object/compile-scope model stops carrying module records.",
+      "violations": [
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|O3|undeclared module records flint.java.character",
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|O3|undeclared module records flint.java.sql",
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|O3|undeclared module records flint.java.text.simpledateformat",
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|O3|undeclared module records flint.java.time",
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|O3|undeclared module records flint.java.time.format",
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|O3|undeclared module records flint.java.util.calendar",
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|O3|undeclared module records flint.java.util.date",
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|O3|undeclared module records flint.java.util.timezone",
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|Oz|undeclared module records flint.java.character",
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|Oz|undeclared module records flint.java.sql",
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|Oz|undeclared module records flint.java.text.simpledateformat",
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|Oz|undeclared module records flint.java.time",
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|Oz|undeclared module records flint.java.time.format",
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|Oz|undeclared module records flint.java.util.calendar",
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|Oz|undeclared module records flint.java.util.date",
+        "link|java-concurrent-copyonwrite|flint.java.util.concurrent.copyonwritearraylist|list|Oz|undeclared module records flint.java.util.timezone"
+      ]
+    },
     "batch-placement": {
       "decision": "ce92c623083ab32b193e292454c6b8b4cc70f63a",
       "reason": "Batch-scope LDC placement: a package's shared module references land in its first object, so sibling probes carry them. The v4.3 per-source compile scope that would have removed them was rolled back (decision ce92c6230); drop this whole group if per-source or per-source+LTO is adopted.",

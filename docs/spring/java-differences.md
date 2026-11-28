@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,029 | 745 | 0 | 1,957 | 13,690 |
+| framework | openjdk@21.0.13 | 2,126 | 764 | 0 | 1,957 | 13,574 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2697,20 +2697,30 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.DateTimeException#<init>(String,Throwable)` | `flint.java.time.DateTimeException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
 | `java.time.Duration` | `flint.java.time.Duration` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct; ZERO is Duration.init. Members without their own row stay deferred: most do not yet check overflow as Java does. |
 | `java.time.Duration#equals(Object)` | `flint.java.time.Duration.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.Duration#parse(CharSequence)` | `flint.java.time.Duration.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.time.Instant` | `flint.java.time.Instant` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct; EPOCH is Instant.init. Members without their own row stay deferred: the MIN/MAX range and overflow checks are not implemented yet. |
 | `java.time.Instant#equals(Object)` | `flint.java.time.Instant.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.Instant#parse(CharSequence)` | `flint.java.time.Instant.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.time.LocalDate` | `flint.java.time.LocalDate` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct; LocalDate.init is EPOCH. Members without their own row stay deferred: of and withDayOfMonth report the DayOfMonth range as 1 - 31 where Java prints 1 - 28/31, plusDays and its relatives do not yet check overflow, and compareTo returns -1/0/1 where Java returns the field difference. |
 | `java.time.LocalDate#equals(Object)` | `flint.java.time.LocalDate.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.LocalDate#parse(CharSequence)` | `flint.java.time.LocalDate.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.LocalDate#parse(CharSequence,DateTimeFormatter)` | `flint.java.time.LocalDate.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.time.LocalDateTime` | `flint.java.time.LocalDateTime` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of a LocalDate and a LocalTime; LocalDateTime.init is 1970-01-01T00:00. Members without their own row stay deferred: day and time arithmetic reports an out-of-range result as a Year error where Java reports EpochDay, plusYears does not check overflow, and compareTo returns -1/0/1 where Java returns the field difference. |
 | `java.time.LocalDateTime#equals(Object)` | `flint.java.time.LocalDateTime.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.LocalDateTime#parse(CharSequence)` | `flint.java.time.LocalDateTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.LocalDateTime#parse(CharSequence,DateTimeFormatter)` | `flint.java.time.LocalDateTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.time.LocalTime` | `flint.java.time.LocalTime` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct; LocalTime.init is MIDNIGHT. Members without their own row stay deferred. |
 | `java.time.LocalTime#equals(Object)` | `flint.java.time.LocalTime.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.LocalTime#parse(CharSequence)` | `flint.java.time.LocalTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.LocalTime#parse(CharSequence,DateTimeFormatter)` | `flint.java.time.LocalTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.time.MonthDay` | `flint.java.time.monthday.MonthDay` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import MonthDay from flint.java.time.monthday until the JDK aggregate re-exports it. Null parse text counts as empty (R26). Java throws NullPointerException. |
 | `java.time.MonthDay#equals(Object)` | `flint.java.time.monthday.MonthDay.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.MonthDay#parse(CharSequence)` | `flint.java.time.monthday.MonthDay.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.time.MonthDay#with(Month)` | `flint.java.time.monthday.MonthDay.with_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `java.time.OffsetDateTime` | `flint.java.time.OffsetDateTime` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of a LocalDateTime and a ZoneOffset. Members without their own row stay deferred: compareTo returns -1/0/1 where Java returns field differences, withOffsetSameInstant goes through the instant where Java adds seconds to the local date-time (the out-of-range message differs), and ofInstant and atZoneSameInstant report an out-of-range result as a Year error where Java reports EpochDay. |
 | `java.time.OffsetDateTime#equals(Object)` | `flint.java.time.OffsetDateTime.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.OffsetDateTime#parse(CharSequence)` | `flint.java.time.OffsetDateTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.OffsetDateTime#parse(CharSequence,DateTimeFormatter)` | `flint.java.time.OffsetDateTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.time.Period` | `flint.java.time.period.Period` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import Period from flint.java.time.period until the JDK aggregate re-exports it. Null parse text counts as empty (R26). Java throws NullPointerException. |
 | `java.time.Period#equals(Object)` | `flint.java.time.period.Period.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.Period#parse(CharSequence)` | `flint.java.time.period.Period.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
@@ -2724,6 +2734,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.ZoneId` | `flint.java.time.ZoneId` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of an ID and its fixed offset; ZoneId.init is Z. Region IDs need the time-zone database, so of accepts only offsets and the UTC, GMT and UT prefixes, and systemDefault is UTC; both stay deferred. |
 | `java.time.ZoneOffset` | `flint.java.time.ZoneOffset` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of the total seconds; ZoneOffset.init is UTC. It is not a ZoneId subtype: toZoneId converts it. Members without their own row stay deferred: compareTo returns -1/0/1 where Java returns the difference of the total seconds. |
 | `java.time.ZonedDateTime` | `flint.java.time.ZonedDateTime` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of a LocalDateTime, a ZoneOffset and a ZoneId. Members without their own row stay deferred: the factories wait for region rules (gap and overlap resolution) and the EpochDay range message. |
+| `java.time.ZonedDateTime#parse(CharSequence)` | `flint.java.time.ZonedDateTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.ZonedDateTime#parse(CharSequence,DateTimeFormatter)` | `flint.java.time.ZonedDateTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 
 #### java.time.format
 
@@ -2861,6 +2873,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.EnumSet` | `flint.java.util.enumset.EnumSet` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.enumset. Java's Class<E> token becomes the EnumSet!E template parameter (R4). AbstractSet is deferred to sol-jdk-core's collections design, so the class derives from AbstractCollection and Set and is reparented when AbstractSet lands. |
 | `java.util.EnumSet#allOf(Class)` | `flint.java.util.enumset.EnumSet.allOf` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `java.util.EnumSet#noneOf(Class)` | `flint.java.util.enumset.EnumSet.noneOf` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `java.util.EnumSet#of(E,E...)` | `flint.java.util.enumset.EnumSet.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.EnumSet#of(E...)` | `flint.java.util.enumset.EnumSet.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.HashMap#containsKey(Object)` | `flint.java.util.HashMap.containsKey` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HashMap#containsValue(Object)` | `flint.java.util.HashMap.containsValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -2965,6 +2978,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.concurrent.CompletionException#<init>(String)` | `flint.java.util.concurrent.completionexception.CompletionException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.concurrent.CompletionException#<init>(String,Throwable)` | `flint.java.util.concurrent.completionexception.CompletionException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.concurrent.CompletionException#<init>(Throwable)` | `flint.java.util.concurrent.completionexception.CompletionException.this` | [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Preserves the cause. A non-RuntimeException cause's detail is rendered through javaToString, which does not invoke a custom checked Throwable.toString override. |
+| `java.util.concurrent.CopyOnWriteArrayList` | `flint.java.util.concurrent.copyonwritearraylist.CopyOnWriteArrayList` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.concurrent.copyonwritearraylist; flint.java.util.concurrent does not re-export it until the JDK aggregate exists. |
+| `java.util.concurrent.CopyOnWriteArrayList#contains(Object)` | `flint.java.util.concurrent.copyonwritearraylist.CopyOnWriteArrayList.contains` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.concurrent.CopyOnWriteArrayList#indexOf(Object)` | `flint.java.util.concurrent.copyonwritearraylist.CopyOnWriteArrayList.indexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.concurrent.CopyOnWriteArrayList#lastIndexOf(Object)` | `flint.java.util.concurrent.copyonwritearraylist.CopyOnWriteArrayList.lastIndexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.concurrent.CopyOnWriteArrayList#remove(Object)` | `flint.java.util.concurrent.copyonwritearraylist.CopyOnWriteArrayList.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.concurrent.CopyOnWriteArrayList#toArray()` | `flint.java.util.concurrent.copyonwritearraylist.CopyOnWriteArrayList.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.concurrent.Delayed` | `flint.java.util.concurrent.delayed.Delayed` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Import from flint.java.util.concurrent.delayed until the JDK aggregate is available. |
 | `java.util.concurrent.Delayed#getDelay(TimeUnit)` | `flint.java.util.concurrent.delayed.Delayed.getDelay` | [R5](api-mapping.md#r5-optional-and-nullable-values) | TimeUnit is a value enum, so a null unit is rejected at compile time. |
 | `java.util.concurrent.ExecutionException` | `flint.java.util.concurrent.executionexception.ExecutionException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Import the checked exception from flint.java.util.concurrent.executionexception. An empty detail is absent in Flint. Java preserves an explicitly empty String. |
@@ -11151,7 +11170,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
-| java.math | 133 | 0 |
+| java.math | 132 | 0 |
 | java.net | 552 | 0 |
 | java.net.spi | 0 | 1 |
 | java.nio | 18 | 0 |
@@ -11168,13 +11187,13 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.sql | 1,005 | 0 |
 | java.text | 535 | 0 |
 | java.text.spi | 0 | 27 |
-| java.time | 551 | 0 |
+| java.time | 460 | 0 |
 | java.time.chrono | 405 | 0 |
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,861 | 0 |
-| java.util.concurrent | 1,198 | 0 |
+| java.util | 1,858 | 0 |
+| java.util.concurrent | 1,177 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 89 | 0 |

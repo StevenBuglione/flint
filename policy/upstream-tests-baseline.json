@@ -5714,6 +5714,10 @@
       "java/util/concurrent/forkjoin/Uniprocessor.java",
       "java/util/concurrent/tck/JSR166TestCase.java"
     ],
+    "java-concurrent-copyonwrite": [
+      "java/util/concurrent/CopyOnWriteArrayList/COWSubList.java",
+      "java/util/concurrent/CopyOnWriteArrayList/EqualsRace.java"
+    ],
     "java-concurrent-sync": [
       "java/util/concurrent/ArrayBlockingQueue/WhiteBox.java",
       "java/util/concurrent/BlockingQueue/CancelledProducerConsumerLoops.java",
@@ -5741,8 +5745,6 @@
       "java/util/concurrent/ConcurrentQueues/IteratorWeakConsistency.java",
       "java/util/concurrent/ConcurrentQueues/OfferRemoveLoops.java",
       "java/util/concurrent/ConcurrentQueues/RemovePollRace.java",
-      "java/util/concurrent/CopyOnWriteArrayList/COWSubList.java",
-      "java/util/concurrent/CopyOnWriteArrayList/EqualsRace.java",
       "java/util/concurrent/CopyOnWriteArraySet/RacingCows.java",
       "java/util/concurrent/CopyOnWriteArraySet/SerializationTest.java",
       "java/util/concurrent/CountDownLatch/Basic.java",

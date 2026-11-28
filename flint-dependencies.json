@@ -343,6 +343,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-concurrent-copyonwrite": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-concurrent-exec": {
       "repo": "framework",
       "version": "monorepo"
