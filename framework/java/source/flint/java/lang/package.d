@@ -16,10 +16,16 @@ $(UL
 module flint.java.lang;
 
 public import flint.java.lang.boolean : Boolean;
+public import flint.java.lang.error : AssertionError, Error_;
+public import flint.java.lang.illegalmonitorstateexception : IllegalMonitorStateException;
 public import flint.java.lang.integer : Integer;
+public import flint.java.lang.interruptedexception : InterruptedException;
 public import flint.java.lang.long_ : Long;
+public import flint.java.lang.nullpointerexception : NullPointerException;
 public import flint.java.lang.javaobject : JavaObject;
 public import flint.java.lang.runnable : Runnable;
+public import flint.java.lang.runtimeexception : IllegalArgumentException, IllegalStateException,
+    JavaExceptionConstructors, RuntimeException, javaToString;
 public import flint.java.lang.system : System;
 
 import flint.engine.aot.objects : objectEquals, objectToHash, objectToString;
@@ -34,192 +40,8 @@ package(flint) import flint.java.lang.character.decimaldigits : javaDecimalDigit
 // ---------------------------------------------------------------------------------------------------------------
 // Exceptions (R8)
 
-/// A trace that records nothing: set before throwing, druntime captures no stack trace.
-private final class NoTrace : Throwable.TraceInfo
-{
-    override int opApply(scope int delegate(ref const(char[])) dg) const
-    {
-        return 0;
-    }
-
-    override int opApply(scope int delegate(ref size_t, ref const(char[])) dg) const
-    {
-        return 0;
-    }
-
-    override string toString() const
-    {
-        return "";
-    }
-}
-
-/++
-Java's `RuntimeException`: the root of the unchecked exceptions Spring throws.
-
-D's `Throwable.next` chains collateral exceptions; Java's cause is kept separately and read with `getCause`.
-+/
-class RuntimeException : Exception
-{
-    private Throwable cause_;
-    private bool causeSet;
-
-    /// No message and no cause.
-    this() pure nothrow
-    {
-        super(null);
-    }
-
-    /// `message`, with a cause that can still be initialized.
-    this(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
-    {
-        super(message, file, line);
-    }
-
-    /// `message` and an initialized `cause`, including an explicit null.
-    this(string message, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
-    {
-        this(message, file, line);
-        cause_ = cause;
-        causeSet = true;
-    }
-
-    /// Select the cause overload when the caller supplies a null literal.
-    this(string message, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
-    {
-        this(message, cast(Throwable) null, file, line);
-    }
-
-    /// Java's `RuntimeException(Throwable cause)`: the message is `cause.toString()`, or null.
-    this(Throwable cause, string file = __FILE__, size_t line = __LINE__)
-    {
-        super(cause is null ? null : javaToString(cause), file, line);
-        cause_ = cause;
-        causeSet = true;
-    }
-
-    /++
-    Java's protected four-argument constructor. With `writableStackTrace` false, throwing captures no stack
-    trace: the framework's control-flow exceptions use it. Suppression is always enabled in D.
-    +/
-    protected this(string message, Throwable cause, bool enableSuppression, bool writableStackTrace,
-            string file = __FILE__, size_t line = __LINE__) pure nothrow
-    {
-        this(message, cause, file, line);
-        // druntime captures a trace only while `info` is null (rt.deh._d_createTrace).
-        if (!writableStackTrace)
-            info = new NoTrace;
-    }
-
-    /// The detail message; null when there is none.
-    string getMessage() const pure nothrow @nogc
-    {
-        return msg;
-    }
-
-    /// `getMessage()`; subclasses may localize.
-    string getLocalizedMessage() const pure nothrow @nogc
-    {
-        return getMessage();
-    }
-
-    /// The cause; null when unknown.
-    inout(Throwable) getCause() inout pure nothrow @nogc
-    {
-        return cause_;
-    }
-
-    /// Set the cause once, as Java allows. Throws `IllegalStateException` when it was already set and
-    /// `IllegalArgumentException` for a self-cause.
-    RuntimeException initCause(Throwable cause)
-    {
-        if (causeSet)
-            throw new IllegalStateException("Can't overwrite cause with " ~ (cause is null ? "a null" : javaToString(
-                    cause)));
-        if (cause is this)
-            throw new IllegalArgumentException("Self-causation not permitted");
-        cause_ = cause;
-        causeSet = true;
-        return this;
-    }
-
-    /// Java's `Throwable.toString()`: the class name, then `: message` when there is one.
-    override string toString() const
-    {
-        return javaToString(this);
-    }
-}
-
-/// Java's `Throwable.toString()` for any throwable: its class name, then `: message` when there is one.
-string javaToString(const Throwable t) pure nothrow
-{
-    string message = t.msg;
-    if (auto runtime = cast(const RuntimeException) t)
-        message = runtime.getLocalizedMessage();
-    const name = typeid(t).name;
-    return message is null ? name : name ~ ": " ~ message;
-}
-
-/// Declares the five Java constructors of an exception class that forwards to its superclass.
-private mixin template JavaExceptionConstructors()
-{
-    /// No message and no cause.
-    this() pure nothrow
-    {
-        super();
-    }
-
-    /// `message`, with a cause that can still be initialized.
-    this(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
-    {
-        super(message, file, line);
-    }
-
-    /// `message` and an initialized `cause`.
-    this(string message, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
-    {
-        super(message, cause, file, line);
-    }
-
-    /// Select the cause overload when the caller supplies a null literal.
-    this(string message, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
-    {
-        this(message, cast(Throwable) null, file, line);
-    }
-
-    /// The message is `cause.toString()`.
-    this(Throwable cause, string file = __FILE__, size_t line = __LINE__)
-    {
-        super(cause, file, line);
-    }
-
-    /// See `RuntimeException`'s four-argument constructor.
-    protected this(string message, Throwable cause, bool enableSuppression, bool writableStackTrace,
-            string file = __FILE__, size_t line = __LINE__) pure nothrow
-    {
-        super(message, cause, enableSuppression, writableStackTrace, file, line);
-    }
-}
-
-/// Thrown when a method receives an illegal or inappropriate argument.
-class IllegalArgumentException : RuntimeException
-{
-    mixin JavaExceptionConstructors;
-}
-
-/// Thrown when a method is invoked at an illegal or inappropriate time.
-class IllegalStateException : RuntimeException
-{
-    mixin JavaExceptionConstructors;
-}
-
 /// Thrown when an operation is not supported, such as a write to an unmodifiable collection.
 class UnsupportedOperationException : RuntimeException
-{
-    mixin JavaExceptionConstructors;
-}
-
-/// Thrown when `null` is used where an object is required.
-class NullPointerException : RuntimeException
 {
     mixin JavaExceptionConstructors;
 }
@@ -286,34 +108,6 @@ class NumberFormatException : IllegalArgumentException
 class InstantiationException : RuntimeException
 {
     mixin JavaExceptionConstructors;
-}
-
-/++
-Java's `AssertionError`. Java's `Error`s that application code catches map to D `Exception`s (rule R8), because
-D's `Error` skips cleanup.
-+/
-class AssertionError : Exception
-{
-    private Throwable cause_;
-
-    /// `message`, and optionally a `cause`.
-    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
-    {
-        super(message, file, line);
-        cause_ = cause;
-    }
-
-    /// The detail message; null when there is none.
-    string getMessage() const pure nothrow @nogc
-    {
-        return msg;
-    }
-
-    /// The cause; null when unknown.
-    inout(Throwable) getCause() inout pure nothrow @nogc
-    {
-        return cause_;
-    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------

@@ -3,21 +3,27 @@
     "flint.java.character": {
       "character-ascii-lower": {
         "data": [],
-        "leaves": [],
+        "leaves": [
+          "flint.java.lang.runtimeexception"
+        ],
         "source": "closure/character-ascii-lower.d"
       },
       "character-category": {
         "data": [
           "flint.java.character.letterRanges"
         ],
-        "leaves": [],
+        "leaves": [
+          "flint.java.lang.runtimeexception"
+        ],
         "source": "closure/character-category.d"
       },
       "character-lower": {
         "data": [
           "flint.java.character.lowerRuns"
         ],
-        "leaves": [],
+        "leaves": [
+          "flint.java.lang.runtimeexception"
+        ],
         "source": "closure/character-lower.d"
       }
     },
@@ -32,7 +38,8 @@
       "bytearray-input": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.lang.runtimeexception"
         ],
         "source": "closure/bytearray-input.d"
       }
@@ -40,14 +47,17 @@
     "flint.java.lang": {
       "double": {
         "data": [],
-        "leaves": [],
+        "leaves": [
+          "flint.java.lang.runtimeexception"
+        ],
         "source": "closure/double.d"
       },
       "integer": {
         "data": [],
         "leaves": [
           "flint.java.internal.integers",
-          "flint.java.lang.character.decimaldigits"
+          "flint.java.lang.character.decimaldigits",
+          "flint.java.lang.runtimeexception"
         ],
         "source": "closure/integer.d"
       },
@@ -55,20 +65,24 @@
         "data": [],
         "leaves": [
           "flint.java.internal.integers",
-          "flint.java.lang.character.decimaldigits"
+          "flint.java.lang.character.decimaldigits",
+          "flint.java.lang.runtimeexception"
         ],
         "source": "closure/long.d"
       },
       "string-format": {
         "data": [],
         "leaves": [
+          "flint.java.lang.runtimeexception",
           "flint.java.util.formatter"
         ],
         "source": "closure/string-format.d"
       },
       "string-hash": {
         "data": [],
-        "leaves": [],
+        "leaves": [
+          "flint.java.lang.runtimeexception"
+        ],
         "source": "closure/string-hash.d"
       },
       "valueof-array": {
@@ -88,11 +102,61 @@
         "source": "closure/decimal-digits.d"
       }
     },
+    "flint.java.lang.error": {
+      "error-leaf": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.lang.runtimeexception"
+        ],
+        "source": "closure/error_leaf.d"
+      }
+    },
+    "flint.java.lang.illegalmonitorstateexception": {
+      "illegal-monitor-state-leaf": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.lang.runtimeexception"
+        ],
+        "source": "closure/illegalmonitorstateexception_leaf.d"
+      }
+    },
+    "flint.java.lang.interruptedexception": {
+      "interrupted-leaf": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.lang.runtimeexception"
+        ],
+        "source": "closure/interruptedexception_leaf.d"
+      }
+    },
+    "flint.java.lang.nullpointerexception": {
+      "null-pointer-leaf": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.lang.runtimeexception"
+        ],
+        "source": "closure/nullpointerexception_leaf.d"
+      }
+    },
+    "flint.java.lang.runtimeexception": {
+      "runtime-exception-leaf": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang"
+        ],
+        "source": "closure/runtimeexception_leaf.d"
+      }
+    },
     "flint.java.net": {
       "uri": {
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.runtimeexception",
           "flint.java.net.internal.ipv6literal"
         ],
         "source": "closure/uri.d"
@@ -102,7 +166,8 @@
       "charset": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.lang.runtimeexception"
         ],
         "source": "closure/charset.d"
       }
@@ -118,7 +183,8 @@
       "sql-exception": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.lang.runtimeexception"
         ],
         "source": "closure/sql-exception.d"
       }
@@ -128,6 +194,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.runtimeexception",
           "flint.java.text.simpledateformat"
         ],
         "source": "closure/message-format.d"
@@ -138,6 +205,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.runtimeexception",
           "flint.java.util.calendar",
           "flint.java.util.date",
           "flint.java.util.timezone"
@@ -150,6 +218,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.runtimeexception",
           "flint.java.time.format"
         ],
         "source": "closure/localdate.d"
@@ -160,6 +229,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.runtimeexception",
           "flint.java.time"
         ],
         "source": "closure/time-format.d"
@@ -169,21 +239,25 @@
       "arraylist": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.lang.runtimeexception"
         ],
         "source": "closure/arraylist.d"
       },
       "hashmap": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.lang.runtimeexception"
         ],
         "source": "closure/hashmap.d"
       },
       "optional": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
+          "flint.java.lang.runtimeexception"
         ],
         "source": "closure/optional.d"
       }
@@ -193,6 +267,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.runtimeexception",
           "flint.java.time",
           "flint.java.util.date",
           "flint.java.util.timezone"
@@ -203,7 +278,9 @@
     "flint.java.util.concurrent": {
       "time-unit": {
         "data": [],
-        "leaves": [],
+        "leaves": [
+          "flint.java.lang.runtimeexception"
+        ],
         "source": "closure/time-unit.d"
       }
     },
@@ -233,6 +310,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.runtimeexception",
           "flint.java.time"
         ],
         "source": "closure/date.d"
@@ -242,6 +320,7 @@
       "descriptors": {
         "data": [],
         "leaves": [
+          "flint.java.lang.runtimeexception",
           "flint.java.util"
         ],
         "source": "closure/descriptors.d"
@@ -251,7 +330,8 @@
       "formatter": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.lang.runtimeexception"
         ],
         "source": "closure/formatter.d"
       }
@@ -269,6 +349,8 @@
         "leaves": [
           "flint.java.lang",
           "flint.java.lang.long_",
+          "flint.java.lang.nullpointerexception",
+          "flint.java.lang.runtimeexception",
           "flint.java.util"
         ],
         "source": "closure/stream.d"
@@ -279,6 +361,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.runtimeexception",
           "flint.java.time"
         ],
         "source": "closure/timezone.d"
@@ -288,6 +371,7 @@
       "datasource": {
         "data": [],
         "leaves": [
+          "flint.java.lang.runtimeexception",
           "flint.java.sql"
         ],
         "source": "closure/datasource.d"
