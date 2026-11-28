@@ -6,8 +6,8 @@ Modified by the Flint authors: JUnit and AssertJ assertions become D unittests a
 `@PathPatternsParameterizedTest` is one unittest that loops over the named request factories. flint.web has no
 `ServletRequestPathUtils` or `UrlPathHelper` and its source resolves the lookup path from the request itself, so
 both factories only build the request. The test lives with flint.mock.web's `MockHttpServletRequest` in
-flint:framework-test, which depends on flint:web. Cases that need `getCorsConfigurations` or
-`setAllowInitLookupPath` wait behind version gates.
+flint:framework-test, which depends on flint:web. The case that needs `setAllowInitLookupPath` waits behind a
+version gate.
 +/
 module flint.web.url_based_cors_configuration_source_tests;
 
@@ -61,22 +61,19 @@ unittest
     }
 }
 
-// flint.web's UrlBasedCorsConfigurationSource does not expose its configurations map (getCorsConfigurations).
-version (FlintCorsSourceConfigurationsMap)
+// flint.web's UrlBasedCorsConfigurationSource exposes its configurations map (getCorsConfigurations).
+@("UrlBasedCorsConfigurationSourceTests.unmodifiableConfigurationsMap")
+unittest
 {
     import flint.java.lang : UnsupportedOperationException;
 
-    @("UrlBasedCorsConfigurationSourceTests.unmodifiableConfigurationsMap")
-    unittest
-    {
-        auto source = new UrlBasedCorsConfigurationSource();
-        bool thrown;
-        try
-            source.getCorsConfigurations()["/**"] = new CorsConfiguration();
-        catch (UnsupportedOperationException)
-            thrown = true;
-        assert(thrown);
-    }
+    auto source = new UrlBasedCorsConfigurationSource();
+    bool thrown;
+    try
+        source.getCorsConfigurations().put("/**", new CorsConfiguration());
+    catch (UnsupportedOperationException)
+        thrown = true;
+    assert(thrown);
 }
 
 // flint.web's UrlBasedCorsConfigurationSource always resolves the lookup path (no setAllowInitLookupPath).

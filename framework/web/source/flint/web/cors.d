@@ -16,6 +16,7 @@ import flint.http : HttpHeaders, HttpMethod, HttpStatus;
 import flint.http.server : ServletServerHttpRequest, ServletServerHttpResponse;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.java.lang : IllegalArgumentException;
+import flint.java.util : Collections, LinkedHashMap, Map;
 import flint.web.util.pattern : PathPattern, PathPatternParser;
 import std.typecons : Nullable, nullable;
 
@@ -869,6 +870,15 @@ class UrlBasedCorsConfigurationSource : CorsConfigurationSource
     bool isEmpty() const pure nothrow @nogc
     {
         return entries.length == 0;
+    }
+
+    /// All configured CORS mappings, keyed by their pattern string, unmodifiable (`getCorsConfigurations`).
+    Map!(string, CorsConfiguration) getCorsConfigurations()
+    {
+        auto result = new LinkedHashMap!(string, CorsConfiguration)();
+        foreach (entry; entries)
+            result.put(entry.pattern.getPatternString(), entry.config);
+        return Collections.unmodifiableMap(result);
     }
 
     CorsConfiguration getCorsConfiguration(HttpServletRequest request)
