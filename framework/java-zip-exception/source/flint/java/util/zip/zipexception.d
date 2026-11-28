@@ -37,7 +37,7 @@ class ZipException : IOException
 {
     this()
     {
-        super(null);
+        super();
     }
 
     this(string message)
