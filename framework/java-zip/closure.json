@@ -50,6 +50,7 @@
       "wrapped-data": {
         "source": "closure/deflater.d",
         "leaves": [
+          "flint.java.lang",
           "flint.java.lang.runtimeexception",
           "flint.java.lang.nullpointerexception",
           "flint.java.util.zip.ffi.deflate",
@@ -63,6 +64,7 @@
       "wrapped-data": {
         "source": "closure/inflater.d",
         "leaves": [
+          "flint.java.lang",
           "flint.java.lang.runtimeexception",
           "flint.java.lang.nullpointerexception",
           "flint.java.util.zip.dataformatexception",
