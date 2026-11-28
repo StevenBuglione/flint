@@ -1,0 +1,10 @@
+{
+  "source": "closure/ziperror.d",
+  "leaves": [
+    "flint.java.lang",
+    "flint.java.lang.error",
+    "flint.java.lang.runtimeexception",
+    "flint.java.lang.virtualmachineerror"
+  ],
+  "data": []
+}

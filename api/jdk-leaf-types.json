@@ -133,6 +133,7 @@
   "java.util.jar.JarEntry": "flint.java.util.jar.jarentry",
   "java.util.jar.JarException": "flint.java.util.jar.jarexception",
   "java.util.zip.ZipEntry": "flint.java.util.zip.zipentry",
+  "java.util.zip.ZipError": "flint.java.util.zip.ziperror",
   "java.util.zip.ZipException": "flint.java.util.zip.zipexception"
  }
 }
