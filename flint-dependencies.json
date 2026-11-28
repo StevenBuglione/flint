@@ -339,6 +339,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-collections-arraydeque": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-concurrent": {
       "repo": "framework",
       "version": "monorepo"
