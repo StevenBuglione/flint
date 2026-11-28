@@ -883,6 +883,8 @@
 "org.springframework.ai.transformer.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.ai.transformer.splitter.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.ai.transformers.**":{"status":"excluded","category":"deferred","phase":"3"},
+"org.springframework.ai.util.ResourceUtils":{"d":"flint.ai.util.ResourceUtils","status":"ported"},
+"org.springframework.ai.util.ResourceUtils#getText(String)":{"d":"flint.ai.util.ResourceUtils.getText","rules":["D-8"],"note":"Read failures propagate from the resource unwrapped (no IOException); the resource is decoded as UTF-8.","status":"adapted"},
 "org.springframework.ai.util.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.ai.util.json.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.ai.util.json.schema.**":{"status":"excluded","category":"deferred","phase":"2"},

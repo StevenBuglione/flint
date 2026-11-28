@@ -179,7 +179,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 
 | Repo | Upstream | Ported | Adapted | By porter | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 246 | 392 | 0 | 0 | 15,158 |
+| ai | spring-ai@v2.1.0 | 247 | 393 | 0 | 0 | 15,156 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
 | framework | spring-framework@v7.1.0 | 3,662 | 1,549 | 0 | 4,870 | 29,753 |
@@ -714,6 +714,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.ai.tokenizer.TokenCountEstimator#estimate(String)` | `flint.ai.tokenizer.TokenCountEstimator.estimate` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+
+#### org.springframework.ai.util
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.ai.util.ResourceUtils#getText(String)` | `flint.ai.util.ResourceUtils.getText` | [D-8](api-mapping.md#deviations) | Read failures propagate from the resource unwrapped (no IOException); the resource is decoded as UTF-8. |
 
 ### boot
 
@@ -10528,7 +10534,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.transformer | 4 | 0 |
 | org.springframework.ai.transformer.splitter | 29 | 0 |
 | org.springframework.ai.transformers | 0 | 34 |
-| org.springframework.ai.util | 24 | 0 |
+| org.springframework.ai.util | 22 | 0 |
 | org.springframework.ai.util.json | 7 | 0 |
 | org.springframework.ai.util.json.schema | 25 | 0 |
 | org.springframework.ai.utils | 4 | 0 |
