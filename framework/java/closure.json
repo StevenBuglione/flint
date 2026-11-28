@@ -4,6 +4,7 @@
       "character-ascii-lower": {
         "data": [],
         "leaves": [
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/character-ascii-lower.d"
@@ -13,6 +14,7 @@
           "flint.java.character.letterRanges"
         ],
         "leaves": [
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/character-category.d"
@@ -22,6 +24,7 @@
           "flint.java.character.lowerRuns"
         ],
         "leaves": [
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/character-lower.d"
@@ -39,6 +42,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/bytearray-input.d"
@@ -48,6 +52,7 @@
       "double": {
         "data": [],
         "leaves": [
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/double.d"
@@ -57,6 +62,7 @@
         "leaves": [
           "flint.java.internal.integers",
           "flint.java.lang.character.decimaldigits",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/integer.d"
@@ -66,6 +72,7 @@
         "leaves": [
           "flint.java.internal.integers",
           "flint.java.lang.character.decimaldigits",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/long.d"
@@ -73,6 +80,7 @@
       "string-format": {
         "data": [],
         "leaves": [
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception",
           "flint.java.util.formatter"
         ],
@@ -81,6 +89,7 @@
       "string-hash": {
         "data": [],
         "leaves": [
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/string-hash.d"
@@ -99,7 +108,9 @@
       "array-index": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
+          "flint.java.lang.runtimeexception"
         ],
         "source": "closure/array-index.d"
       }
@@ -116,6 +127,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/error_leaf.d"
@@ -126,6 +138,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/illegalmonitorstateexception_leaf.d"
@@ -136,6 +149,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/interruptedexception_leaf.d"
@@ -155,7 +169,8 @@
       "runtime-exception-leaf": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.lang.nullpointerexception"
         ],
         "source": "closure/runtimeexception_leaf.d"
       }
@@ -165,6 +180,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception",
           "flint.java.net.internal.ipv6literal"
         ],
@@ -176,6 +192,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/charset.d"
@@ -193,6 +210,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/sql-exception.d"
@@ -203,6 +221,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception",
           "flint.java.text.simpledateformat"
         ],
@@ -214,6 +233,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception",
           "flint.java.util.calendar",
           "flint.java.util.date",
@@ -227,6 +247,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception",
           "flint.java.time.format"
         ],
@@ -238,6 +259,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception",
           "flint.java.time"
         ],
@@ -249,6 +271,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/arraylist.d"
@@ -257,6 +280,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/hashmap.d"
@@ -276,6 +300,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception",
           "flint.java.time",
           "flint.java.util.date",
@@ -288,6 +313,7 @@
       "time-unit": {
         "data": [],
         "leaves": [
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/time-unit.d"
@@ -319,6 +345,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception",
           "flint.java.time"
         ],
@@ -329,6 +356,7 @@
       "descriptors": {
         "data": [],
         "leaves": [
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception",
           "flint.java.util"
         ],
@@ -340,6 +368,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/formatter.d"
@@ -370,6 +399,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception",
           "flint.java.time"
         ],
@@ -380,6 +410,7 @@
       "datasource": {
         "data": [],
         "leaves": [
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.runtimeexception",
           "flint.java.sql"
         ],

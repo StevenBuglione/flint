@@ -1,7 +1,9 @@
 {
   "data": [],
   "leaves": [
-    "flint.java.lang"
+    "flint.java.lang",
+    "flint.java.lang.nullpointerexception",
+    "flint.java.lang.runtimeexception"
   ],
   "source": "closure/negative-array-size.d"
 }
