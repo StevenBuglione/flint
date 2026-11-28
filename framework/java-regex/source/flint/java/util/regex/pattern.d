@@ -63,6 +63,71 @@ final class Pattern
         return new Matcher(this, input);
     }
 
+    /// Quote literal text so it compiles as an expression that matches itself (R5, R26).
+    static string quote(string text)
+    {
+        string result = "\\Q";
+        size_t start;
+        size_t at;
+        while (at + 1 < text.length)
+        {
+            if (text[at] == '\\' && text[at + 1] == 'E')
+            {
+                result ~= text[start .. at] ~ "\\E\\\\E\\Q";
+                at += 2;
+                start = at;
+            }
+            else
+                ++at;
+        }
+        return result ~ text[start .. $] ~ "\\E";
+    }
+
+    /// Split the input around matches, dropping trailing empty strings (R5, R26).
+    string[] split(string input)
+    {
+        return split(input, 0);
+    }
+
+    /// Split the input with Java's positive, zero and negative limit rules (R5, R26).
+    string[] split(string input, int limit)
+    {
+        const text = input is null ? "" : input;
+        const units = utf16Length(text);
+        const limited = limit > 0;
+        string[] pieces;
+        int index;
+        auto matcher = matcher(text);
+        while (matcher.find())
+        {
+            const first = matcher.start();
+            if (!limited || pieces.length < limit - 1)
+            {
+                if (index == 0 && first == 0 && matcher.end() == 0)
+                    continue; // Java drops the empty piece before a zero-width match at the start
+                pieces ~= sliceUtf16(text, index, first);
+                index = matcher.end();
+            }
+            else if (pieces.length == limit - 1)
+            {
+                pieces ~= sliceUtf16(text, index, units);
+                break;
+            }
+        }
+        if (index == 0)
+            return [text];
+        if (!limited || pieces.length < limit)
+            pieces ~= sliceUtf16(text, index, units);
+        if (limit == 0)
+        {
+            size_t keep = pieces.length;
+            while (keep > 0 && pieces[keep - 1].length == 0)
+                --keep;
+            pieces.length = keep;
+        }
+        return pieces;
+    }
+
     /// The flags in effect after compiling this expression.
     int flags() const pure nothrow @nogc
     {
@@ -180,6 +245,7 @@ private class NumberedMatch : MatchResult
 final class Matcher : NumberedMatch
 {
     private Pattern compiled;
+    private int searchFrom; // in Unicode code points
 
     private this(Pattern compiled, string input)
     {
@@ -205,10 +271,27 @@ final class Matcher : NumberedMatch
         return match(false);
     }
 
+    /// Find the next match at or after the current search position.
+    bool find()
+    {
+        return findFrom(searchFrom);
+    }
+
+    /// Find the first match at or after the given UTF-16 offset.
+    bool find(int start)
+    {
+        if (start < 0 || start > utf16Length(input))
+            throw new IndexOutOfBoundsException("Illegal start index");
+        matched = false;
+        searchFrom = codePointIndex(input, start);
+        return findFrom(searchFrom);
+    }
+
     /// Clear the match state while keeping the current input and compiled expression.
     Matcher reset() pure nothrow @nogc
     {
         matched = false;
+        searchFrom = 0;
         return this;
     }
 
@@ -226,6 +309,18 @@ final class Matcher : NumberedMatch
             capturePoints = new int[2 * (groupCount() + 1)];
         scope int[] result = capturePoints.length ? capturePoints : wholeMatch[];
         matched = compiled.program.captureMatch(input, result, wholeInput);
+        searchFrom = matched ? result[1] : 0;
+        return matched;
+    }
+
+    private bool findFrom(int from)
+    {
+        matched = false;
+        if (groupCount() && !capturePoints.length)
+            capturePoints = new int[2 * (groupCount() + 1)];
+        scope int[] result = capturePoints.length ? capturePoints : wholeMatch[];
+        matched = compiled.program.searchMatch(input, from, result);
+        searchFrom = matched ? (result[1] == result[0] ? result[1] + 1 : result[1]) : 0;
         return matched;
     }
 
@@ -252,6 +347,51 @@ final class Matcher : NumberedMatch
         }
         return result;
     }
+}
+
+/// The number of UTF-16 code units in UTF-8 `text`, matching Java's `String.length`.
+private int utf16Length(scope const(char)[] text) pure nothrow @nogc
+{
+    import flint.engine.aot.text : decodeUtf8;
+
+    size_t at;
+    int units;
+    while (at < text.length)
+        units += decodeUtf8(text, at) > wchar.max ? 2 : 1;
+    return units;
+}
+
+/// The code point index whose UTF-16 prefix reaches `unit`, rounding a mid-pair offset down.
+private int codePointIndex(scope const(char)[] text, int unit) pure nothrow @nogc
+{
+    import flint.engine.aot.text : decodeUtf8;
+
+    size_t at;
+    int units, points;
+    while (at < text.length && units < unit)
+    {
+        units += decodeUtf8(text, at) > wchar.max ? 2 : 1;
+        ++points;
+    }
+    return points;
+}
+
+/// The byte offset of the code point that contains UTF-16 offset `unit`.
+private size_t byteOffset(scope const(char)[] text, int unit) pure nothrow @nogc
+{
+    import flint.engine.aot.text : decodeUtf8;
+
+    size_t at;
+    int units;
+    while (at < text.length && units < unit)
+        units += decodeUtf8(text, at) > wchar.max ? 2 : 1;
+    return at;
+}
+
+/// A UTF-8 slice between two UTF-16 offsets drawn from match boundaries.
+private string sliceUtf16(string text, int first, int last) pure nothrow @nogc
+{
+    return text[byteOffset(text, first) .. byteOffset(text, last)];
 }
 
 /// A malformed regular expression and the approximate position of the error.

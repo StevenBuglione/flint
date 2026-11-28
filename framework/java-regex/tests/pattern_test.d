@@ -262,3 +262,71 @@ unittest
     noCaptures.reset("b");
     assert(whole.groupCount() == 0 && whole.group().get == "a" && whole.end() == 1);
 }
+
+@("Matcher.find walks successive matches and reports UTF-16 offsets")
+unittest
+{
+    import flint.java.lang : IndexOutOfBoundsException;
+    import std.exception : assertThrown;
+
+    auto matcher = Pattern.compile("(b.)").matcher("😀bc xbd");
+    assert(matcher.find());
+    assert(matcher.group().get == "bc" && matcher.start() == 2 && matcher.end() == 4);
+    assert(matcher.group(1).get == "bc" && matcher.start(1) == 2 && matcher.end(1) == 4);
+    assert(matcher.find());
+    assert(matcher.group().get == "bd" && matcher.start() == 6 && matcher.end() == 8);
+    assert(!matcher.find() && !matcher.hasMatch());
+    assert(matcher.find(4) && matcher.start() == 6 && matcher.group().get == "bd");
+    assertThrown!IndexOutOfBoundsException(matcher.find(-1));
+    assertThrown!IndexOutOfBoundsException(matcher.find(9));
+}
+
+@("Matcher.find yields the empty matches Java reports")
+unittest
+{
+    auto matcher = Pattern.compile("a*").matcher("ba");
+    assert(matcher.find() && matcher.start() == 0 && matcher.end() == 0);
+    assert(matcher.find() && matcher.start() == 1 && matcher.end() == 2 && matcher.group().get == "a");
+    assert(matcher.find() && matcher.start() == 2 && matcher.end() == 2);
+    assert(!matcher.find());
+
+    auto prefix = Pattern.compile("a").matcher("aXaa");
+    assert(prefix.lookingAt() && prefix.end() == 1);
+    assert(prefix.find() && prefix.start() == 2 && prefix.end() == 3);
+    assert(prefix.find() && prefix.start() == 3 && prefix.end() == 4);
+
+    auto anchored = Pattern.compile("^b").matcher("ab");
+    assert(!anchored.find());
+}
+
+@("Pattern.split follows Java's limit rules and UTF-16 boundaries")
+unittest
+{
+    auto commas = Pattern.compile(",");
+    assert(commas.split("a,b,,c") == ["a", "b", "", "c"]);
+    assert(commas.split("a,b,,") == ["a", "b"]);
+    assert(commas.split("a,b,,", -1) == ["a", "b", "", ""]);
+    assert(commas.split("a,b,c,d", 2) == ["a", "b,c,d"]);
+    assert(commas.split("") == [""]);
+    assert(commas.split("abc") == ["abc"]);
+
+    auto empty = Pattern.compile("");
+    assert(empty.split("abc") == ["a", "b", "c"]);
+    assert(empty.split("abc", 2) == ["a", "bc"]);
+    assert(empty.split("😀b") == ["😀", "b"]);
+
+    assert(Pattern.compile("\\s+").split(" one two ") == ["", "one", "two"]);
+    assert(Pattern.compile("x").split(null) == [""]);
+}
+
+@("Pattern.quote compiles literal text, including embedded terminator sequences")
+unittest
+{
+    foreach (text; ["plain", "a.b*c", "a\\E*b", "\\Q", "", "😀|"])
+    {
+        auto literal = Pattern.compile(Pattern.quote(text));
+        assert(literal.matcher(text).matches());
+        assert(literal.pattern() == Pattern.quote(text));
+    }
+    assert(!Pattern.compile(Pattern.quote("a.b")).matcher("axb").matches());
+}

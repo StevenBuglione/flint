@@ -113,6 +113,41 @@ struct Regex
         return match(input, result, wholeInput);
     }
 
+    /// `Matcher.find()`: the leftmost match that starts at or after code point `from`. Captures are saved as pairs of
+    /// Unicode code-point indices; `result[0]` is the match start, not zero.
+    bool searchMatch(scope const(char)[] input, int from, scope int[] result) const
+    {
+        assert(result.length == 2 * (groups + 1));
+        dchar[256] smallText = void;
+        const onStack = input.length <= smallText.length;
+        scope dchar[] buffer = onStack ? smallText[0 .. input.length] : new dchar[input.length];
+        scope text = buffer[0 .. decodeInto(input, buffer)];
+        int[32] smallState = void;
+        const captureCount = 2 * (groups + 1);
+        const stateCount = captureCount + registers;
+        scope int[] state = stateCount <= smallState.length ? smallState[0 .. stateCount] : new int[stateCount];
+        const start = from < 0 ? 0 : from;
+        if (start > text.length)
+            return false;
+        foreach (pos; start .. text.length + 1)
+        {
+            state[] = -1;
+            scope vm = Matcher(code, sets, text, state[0 .. captureCount], state[captureCount .. $]);
+            const end = vm.run(0, cast(int) pos, -1);
+            if (end >= 0)
+            {
+                if (result.length)
+                {
+                    result[] = state[0 .. captureCount];
+                    result[0] = cast(int) pos;
+                    result[1] = end;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
     private bool match(scope const(char)[] input, scope int[] result, bool wholeInput) const
     {
         // A request's value is short: its code points, captures and loop registers live on the (fiber) stack, and
