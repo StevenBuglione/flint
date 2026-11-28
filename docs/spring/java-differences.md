@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,248 | 860 | 0 | 1,957 | 13,356 |
+| framework | openjdk@21.0.13 | 2,248 | 862 | 0 | 1,957 | 13,354 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2332,6 +2332,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.StringWriter#write(char[],int,int)` | `flint.java.io.StringWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's concrete UTF-16 adapter; a lone half writes U+FFFD (R14) and a null array is empty (R26). |
 | `java.io.StringWriter#write(int)` | `flint.java.io.StringWriter.write` | [R14](api-mapping.md#r14-strings-and-text) | Inherits Writer's single-character write; a lone surrogate appends U+FFFD (R14). |
 | `java.io.UTFDataFormatException#<init>(String)` | `flint.java.io.UTFDataFormatException.this` | [R26](api-mapping.md#r26-null-arrays) | An empty message means no detail (R26). The cause stays open for one initCause call. |
+| `java.io.UncheckedIOException#<init>(IOException)` | `flint.java.io.UncheckedIOException.this` | [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | A null cause is rejected. A cause-specific toString override is not invoked: the detail uses the cause's D class name and message, and an empty cause message leaves only the class name (R26). |
+| `java.io.UncheckedIOException#<init>(String,IOException)` | `flint.java.io.UncheckedIOException.this` | [R26](api-mapping.md#r26-null-arrays) | A null cause is rejected. An empty message means no detail (R26). |
 | `java.io.UnsupportedEncodingException` | `flint.java.io.unsupportedencodingexception.UnsupportedEncodingException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions) |  |
 | `java.io.UnsupportedEncodingException#<init>(String)` | `flint.java.io.unsupportedencodingexception.UnsupportedEncodingException.this` | [R26](api-mapping.md#r26-null-arrays) | An empty message means no detail (R26). The cause stays open for one initCause call. |
 | `java.io.Writer#write(String)` | `flint.java.io.Writer.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | The whole UTF-8 text overload is Flint's abstract sink; Java's concrete write(String) forwards to the UTF-16 ranged overload with the string's length. A null string is empty (R26). |
@@ -11273,7 +11275,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 552 | 0 |
+| java.io | 550 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -12225,8 +12227,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.StringWriter#append(CharSequence,int,int)` | 2 | Missing UTF-16 sequence range append with a StringWriter result. Java applies the range to the text null when the sequence is absent. |
 | framework | `java.io.StringWriter#append(char)` | 2 | Missing single UTF-16 code-unit append with a StringWriter result. |
 | framework | `java.io.StringWriter#getBuffer()` | 2 | Missing access to the same live mutable StringBuffer that the writer uses as its lock. |
-| framework | `java.io.UncheckedIOException#<init>(IOException)` | 2 | The constructor checks null causes. Java derives the message from the virtual IOException.toString method. The current formatter uses the cause's type and raw detail. |
-| framework | `java.io.UncheckedIOException#<init>(String,IOException)` | 2 | The constructor checks null causes. The inherited Java detail accessor still needs R26 empty-string normalization. |
 | framework | `java.io.Writer` | 2 | The abstract sink implements Closeable and Flushable and the UTF-16 write hooks; Appendable is still pending. |
 | framework | `java.io.Writer#<init>()` | 2 | Java initializes the protected lock to the writer itself. The existing type has no lock field. |
 | framework | `java.io.Writer#append(CharSequence)` | 2 | Java appends the four characters null for an absent character sequence. The existing method treats a null slice as empty. |
