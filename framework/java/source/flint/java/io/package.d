@@ -622,6 +622,164 @@ class BufferedInputStream : FilterInputStream
     }
 }
 
+/// Java's `PushbackInputStream`: an input stream with a pushback buffer.
+class PushbackInputStream : FilterInputStream
+{
+    /// The pushback buffer. Null once the stream is closed.
+    protected ubyte[] buf;
+
+    /// The index of the next pushed-back byte; `buf.length` when empty.
+    protected int pos;
+
+    /// Wrap `input` with a one-byte pushback buffer.
+    this(InputStream input)
+    {
+        this(input, 1);
+    }
+
+    /// Wrap `input` with a pushback buffer of `size` bytes.
+    this(InputStream input, int size)
+    {
+        super(input);
+        if (size <= 0)
+        {
+            import flint.java.lang : IllegalArgumentException;
+
+            throw new IllegalArgumentException("size <= 0");
+        }
+        buf = new ubyte[size];
+        pos = size;
+    }
+
+    alias read = FilterInputStream.read;
+
+    private void ensureOpen()
+    {
+        if (in_ is null)
+            throw new IOException("Stream closed");
+    }
+
+    /// The next pushed-back byte, or the wrapped stream's next byte.
+    override int read()
+    {
+        ensureOpen();
+        if (pos < buf.length)
+            return buf[pos++] & 0xFF;
+        return super.read();
+    }
+
+    /// Read pushed-back bytes first, then from the wrapped stream.
+    override int read(scope ubyte[] b, int off, int len)
+    {
+        ensureOpen();
+        checkReadRange(b.length, off, len);
+        if (len == 0)
+            return 0;
+
+        int avail = cast(int)(buf.length - pos);
+        if (avail > 0)
+        {
+            if (len < avail)
+                avail = len;
+            copyRange(b, off, buf, pos, avail);
+            pos += avail;
+            off += avail;
+            len -= avail;
+        }
+        if (len > 0)
+        {
+            const count = super.read(b, off, len);
+            if (count == -1)
+                return avail == 0 ? -1 : avail;
+            return avail + count;
+        }
+        return avail;
+    }
+
+    /// Push one byte back.
+    void unread(int b)
+    {
+        ensureOpen();
+        if (pos == 0)
+            throw new IOException("Push back buffer is full");
+        buf[--pos] = cast(ubyte) b;
+    }
+
+    /// Push `len` bytes of `b` from `off` back.
+    void unread(scope const(ubyte)[] b, int off, int len)
+    {
+        ensureOpen();
+        if (len > pos)
+            throw new IOException("Push back buffer is full");
+        checkReadRange(b.length, off, len);
+        pos -= len;
+        copyRange(buf, pos, b, off, len);
+    }
+
+    /// Push every byte of `b` back.
+    void unread(scope const(ubyte)[] b)
+    {
+        unread(b, 0, cast(int) b.length);
+    }
+
+    /// The pushed-back bytes plus the wrapped stream's estimate.
+    override int available()
+    {
+        ensureOpen();
+        const n = cast(int)(buf.length - pos);
+        const avail = super.available();
+        return n > (int.max - avail) ? int.max : n + avail;
+    }
+
+    /// Skip pushed-back bytes first, then the wrapped stream.
+    override long skip(long n)
+    {
+        ensureOpen();
+        if (n <= 0)
+            return 0;
+
+        long skipped = buf.length - pos;
+        if (skipped > 0)
+        {
+            if (n < skipped)
+                skipped = n;
+            pos += cast(int) skipped;
+            n -= skipped;
+        }
+        if (n > 0)
+            skipped += super.skip(n);
+        return skipped;
+    }
+
+    /// Marks are not supported.
+    override bool markSupported()
+    {
+        return false;
+    }
+
+    /// Marks are not supported, so this does nothing.
+    override void mark(int readLimit)
+    {
+    }
+
+    /// Marks are not supported.
+    override void reset()
+    {
+        throw new IOException("mark/reset not supported");
+    }
+
+    /// Close the wrapped stream once.
+    override void close()
+    {
+        if (in_ !is null)
+        {
+            in_.close();
+            in_ = null;
+            buf = null;
+        }
+    }
+}
+
 /// Java's `OutputStream`: a sink of bytes.
 abstract class OutputStream : Closeable, Flushable
 {
@@ -1321,6 +1479,7 @@ private void putCodePoint(scope char[] output, ref size_t used, int codePoint) p
 class DataInputStream : FilterInputStream, DataInput
 {
     private ubyte[8] readBuffer;
+    private PushbackInputStream readLinePushback;
 
     /// Wrap `input`.
     this(InputStream input)
@@ -1456,6 +1615,72 @@ class DataInputStream : FilterInputStream, DataInput
         Bits bits;
         bits.l = readLongBits(readBuffer, 0);
         return bits.d;
+    }
+
+    /// Read a line of text; each byte becomes one UTF-16 code unit, as Java does.
+    final string readLine()
+    {
+        ubyte[] line;
+        size_t used;
+        int c;
+        loop: for (;;)
+        {
+            c = in_.read();
+            switch (c)
+            {
+            case -1:
+            case '\n':
+                break loop;
+            case '\r':
+                const c2 = in_.read();
+                if (c2 != '\n' && c2 != -1)
+                {
+                    PushbackInputStream pushback = readLinePushback;
+                    if (pushback is null)
+                    {
+                        pushback = new PushbackInputStream(in_);
+                        in_ = pushback;
+                        readLinePushback = pushback;
+                    }
+                    pushback.unread(c2);
+                }
+                break loop;
+            default:
+                if (used == line.length)
+                {
+                    const grownLength = line.length ? line.length * 2 : 128;
+                    ubyte[] grown = new ubyte[grownLength];
+                    if (line.length)
+                        copyRange(grown, 0, line, 0, line.length);
+                    line = grown;
+                }
+                line[used++] = cast(ubyte) c;
+                break;
+            }
+        }
+        if (c == -1 && used == 0)
+            return null;
+        return latin1String(line[0 .. used]);
+    }
+
+    private static string latin1String(scope const(ubyte)[] bytes)
+    {
+        size_t length;
+        foreach (b; bytes)
+            length += b < 0x80 ? 1 : 2;
+        char[] result = new char[length];
+        size_t index;
+        foreach (b; bytes)
+        {
+            if (b < 0x80)
+                result[index++] = cast(char) b;
+            else
+            {
+                result[index++] = cast(char)(0xC0 | (b >> 6));
+                result[index++] = cast(char)(0x80 | (b & 0x3F));
+            }
+        }
+        return result.idup;
     }
 
     /// Read modified UTF-8 with a two-byte length prefix.
