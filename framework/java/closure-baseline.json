@@ -2744,6 +2744,28 @@
         "link|java-zip-entry|flint.java.util.zip.zipentry|zipentry|Oz|undeclared module records flint.java.util.date",
         "link|java-zip-entry|flint.java.util.zip.zipentry|zipentry|Oz|undeclared module records flint.java.util.timezone"
       ]
+    },
+    "java-jar-entry-module-records": {
+      "decision": "523bd5bd92ef255ad83efdaa4253b42197271e8a",
+      "reason": "Decision 523bd5bd (2026-11-28): a brand-new JDK leaf inherits the RTInfo/first-object module metadata records of the batch it lands in. JarEntry is a new separate package whose probe declares its real imports flint.java.lang, flint.java.nio.file.attribute.filetime, flint.java.time, flint.java.util.concurrent, flint.java.util.jar and flint.java.util.zip.zipentry; the listed modules are not real imports. Drop this whole group when the first-object/compile-scope model stops carrying module records.",
+      "violations": [
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|O3|undeclared module records flint.java.character",
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|O3|undeclared module records flint.java.sql",
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|O3|undeclared module records flint.java.text.simpledateformat",
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|O3|undeclared module records flint.java.time.format",
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|O3|undeclared module records flint.java.util",
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|O3|undeclared module records flint.java.util.calendar",
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|O3|undeclared module records flint.java.util.date",
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|O3|undeclared module records flint.java.util.timezone",
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|Oz|undeclared module records flint.java.character",
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|Oz|undeclared module records flint.java.sql",
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|Oz|undeclared module records flint.java.text.simpledateformat",
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|Oz|undeclared module records flint.java.time.format",
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|Oz|undeclared module records flint.java.util",
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|Oz|undeclared module records flint.java.util.calendar",
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|Oz|undeclared module records flint.java.util.date",
+        "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|Oz|undeclared module records flint.java.util.timezone"
+      ]
     }
   }
 }
