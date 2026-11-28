@@ -35,8 +35,9 @@ private string[] drainLines(Scanner scanner)
     assert(drain(new Scanner("a\u000Bb")) == ["a", "b"]);
     assert(drain(new Scanner("a\u001Cb\u001Dc\u001Ed\u001Fe")) == ["a", "b", "c", "d", "e"]);
     assert(drain(new Scanner("a\u1680b")) == ["a", "b"]);
-    assert(drain(new Scanner("a\u2000b\u2001c\u2002d\u2003e\u2004f\u2005g\u2006h\u2009i\u200Aj"))
-        == ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]);
+    assert(drain(new Scanner("a\u2000b\u2001c\u2002d\u2003e\u2004f\u2005g\u2006h\u2009i\u200Aj")) == [
+        "a", "b", "c", "d", "e", "f", "g", "h", "i", "j"
+    ]);
     assert(drain(new Scanner("a\u2007b\u00A0c\u200Bd")) == ["a\u2007b\u00A0c\u200Bd"]);
     assert(drain(new Scanner("a\u2028b\u2029c\u205Fd\u3000e")) == ["a", "b", "c", "d", "e"]);
     assert(new Scanner("   ").hasNext() == false);

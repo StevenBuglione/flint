@@ -105,6 +105,7 @@
   "java.util.MissingFormatArgumentException": "flint.java.util.formatter",
   "java.util.Random": "flint.java.util.random.random",
   "java.util.SplittableRandom": "flint.java.util.splittablerandom",
+  "java.util.Scanner": "flint.java.util.scanner",
   "java.util.StringJoiner": "flint.java.util.stringjoiner",
   "java.util.UUID": "flint.java.util.uuid",
   "java.util.UnknownFormatConversionException": "flint.java.util.formatter",

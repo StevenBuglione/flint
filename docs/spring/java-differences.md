@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,187 | 802 | 0 | 1,957 | 13,475 |
+| framework | openjdk@21.0.13 | 2,194 | 804 | 0 | 1,957 | 13,466 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2993,6 +2993,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Optional` | `flint.java.util.Optional` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.Properties#setProperty(String,String)` | `flint.java.util.Properties.setProperty` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Random#nextBytes(byte[])` | `flint.java.util.random.random.Random.nextBytes` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Scanner` | `flint.java.util.scanner.Scanner` | [R1](api-mapping.md#r1-packages-and-names), [R14](api-mapping.md#r14-strings-and-text) | Import the leaf flint.java.util.scanner. The scoped port covers Scanner(String), the default Character.isWhitespace token delimiter, hasNext/next, hasNextLine/nextLine, close and ioException; delimiter patterns, Readable sources and the numeric next* methods are not yet ported. A null source throws NullPointerException as in Java. |
+| `java.util.Scanner#ioException()` | `flint.java.util.scanner.Scanner.ioException` | [R8](api-mapping.md#r8-exceptions) | Returns D's Throwable; it is always null for a String source, where Java declares IOException. |
 | `java.util.Set#of(E...)` | `flint.java.util.Set.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.SimpleTimeZone#clone()` | `flint.java.util.SimpleTimeZone.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.SplittableRandom#nextBytes(byte[])` | `flint.java.util.splittablerandom.SplittableRandom.nextBytes` | [R26](api-mapping.md#r26-null-arrays) |  |
@@ -11271,7 +11273,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,860 | 0 |
+| java.util | 1,851 | 0 |
 | java.util.concurrent | 1,139 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |

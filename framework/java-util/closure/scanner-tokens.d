@@ -8,7 +8,8 @@ import flint.java.util.scanner : Scanner;
 
 int main(string[] args)
 {
-    auto scanner = new Scanner("  alpha beta\n gamma\r\ndelta  ");
+    const source = args.length > 1 ? args[1] : "  alpha beta\n gamma\r\ndelta  ";
+    auto scanner = new Scanner(source);
     int count;
     while (scanner.hasNext())
     {
