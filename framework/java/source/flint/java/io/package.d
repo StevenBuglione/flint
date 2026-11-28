@@ -2134,6 +2134,7 @@ class StringWriter : Writer
 class OutputStreamWriter : Writer
 {
     private OutputStream output;
+    private bool closed_;
 
     /// A writer over `output`. A null stream is rejected, as Java's lock constructor does.
     this(OutputStream output)
@@ -2149,17 +2150,27 @@ class OutputStreamWriter : Writer
 
     override void write(scope const(char)[] text)
     {
+        if (closed_)
+            throw new IOException("Stream closed");
         output.write(cast(const(ubyte)[]) text);
     }
 
     override void flush()
     {
+        if (closed_)
+            throw new IOException("Stream closed");
         output.flush();
     }
 
     override void close()
     {
-        output.close();
+        if (closed_)
+            return;
+        closed_ = true;
+        try
+            output.flush();
+        finally
+            output.close();
     }
 }
 
