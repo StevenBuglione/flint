@@ -2788,6 +2788,22 @@ class PrintWriter : Writer
         newLine();
     }
 
+    /// Java's `printf(String, Object...)`: `format`.
+    PrintWriter printf(Args...)(string format, Args args)
+    {
+        return this.format(format, args);
+    }
+
+    /// Java's `format(String, Object...)`: write `String.format(format, args...)` and return this writer. There is no
+    /// `Locale`, so the root locale's separators apply (R7); a checked sink failure is recorded as Java's does.
+    PrintWriter format(Args...)(string format, Args args)
+    {
+        import flint.java.lang : String;
+
+        print(String.format(format, args));
+        return this;
+    }
+
     private void newLine()
     {
         import flint.java.lang : System;
@@ -2893,8 +2909,8 @@ Java's `PrintStream`: formatted byte output with a recorded error state.
 Ported from OpenJDK 21.0.13 `src/java.base/share/classes/java/io/PrintStream.java`; modified by the Flint authors:
 D text is UTF-8, the `Writer` pipeline is Flint's `BufferedWriter` over `OutputStreamWriter`, and the per-thread
 interrupt flag is absent, so an `InterruptedIOException` is recorded in the error state (D-IO-2). A checked write,
-flush or close failure never escapes; it sets the error state, as Java's methods do. The file constructors,
-`format`/`printf` and the `CharSequence` appends are deferred.
+flush or close failure never escapes; it sets the error state, as Java's methods do. `format`/`printf` format through
+`String.format`'s root-locale engine (R7); the file constructors and the `CharSequence` appends are deferred.
 +/
 class PrintStream : FilterOutputStream
 {
@@ -3138,6 +3154,23 @@ class PrintStream : FilterOutputStream
     {
         print(value);
         newLine();
+    }
+
+    /// Java's `printf(String, Object...)`: `format`.
+    PrintStream printf(Args...)(string format, Args args)
+    {
+        return this.format(format, args);
+    }
+
+    /// Java's `format(String, Object...)`: write `String.format(format, args...)` through the text pipeline and
+    /// return this stream. There is no `Locale`, so the root locale's separators apply (R7); a checked sink failure
+    /// is recorded as Java's does.
+    PrintStream format(Args...)(string format, Args args)
+    {
+        import flint.java.lang : String;
+
+        print(String.format(format, args));
+        return this;
     }
 
     /// Java's `append(CharSequence)`: write the text and return this stream.

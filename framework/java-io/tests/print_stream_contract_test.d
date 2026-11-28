@@ -124,6 +124,32 @@ unittest
     assert(output.toByteArray() == expected);
 }
 
+@("PrintStream formats through String.format and returns itself")
+unittest
+{
+    auto output = new ByteArrayOutputStream;
+    auto stream = new PrintStream(output);
+
+    assert(stream.format("%s=%d", "x", 7) is stream);
+    stream.print(cast(wchar) '|');
+    assert(stream.printf("%05.2f", 3.14159) is stream);
+    stream.format(cast(string) null);
+
+    ubyte[] expected = (cast(const(ubyte)[]) "x=7|03.14").dup;
+    assert(output.toByteArray() == expected);
+}
+
+@("PrintStream records a checked sink failure from format")
+unittest
+{
+    auto sink = new RecordingOutput;
+    sink.failWrite = true;
+    auto stream = new PrintStream(sink);
+
+    stream.format("%d", 7);
+    assert(stream.checkError());
+}
+
 @("PrintStream writes a UTF-16 character array and the platform line separator")
 unittest
 {

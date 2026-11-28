@@ -149,6 +149,21 @@ unittest
     assert(named.calls == 1);
 }
 
+@("PrintWriter formats through String.format and returns itself")
+unittest
+{
+    auto output = new StringWriter;
+    auto printer = new PrintWriter(output);
+
+    assert(printer.format("%s=%d", "x", 7) is printer);
+    printer.print("|");
+    assert(printer.printf("%05.2f", 3.14159) is printer);
+    printer.format(cast(string) null);
+    printer.flush();
+
+    assert(output.toString() == "x=7|03.14");
+}
+
 private final class CountingWriter : Writer
 {
     string data;
@@ -259,6 +274,17 @@ unittest
     printer.write("y");
     assert(!printer.checkError());
     assert(sink.flushes == 2);
+}
+
+@("PrintWriter records a checked sink failure from format")
+unittest
+{
+    auto sink = new FailingWriter;
+    sink.failWrite = true;
+    auto printer = new PrintWriter(sink);
+
+    printer.format("%d", 7);
+    assert(printer.checkError());
 }
 
 @("PrintWriter's protected error hooks control checkError")
