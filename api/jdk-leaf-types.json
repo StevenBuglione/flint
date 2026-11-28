@@ -124,6 +124,8 @@
   "java.util.concurrent.TimeoutException": "flint.java.util.concurrent.timeoutexception",
   "java.util.concurrent.atomic.AtomicReference": "flint.java.util.concurrent.atomic.atomicreference",
   "java.util.jar.JarException": "flint.java.util.jar.jarexception",
+  "java.util.zip.Deflater": "flint.java.util.zip.deflater",
+  "java.util.zip.Inflater": "flint.java.util.zip.inflater",
   "java.util.zip.ZipException": "flint.java.util.zip.zipexception"
  }
 }

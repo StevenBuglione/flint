@@ -179,10 +179,10 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 
 | Repo | Upstream | Ported | Adapted | By porter | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 229 | 365 | 0 | 0 | 15,202 |
+| ai | spring-ai@v2.1.0 | 235 | 359 | 0 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,656 | 1,555 | 0 | 4,870 | 29,753 |
+| framework | spring-framework@v7.1.0 | 3,662 | 1,549 | 0 | 4,870 | 29,753 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,045 | 743 | 0 | 1,927 | 13,706 |
+| framework | openjdk@21.0.13 | 2,214 | 816 | 0 | 1,963 | 13,428 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -403,7 +403,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.ai.converter.ListOutputConverter` | `flint.ai.converter.ListOutputConverter` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.converter.MarkdownCodeBlockCleaner#clean(String)` | `flint.ai.converter.MarkdownCodeBlockCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.converter.ResponseTextCleaner#clean(String)` | `flint.ai.converter.ResponseTextCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.converter.StructuredOutputConverter#getJsonSchema()` | `flint.ai.converter.StructuredOutputConverter.getJsonSchema` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
@@ -433,11 +432,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.document.DocumentMetadata` | `flint.ai.document.DocumentMetadata` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.document.DocumentMetadata#CONTENT_REF` | `flint.ai.document.DocumentMetadata.CONTENT_REF` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.document.DocumentMetadata#DISTANCE` | `flint.ai.document.DocumentMetadata.DISTANCE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
-| `org.springframework.ai.document.DocumentReader` | `flint.ai.document.DocumentReader` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.document.DocumentReader#read()` | `flint.ai.document.DocumentReader.read` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
-| `org.springframework.ai.document.DocumentTransformer` | `flint.ai.document.DocumentTransformer` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.document.DocumentTransformer#transform(List)` | `flint.ai.document.DocumentTransformer.transform` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
-| `org.springframework.ai.document.DocumentWriter` | `flint.ai.document.DocumentWriter` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.document.DocumentWriter#write(List)` | `flint.ai.document.DocumentWriter.write` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 
 #### org.springframework.ai.document.id
@@ -464,7 +460,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.embedding.EmbeddingOptions#getDimensions()` | `flint.ai.embedding.EmbeddingOptions.getDimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.embedding.EmbeddingOptions#getModel()` | `flint.ai.embedding.EmbeddingOptions.getModel` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.embedding.EmbeddingOptions.Builder#dimensions(Integer)` | `flint.ai.embedding.EmbeddingOptions.Builder.dimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `org.springframework.ai.embedding.EmbeddingRequest` | `flint.ai.embedding.EmbeddingRequest` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.embedding.EmbeddingResultMetadata#<init>(String,ModalityType,MimeType,Object)` | `flint.ai.embedding.EmbeddingResultMetadata.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.embedding.EmbeddingResultMetadata#getDocumentData()` | `flint.ai.embedding.EmbeddingResultMetadata.getDocumentData` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.embedding.EmbeddingResultMetadata.ModalityUtils#getModalityType(MimeType)` | `flint.ai.embedding.EmbeddingResultMetadata.ModalityUtils.getModalityType` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -677,7 +672,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.ai.template.NoOpTemplateRenderer` | `flint.ai.template_.NoOpTemplateRenderer` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.ai.template.NoOpTemplateRenderer#apply(String,Map)` | `flint.ai.template_.NoOpTemplateRenderer.apply` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
-| `org.springframework.ai.template.TemplateRenderer` | `flint.ai.template_.TemplateRenderer` | [R10](api-mapping.md#r10-streams-and-collections), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.ai.template.TemplateRenderer` | `flint.ai.template_.TemplateRenderer` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.ai.template.TemplateRenderer#apply(String,Map)` | `flint.ai.template_.TemplateRenderer.apply` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.ai.template.ValidationMode` | `flint.ai.template_.ValidationMode` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 
@@ -685,7 +680,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.ai.tokenizer.TokenCountEstimator#estimate(Iterable)` | `flint.ai.tokenizer.TokenCountEstimator.estimate` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.tokenizer.TokenCountEstimator#estimate(String)` | `flint.ai.tokenizer.TokenCountEstimator.estimate` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 ### boot
@@ -2421,6 +2415,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.net.BindException` | `flint.java.net.bindexception.BindException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.bindexception : BindException. Checked Java socket exception subclass (through SocketException) mapped to D Exception (D-8) with R26 detail message handling. |
+| `java.net.ConnectException` | `flint.java.net.connectexception.ConnectException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.connectexception : ConnectException. Checked Java socket exception subclass (through SocketException) mapped to D Exception (D-8) with R26 detail message handling. |
 | `java.net.DatagramPacket` | `flint.java.net.datagrampacket.DatagramPacket` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.datagrampacket : DatagramPacket. Equality and hashing stay by identity, as in Java. |
 | `java.net.DatagramPacket#<init>(byte[],int)` | `flint.java.net.datagrampacket.DatagramPacket.this` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
 | `java.net.DatagramPacket#<init>(byte[],int,InetAddress,int)` | `flint.java.net.datagrampacket.DatagramPacket.this` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
@@ -2449,6 +2445,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.net.HttpCookie#setPath(String)` | `flint.java.net.httpcookie.HttpCookie.setPath` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.net.HttpCookie#setPortlist(String)` | `flint.java.net.httpcookie.HttpCookie.setPortlist` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.net.HttpCookie#setValue(String)` | `flint.java.net.httpcookie.HttpCookie.setValue` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.HttpRetryException` | `flint.java.net.httpretryexception.HttpRetryException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.httpretryexception : HttpRetryException. Checked Java IOException subclass mapped to D Exception (D-8) with R26 detail message handling. |
+| `java.net.HttpRetryException#<init>(String,int)` | `flint.java.net.httpretryexception.HttpRetryException.this` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | One D constructor with an optional location covers both Java constructors; an empty detail normalizes to null under R26. |
+| `java.net.HttpRetryException#<init>(String,int,String)` | `flint.java.net.httpretryexception.HttpRetryException.this` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | One D constructor with an optional location covers both Java constructors; an empty detail normalizes to null under R26. |
+| `java.net.HttpRetryException#getLocation()` | `flint.java.net.httpretryexception.HttpRetryException.getLocation` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A null string denotes an absent location. |
+| `java.net.HttpRetryException#getReason()` | `flint.java.net.httpretryexception.HttpRetryException.getReason` | [R26](api-mapping.md#r26-null-arrays) | Returns the detail message; an empty detail normalized to null under R26. |
 | `java.net.Inet4Address` | `flint.java.net.inetaddress.Inet4Address` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.inetaddress : Inet4Address. Final class without Serializable. |
 | `java.net.Inet4Address#equals(Object)` | `flint.java.net.inetaddress.Inet4Address.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.net.Inet6Address` | `flint.java.net.inetaddress.Inet6Address` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.inetaddress : Inet6Address. Final class without Serializable; scoped interfaces are pending. |
@@ -2466,14 +2467,19 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.net.InterfaceAddress` | `flint.java.net.interfaceaddress.InterfaceAddress` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.interfaceaddress : InterfaceAddress. Final class with package-private constructors (Java has no public or protected constructor) and mixin JavaObject. |
 | `java.net.InterfaceAddress#equals(Object)` | `flint.java.net.interfaceaddress.InterfaceAddress.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.net.MalformedURLException` | `flint.java.net.malformedurlexception.MalformedURLException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.malformedurlexception : MalformedURLException. Checked Java IOException subclass mapped to D Exception (D-8) with R26 detail message handling. |
+| `java.net.NoRouteToHostException` | `flint.java.net.noroutetohostexception.NoRouteToHostException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.noroutetohostexception : NoRouteToHostException. Checked Java socket exception subclass (through SocketException) mapped to D Exception (D-8) with R26 detail message handling. |
 | `java.net.PasswordAuthentication` | `flint.java.net.passwordauthentication.PasswordAuthentication` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.passwordauthentication : PasswordAuthentication. Equality and hashing stay by identity, as in Java. |
 | `java.net.PasswordAuthentication#<init>(String,char[])` | `flint.java.net.passwordauthentication.PasswordAuthentication.this` | [R26](api-mapping.md#r26-null-arrays) | The password is copied, as in Java. A null password counts as empty where Java throws NullPointerException. |
+| `java.net.PortUnreachableException` | `flint.java.net.portunreachableexception.PortUnreachableException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.portunreachableexception : PortUnreachableException. Checked Java socket exception subclass (through SocketException) mapped to D Exception (D-8) with R26 detail message handling. |
+| `java.net.ProtocolException` | `flint.java.net.protocolexception.ProtocolException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.protocolexception : ProtocolException. Checked Java IOException subclass mapped to D Exception (D-8) with R26 detail message handling. |
 | `java.net.ProtocolFamily` | `flint.java.net.protocolfamily.ProtocolFamily` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.protocolfamily : ProtocolFamily. |
 | `java.net.Proxy` | `flint.java.net.proxy.Proxy` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.proxy : Proxy. Implements JavaObject without Serializable. hashCode adds the type's ordinal where Java adds the enum's identity hash, so the number differs from Java's but equal proxies still hash equally. |
 | `java.net.Proxy#<init>(Type,SocketAddress)` | `flint.java.net.proxy.Proxy.this` | [R26](api-mapping.md#r26-null-arrays) | As in Java, a DIRECT type or an address that is not an InetSocketAddress (null included) throws IllegalArgumentException with Java's message. For a caller's own SocketAddress subclass the message shows the D class name, because Object.toString is not @safe in D. |
 | `java.net.Proxy#equals(Object)` | `flint.java.net.proxy.Proxy.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.net.Proxy#hashCode()` | `flint.java.net.proxy.Proxy.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality), [R15](api-mapping.md#r15-enums-with-fields) | The type contributes its stable ordinal in place of Java enum reference identity. Cross-runtime numeric hashes differ. |
 | `java.net.SocketAddress` | `flint.java.net.socketaddress.SocketAddress` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.socketaddress : SocketAddress. Abstract socket address base without Java Serializable. |
+| `java.net.SocketException` | `flint.java.net.socketexception.SocketException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.socketexception : SocketException. Checked Java IOException subclass mapped to D Exception (D-8) with R26 detail message handling. |
+| `java.net.SocketTimeoutException` | `flint.java.net.sockettimeoutexception.SocketTimeoutException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.sockettimeoutexception : SocketTimeoutException. Checked Java IOException subclass (through InterruptedIOException) mapped to D Exception (D-8) with R26 detail message handling; bytesTransferred stays a public int field. |
 | `java.net.StandardProtocolFamily` | `flint.java.net.standardprotocolfamily.StandardProtocolFamily` | [R1](api-mapping.md#r1-packages-and-names), [R18](api-mapping.md#r18-enums-that-implement-an-interface) | Leaf import: flint.java.net.standardprotocolfamily : StandardProtocolFamily. D enum implementing ProtocolFamily via R18; call family.name() via R20 UFCS. |
 | `java.net.StandardProtocolFamily#INET` | `flint.java.net.standardprotocolfamily.StandardProtocolFamily.INET` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.net.StandardProtocolFamily#INET6` | `flint.java.net.standardprotocolfamily.StandardProtocolFamily.INET6` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
@@ -2502,6 +2508,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.net.URLEncoder#encode(String,Charset)` | `flint.java.net.urlencoder.URLEncoder.encode` | [R26](api-mapping.md#r26-null-arrays), [R5](api-mapping.md#r5-optional-and-nullable-values) | Charset.init represents an absent charset and raises NullPointerException. |
 | `java.net.URLEncoder#encode(String,String)` | `flint.java.net.urlencoder.URLEncoder.encode` | [R26](api-mapping.md#r26-null-arrays), [R8](api-mapping.md#r8-exceptions) | An empty, illegal or unsupported charset name raises UnsupportedEncodingException. |
 | `java.net.UnknownHostException` | `flint.java.net.unknownhostexception.UnknownHostException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.unknownhostexception : UnknownHostException. Checked Java IOException subclass mapped to D Exception (D-8) with R26 detail message handling. |
+| `java.net.UnknownServiceException` | `flint.java.net.unknownserviceexception.UnknownServiceException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.unknownserviceexception : UnknownServiceException. Checked Java IOException subclass mapped to D Exception (D-8) with R26 detail message handling. |
 
 #### java.net.spi
 
@@ -2724,20 +2731,30 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.DateTimeException#<init>(String,Throwable)` | `flint.java.time.DateTimeException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
 | `java.time.Duration` | `flint.java.time.Duration` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct; ZERO is Duration.init. Members without their own row stay deferred: most do not yet check overflow as Java does. |
 | `java.time.Duration#equals(Object)` | `flint.java.time.Duration.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.Duration#parse(CharSequence)` | `flint.java.time.Duration.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.time.Instant` | `flint.java.time.Instant` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct; EPOCH is Instant.init. Members without their own row stay deferred: the MIN/MAX range and overflow checks are not implemented yet. |
 | `java.time.Instant#equals(Object)` | `flint.java.time.Instant.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.Instant#parse(CharSequence)` | `flint.java.time.Instant.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.time.LocalDate` | `flint.java.time.LocalDate` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct; LocalDate.init is EPOCH. Members without their own row stay deferred: of and withDayOfMonth report the DayOfMonth range as 1 - 31 where Java prints 1 - 28/31, plusDays and its relatives do not yet check overflow, and compareTo returns -1/0/1 where Java returns the field difference. |
 | `java.time.LocalDate#equals(Object)` | `flint.java.time.LocalDate.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.LocalDate#parse(CharSequence)` | `flint.java.time.LocalDate.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.LocalDate#parse(CharSequence,DateTimeFormatter)` | `flint.java.time.LocalDate.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.time.LocalDateTime` | `flint.java.time.LocalDateTime` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of a LocalDate and a LocalTime; LocalDateTime.init is 1970-01-01T00:00. Members without their own row stay deferred: day and time arithmetic reports an out-of-range result as a Year error where Java reports EpochDay, plusYears does not check overflow, and compareTo returns -1/0/1 where Java returns the field difference. |
 | `java.time.LocalDateTime#equals(Object)` | `flint.java.time.LocalDateTime.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.LocalDateTime#parse(CharSequence)` | `flint.java.time.LocalDateTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.LocalDateTime#parse(CharSequence,DateTimeFormatter)` | `flint.java.time.LocalDateTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.time.LocalTime` | `flint.java.time.LocalTime` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct; LocalTime.init is MIDNIGHT. Members without their own row stay deferred. |
 | `java.time.LocalTime#equals(Object)` | `flint.java.time.LocalTime.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.LocalTime#parse(CharSequence)` | `flint.java.time.LocalTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.LocalTime#parse(CharSequence,DateTimeFormatter)` | `flint.java.time.LocalTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.time.MonthDay` | `flint.java.time.monthday.MonthDay` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import MonthDay from flint.java.time.monthday until the JDK aggregate re-exports it. Null parse text counts as empty (R26). Java throws NullPointerException. |
 | `java.time.MonthDay#equals(Object)` | `flint.java.time.monthday.MonthDay.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.MonthDay#parse(CharSequence)` | `flint.java.time.monthday.MonthDay.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.time.MonthDay#with(Month)` | `flint.java.time.monthday.MonthDay.with_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `java.time.OffsetDateTime` | `flint.java.time.OffsetDateTime` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of a LocalDateTime and a ZoneOffset. Members without their own row stay deferred: compareTo returns -1/0/1 where Java returns field differences, withOffsetSameInstant goes through the instant where Java adds seconds to the local date-time (the out-of-range message differs), and ofInstant and atZoneSameInstant report an out-of-range result as a Year error where Java reports EpochDay. |
 | `java.time.OffsetDateTime#equals(Object)` | `flint.java.time.OffsetDateTime.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.OffsetDateTime#parse(CharSequence)` | `flint.java.time.OffsetDateTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.OffsetDateTime#parse(CharSequence,DateTimeFormatter)` | `flint.java.time.OffsetDateTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.time.Period` | `flint.java.time.period.Period` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import Period from flint.java.time.period until the JDK aggregate re-exports it. Null parse text counts as empty (R26). Java throws NullPointerException. |
 | `java.time.Period#equals(Object)` | `flint.java.time.period.Period.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.Period#parse(CharSequence)` | `flint.java.time.period.Period.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
@@ -2751,6 +2768,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.ZoneId` | `flint.java.time.ZoneId` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of an ID and its fixed offset; ZoneId.init is Z. Region IDs need the time-zone database, so of accepts only offsets and the UTC, GMT and UT prefixes, and systemDefault is UTC; both stay deferred. |
 | `java.time.ZoneOffset` | `flint.java.time.ZoneOffset` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of the total seconds; ZoneOffset.init is UTC. It is not a ZoneId subtype: toZoneId converts it. Members without their own row stay deferred: compareTo returns -1/0/1 where Java returns the difference of the total seconds. |
 | `java.time.ZonedDateTime` | `flint.java.time.ZonedDateTime` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of a LocalDateTime, a ZoneOffset and a ZoneId. Members without their own row stay deferred: the factories wait for region rules (gap and overlap resolution) and the EpochDay range message. |
+| `java.time.ZonedDateTime#parse(CharSequence)` | `flint.java.time.ZonedDateTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.ZonedDateTime#parse(CharSequence,DateTimeFormatter)` | `flint.java.time.ZonedDateTime.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 
 #### java.time.format
 
@@ -2866,13 +2885,30 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.AbstractList#lastIndexOf(Object)` | `flint.java.util.AbstractList.lastIndexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.ArrayList#toArray()` | `flint.java.util.ArrayList.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Arrays#toString(Object[])` | `flint.java.util.Arrays.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Base64` | `flint.java.util.base64.Base64` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import from flint.java.util.base64; flint.java.util does not re-export it until the JDK aggregate exists. Under R26, null byte-array and string slices behave as empty inputs. Java throws NullPointerException. |
+| `java.util.Base64#getMimeEncoder(int,byte[])` | `flint.java.util.base64.Base64.getMimeEncoder` | [R26](api-mapping.md#r26-null-arrays) | The encoder keeps its own copy of the separator; Java keeps the caller's array. |
+| `java.util.Base64.Decoder#decode(String)` | `flint.java.util.base64.Base64.Decoder.decode` | [R26](api-mapping.md#r26-null-arrays) | The UTF-8 string is read as Java's ISO-8859-1 bytes: a code point above U+00FF, or a malformed sequence, becomes '?'. |
+| `java.util.Base64.Decoder#decode(byte[])` | `flint.java.util.base64.Base64.Decoder.decode` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Base64.Decoder#decode(byte[],byte[])` | `flint.java.util.base64.Base64.Decoder.decode` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Base64.Encoder#encode(byte[])` | `flint.java.util.base64.Base64.Encoder.encode` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Base64.Encoder#encode(byte[],byte[])` | `flint.java.util.base64.Base64.Encoder.encode` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Base64.Encoder#encodeToString(byte[])` | `flint.java.util.base64.Base64.Encoder.encodeToString` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.BitSet` | `flint.java.util.bitset.BitSet` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.bitset. Re-exporting from the lower-tier flint.java.util module would create a DUB dependency cycle. A null array argument counts as empty under R26. Java throws NullPointerException. |
+| `java.util.BitSet#clone()` | `flint.java.util.bitset.BitSet.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.BitSet#equals(Object)` | `flint.java.util.bitset.BitSet.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.BitSet#hashCode()` | `flint.java.util.bitset.BitSet.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.BitSet#valueOf(byte[])` | `flint.java.util.bitset.BitSet.valueOf` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.BitSet#valueOf(long[])` | `flint.java.util.bitset.BitSet.valueOf` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Calendar#isSet` | `flint.java.util.Calendar.isSet` | [R24](api-mapping.md#r24-final-instance-fields) |  |
 | `java.util.Collection#contains(Object)` | `flint.java.util.Collection.contains` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Collection#remove(Object)` | `flint.java.util.Collection.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Collection#toArray()` | `flint.java.util.Collection.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Date#clone()` | `flint.java.util.Date.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.EnumSet` | `flint.java.util.enumset.EnumSet` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.enumset. Java's Class<E> token becomes the EnumSet!E template parameter (R4). AbstractSet is deferred to sol-jdk-core's collections design, so the class derives from AbstractCollection and Set and is reparented when AbstractSet lands. |
+| `java.util.EnumSet#allOf(Class)` | `flint.java.util.enumset.EnumSet.allOf` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `java.util.EnumSet#noneOf(Class)` | `flint.java.util.enumset.EnumSet.noneOf` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `java.util.EnumSet#of(E,E...)` | `flint.java.util.enumset.EnumSet.of` | [R7](api-mapping.md#r7-overloads) |  |
+| `java.util.EnumSet#of(E...)` | `flint.java.util.enumset.EnumSet.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.HashMap#containsKey(Object)` | `flint.java.util.HashMap.containsKey` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HashMap#containsValue(Object)` | `flint.java.util.HashMap.containsValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HashMap#get(Object)` | `flint.java.util.HashMap.get` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -2976,6 +3012,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.concurrent.CompletionException#<init>(String)` | `flint.java.util.concurrent.completionexception.CompletionException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.concurrent.CompletionException#<init>(String,Throwable)` | `flint.java.util.concurrent.completionexception.CompletionException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.concurrent.CompletionException#<init>(Throwable)` | `flint.java.util.concurrent.completionexception.CompletionException.this` | [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Preserves the cause. A non-RuntimeException cause's detail is rendered through javaToString, which does not invoke a custom checked Throwable.toString override. |
+| `java.util.concurrent.CopyOnWriteArrayList` | `flint.java.util.concurrent.copyonwritearraylist.CopyOnWriteArrayList` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.concurrent.copyonwritearraylist; flint.java.util.concurrent does not re-export it until the JDK aggregate exists. |
+| `java.util.concurrent.CopyOnWriteArrayList#contains(Object)` | `flint.java.util.concurrent.copyonwritearraylist.CopyOnWriteArrayList.contains` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.concurrent.CopyOnWriteArrayList#indexOf(Object)` | `flint.java.util.concurrent.copyonwritearraylist.CopyOnWriteArrayList.indexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.concurrent.CopyOnWriteArrayList#lastIndexOf(Object)` | `flint.java.util.concurrent.copyonwritearraylist.CopyOnWriteArrayList.lastIndexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.concurrent.CopyOnWriteArrayList#remove(Object)` | `flint.java.util.concurrent.copyonwritearraylist.CopyOnWriteArrayList.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.concurrent.CopyOnWriteArrayList#toArray()` | `flint.java.util.concurrent.copyonwritearraylist.CopyOnWriteArrayList.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.concurrent.Delayed` | `flint.java.util.concurrent.delayed.Delayed` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Import from flint.java.util.concurrent.delayed until the JDK aggregate is available. |
 | `java.util.concurrent.Delayed#getDelay(TimeUnit)` | `flint.java.util.concurrent.delayed.Delayed.getDelay` | [R5](api-mapping.md#r5-optional-and-nullable-values) | TimeUnit is a value enum, so a null unit is rejected at compile time. |
 | `java.util.concurrent.ExecutionException` | `flint.java.util.concurrent.executionexception.ExecutionException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Import the checked exception from flint.java.util.concurrent.executionexception. An empty detail is absent in Flint. Java preserves an explicitly empty String. |
@@ -2985,16 +3027,29 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.concurrent.Executor#execute(Runnable)` | `flint.java.util.concurrent.executor.Executor.execute` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces) | Accepts an owned @safe D delegate in addition to Runnable. Untyped null selects the original Runnable overload. |
 | `java.util.concurrent.Future` | `flint.java.util.concurrent.future.Future` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Import from flint.java.util.concurrent.future until the JDK aggregate is available. |
 | `java.util.concurrent.Future#cancel(boolean)` | `flint.java.util.concurrent.future.Future.cancel` | [R1](api-mapping.md#r1-packages-and-names) |  |
-| `java.util.concurrent.Future#exceptionNow()` | `flint.java.util.concurrent.future.Future.exceptionNow` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions) | A final interface method, as Comparator's generic defaults are. |
+| `java.util.concurrent.Future#exceptionNow()` | `flint.java.util.concurrent.future.Future.exceptionNow` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions) | Moved into `mixin template Future.Defaults` as R3 requires; an implementor mixes it in and may override it as CompletableFuture does. |
 | `java.util.concurrent.Future#get()` | `flint.java.util.concurrent.future.Future.get` | [R8](api-mapping.md#r8-exceptions) | D has no throws clause (D-8). InterruptedException is not ported yet, so get on a completed task cannot currently raise it. |
 | `java.util.concurrent.Future#get(long,TimeUnit)` | `flint.java.util.concurrent.future.Future.get` | [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions) | Same D name as the no-argument overload; TimeUnit is passed by value. |
-| `java.util.concurrent.Future#resultNow()` | `flint.java.util.concurrent.future.Future.resultNow` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions) | A final interface method, as Comparator's generic defaults are, rather than a mixin template. Messages and cause chain match Java 21. |
-| `java.util.concurrent.Future#state()` | `flint.java.util.concurrent.future.Future.state` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions), [R13](api-mapping.md#r13-nested-and-inner-classes) | A final interface method returning the hoisted FutureState. |
+| `java.util.concurrent.Future#resultNow()` | `flint.java.util.concurrent.future.Future.resultNow` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions) | Moved into `mixin template Future.Defaults` as R3 requires; an implementor mixes it in and may override it as CompletableFuture does. Messages and cause chain match Java 21. |
+| `java.util.concurrent.Future#state()` | `flint.java.util.concurrent.future.Future.state` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions), [R13](api-mapping.md#r13-nested-and-inner-classes) | Moved into `mixin template Future.Defaults` as R3 requires; an implementor mixes it in and may override it as CompletableFuture does. Returns the hoisted FutureState. |
 | `java.util.concurrent.Future.State` | `flint.java.util.concurrent.future.FutureState` | [R13](api-mapping.md#r13-nested-and-inner-classes) | Hoisted to FutureState and exposed through Future.State as an alias. |
 | `java.util.concurrent.Future.State#CANCELLED` | `flint.java.util.concurrent.future.FutureState.CANCELLED` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `java.util.concurrent.Future.State#FAILED` | `flint.java.util.concurrent.future.FutureState.FAILED` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `java.util.concurrent.Future.State#RUNNING` | `flint.java.util.concurrent.future.FutureState.RUNNING` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `java.util.concurrent.Future.State#SUCCESS` | `flint.java.util.concurrent.future.FutureState.SUCCESS` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
+| `java.util.concurrent.FutureTask` | `flint.java.util.concurrent.futuretask.FutureTask` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | D generic class; import it from flint.java.util.concurrent.futuretask. |
+| `java.util.concurrent.FutureTask#<init>(Callable)` | `flint.java.util.concurrent.futuretask.FutureTask.this` | [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions) | A null callable raises NullPointerException. |
+| `java.util.concurrent.FutureTask#<init>(Runnable,Object)` | `flint.java.util.concurrent.futuretask.FutureTask.this` | [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions) | Same D name as the Callable constructor; a null runnable raises NullPointerException. |
+| `java.util.concurrent.FutureTask#cancel(boolean)` | `flint.java.util.concurrent.futuretask.FutureTask.cancel` | [R8](api-mapping.md#r8-exceptions) | Java thread interruption is deferred until the Thread façade lands; a cancelled running task stops publishing its result. |
+| `java.util.concurrent.FutureTask#exceptionNow()` | `flint.java.util.concurrent.futuretask.FutureTask.exceptionNow` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions) | Provided by `mixin template Future.Defaults` as R3 requires. |
+| `java.util.concurrent.FutureTask#get()` | `flint.java.util.concurrent.futuretask.FutureTask.get` | [R8](api-mapping.md#r8-exceptions) | D has no throws clause (D-8). InterruptedException is not ported yet, so a waiting get is not interruptible. |
+| `java.util.concurrent.FutureTask#get(long,TimeUnit)` | `flint.java.util.concurrent.futuretask.FutureTask.get` | [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions) | Same D name as the no-argument overload; TimeUnit is passed by value and cannot be null. |
+| `java.util.concurrent.FutureTask#resultNow()` | `flint.java.util.concurrent.futuretask.FutureTask.resultNow` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions) | Provided by `mixin template Future.Defaults` as R3 requires. |
+| `java.util.concurrent.FutureTask#state()` | `flint.java.util.concurrent.futuretask.FutureTask.state` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions), [R13](api-mapping.md#r13-nested-and-inner-classes) | Provided by `mixin template Future.Defaults`; returns the hoisted FutureState. |
+| `java.util.concurrent.RunnableFuture` | `flint.java.util.concurrent.future.RunnableFuture` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Declared in the Future leaf; import it from flint.java.util.concurrent.future. |
+| `java.util.concurrent.RunnableFuture#run()` | `flint.java.util.concurrent.future.RunnableFuture.run` | [R1](api-mapping.md#r1-packages-and-names) |  |
+| `java.util.concurrent.RunnableScheduledFuture` | `flint.java.util.concurrent.scheduledfuture.RunnableScheduledFuture` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Declared in the ScheduledFuture leaf; import it from flint.java.util.concurrent.scheduledfuture. |
+| `java.util.concurrent.ScheduledFuture` | `flint.java.util.concurrent.scheduledfuture.ScheduledFuture` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Declared in the ScheduledFuture leaf; import it from flint.java.util.concurrent.scheduledfuture. |
 | `java.util.concurrent.TimeUnit#convert(Duration)` | `flint.java.util.concurrent.convert` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
 | `java.util.concurrent.TimeUnit#convert(long,TimeUnit)` | `flint.java.util.concurrent.convert` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
 | `java.util.concurrent.TimeUnit#toDays(long)` | `flint.java.util.concurrent.toDays` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
@@ -3039,6 +3094,24 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.function.IntSupplier` | `flint.java.util.function_.intsupplier.IntSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.LongSupplier` | `flint.java.util.function_.longsupplier.LongSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.Supplier` | `flint.java.util.function_.supplier.Supplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
+
+#### java.util.jar
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.util.jar.Attributes` | `flint.java.util.jar.Attributes` | [R10](api-mapping.md#r10-streams-and-collections) | The class keeps its Java methods but does not implement the generic Map interface; key and value views are D slices. |
+| `java.util.jar.Attributes#containsKey(Object)` | `flint.java.util.jar.Attributes.containsKey` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.jar.Attributes#containsValue(Object)` | `flint.java.util.jar.Attributes.containsValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.jar.Attributes#entrySet()` | `flint.java.util.jar.Attributes.entrySet` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `java.util.jar.Attributes#get(Object)` | `flint.java.util.jar.Attributes.get` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.jar.Attributes#keySet()` | `flint.java.util.jar.Attributes.keySet` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `java.util.jar.Attributes#put(Object,Object)` | `flint.java.util.jar.Attributes.put` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.jar.Attributes#putAll(Map)` | `flint.java.util.jar.Attributes.putAll` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `java.util.jar.Attributes#remove(Object)` | `flint.java.util.jar.Attributes.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.jar.Attributes#values()` | `flint.java.util.jar.Attributes.values` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `java.util.jar.Attributes.Name` | `flint.java.util.jar.Name` | [R13](api-mapping.md#r13-nested-and-inner-classes) | Java's static nested class is the top-level flint.java.util.jar.Name and is aliased as Attributes.Name. |
+| `java.util.jar.JarException` | `flint.java.util.jar.jarexception.JarException` | [R26](api-mapping.md#r26-null-arrays) | An explicitly empty Java detail message is reported as absent. |
+| `java.util.jar.Manifest#getEntries()` | `flint.java.util.jar.Manifest.getEntries` | [R10](api-mapping.md#r10-streams-and-collections) | Returns the insertion-ordered Entries facade instead of java.util.Map. |
 
 #### java.util.random
 
@@ -3089,6 +3162,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.zip.Inflater#setDictionary(byte[],int,int)` | `flint.java.util.zip.inflater.Inflater.setDictionary` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D slices, so the offset/length form is one call on a slice; a null slice is empty under R26 (Java throws NullPointerException). |
 | `java.util.zip.Inflater#setInput(byte[])` | `flint.java.util.zip.inflater.Inflater.setInput` | [R26](api-mapping.md#r26-null-arrays) | Null and empty D arrays and slices are the empty Java array (R26). |
 | `java.util.zip.Inflater#setInput(byte[],int,int)` | `flint.java.util.zip.inflater.Inflater.setInput` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D slices, so the offset/length form is one call on a slice; a null slice is empty under R26 (Java throws NullPointerException). |
+| `java.util.zip.ZipException` | `flint.java.util.zip.zipexception.ZipException` | [R26](api-mapping.md#r26-null-arrays) | An explicitly empty Java detail message is reported as absent. |
 
 #### org.aopalliance.aop
 
@@ -5143,7 +5217,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.web.servlet.DispatcherServlet#resolveViewName(String,Map,Locale,HttpServletRequest)` | `flint.web.servlet.DispatcherServlet.resolveViewName` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.HandlerExecutionChain#<init>(Object,List)` | `flint.web.servlet.HandlerExecutionChain` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.HandlerInterceptor` | `flint.web.servlet.HandlerInterceptor` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.web.servlet.HandlerInterceptor#afterCompletion(HttpServletRequest,HttpServletResponse,Object,Exception)` | `flint.web.servlet.HandlerInterceptor.afterCompletion` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
@@ -5153,16 +5226,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.web.servlet.ModelAndView#<init>()` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#<init>(String)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#<init>(String,HttpStatusCode)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.web.servlet.ModelAndView#<init>(String,Map)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.web.servlet.ModelAndView#<init>(String,Map,HttpStatusCode)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#<init>(String,String,Object)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#<init>(View)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.web.servlet.ModelAndView#<init>(View,Map)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#<init>(View,String,Object)` | `flint.web.servlet.ModelAndView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#addObject(Object)` | `flint.web.servlet.ModelAndView.addObject` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#addObject(String,Object)` | `flint.web.servlet.ModelAndView.addObject` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#clear()` | `flint.web.servlet.ModelAndView.clear` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.web.servlet.ModelAndView#getModel()` | `flint.web.servlet.ModelAndView.getModel` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#getStatus()` | `flint.web.servlet.ModelAndView.getStatus` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#getView()` | `flint.web.servlet.ModelAndView.getView` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.ModelAndView#getViewName()` | `flint.web.servlet.ModelAndView.getViewName` | [R10](api-mapping.md#r10-streams-and-collections) |  |
@@ -5178,7 +5247,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.web.servlet.View#RESPONSE_STATUS_ATTRIBUTE` | `flint.web.servlet.View.RESPONSE_STATUS_ATTRIBUTE` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.View#SELECTED_CONTENT_TYPE` | `flint.web.servlet.View.SELECTED_CONTENT_TYPE` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.View#getContentType()` | `flint.web.servlet.View.getContentType` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.web.servlet.View#render(Map,HttpServletRequest,HttpServletResponse)` | `flint.web.servlet.View.render` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### org.springframework.web.servlet.config.annotation
 
@@ -7634,12 +7702,68 @@ These Java elements have no Flint counterpart, for the reason the category gives
 
 | Java | Reason | Note |
 | --- | --- | --- |
+| `java.net.Authenticator` | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.Authenticator.**` (3 elements) | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CacheRequest` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.CacheRequest.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.CacheResponse` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.CacheResponse.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.ContentHandler` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.ContentHandler.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.ContentHandlerFactory` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.ContentHandlerFactory.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.CookieHandler` | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CookieHandler.**` (0 elements) | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CookieManager` | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CookieManager.**` (0 elements) | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CookiePolicy` | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CookiePolicy.**` (0 elements) | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CookieStore` | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.CookieStore.**` (0 elements) | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.DatagramSocket` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.DatagramSocket.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.DatagramSocketImpl` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.DatagramSocketImpl.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.DatagramSocketImplFactory` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.DatagramSocketImplFactory.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.FileNameMap` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.FileNameMap.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.HttpURLConnection` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.HttpURLConnection.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.IDN` | `jvm-platform` | Internationalized domain names are not part of the JDK port's scope (docs/spring/phase2/jdk-port.md). |
+| `java.net.IDN.**` (0 elements) | `jvm-platform` | Internationalized domain names are not part of the JDK port's scope (docs/spring/phase2/jdk-port.md). |
+| `java.net.JarURLConnection` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.JarURLConnection.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.MulticastSocket` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.MulticastSocket.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
 | `java.net.NetPermission` | `jvm-platform` |  |
 | `java.net.NetPermission#**` (2 elements) | `jvm-platform` |  |
 | `java.net.NetPermission.**` (0 elements) | `jvm-platform` |  |
+| `java.net.NetworkInterface` | `jvm-platform` | Network interface enumeration is not part of the JDK port's scope (docs/spring/phase2/jdk-port.md). |
+| `java.net.NetworkInterface.**` (0 elements) | `jvm-platform` | Network interface enumeration is not part of the JDK port's scope (docs/spring/phase2/jdk-port.md). |
+| `java.net.ProxySelector` | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.ProxySelector.**` (0 elements) | `jvm-platform` | Parsing-only URL and HttpCookie scope; authentication, cookie storage and proxy selection use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.ResponseCache` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.ResponseCache.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.SecureCacheResponse` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.SecureCacheResponse.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.ServerSocket` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.ServerSocket.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.Socket` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.Socket.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketImpl` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketImpl.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketImplFactory` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketImplFactory.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketOption` | `jvm-platform` | Socket options belong to the socket APIs, which use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketOption.**` (0 elements) | `jvm-platform` | Socket options belong to the socket APIs, which use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketOptions` | `jvm-platform` | Socket options belong to the socket APIs, which use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.SocketOptions.**` (0 elements) | `jvm-platform` | Socket options belong to the socket APIs, which use Flint's engines (docs/spring/phase2/jdk-port.md). |
 | `java.net.SocketPermission` | `jvm-platform` |  |
 | `java.net.SocketPermission#**` (6 elements) | `jvm-platform` |  |
 | `java.net.SocketPermission.**` (0 elements) | `jvm-platform` |  |
+| `java.net.StandardSocketOptions` | `jvm-platform` | Socket options belong to the socket APIs, which use Flint's engines (docs/spring/phase2/jdk-port.md). |
+| `java.net.StandardSocketOptions.**` (0 elements) | `jvm-platform` | Socket options belong to the socket APIs, which use Flint's engines (docs/spring/phase2/jdk-port.md). |
 | `java.net.URL#getContent()` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; network I/O uses Flint engines. |
 | `java.net.URL#getContent(Class[])` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; network I/O uses Flint engines. |
 | `java.net.URL#openConnection()` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; network I/O uses Flint engines. |
@@ -7649,9 +7773,24 @@ These Java elements have no Flint counterpart, for the reason the category gives
 | `java.net.URLClassLoader` | `jvm-runtime` |  |
 | `java.net.URLClassLoader#**` (16 elements) | `jvm-runtime` |  |
 | `java.net.URLClassLoader.**` (0 elements) | `jvm-runtime` |  |
+| `java.net.URLConnection` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.URLConnection.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
 | `java.net.URLPermission` | `jvm-platform` |  |
 | `java.net.URLPermission#**` (6 elements) | `jvm-platform` |  |
 | `java.net.URLPermission.**` (0 elements) | `jvm-platform` |  |
+| `java.net.URLStreamHandler` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.URLStreamHandler.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.URLStreamHandlerFactory` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.URLStreamHandlerFactory.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.UnixDomainSocketAddress` | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+| `java.net.UnixDomainSocketAddress.**` (0 elements) | `jvm-platform` | Network sockets use Flint's engines; not part of the JDK port (docs/spring/phase2/jdk-port.md). |
+
+#### java.net.spi
+
+| Java | Reason | Note |
+| --- | --- | --- |
+| `java.net.spi.URLStreamHandlerProvider` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
+| `java.net.spi.URLStreamHandlerProvider.**` (0 elements) | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; content, handler and connection machinery is not ported. |
 
 #### java.security
 
@@ -11083,9 +11222,9 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang | 1,519 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
-| java.math | 133 | 0 |
-| java.net | 601 | 0 |
-| java.net.spi | 0 | 2 |
+| java.math | 132 | 0 |
+| java.net | 552 | 0 |
+| java.net.spi | 0 | 1 |
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |
 | java.nio.channels.spi | 0 | 53 |
@@ -11100,22 +11239,22 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.sql | 1,005 | 0 |
 | java.text | 535 | 0 |
 | java.text.spi | 0 | 27 |
-| java.time | 551 | 0 |
+| java.time | 460 | 0 |
 | java.time.chrono | 405 | 0 |
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,899 | 0 |
-| java.util.concurrent | 1,214 | 0 |
+| java.util | 1,860 | 0 |
+| java.util.concurrent | 1,177 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 89 | 0 |
-| java.util.jar | 0 | 101 |
+| java.util.jar | 42 | 0 |
 | java.util.random | 67 | 0 |
 | java.util.regex | 67 | 0 |
 | java.util.spi | 0 | 43 |
 | java.util.stream | 287 | 0 |
-| java.util.zip | 180 | 0 |
+| java.util.zip | 179 | 0 |
 | javax.crypto | 279 | 0 |
 | javax.crypto.interfaces | 0 | 13 |
 | javax.crypto.spec | 101 | 0 |
@@ -12155,6 +12294,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.lang.annotation.IncompleteAnnotationException#<init>(Class,String)` | 2 | Waits on IncompleteAnnotationException. |
 | framework | `java.lang.annotation.IncompleteAnnotationException#annotationType()` | 2 | Waits on IncompleteAnnotationException. |
 | framework | `java.lang.annotation.IncompleteAnnotationException#elementName()` | 2 | Waits on IncompleteAnnotationException. |
+| framework | `java.net.BindException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
+| framework | `java.net.BindException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
+| framework | `java.net.ConnectException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
+| framework | `java.net.ConnectException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
 | framework | `java.net.Inet6Address#getByAddress(String,byte[],NetworkInterface)` | 2 | Requires NetworkInterface and its address enumeration to derive the numeric scope. |
 | framework | `java.net.Inet6Address#getScopedInterface()` | 2 | Requires NetworkInterface. Addresses built by this leaf never carry a scoped interface. |
 | framework | `java.net.InetAddress#getCanonicalHostName()` | 2 | Always performs a reverse lookup. Name resolution through the Flint engines (java.net.spi InetAddressResolver) is pending; this leaf builds addresses from raw bytes only. |
@@ -12166,11 +12309,19 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.net.InetSocketAddress#getHostName()` | 2 | Performs a reverse lookup when the address has no host name. Name resolution through the Flint engines (java.net.spi InetAddressResolver) is pending; this leaf builds socket addresses from an InetAddress or an unresolved host name only. getHostString returns the host name without a lookup. |
 | framework | `java.net.MalformedURLException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.MalformedURLException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
-| framework | `java.net.ProtocolException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
-| framework | `java.net.ProtocolException#<init>(String)` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
+| framework | `java.net.NoRouteToHostException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
+| framework | `java.net.NoRouteToHostException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
+| framework | `java.net.PortUnreachableException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
+| framework | `java.net.PortUnreachableException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
+| framework | `java.net.ProtocolException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
+| framework | `java.net.ProtocolException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.Proxy#NO_PROXY` | 2 | Java hands out one shared DIRECT Proxy. engine-aot's constantInstance builds a shared object only for classes whose fields are all immutable, and a Proxy keeps the caller's SocketAddress. A fresh object per access would break identity comparisons such as proxy == Proxy.NO_PROXY. |
-| framework | `java.net.SocketTimeoutException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
-| framework | `java.net.SocketTimeoutException#<init>(String)` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
+| framework | `java.net.SocketException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
+| framework | `java.net.SocketException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
+| framework | `java.net.SocketException#<init>(String,Throwable)` | 2 | Java initializes the cause even when explicitly null. The checked IOException base lacks the initCause lifecycle. |
+| framework | `java.net.SocketException#<init>(Throwable)` | 2 | Requires canonical virtual Throwable.toString() dispatch for cause-derived detail. |
+| framework | `java.net.SocketTimeoutException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
+| framework | `java.net.SocketTimeoutException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.URI#<init>(String)` | 2 | Requires a public string constructor with Java URI syntax validation and URISyntaxException diagnostics. |
 | framework | `java.net.URI#compareTo(URI)` | 2 | Requires ordering by URI component, including percent escape hex normalization and case-insensitive scheme and host comparison. |
 | framework | `java.net.URI#create(String)` | 2 | Requires Java URI syntax validation. The current parser accepts invalid scheme starts, unclosed IPv6 literals, and repeated unescaped fragment delimiters. |
@@ -12183,8 +12334,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.net.URL#toURI()` | 2 | URISyntaxException and full URI(String) constructor are pending. |
 | framework | `java.net.UnknownHostException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.UnknownHostException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
-| framework | `java.net.UnknownServiceException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
-| framework | `java.net.UnknownServiceException#<init>(String)` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
+| framework | `java.net.UnknownServiceException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
+| framework | `java.net.UnknownServiceException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.nio.ByteBuffer#allocateDirect(int)` | 2 | Direct (off-heap) allocation follows the heap cursor slice; every Flint ByteBuffer is a heap buffer. |
 | framework | `java.nio.CharBuffer#chars()` | 2 | Returns java.util.stream.IntStream, which Flint does not have yet. |
 | framework | `java.nio.charset.Charset#<init>(String,String[])` | 2 | Flint's Charset is a closed value type over the six standard charsets with a private id, so it has no constructor a subclass can call; user-defined charsets wait until Charset becomes a class. |
@@ -12358,6 +12509,12 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.temporal.ValueRange#checkValidValue(long,TemporalField)` | 2 | Requires TemporalField. |
 | framework | `java.util.AbstractList#subList(int,int)` | 2 | Java returns a backed range and invalidates it after structural modification of the parent. The current implementation returns a copy and throws IndexOutOfBoundsException for a reversed range. |
 | framework | `java.util.Arrays#asList(T...)` | 2 | Java returns a fixed-size view backed by the supplied array. The current fixed-size copy loses writes in both directions. A null D array counts as empty under R26. |
+| framework | `java.util.Base64.Decoder#decode(ByteBuffer)` | 2 | Needs flint:java-util to depend on flint:java-nio-buffers for flint.java.nio.bytebuffer.ByteBuffer, which java-util does not import yet. |
+| framework | `java.util.Base64.Decoder#wrap(InputStream)` | 2 | The decoding InputStream needs java.io.InputStream, whose Closeable interface is pending. |
+| framework | `java.util.Base64.Encoder#encode(ByteBuffer)` | 2 | Needs flint:java-util to depend on flint:java-nio-buffers for flint.java.nio.bytebuffer.ByteBuffer, which java-util does not import yet. |
+| framework | `java.util.Base64.Encoder#wrap(OutputStream)` | 2 | The encoding OutputStream needs java.io.OutputStream, whose Closeable and Flushable interfaces are pending. |
+| framework | `java.util.BitSet#valueOf(ByteBuffer)` | 2 | The ByteBuffer overload would link flint.java.nio.bytebuffer into the java.nio-free flint.java.util.bitset leaf; deferred until a measured linkage and budget decision. |
+| framework | `java.util.BitSet#valueOf(LongBuffer)` | 2 | The LongBuffer overload would link flint.java.nio.longbuffer into the java.nio-free flint.java.util.bitset leaf; deferred until a measured linkage and budget decision. |
 | framework | `java.util.Collections#emptyList()` | 2 | Java permits no-op clear, removal of a missing element and removeIf on this empty factory result. The existing result throws UnsupportedOperationException. |
 | framework | `java.util.Collections#emptyMap()` | 2 | Java permits no-op clear and removal of a missing key on this empty factory result. The existing result throws UnsupportedOperationException. |
 | framework | `java.util.Collections#emptySet()` | 2 | Java permits no-op clear, removal of a missing element and removeIf on this empty factory result. The existing result throws UnsupportedOperationException. |
@@ -12422,6 +12579,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.UUID#fromString(String)` | 2 | The Java UUID parser, including shortened hexadecimal fields, awaits Character radix conversion. |
 | framework | `java.util.UUID#nameUUIDFromBytes(byte[])` | 2 | Version 3 name-based UUIDs await the canonical Java MessageDigest MD5 provider. |
 | framework | `java.util.concurrent.ExecutionException#<init>(Throwable)` | 2 | The cause is retained, but a custom checked Throwable.toString override is bypassed when deriving the detail. Java invokes that override. |
+| framework | `java.util.concurrent.FutureTask#toString()` | 2 | D object.Object.toString is @system and no Java identity-hash helper is ported yet; the inherited D text stands. |
 | framework | `java.util.concurrent.atomic.AtomicReference#updateAndGet(UnaryOperator)` | 2 | The null callback check needs a separately linkable canonical NullPointerException (R8). The current constructor retains unrelated Java module records and the callback exceeds the AtomicReference leaf budget. |
 | framework | `java.util.function.BiConsumer#andThen(BiConsumer)` | 2 | The existing interface exposes accept and lacks Java's overridable composition default (R3). |
 | framework | `java.util.function.BiFunction#andThen(Function)` | 2 | The existing interface exposes apply and has no composition method. Java's default is overridable and rejects a null function before invocation (R3, R8). |
@@ -12439,6 +12597,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.function.Predicate#not(Predicate)` | 2 | The existing D method accepts a null predicate at composition time (R8). Its call to the final negate method also prevents dispatch to an implementor's negate override (R3). |
 | framework | `java.util.function.Predicate#or(Predicate)` | 2 | The existing final D method prevents implementor overrides (R3) and accepts a null predicate at composition time. Java throws NullPointerException there (R8). |
 | framework | `java.util.function.UnaryOperator#identity()` | 2 | The inherited Function.identity factory returns Function. Java's UnaryOperator factory returns the nominal UnaryOperator. |
+| framework | `java.util.jar.Attributes#map` | 2 | The protected java.util.Map field is not exposed; putValue and the Map-shaped methods reach the insertion-ordered storage. |
+| framework | `java.util.jar.JarException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked ZipException base lacks that API. |
+| framework | `java.util.jar.JarException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked ZipException base lacks that API and its R26 detail accessor normalization is pending. |
 | framework | `java.util.regex.Matcher` | 2 | Assignment to Java MatchResult and access to recorded match positions and groups await the Matcher state port. |
 | framework | `java.util.regex.Pattern#asMatchPredicate()` | 2 | Requires a Predicate adapter for whole-input matching. |
 | framework | `java.util.regex.Pattern#asPredicate()` | 2 | Requires the Matcher search API and a Predicate adapter. |
@@ -12487,6 +12648,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.stream.Stream#toArray(IntFunction)` | 2 | Flint has no typed array-generator overload. Java passes the result size to the generator and rejects elements incompatible with the returned array type. |
 | framework | `java.util.zip.DataFormatException#<init>()` | 2 | Java leaves the cause open to one later initCause call. Flint lacks that API until the shared checked base lands. |
 | framework | `java.util.zip.DataFormatException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. Flint lacks that API until the shared checked base lands. |
+| framework | `java.util.zip.ZipException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
+| framework | `java.util.zip.ZipException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
 | framework | `org.hibernate.validator.HibernateValidator#buildValidatorFactory(ConfigurationState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `org.hibernate.validator.HibernateValidator#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `org.hibernate.validator.HibernateValidator#createSpecializedConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
