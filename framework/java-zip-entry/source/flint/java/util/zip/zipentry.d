@@ -162,7 +162,8 @@ class ZipEntry
             const dos = (cast(long) year << 25) | (cast(long) time.getMonthValue() << 21) | (
                     cast(long) time.getDayOfMonth() << 16) | (cast(long) time.getHour() << 11) | (
                     cast(long) time.getMinute() << 5) | (cast(long) second >> 1);
-            this.xdostime = (dos & 0xffffffffL) + (cast(long)(((second & 0x1) * 1000) + time.getNano() / 1_000_000) << 32);
+            const millis = ((second & 0x1) * 1000) + time.getNano() / 1_000_000;
+            this.xdostime = (dos & 0xffffffffL) + (cast(long) millis << 32);
         }
         if (xdostime != DOSTIME_BEFORE_1980 && year <= 0x7f)
             this.mtime = Nullable!FileTime.init;
@@ -288,7 +289,7 @@ class ZipEntry
     }
 
     /// Sets the optional extra field data, optionally reading ZIP64 sizes, for a LOC or CEN header.
-    package(flint.java.util.zip) void setExtra0(byte[] extra, bool doZIP64, bool isLOC)
+    package void setExtra0(byte[] extra, bool doZIP64, bool isLOC)
     {
         if (extra !is null)
         {
