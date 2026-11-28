@@ -2488,24 +2488,92 @@ class SequenceInputStream : InputStream
     }
 }
 
+/// Java's `UnixFileSystem.normalize`: collapse runs of `/` and drop a trailing `/`, except for the root.
+private string normalizePathname(string pathname) pure nothrow
+{
+    size_t length;
+    char previous = '\0';
+    foreach (const char c; pathname)
+    {
+        if (previous == '/' && c == '/')
+            continue;
+        length++;
+        previous = c;
+    }
+    if (length > 1 && previous == '/')
+        length--;
+    if (length == pathname.length)
+        return pathname;
+
+    char[] normalized = new char[pathname.length];
+    size_t index;
+    previous = '\0';
+    foreach (const char c; pathname)
+    {
+        if (previous == '/' && c == '/')
+            continue;
+        normalized[index++] = c;
+        previous = c;
+    }
+    return normalized[0 .. length].idup;
+}
+
+/// Java's `UnixFileSystem.resolve(parent, child)`: `child` under `parent`, keeping a rooted child in place.
+private string resolvePathname(string parent, string child) pure nothrow
+{
+    if (child.length == 0)
+        return parent;
+    if (child[0] == '/')
+    {
+        if (parent == "/")
+            return child;
+        return trimSeparator(parent ~ child);
+    }
+    return trimSeparator(parent == "/" ? parent ~ child : parent ~ "/" ~ child);
+}
+
+/// Java's `UnixFileSystem.trimSeparator`: drop one trailing `/`, never from the root.
+private string trimSeparator(string path) pure nothrow @nogc
+{
+    return path.length > 1 && path[$ - 1] == '/' ? path[0 .. $ - 1] : path;
+}
+
 /// Java's `File`: a filesystem path.
 class File
 {
     private string path_;
 
     /// The file at `pathname`.
-    this(string pathname) pure nothrow @nogc
+    this(string pathname) pure nothrow
     {
-        path_ = pathname;
+        path_ = normalizePathname(pathname);
     }
 
-    /// The file `child` inside `parent`.
+    /// The file `child` inside `parent`; a null parent leaves `child` bare, an empty one uses the root.
     this(string parent, string child) pure nothrow
     {
-        path_ = parent.length == 0 ? child : (parent[$ - 1] == '/' ? parent ~ child : parent ~ "/" ~ child);
+        const normalizedChild = normalizePathname(child);
+        if (parent is null)
+            path_ = normalizedChild;
+        else if (parent.length == 0)
+            path_ = resolvePathname("/", normalizedChild);
+        else
+            path_ = resolvePathname(normalizePathname(parent), normalizedChild);
     }
 
-    /// The path as given.
+    /// The file `child` inside the already normalized `parent`.
+    this(File parent, string child) pure nothrow
+    {
+        const normalizedChild = normalizePathname(child);
+        if (parent is null)
+            path_ = normalizedChild;
+        else if (parent.path_.length == 0)
+            path_ = resolvePathname("/", normalizedChild);
+        else
+            path_ = resolvePathname(parent.path_, normalizedChild);
+    }
+
+    /// The normalized pathname.
     string getPath() const pure nothrow @nogc
     {
         return path_;
@@ -2529,7 +2597,9 @@ class File
             end--;
         if (end == 0)
             return null;
-        return end == 1 ? "/" : path_[0 .. end - 1];
+        if (end == 1)
+            return path_.length == 1 ? null : "/";
+        return path_[0 .. end - 1];
     }
 
     /// Whether `other` is a `File` with the same pathname.
@@ -2588,8 +2658,13 @@ class File
     /// The absolute path.
     string getAbsolutePath() const
     {
-        import flint.engine.aot.host : absolutePath;
+        import flint.engine.aot.host : absolutePath, currentDirectory;
 
+        if (path_.length == 0)
+        {
+            const working = currentDirectory();
+            return working is null ? "" : working;
+        }
         return absolutePath(path_);
     }
 
@@ -2644,7 +2719,7 @@ class File
     /// The path.
     override string toString() const
     {
-        return path_;
+        return getPath();
     }
 }
 
