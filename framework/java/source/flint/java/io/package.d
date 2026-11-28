@@ -950,10 +950,26 @@ class ByteArrayOutputStream : OutputStream
         count = 0;
     }
 
-    /// The bytes as UTF-8 text.
+    /// The bytes decoded as UTF-8 text, each malformed sequence replaced with U+FFFD.
     override string toString() const
     {
-        return cast(string) buf[0 .. count].idup;
+        import flint.engine.aot.text : decodeUtf8, isValidUtf8;
+
+        const bytes = cast(const(char)[]) buf[0 .. count];
+        if (isValidUtf8(bytes))
+            return bytes.idup;
+        char[] text;
+        size_t i;
+        while (i < bytes.length)
+        {
+            const start = i;
+            const codePoint = decodeUtf8(bytes, i);
+            if (codePoint == 0xFFFD && bytes[start .. i] != "\xEF\xBF\xBD")
+                text ~= "\xEF\xBF\xBD";
+            else
+                text ~= bytes[start .. i];
+        }
+        return text.idup;
     }
 }
 

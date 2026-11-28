@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,233 | 835 | 0 | 1,957 | 13,396 |
+| framework | openjdk@21.0.13 | 2,233 | 836 | 0 | 1,957 | 13,395 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2271,6 +2271,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.ByteArrayOutputStream` | `flint.java.io.ByteArrayOutputStream` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Declared in the flint.java.io aggregate; the protected capacity buffer is a D ubyte slice (R26). Java's synchronized methods are not synchronized because a Flint stream is confined to one fiber. |
 | `java.io.ByteArrayOutputStream#buf` | `flint.java.io.ByteArrayOutputStream.buf` | [R26](api-mapping.md#r26-null-arrays) | A protected D ubyte slice standing in for Java's byte[]; a null slice counts as empty under R26. |
 | `java.io.ByteArrayOutputStream#toByteArray()` | `flint.java.io.ByteArrayOutputStream.toByteArray` | [R26](api-mapping.md#r26-null-arrays) | Returns a detached D ubyte slice of the count valid bytes; empty at zero count under R26. |
+| `java.io.ByteArrayOutputStream#toString()` | `flint.java.io.ByteArrayOutputStream.toString` | [R14](api-mapping.md#r14-strings-and-text) | Decodes the accumulated bytes as UTF-8, Flint's default charset, replacing each malformed sequence with U+FFFD as Java's default-charset decoder does. Java's default charset is platform-selected; Flint's is UTF-8. |
 | `java.io.ByteArrayOutputStream#write(byte[],int,int)` | `flint.java.io.ByteArrayOutputStream.write` | [R26](api-mapping.md#r26-null-arrays) | A D ubyte slice; a null slice counts as empty under R26 and the range is checked first. The stream monitor is omitted because a Flint stream is confined to one fiber. |
 | `java.io.ByteArrayOutputStream#writeBytes(byte[])` | `flint.java.io.ByteArrayOutputStream.writeBytes` | [R26](api-mapping.md#r26-null-arrays) | Added in Java 11. A D ubyte slice; a null slice counts as empty under R26. |
 | `java.io.ByteArrayOutputStream#writeTo(OutputStream)` | `flint.java.io.ByteArrayOutputStream.writeTo` | [R1](api-mapping.md#r1-packages-and-names) | Copies the accumulated bytes and writes the copy whole, as Java 21 does for virtual threads, so a reactor fiber can suspend in the sink. The bytes stay in the buffer. A null sink is rejected. Java's platform-thread path writes the buffer under the monitor; a Flint stream is confined to one fiber and is not monitored. |
@@ -11266,7 +11267,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 590 | 0 |
+| java.io | 589 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -12152,7 +12153,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `jakarta.servlet.ServletException#<init>(Throwable)` | 2 | Missing cause-only constructor: Java initializes the cause, even to null, and derives the message from a non-null cause. Java leaves the cause open to one later initCause call; the D ServletException has one merged (message, rootCause) constructor over the plain Exception base, with no initCause, so an omitted and an explicit null cause are indistinguishable. Pending web-http's (msg)/(msg, cause)/(cause) split. |
 | framework | `jakarta.validation.Validation#byDefaultProvider()` | 2 | Flint's byDefaultProvider() returns the Configuration itself; GenericBootstrap is deferred. |
 | framework | `jakarta.validation.spi.ValidationProvider#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
-| framework | `java.io.ByteArrayOutputStream#toString()` | 2 | The current method returns raw UTF-8 bytes as D text. Java decodes using the default charset and replaces malformed input. |
 | framework | `java.io.EOFException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.io.EOFException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
 | framework | `java.io.File#<init>(File,String)` | 2 | The overload taking a File parent is pending. |
