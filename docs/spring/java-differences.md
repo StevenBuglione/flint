@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,231 | 837 | 0 | 1,963 | 13,390 |
+| framework | openjdk@21.0.13 | 2,239 | 846 | 0 | 1,963 | 13,373 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2279,6 +2279,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.lang.Appendable#append(char)` | `flint.java.lang.Appendable.append` | [R14](api-mapping.md#r14-strings-and-text) | A wchar is one UTF-16 code unit, as Java's char is. |
 | `java.lang.ArithmeticException` | `flint.java.lang.ArithmeticException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.ArithmeticException#<init>(String)` | `flint.java.lang.ArithmeticException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.AssertionError` | `flint.java.lang.error.AssertionError` | [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Flint uses the catchable D Exception base. The inherited Java initCause method is unavailable. A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
@@ -2302,6 +2303,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.lang.Byte#valueOf(String)` | `flint.java.lang.byte_.Byte.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns a byte: a boxed Byte is a D byte. A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
 | `java.lang.Byte#valueOf(String,int)` | `flint.java.lang.byte_.Byte.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns a byte: a boxed Byte is a D byte. A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
 | `java.lang.Byte#valueOf(byte)` | `flint.java.lang.byte_.Byte.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns the byte itself: a boxed Byte is a D byte. |
+| `java.lang.CharSequence#charAt(int)` | `flint.java.lang.CharSequence.charAt` | [R14](api-mapping.md#r14-strings-and-text) | A wchar returns one UTF-16 code unit, including a surrogate half. |
+| `java.lang.CharSequence#isEmpty()` | `flint.java.lang.CharSequence.isEmpty` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Implementors opt into the default with CharSequence.Defaults. |
+| `java.lang.CharSequence#toString()` | `flint.java.lang.CharSequence.toString` | [R14](api-mapping.md#r14-strings-and-text) | The D UTF-8 string uses U+FFFD when a subsequence contains a lone surrogate. |
 | `java.lang.ClassCastException` | `flint.java.lang.ClassCastException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.ClassCastException#<init>(String)` | `flint.java.lang.ClassCastException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.Double` | `flint.java.lang.double_.Double` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.lang.double_; flint.java.lang keeps its smaller Double until the JDK aggregate re-exports this leaf. A boxed Double is a D double (R5). |
@@ -2424,6 +2428,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.lang.Short#valueOf(String,int)` | `flint.java.lang.short_.Short.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns a short: a boxed Short is a D short. A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
 | `java.lang.Short#valueOf(short)` | `flint.java.lang.short_.Short.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns the short itself: a boxed Short is a D short. |
 | `java.lang.StrictMath` | `flint.java.lang.strictmath.StrictMath` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.lang.strictmath; flint.java.lang does not re-export it until the JDK aggregate exists. NaN results are the canonical quiet NaN (Double.NaN's bits); HotSpot on x86-64 returns the sign-set default NaN for computed paths, which only doubleToRawLongBits can observe. |
+| `java.lang.StringBuffer` | `flint.java.lang.StringBuffer` | [R14](api-mapping.md#r14-strings-and-text) | First slice: the constructors, append(String), append(char), length and toString that java.text.Format needs. The Appendable/CharSequence conformance and the checked char[] range overload follow the exception-leaf split (#3). Java synchronizes operations on each buffer and every append returns the original buffer. |
+| `java.lang.StringBuffer#<init>(String)` | `flint.java.lang.StringBuffer.this` | [R26](api-mapping.md#r26-null-arrays) | Java rejects null; a null D string initializes an empty buffer under R26. |
+| `java.lang.StringBuffer#append(String)` | `flint.java.lang.StringBuffer.append` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A null D string is distinguished with `is null` and appends the literal null, as Java does. |
+| `java.lang.StringBuffer#append(char)` | `flint.java.lang.StringBuffer.append` | [R14](api-mapping.md#r14-strings-and-text) | A wchar is one UTF-16 code unit, including a surrogate half (R14). |
+| `java.lang.StringBuffer#toString()` | `flint.java.lang.StringBuffer.toString` | [R14](api-mapping.md#r14-strings-and-text) | A UTF-16 snapshot encoded as D UTF-8; a lone surrogate becomes U+FFFD (R14). |
 | `java.lang.UnsupportedOperationException` | `flint.java.lang.UnsupportedOperationException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.UnsupportedOperationException#<init>(String)` | `flint.java.lang.UnsupportedOperationException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.UnsupportedOperationException#<init>(String,Throwable)` | `flint.java.lang.UnsupportedOperationException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
@@ -11292,7 +11301,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
 | java.io | 770 | 0 |
-| java.lang | 1,519 | 0 |
+| java.lang | 1,502 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 132 | 0 |
@@ -12320,6 +12329,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.lang.AssertionError#<init>(float)` | 2 | Missing primitive overload. Java uses Float.toString for the detail, including signed zero and special values. |
 | framework | `java.lang.AssertionError#<init>(int)` | 2 | Missing primitive overload. Java stores the signed decimal detail of the int. |
 | framework | `java.lang.AssertionError#<init>(long)` | 2 | Missing primitive overload. Java stores the signed decimal detail of the long. |
+| framework | `java.lang.CharSequence#chars()` | 2 | Requires the canonical IntStream and a dependency direction compatible with flint:java. |
+| framework | `java.lang.CharSequence#codePoints()` | 2 | Requires the canonical IntStream and a dependency direction compatible with flint:java. |
+| framework | `java.lang.CharSequence#compare(CharSequence,CharSequence)` | 2 | Requires same-runtime-class dispatch to the Java Comparable implementation. |
 | framework | `java.lang.Error#<init>(String)` | 2 | Requires the canonical catchable Error with Java detail and a cause that can be initialized later. ReentrantLock uses this constructor for lock-count overflow. Empty and null D detail follow R26. |
 | framework | `java.lang.InstantiationException` | 2 | Flint extends RuntimeException. Java extends checked ReflectiveOperationException and bypasses RuntimeException catches (R8). |
 | framework | `java.lang.InstantiationException#<init>()` | 2 | The no-argument constructor must produce the checked InstantiationException type (R8). |
@@ -12342,14 +12354,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.lang.ReflectiveOperationException#<init>(String)` | 2 | Requires the checked ReflectiveOperationException base and a cause that can be initialized later. |
 | framework | `java.lang.ReflectiveOperationException#<init>(String,Throwable)` | 2 | Requires the checked ReflectiveOperationException base and a cause initialized even when null. |
 | framework | `java.lang.ReflectiveOperationException#<init>(Throwable)` | 2 | Requires the checked ReflectiveOperationException base with a detail derived from the cause and the cause already initialized. |
-| framework | `java.lang.StringBuffer` | 2 | Missing mutable text type required by Format and SimpleDateFormat. Java synchronizes operations on each buffer and append returns the original buffer. |
-| framework | `java.lang.StringBuffer#<init>()` | 2 | Requires a mutable StringBuffer that starts empty for Format.format(Object). |
-| framework | `java.lang.StringBuffer#<init>(String)` | 2 | Requires initializing the mutable buffer with the supplied text and counting its UTF-16 code units (R14). Java rejects null. A null D string initializes an empty buffer under R26. |
-| framework | `java.lang.StringBuffer#append(String)` | 2 | Requires synchronized string append and return of the original buffer. Java appends the literal null for a null String. R5 Nullable!string preserves the distinction from an empty String. A plain string convenience overload awaits owner approval. |
-| framework | `java.lang.StringBuffer#append(char)` | 2 | Requires synchronized append of one UTF-16 code unit (R14) and return of the original buffer. |
-| framework | `java.lang.StringBuffer#append(char[],int,int)` | 2 | Requires synchronized append of a checked UTF-16 offset and count (R14), including overflow rejection, and return of the original buffer. |
-| framework | `java.lang.StringBuffer#length()` | 2 | Requires synchronized access to the length in UTF-16 code units (R14), used by format field offsets. |
-| framework | `java.lang.StringBuffer#toString()` | 2 | Requires a synchronized immutable snapshot of the buffer text. |
+| framework | `java.lang.StringBuffer#append(char[],int,int)` | 2 | Waits on the canonical IndexOutOfBoundsException leaf (#3) so the checked range throws Java's exception without importing the java.lang aggregate. |
 | framework | `java.lang.annotation.Annotation` | 2 | Runtime annotation interface waits on the RuntimeClassRef annotationType() and R22 runtime sibling contract. |
 | framework | `java.lang.annotation.Annotation#annotationType()` | 2 | Waits on the Annotation runtime contract (R4 RuntimeClassRef). |
 | framework | `java.lang.annotation.Annotation#equals(Object)` | 2 | Waits on the Annotation runtime contract. |

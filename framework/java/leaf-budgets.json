@@ -52,6 +52,11 @@
     "incremental_linked_bytes": 757,
     "template_instances": 33
   },
+  "flint.java.lang.stringbuffer": {
+    "incremental_linked_bytes": 1831,
+    "template_instances": 38,
+    "control": "tools/jdk-closure-controls/runtime-exception.d"
+  },
   "flint.java.lang.system": {
     "incremental_linked_bytes": 80,
     "template_instances": 2

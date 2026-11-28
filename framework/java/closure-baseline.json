@@ -2898,6 +2898,34 @@
         "link|java|flint.java.lang.float_|core|Oz|undeclared module records flint.java.util.date",
         "link|java|flint.java.lang.float_|core|Oz|undeclared module records flint.java.util.timezone"
       ]
+    },
+    "java-lang-stringbuffer-module-records": {
+      "decision": "523bd5bd92ef255ad83efdaa4253b42197271e8a",
+      "reason": "Decision 523bd5bd (2026-11-28): a brand-new JDK leaf inherits the RTInfo/first-object module metadata records of the batch it lands in. StringBuffer is a new leaf in flint:java whose probe declares only its real internal engine; the listed modules are not real imports but arrive with the RTInfo instance the linker places in flint.java.character. Drop this whole group when the first-object/compile-scope model stops carrying module records.",
+      "violations": [
+        "link|java|flint.java.lang.stringbuffer|text|O3|undeclared module records flint.java.character",
+        "link|java|flint.java.lang.stringbuffer|text|O3|undeclared module records flint.java.lang",
+        "link|java|flint.java.lang.stringbuffer|text|O3|undeclared module records flint.java.lang.runtimeexception",
+        "link|java|flint.java.lang.stringbuffer|text|O3|undeclared module records flint.java.sql",
+        "link|java|flint.java.lang.stringbuffer|text|O3|undeclared module records flint.java.text.simpledateformat",
+        "link|java|flint.java.lang.stringbuffer|text|O3|undeclared module records flint.java.time",
+        "link|java|flint.java.lang.stringbuffer|text|O3|undeclared module records flint.java.time.format",
+        "link|java|flint.java.lang.stringbuffer|text|O3|undeclared module records flint.java.util",
+        "link|java|flint.java.lang.stringbuffer|text|O3|undeclared module records flint.java.util.calendar",
+        "link|java|flint.java.lang.stringbuffer|text|O3|undeclared module records flint.java.util.date",
+        "link|java|flint.java.lang.stringbuffer|text|O3|undeclared module records flint.java.util.timezone",
+        "link|java|flint.java.lang.stringbuffer|text|Oz|undeclared module records flint.java.character",
+        "link|java|flint.java.lang.stringbuffer|text|Oz|undeclared module records flint.java.lang",
+        "link|java|flint.java.lang.stringbuffer|text|Oz|undeclared module records flint.java.lang.runtimeexception",
+        "link|java|flint.java.lang.stringbuffer|text|Oz|undeclared module records flint.java.sql",
+        "link|java|flint.java.lang.stringbuffer|text|Oz|undeclared module records flint.java.text.simpledateformat",
+        "link|java|flint.java.lang.stringbuffer|text|Oz|undeclared module records flint.java.time",
+        "link|java|flint.java.lang.stringbuffer|text|Oz|undeclared module records flint.java.time.format",
+        "link|java|flint.java.lang.stringbuffer|text|Oz|undeclared module records flint.java.util",
+        "link|java|flint.java.lang.stringbuffer|text|Oz|undeclared module records flint.java.util.calendar",
+        "link|java|flint.java.lang.stringbuffer|text|Oz|undeclared module records flint.java.util.date",
+        "link|java|flint.java.lang.stringbuffer|text|Oz|undeclared module records flint.java.util.timezone"
+      ]
     }
   }
 }

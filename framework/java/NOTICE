@@ -9,8 +9,9 @@ reference results produced by executing the public Java SE 21 API.
 The specification and conformance test inventory are pinned to OpenJDK 21.0.13.
 
 CharSequence, Closeable, Flushable, Math, StrictMath, Byte, Short, Integer, Long, Double,
-Float and their shared parsing and formatting core are ported from OpenJDK
-21.0.13. Their source files retain the upstream copyright and license notices.
+Float, StringBuffer and their shared parsing and formatting core are ported from
+OpenJDK 21.0.13. Their source files retain the upstream copyright and license
+notices.
 
 SPDX-License-Identifier: GPL-2.0-only WITH Classpath-exception-2.0
 See LICENSE for the license and Classpath Exception.

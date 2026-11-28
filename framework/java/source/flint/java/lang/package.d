@@ -28,6 +28,7 @@ public import flint.java.lang.javaobject : JavaObject;
 public import flint.java.lang.runnable : Runnable;
 public import flint.java.lang.runtimeexception : IllegalArgumentException, IllegalStateException,
     JavaExceptionConstructors, RuntimeException, javaToString;
+public import flint.java.lang.stringbuffer : StringBuffer;
 public import flint.java.lang.system : System;
 
 import flint.engine.aot.objects : objectEquals, objectToHash, objectToString;
