@@ -87,6 +87,7 @@ struct Regex
     private int groups; // capturing groups, without group 0
     private int registers;
     private int compiledFlags;
+    private int[string] groupNames; // named capturing groups: name -> 1-based group index
 
     /// Flags in effect after parsing the top-level expression.
     int flags() const pure nothrow @nogc
@@ -98,6 +99,13 @@ struct Regex
     int groupCount() const pure nothrow @nogc
     {
         return groups;
+    }
+
+    /// The named capturing groups as name -> 1-based group index. The table is never written after compilation, so a
+    /// caller may read it without a copy.
+    const(int[string]) nameTable() const
+    {
+        return groupNames;
     }
 
     /// `Pattern.matcher(input).matches()`: whether the whole input matches.
@@ -196,6 +204,7 @@ Regex compileRegex(string regex, int flags = 0)
             if (contains(result.sets, cast(int) index, c))
                 set.ascii[c >> 6] |= 1UL << (c & 63);
     result.groups = parser.groupCount;
+    result.groupNames = parser.names;
     result.compiledFlags = parser.flags;
     result.registers = compiler.registers;
     return result;

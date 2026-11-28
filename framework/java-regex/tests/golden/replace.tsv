@@ -1,0 +1,31 @@
+(\\d+)	a12b345c	<$1>	a<12>b<345>c	a<12>b345c
+(\\d+)	a12b345c	$0	a12b345c	a12b345c
+(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})	2026-11-28 x 1999-01-02	${day}/${month}/${year}	28/11/2026 x 02/01/1999	28/11/2026 x 1999-01-02
+(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})	2026-11-28	$1/$2/$3	2026/11/28	2026/11/28
+(a)(b)?	ab a	[$2]	[b] []	[b] a
+(a)	a	$12	a2	a2
+(a)	a	$9	error	error
+(a)	a	$	error	error
+(a)	a	$x	error	error
+(a)	a	$$	error	error
+(a)	a	${y}	error	error
+(a)	a	${}	error	error
+(a)	a	${y	error	error
+(a)	a	\\$1	$1	$1
+(a)	a	\\\\	\\	\\
+(a)	a	a\\b	ab	ab
+(a)	a	x\\	error	error
+(a)	a	$00	a	a
+(a)	a	$01	a	a
+(a)	a	$02	a2	a2
+	ab	-	-a-b-	-ab
+a*	baaac	X	XbXXcX	Xbaaac
+[é😀]	aéb😀c	Z	aZbZc	aZb😀c
+(é)(😀)?	é 😀	\\$2:$1	$2:é 😀	$2:é 😀
+(a)|(b)	ab	<$1$2>	<a><b>	<a>b
+\\s+	  a\tb \n c 	_	_a_b_c_	_a\tb \n c 
+(x)?y	y xy	[$1]	[] [x]	[] xy
+(a)	abc	$1$1	aabc	aabc
+(a)	abc	$1\\	error	error
+(a)	abc	\\	error	error
+(?:a)	aaa	$1	error	error

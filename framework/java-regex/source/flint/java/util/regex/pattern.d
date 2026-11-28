@@ -154,16 +154,18 @@ private class NumberedMatch : MatchResult
     private int[2] wholeMatch;
     private int[] capturePoints;
     private bool matched;
+    private const(int[string]) groupNames;
 
     private struct Capture
     {
         int first, last;
     }
 
-    private this(string input, int groups) pure nothrow @nogc
+    private this(string input, int groups, const(int[string]) groupNames) pure nothrow @nogc
     {
         this.input = input;
         this.groups = groups;
+        this.groupNames = groupNames;
     }
 
     /// Count the capturing groups defined by the pattern.
@@ -182,6 +184,11 @@ private class NumberedMatch : MatchResult
         return utf16Offset(capture(group).first);
     }
 
+    final int start(string name) const
+    {
+        return start(matchedGroupIndex(name));
+    }
+
     final override int end() const
     {
         return end(0);
@@ -190,6 +197,11 @@ private class NumberedMatch : MatchResult
     final override int end(int group) const
     {
         return utf16Offset(capture(group).last);
+    }
+
+    final int end(string name) const
+    {
+        return end(matchedGroupIndex(name));
     }
 
     final override Nullable!string group() const
@@ -207,6 +219,22 @@ private class NumberedMatch : MatchResult
         const first = at;
         advance(range.last - range.first, at);
         return Nullable!string(input[first .. at]);
+    }
+
+    final Nullable!string group(string name) const
+    {
+        return group(matchedGroupIndex(name));
+    }
+
+    /// Java's `getMatchedGroupIndex`: the match check comes before the name lookup.
+    private int matchedGroupIndex(string name) const
+    {
+        if (!matched)
+            throw new IllegalStateException("No match found");
+        auto found = name in groupNames;
+        if (found is null)
+            throw new IllegalArgumentException("No group with name <" ~ name ~ ">");
+        return *found;
     }
 
     private Capture capture(int group) const
@@ -249,7 +277,7 @@ final class Matcher : NumberedMatch
 
     private this(Pattern compiled, string input)
     {
-        super(input, compiled.program.groupCount());
+        super(input, compiled.program.groupCount(), compiled.program.nameTable());
         this.compiled = compiled;
     }
 
@@ -285,6 +313,33 @@ final class Matcher : NumberedMatch
         matched = false;
         searchFrom = codePointIndex(input, start);
         return findFrom(searchFrom);
+    }
+
+    /// Replace every match with Java's replacement syntax: `$g`, `${name}` and `\` escapes (R5, R26).
+    string replaceAll(string replacement)
+    {
+        reset();
+        return replaceMatches(replacement, false);
+    }
+
+    /// Replace the first match with Java's replacement syntax (R5, R26).
+    string replaceFirst(string replacement)
+    {
+        reset();
+        return replaceMatches(replacement, true);
+    }
+
+    /// Quote literal text so it can be used as a replacement (R5, R26).
+    static string quoteReplacement(string text)
+    {
+        string result;
+        foreach (char c; text)
+        {
+            if (c == '\\' || c == '$')
+                result ~= '\\';
+            result ~= c;
+        }
+        return result;
     }
 
     /// Clear the match state while keeping the current input and compiled expression.
@@ -324,6 +379,121 @@ final class Matcher : NumberedMatch
         return matched;
     }
 
+    private string replaceMatches(string replacement, bool firstOnly)
+    {
+        import flint.engine.aot.text : decodeUtf8;
+
+        string output;
+        size_t byteCursor;
+        int unitCursor;
+        bool any;
+        while (find())
+        {
+            any = true;
+            const matchStart = start();
+            const segmentStart = byteCursor;
+            while (unitCursor < matchStart)
+                unitCursor += decodeUtf8(input, byteCursor) > wchar.max ? 2 : 1;
+            output ~= input[segmentStart .. byteCursor];
+            appendExpanded(output, replacement);
+            const matchEnd = end();
+            while (unitCursor < matchEnd)
+                unitCursor += decodeUtf8(input, byteCursor) > wchar.max ? 2 : 1;
+            if (firstOnly)
+                break;
+        }
+        if (!any)
+            return input;
+        output ~= input[byteCursor .. $];
+        return output;
+    }
+
+    private void appendExpanded(ref string output, string replacement) const
+    {
+        size_t at;
+        size_t literal = 0;
+        while (at < replacement.length)
+        {
+            const c = replacement[at];
+            if (c == '\\')
+            {
+                output ~= replacement[literal .. at];
+                if (at + 1 >= replacement.length)
+                    throw new IllegalArgumentException("character to be escaped is missing");
+                const length = utf8SequenceLength(replacement, at + 1);
+                output ~= replacement[at + 1 .. at + 1 + length];
+                at += 1 + length;
+                literal = at;
+            }
+            else if (c == '$')
+            {
+                output ~= replacement[literal .. at];
+                at = appendGroupReference(output, replacement, at + 1);
+                literal = at;
+            }
+            else
+                ++at;
+        }
+        output ~= replacement[literal .. $];
+    }
+
+    private size_t appendGroupReference(ref string output, string replacement, size_t at) const
+    {
+        if (at >= replacement.length)
+            throw new IllegalArgumentException("Illegal group reference: group index is missing");
+        if (replacement[at] == '{')
+            return appendNamedGroupReference(output, replacement, at);
+        if (replacement[at] < '0' || replacement[at] > '9')
+            throw new IllegalArgumentException("Illegal group reference");
+        return appendNumberedGroupReference(output, replacement, at);
+    }
+
+    private size_t appendNamedGroupReference(ref string output, string replacement, size_t at) const
+    {
+        auto close = at + 1;
+        while (close < replacement.length && replacement[close] != '}')
+            ++close;
+        if (close >= replacement.length)
+            throw new IllegalArgumentException("named capturing group is missing trailing '}'");
+        const name = replacement[at + 1 .. close];
+        if (name.length == 0)
+            throw new IllegalArgumentException("named capturing group has 0 length name");
+        auto found = name in groupNames;
+        if (found is null)
+            throw new IllegalArgumentException("No group with name {" ~ name ~ "}");
+        appendGroup(output, *found);
+        return close + 1;
+    }
+
+    private size_t appendNumberedGroupReference(ref string output, string replacement, size_t at) const
+    {
+        int group = replacement[at] - '0';
+        auto next = at + 1;
+        while (next < replacement.length && replacement[next] >= '0' && replacement[next] <= '9')
+        {
+            const candidate = group * 10 + (replacement[next] - '0');
+            if (group > (int.max - 9) / 10 || candidate > groupCount())
+                break;
+            group = candidate;
+            ++next;
+        }
+        if (group > groupCount())
+        {
+            import flint.engine.aot.text : decimal;
+
+            throw new IndexOutOfBoundsException("No group " ~ decimal(cast(long) group));
+        }
+        appendGroup(output, group);
+        return next;
+    }
+
+    private void appendGroup(ref string output, int group) const
+    {
+        const text = this.group(group);
+        if (!text.isNull)
+            output ~= text.get;
+    }
+
     /// Whether the preceding match succeeded.
     bool hasMatch() const pure nothrow @nogc
     {
@@ -333,7 +503,7 @@ final class Matcher : NumberedMatch
     /// Capture a detached view of the current numbered match state.
     MatchResult toMatchResult() const pure nothrow
     {
-        auto result = new NumberedMatch(matched ? input : null, groupCount());
+        auto result = new NumberedMatch(matched ? input : null, groupCount(), groupNames);
         if (matched)
         {
             result.matched = true;
@@ -347,6 +517,15 @@ final class Matcher : NumberedMatch
         }
         return result;
     }
+}
+
+/// The number of bytes in the UTF-8 sequence that starts at `at`.
+private size_t utf8SequenceLength(scope const(char)[] text, size_t at) pure nothrow @nogc
+{
+    const lead = cast(ubyte) text[at];
+    const length = lead >= 0xF0 ? 4 : lead >= 0xE0 ? 3 : lead >= 0xC0 ? 2 : 1;
+    const remaining = text.length - at;
+    return length < remaining ? length : remaining;
 }
 
 /// The number of UTF-16 code units in UTF-8 `text`, matching Java's `String.length`.

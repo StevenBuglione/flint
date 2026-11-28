@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,949 | 701 | 0 | 1,921 | 13,850 |
+| framework | openjdk@21.0.13 | 1,951 | 705 | 0 | 1,921 | 13,844 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -3023,10 +3023,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.regex.MatchResult` | `flint.java.util.regex.MatchResult` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | The numbered capture contract is available. The Java default methods are deferred. |
 | `java.util.regex.MatchResult#group()` | `flint.java.util.regex.matchresult.MatchResult.group` | [R5](api-mapping.md#r5-optional-and-nullable-values) | An absent capture uses Nullable!string. |
 | `java.util.regex.MatchResult#group(int)` | `flint.java.util.regex.matchresult.MatchResult.group` | [R5](api-mapping.md#r5-optional-and-nullable-values) | An absent capture uses Nullable!string. |
-| `java.util.regex.Matcher` | `flint.java.util.regex.Matcher` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Implements numbered MatchResult captures for whole-input, prefix and search matches. Under R26 a null reset input counts as empty text. Java throws NullPointerException. Named capture operations remain deferred. |
+| `java.util.regex.Matcher` | `flint.java.util.regex.Matcher` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Implements MatchResult captures for whole-input, prefix and search matches, including named capture access and Java replacement syntax. Under R26 a null reset input or replacement counts as empty text. Java throws NullPointerException. The Function-based replacements, region and bounds controls, and appendReplacement/appendTail remain deferred. |
 | `java.util.regex.Matcher#find(int)` | `flint.java.util.regex.pattern.Matcher.find` | [R5](api-mapping.md#r5-optional-and-nullable-values) | The start is a Java UTF-16 offset; an offset inside a surrogate pair searches from that pair's code point. |
 | `java.util.regex.Matcher#group()` | `flint.java.util.regex.pattern.Matcher.group` | [R5](api-mapping.md#r5-optional-and-nullable-values) | An absent capture uses Nullable!string. |
+| `java.util.regex.Matcher#group(String)` | `flint.java.util.regex.pattern.Matcher.group` | [R5](api-mapping.md#r5-optional-and-nullable-values) | An absent capture uses Nullable!string; an unknown name throws IllegalArgumentException, after Java's no-match check. |
 | `java.util.regex.Matcher#group(int)` | `flint.java.util.regex.pattern.Matcher.group` | [R5](api-mapping.md#r5-optional-and-nullable-values) | An absent capture uses Nullable!string. |
+| `java.util.regex.Matcher#quoteReplacement(String)` | `flint.java.util.regex.pattern.Matcher.quoteReplacement` | [R26](api-mapping.md#r26-null-arrays) | A null slice quotes as empty text. Java throws NullPointerException. |
+| `java.util.regex.Matcher#replaceAll(String)` | `flint.java.util.regex.pattern.Matcher.replaceAll` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | Java's $g, ${name} and backslash replacement syntax; a null replacement counts as empty text under R26. |
+| `java.util.regex.Matcher#replaceFirst(String)` | `flint.java.util.regex.pattern.Matcher.replaceFirst` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | Java's replacement syntax; a null replacement counts as empty text under R26. |
 | `java.util.regex.Matcher#reset(CharSequence)` | `flint.java.util.regex.pattern.Matcher.reset` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.regex.Matcher#toMatchResult()` | `flint.java.util.regex.pattern.Matcher.toMatchResult` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Returns a detached snapshot of the numbered MatchResult state. Java default methods remain deferred. |
 | `java.util.regex.Pattern#matcher(CharSequence)` | `flint.java.util.regex.pattern.Pattern.matcher` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
@@ -11056,7 +11060,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.function | 89 | 0 |
 | java.util.jar | 0 | 101 |
 | java.util.random | 67 | 0 |
-| java.util.regex | 38 | 0 |
+| java.util.regex | 32 | 0 |
 | java.util.spi | 0 | 43 |
 | java.util.stream | 287 | 0 |
 | java.util.zip | 258 | 0 |
@@ -12392,7 +12396,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.regex.Pattern#compile(String)` | 2 | Java supports extended grapheme clusters (\X) and grapheme boundaries (\b{g}). Flint throws RegexUnsupportedException for both. |
 | framework | `java.util.regex.Pattern#compile(String,int)` | 2 | CANON_EQ and UNICODE_CHARACTER_CLASS still throw RegexUnsupportedException. Java supports extended grapheme clusters (\X) and grapheme boundaries (\b{g}). Flint throws RegexUnsupportedException for both. |
 | framework | `java.util.regex.Pattern#matches(String,CharSequence)` | 2 | Java supports extended grapheme clusters (\X) and grapheme boundaries (\b{g}). Flint throws RegexUnsupportedException for both. |
-| framework | `java.util.regex.Pattern#namedGroups()` | 2 | Requires exposing capture names and Java group indices as an unmodifiable map. |
+| framework | `java.util.regex.Pattern#namedGroups()` | 2 | Requires exposing capture names and Java group indices as an unmodifiable Map. The flint.java.util Map facade pulls the whole java.util aggregate into this leaf, over its linked-byte and template budgets; blocked on a leaf Map module or an owner budget decision. |
 | framework | `java.util.regex.Pattern#splitAsStream(CharSequence)` | 2 | Requires lazy split traversal through the Java Stream adapter. |
 | framework | `java.util.regex.Pattern#splitWithDelimiters(CharSequence,int)` | 2 | Requires Matcher search, Java limit behavior and inclusion of the matched delimiters. |
 | framework | `java.util.stream.BaseStream#close()` | 2 | Flint's reference Stream lacks Java's close lifecycle. Java closes the pipeline once and propagates ordered handler failures. |

@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.regex.PatternSyntaxException;
 
 public class GoldenRegex {
@@ -244,7 +245,97 @@ public class GoldenRegex {
         System.out.println(out.size() + " cases");
         if (args.length > 1)
             writeMatcherCases(Path.of(args[1]));
+        if (args.length > 2)
+            writeReplacementCases(Path.of(args[2]), Path.of(args[3]), Path.of(args[4]));
     }
+
+    private static String replaceOnce(Pattern pattern, String input, String replacement, boolean first) {
+        try {
+            var matcher = pattern.matcher(input);
+            return first ? matcher.replaceFirst(replacement) : matcher.replaceAll(replacement);
+        } catch (RuntimeException e) {
+            return "error";
+        }
+    }
+
+    // One row per (expression, input, replacement): the expression, the input, the replacement, replaceAll and
+    // replaceFirst, or "error" when Java rejects the replacement.
+    private static void writeReplacementCases(Path replace, Path named, Path quote) throws Exception {
+        var rows = new ArrayList<String>();
+        String[][] cases = {
+            {"(\\d+)", "a12b345c", "<$1>"},
+            {"(\\d+)", "a12b345c", "$0"},
+            {"(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})", "2026-11-28 x 1999-01-02", "${day}/${month}/${year}"},
+            {"(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})", "2026-11-28", "$1/$2/$3"},
+            {"(a)(b)?", "ab a", "[$2]"},
+            {"(a)", "a", "$12"},
+            {"(a)", "a", "$9"},
+            {"(a)", "a", "$"},
+            {"(a)", "a", "$x"},
+            {"(a)", "a", "$$"},
+            {"(a)", "a", "${y}"},
+            {"(a)", "a", "${}"},
+            {"(a)", "a", "${y"},
+            {"(a)", "a", "\\$1"},
+            {"(a)", "a", "\\\\"},
+            {"(a)", "a", "a\\b"},
+            {"(a)", "a", "x\\"},
+            {"(a)", "a", "$00"},
+            {"(a)", "a", "$01"},
+            {"(a)", "a", "$02"},
+            {"", "ab", "-"},
+            {"a*", "baaac", "X"},
+            {"[é😀]", "aéb😀c", "Z"},
+            {"(é)(😀)?", "é 😀", "\\$2:$1"},
+            {"(a)|(b)", "ab", "<$1$2>"},
+            {"\\s+", "  a\tb \n c ", "_"},
+            {"(x)?y", "y xy", "[$1]"},
+            {"(a)", "abc", "$1$1"},
+            {"(a)", "abc", "$1\\"},
+            {"(a)", "abc", "\\"},
+            {"(?:a)", "aaa", "$1"},
+        };
+        for (String[] c : cases) {
+            Pattern pattern = Pattern.compile(c[0]);
+            rows.add(esc(c[0]) + "\t" + esc(c[1]) + "\t" + esc(c[2]) + "\t"
+                + esc(replaceOnce(pattern, c[1], c[2], false)) + "\t" + esc(replaceOnce(pattern, c[1], c[2], true)));
+        }
+        Files.write(replace, rows, StandardCharsets.UTF_8);
+
+        // Named-group access after find(): group, start and end, or "error" when Java throws.
+        var namedRows = new ArrayList<String>();
+        String[][] namedCases = {
+            {"(?<year>\\d{4})-(?<month>\\d{2})", "on 2026-11", "year"},
+            {"(?<year>\\d{4})-(?<month>\\d{2})", "on 2026-11", "month"},
+            {"(?<x>a)(?<y>b)?", "a", "y"},
+            {"(?<x>a)(?<y>b)?", "ab", "y"},
+            {"(?<x>a)", "zzz", "x"},
+            {"(?<x>a)", "a", "nope"},
+        };
+        for (String[] c : namedCases) {
+            Pattern pattern = Pattern.compile(c[0]);
+            var matcher = pattern.matcher(c[1]);
+            matcher.find();
+            String group, start, end;
+            try {
+                group = String.valueOf(matcher.group(c[2]));
+                start = String.valueOf(matcher.start(c[2]));
+                end = String.valueOf(matcher.end(c[2]));
+            } catch (RuntimeException e) {
+                group = start = end = "error";
+            }
+            namedRows.add(esc(c[0]) + "\t" + esc(c[1]) + "\t" + c[2] + "\t" + esc(group) + "\t" + start + "\t" + end);
+        }
+        Files.write(named, namedRows, StandardCharsets.UTF_8);
+
+        // quoteReplacement: every row's second field is the quoted form of the first, or "error".
+        var quoteRows = new ArrayList<String>();
+        for (String s : new String[] {"$1", "a\\b", "${x}", "", "plain", "$", "\\", "$0${x}\\"})
+            quoteRows.add(esc(s) + "\t" + esc(Matcher.quoteReplacement(s)));
+        Files.write(quote, quoteRows, StandardCharsets.UTF_8);
+
+    }
+
 
     private static void writeMatcherCases(Path output) throws Exception {
         // Each expression has a matching input and a non-matching input.

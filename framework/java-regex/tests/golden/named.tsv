@@ -1,0 +1,6 @@
+(?<year>\\d{4})-(?<month>\\d{2})	on 2026-11	year	2026	3	7
+(?<year>\\d{4})-(?<month>\\d{2})	on 2026-11	month	11	8	10
+(?<x>a)(?<y>b)?	a	y	null	-1	-1
+(?<x>a)(?<y>b)?	ab	y	b	1	2
+(?<x>a)	zzz	x	error	error	error
+(?<x>a)	a	nope	error	error	error
