@@ -811,7 +811,8 @@
    "upstream": "openjdk@21.0.13",
    "dependencies": [
     "conc",
-    "java"
+    "java",
+    "java-concurrent"
    ],
    "bench": {
     "fixture": "framework/java-concurrent-sync/bench",
