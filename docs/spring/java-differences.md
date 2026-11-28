@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,948 | 712 | 0 | 1,921 | 13,840 |
+| framework | openjdk@21.0.13 | 1,949 | 712 | 0 | 1,921 | 13,839 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -11039,7 +11039,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |
 | java.nio.channels.spi | 0 | 53 |
-| java.nio.charset | 23 | 0 |
+| java.nio.charset | 22 | 0 |
 | java.nio.file | 268 | 0 |
 | java.nio.file.attribute | 137 | 0 |
 | java.nio.file.spi | 0 | 35 |
@@ -12165,7 +12165,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.charset.CharsetDecoder#decode(ByteBuffer)` | 2 | Throws CharacterCodingException (through CoderResult.throwException), which waits on checked IOException initCause (framework-core fc-io-charset). canEncode already runs the same loop privately. |
 | framework | `java.nio.charset.CharsetEncoder#encode(CharBuffer)` | 2 | Throws CharacterCodingException (through CoderResult.throwException), which waits on checked IOException initCause (framework-core fc-io-charset). canEncode already runs the same loop privately. |
 | framework | `java.nio.charset.CoderResult#throwException()` | 2 | Requires CharacterCodingException, MalformedInputException and UnmappableCharacterException, which wait on checked IOException initCause. |
-| framework | `java.nio.charset.IllegalCharsetNameException#getCharsetName()` | 2 | Not in D yet. The exception keeps the name only as its message; the field and accessor are still to add, as on UnsupportedCharsetException. |
 | framework | `java.nio.file.Path#compareTo(Path)` | 2 | Default-provider ordering and Comparable<Path> inheritance are deferred. |
 | framework | `java.nio.file.Path#equals(Object)` | 2 | Provider-specific path equality is deferred with hashCode. |
 | framework | `java.nio.file.Path#hashCode()` | 2 | Provider-specific path hashing is deferred with equals. |
