@@ -212,7 +212,17 @@
 "kind": "final class",
 "module": "flint.micrometer.core.instrument.distribution",
 "d": "NoopHistogram",
-"status": "ported"
+"status": "ported",
+"methods": {
+"recordDouble(double)": [
+"nothrow",
+"@nogc"
+],
+"recordLong(long)": [
+"nothrow",
+"@nogc"
+]
+}
 },
 "io.micrometer.core.instrument.distribution.TimeWindowMax": {
 "kind": "class",
