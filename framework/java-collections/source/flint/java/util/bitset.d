@@ -63,6 +63,14 @@ class BitSet
         wordsInUse = cast(int) ownedWords.length;
     }
 
+    /// Returns an independent copy with the same capacity.
+    BitSet clone() const pure nothrow
+    {
+        auto copy = new BitSet(copyWords(words));
+        copy.wordsInUse = wordsInUse;
+        return copy;
+    }
+
     /// Copies the signed words, lowest bit indices first, and drops unused capacity.
     static BitSet valueOf(scope const(long)[] values) pure nothrow
     {
@@ -94,6 +102,40 @@ class BitSet
         const word = cast(uint) bitIndex >> wordShift;
         // Unused capacity holds zero words, so the capacity check also guards the load.
         return word < words.length && (words[word] & maskAt(bitIndex)) != 0;
+    }
+
+    /// Returns a copy of the bits in the half-open range [fromIndex, toIndex), clamped to the live bits.
+    BitSet get(int fromIndex, int toIndex) pure
+    {
+        if (fromIndex < 0 || toIndex < fromIndex)
+            rejectRange(fromIndex, toIndex);
+
+        const liveLength = length();
+        if (liveLength <= fromIndex || fromIndex == toIndex)
+            return new BitSet(copyWords(null));
+
+        auto lastBit = toIndex;
+        if (lastBit > liveLength)
+            lastBit = liveLength;
+        const targetBits = lastBit - fromIndex;
+        const targetWords = ((targetBits - 1) >> wordShift) + 1;
+        const sourceWord = fromIndex >> wordShift;
+        const offset = fromIndex & bitMask;
+
+        auto selected = new ulong[targetWords];
+        foreach (index; 0 .. targetWords)
+        {
+            const source = sourceWord + index;
+            const next = source + 1 < words.length ? words[source + 1] : 0UL;
+            selected[index] = offset == 0 ? words[source] : (words[source] >>> offset) | (next << (wordBits - offset));
+        }
+
+        // Bits past the range in the last selected word come from the next source word.
+        const lastBits = targetBits & bitMask;
+        selected[$ - 1] &= lastBits == 0 ? ulong.max : ulong.max >>> (wordBits - lastBits);
+        auto result = new BitSet(selected);
+        result.recalculateWordsInUse();
+        return result;
     }
 
     /// Sets one bit, growing the capacity if necessary.
@@ -231,6 +273,47 @@ class BitSet
     long[] toLongArray() const pure nothrow
     {
         return cast(long[]) copyLiveWords();
+    }
+
+    /// Java's `toString`: the set bits in order, such as `{1, 2, 3}`.
+    override string toString() const pure nothrow
+    {
+        const liveLength = length();
+        size_t maxDigits = 1;
+        for (uint remaining = liveLength == 0 ? 0 : cast(uint)(liveLength - 1); remaining >= 10; remaining /= 10)
+            ++maxDigits;
+        auto text = new char[(maxDigits + 2) * cast(size_t) cardinality() + 2];
+        size_t length = 0;
+        text[length++] = '{';
+        bool first = true;
+        for (int bit = scanBit(0, true, true); bit >= 0; bit = bit == int.max ? -1 : scanBit(bit + 1, true, true))
+        {
+            if (!first)
+            {
+                text[length++] = ',';
+                text[length++] = ' ';
+            }
+            first = false;
+            length = appendInt(text, length, bit);
+        }
+        text[length++] = '}';
+        return text[0 .. length].idup;
+    }
+
+    pragma(inline, false) private static size_t appendInt(scope char[] dst, size_t pos, int value) pure nothrow @nogc
+    {
+        char[10] digits;
+        size_t count = 0;
+        uint remaining = cast(uint) value;
+        do
+        {
+            digits[count++] = cast(char)('0' + remaining % 10);
+            remaining /= 10;
+        }
+        while (remaining != 0);
+        while (count != 0)
+            dst[pos++] = digits[--count];
+        return pos;
     }
 
     pragma(inline, false) private ulong[] copyLiveWords() const pure nothrow

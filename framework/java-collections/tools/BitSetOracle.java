@@ -36,6 +36,81 @@ class BitSetOracle {
         System.out.println(Integer.toUnsignedString(equalityDigest()));
         System.out.println(Integer.toUnsignedString(orDigest()));
         System.out.println(Integer.toUnsignedString(xorDigest()));
+        System.out.println(Integer.toUnsignedString(windowDigest()));
+        System.out.println(Integer.toUnsignedString(cloneDigest()));
+        System.out.println(Integer.toUnsignedString(textDigest()));
+    }
+
+    private static int windowDigest() {
+        var bits = new BitSet();
+        int state = 0x5eed1234;
+        int digest = 0;
+        for (int step = 0; step < 1024; ++step) {
+            state = state * 1_664_525 + 1_013_904_223;
+            switch (state & 3) {
+                case 0 -> bits.set((state >>> 16) & 383);
+                case 1 -> bits.clear((state >>> 16) & 383);
+                case 2 -> bits.flip((state >>> 16) & 383);
+                case 3 -> { if ((step & 31) == 0) bits.clear(); }
+            }
+            int a = (state >>> 7) & 511;
+            int b = (state >>> 21) & 511;
+            BitSet part = bits.get(Math.min(a, b), Math.max(a, b));
+            digest = 31 * digest + part.size();
+            digest = 31 * digest + part.length();
+            digest = 31 * digest + part.cardinality();
+            for (long word : part.toLongArray()) {
+                digest = 31 * digest + (int)(word ^ (word >>> 32));
+            }
+        }
+        return digest;
+    }
+
+    private static int cloneDigest() {
+        var bits = new BitSet();
+        int state = 0x0ddba11;
+        int digest = 0;
+        for (int step = 0; step < 256; ++step) {
+            state = state * 1_664_525 + 1_013_904_223;
+            bits.set((state >>> 3) & 127);
+            if ((step & 7) == 0) {
+                bits.clear((state >>> 11) & 127);
+            }
+            BitSet copy = (BitSet) bits.clone();
+            bits.flip((state >>> 5) & 127);
+            copy.flip((state >>> 9) & 127);
+            digest = 31 * digest + copy.length();
+            digest = 31 * digest + copy.cardinality();
+            for (long word : copy.toLongArray()) {
+                digest = 31 * digest + (int)(word ^ (word >>> 32));
+            }
+            digest = 31 * digest + bits.length();
+            digest = 31 * digest + bits.cardinality();
+        }
+        return digest;
+    }
+
+    private static int textDigest() {
+        var bits = new BitSet();
+        int state = 0x7e57c0de;
+        int digest = 0;
+        for (int step = 0; step < 128; ++step) {
+            state = state * 1_664_525 + 1_013_904_223;
+            switch (state & 7) {
+                case 0 -> bits.set((state >>> 16) & 383);
+                case 1 -> bits.clear((state >>> 16) & 383);
+                case 2 -> bits.flip((state >>> 16) & 383);
+                case 3 -> bits.set((state >>> 8) & 255, ((state >>> 8) & 255) + 1 + ((state >>> 20) & 31));
+                case 4 -> bits.clear((state >>> 8) & 255, ((state >>> 8) & 255) + 1 + ((state >>> 20) & 31));
+                case 5 -> { if ((step & 15) == 0) bits.clear(); }
+            }
+            String text = bits.toString();
+            for (char ch : text.toCharArray()) {
+                digest = 31 * digest + ch;
+            }
+            digest = 31 * digest + text.length();
+        }
+        return digest;
     }
 
     private static int xorDigest() {

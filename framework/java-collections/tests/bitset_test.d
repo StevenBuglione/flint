@@ -799,3 +799,158 @@ unittest
     }
     assert(digest == 2_742_021_820);
 }
+
+@("clone copies the bits into independent storage with the same capacity")
+unittest
+{
+    auto bits = new BitSet();
+    bits.set(5);
+    auto copy = bits.clone();
+    assert(copy.size() == bits.size() && copy.length() == 6 && copy.cardinality() == 1);
+    bits.set(6);
+    copy.flip(5);
+    assert(bits.get(5) && bits.get(6) && !copy.get(5) && !copy.get(6));
+    assert(copy.isEmpty() && bits.cardinality() == 2);
+}
+
+@("clone agrees with the Temurin 21.0.13+9 oracle")
+unittest
+{
+    auto bits = new BitSet();
+    uint state = 0x0ddb_a11;
+    uint digest;
+    foreach (step; 0 .. 256)
+    {
+        state = state * 1_664_525 + 1_013_904_223;
+        bits.set(cast(int)((state >> 3) & 127));
+        if ((step & 7) == 0)
+            bits.clear(cast(int)((state >> 11) & 127));
+        auto copy = bits.clone();
+        bits.flip(cast(int)((state >> 5) & 127));
+        copy.flip(cast(int)((state >> 9) & 127));
+        foreach (value; [copy.length(), copy.cardinality()])
+            digest = 31 * digest + cast(uint) value;
+        foreach (word; copy.toLongArray())
+            digest = 31 * digest + cast(uint)(word ^ (word >>> 32));
+        foreach (value; [bits.length(), bits.cardinality()])
+            digest = 31 * digest + cast(uint) value;
+    }
+    assert(digest == 1_865_514_417u);
+}
+
+@("get returns a clamped range copy and rejects inverted bounds")
+unittest
+{
+    auto bits = new BitSet();
+    bits.set(2);
+    bits.set(5);
+    bits.set(70);
+    auto window = bits.get(0, 64);
+    assert(window.size() == 64 && window.length() == 6 && window.cardinality() == 2);
+    assert(window.get(2) && window.get(5) && !window.get(70));
+
+    auto high = bits.get(64, 1_000);
+    assert(high.size() == 64 && high.length() == 7 && high.cardinality() == 1 && high.get(6));
+
+    auto clamped = bits.get(0, 1_000);
+    assert(clamped.equals(bits));
+    assert(bits.get(71, 1_000).isEmpty() && bits.get(3, 3).isEmpty());
+    expectBoundsFailure(() { bits.get(-1, 4); }, "fromIndex < 0: -1");
+    expectBoundsFailure(() { bits.get(9, 3); }, "fromIndex: 9 > toIndex: 3");
+}
+
+@("get agrees with the Temurin 21.0.13+9 oracle")
+unittest
+{
+    auto bits = new BitSet();
+    uint state = 0x5eed_1234;
+    uint digest;
+    foreach (step; 0 .. 1_024)
+    {
+        state = state * 1_664_525 + 1_013_904_223;
+        switch (state & 3)
+        {
+        case 0:
+            bits.set(cast(int)((state >> 16) & 383));
+            break;
+        case 1:
+            bits.clear(cast(int)((state >> 16) & 383));
+            break;
+        case 2:
+            bits.flip(cast(int)((state >> 16) & 383));
+            break;
+        default:
+            if ((step & 31) == 0)
+                bits.clear();
+            break;
+        }
+        const a = (state >> 7) & 511;
+        const b = (state >> 21) & 511;
+        auto part = bits.get(cast(int)(a < b ? a : b), cast(int)(a > b ? a : b));
+        foreach (value; [part.size(), part.length(), part.cardinality()])
+            digest = 31 * digest + cast(uint) value;
+        foreach (word; part.toLongArray())
+            digest = 31 * digest + cast(uint)(word ^ (word >>> 32));
+    }
+    assert(digest == 2_895_774_491u);
+}
+
+@("toString lists the set bits in Java's format")
+unittest
+{
+    assert(new BitSet().toString() == "{}");
+    auto bits = new BitSet();
+    bits.set(0);
+    assert(bits.toString() == "{0}");
+    bits.set(1);
+    bits.set(2);
+    bits.set(63);
+    bits.set(64);
+    bits.set(65);
+    assert(bits.toString() == "{0, 1, 2, 63, 64, 65}");
+    bits.clear();
+    bits.set(1_000);
+    assert(bits.toString() == "{1000}");
+}
+
+@("toString agrees with the Temurin 21.0.13+9 oracle")
+unittest
+{
+    auto bits = new BitSet();
+    uint state = 0x7e57_c0de;
+    uint digest;
+    foreach (step; 0 .. 128)
+    {
+        state = state * 1_664_525 + 1_013_904_223;
+        const start = cast(int)((state >> 8) & 255);
+        switch (state & 7)
+        {
+        case 0:
+            bits.set(cast(int)((state >> 16) & 383));
+            break;
+        case 1:
+            bits.clear(cast(int)((state >> 16) & 383));
+            break;
+        case 2:
+            bits.flip(cast(int)((state >> 16) & 383));
+            break;
+        case 3:
+            bits.set(start, start + 1 + cast(int)((state >> 20) & 31));
+            break;
+        case 4:
+            bits.clear(start, start + 1 + cast(int)((state >> 20) & 31));
+            break;
+        case 5:
+            if ((step & 15) == 0)
+                bits.clear();
+            break;
+        default:
+            break;
+        }
+        const text = bits.toString();
+        foreach (ch; text)
+            digest = 31 * digest + cast(uint) ch;
+        digest = 31 * digest + cast(uint) text.length;
+    }
+    assert(digest == 1_279_549_458u);
+}
