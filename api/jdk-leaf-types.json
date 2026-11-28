@@ -102,6 +102,7 @@
   "java.util.EnumSet": "flint.java.util.enumset",
   "java.util.Enumeration": "flint.java.util.enumeration",
   "java.util.EventListener": "flint.java.util.eventlistener",
+  "java.util.EventListenerProxy": "flint.java.util.eventlistenerproxy",
   "java.util.EventObject": "flint.java.util.eventobject",
   "java.util.FormatFlagsConversionMismatchException": "flint.java.util.formatter",
   "java.util.Formatter": "flint.java.util.formatter",

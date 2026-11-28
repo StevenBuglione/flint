@@ -87,6 +87,10 @@
     "incremental_linked_bytes": 1062,
     "template_instances": 40
   },
+  "flint.java.util.eventlistenerproxy": {
+    "incremental_linked_bytes": 1364,
+    "template_instances": 41
+  },
   "flint.java.util.enumeration": {
     "incremental_linked_bytes": 8576,
     "template_instances": 258

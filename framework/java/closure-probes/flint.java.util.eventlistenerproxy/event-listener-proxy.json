@@ -1,0 +1,7 @@
+{
+  "source": "closure/event-listener-proxy.d",
+  "leaves": [
+    "flint.java.util.eventlistener"
+  ],
+  "data": []
+}
