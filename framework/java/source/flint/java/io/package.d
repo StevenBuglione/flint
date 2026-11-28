@@ -2202,19 +2202,34 @@ class OutputStreamWriter : Writer
     }
 }
 
-/// Java's `PrintWriter`: formatted text over a `Writer` or an `OutputStream`.
+/++
+Java's `PrintWriter`: formatted text over a `Writer` or an `OutputStream`.
+
+A checked write, flush or close failure is recorded in the error state instead of escaping, as Java's methods do.
+Flint has no per-thread interrupt flag, so an `InterruptedIOException` is recorded there too (D-IO-2).
++/
 class PrintWriter : Writer
 {
-    private Writer target;
+    /// Java's protected `out`: the target, cleared by a successful close. `out` is a D keyword.
+    protected Writer out_;
+    private bool autoFlush_;
+    private bool trouble_;
 
-    /// A print writer over `target`. A null writer is rejected.
+    /// A print writer over `target`, without automatic flushing. A null writer is rejected.
     this(Writer target)
+    {
+        this(target, false);
+    }
+
+    /// A print writer over `target`; `autoFlush` flushes after every `println`.
+    this(Writer target, bool autoFlush)
     {
         import flint.java.lang : NullPointerException;
 
         if (target is null)
             throw new NullPointerException("out");
-        this.target = target;
+        out_ = target;
+        autoFlush_ = autoFlush;
     }
 
     /// A print writer over `output`, encoding UTF-8. A null stream is rejected.
@@ -2224,14 +2239,61 @@ class PrintWriter : Writer
 
         if (output is null)
             throw new NullPointerException("out");
-        target = new OutputStreamWriter(output);
+        out_ = new OutputStreamWriter(output);
     }
 
     alias write = Writer.write;
 
     override void write(scope const(char)[] text)
     {
-        target.write(text);
+        if (out_ is null)
+        {
+            trouble_ = true;
+            return;
+        }
+        try
+            out_.write(text);
+        catch (IOException)
+            trouble_ = true;
+    }
+
+    override void write(scope const(char)[] text, int off, int len)
+    {
+        if (out_ is null)
+        {
+            trouble_ = true;
+            return;
+        }
+        try
+            out_.write(text, off, len);
+        catch (IOException)
+            trouble_ = true;
+    }
+
+    override void write(scope const(wchar)[] text, int off, int len)
+    {
+        if (out_ is null)
+        {
+            trouble_ = true;
+            return;
+        }
+        try
+            out_.write(text, off, len);
+        catch (IOException)
+            trouble_ = true;
+    }
+
+    override void write(dchar c)
+    {
+        if (out_ is null)
+        {
+            trouble_ = true;
+            return;
+        }
+        try
+            out_.write(c);
+        catch (IOException)
+            trouble_ = true;
     }
 
     /// Java's `print(String)`.
@@ -2240,26 +2302,70 @@ class PrintWriter : Writer
         write(text);
     }
 
+    /// Java's `print(char[])`: one UTF-16 unit array; a null array is empty (R26).
+    void print(scope const(wchar)[] text)
+    {
+        write(text);
+    }
+
+    /// Java's `print(char)`: one UTF-16 code unit through the single-character write (R14).
+    void print(C)(C c) if (is(C == wchar))
+    {
+        write(cast(dchar) c);
+    }
+
     /// Java's `print` of any value: `String.valueOf(value)`.
-    void print(T)(T value) if (!is(T : const(char)[]))
+    void print(T)(T value) if (!is(T : const(char)[]) && !is(T : const(wchar)[]) && !is(T == wchar))
     {
         import flint.java.lang : valueOf;
 
         write(valueOf(value));
     }
 
-    /// Java's `println(String)`; a line separator alone without an argument.
-    void println(scope const(char)[] text = null)
+    /// Java's `println()`: the platform line separator.
+    void println()
     {
-        write(text);
-        write("\n");
+        newLine();
+    }
+
+    /// Java's `println(String)`.
+    void println(scope const(char)[] text)
+    {
+        print(text);
+        newLine();
+    }
+
+    /// Java's `println(char[])`; a null array is empty (R26).
+    void println(scope const(wchar)[] text)
+    {
+        print(text);
+        newLine();
     }
 
     /// Java's `println` of any value.
-    void println(T)(T value) if (!is(T : const(char)[]))
+    void println(T)(T value) if (!is(T : const(char)[]) && !is(T : const(wchar)[]))
     {
         print(value);
-        write("\n");
+        newLine();
+    }
+
+    private void newLine()
+    {
+        import flint.java.lang : System;
+
+        if (out_ is null)
+        {
+            trouble_ = true;
+            return;
+        }
+        try
+        {
+            out_.write(System.lineSeparator());
+            if (autoFlush_)
+                out_.flush();
+        }
+        catch (IOException)
+            trouble_ = true;
     }
 
     /// Java's `append(CharSequence)`.
@@ -2269,14 +2375,59 @@ class PrintWriter : Writer
         return this;
     }
 
+    /// Java's `append(char)`: one UTF-16 code unit through the single-character write (R14).
+    override PrintWriter append(wchar c)
+    {
+        write(cast(dchar) c);
+        return this;
+    }
+
+    /// Java's `checkError`: flush while open, then this writer's or a nested writer's error.
+    bool checkError()
+    {
+        if (out_ !is null)
+            flush();
+        if (auto nested = cast(PrintWriter) out_)
+            return nested.checkError();
+        return trouble_;
+    }
+
+    /// Java's protected `setError`.
+    protected void setError()
+    {
+        trouble_ = true;
+    }
+
+    /// Java's protected `clearError`.
+    protected void clearError()
+    {
+        trouble_ = false;
+    }
+
     override void flush()
     {
-        target.flush();
+        if (out_ is null)
+        {
+            trouble_ = true;
+            return;
+        }
+        try
+            out_.flush();
+        catch (IOException)
+            trouble_ = true;
     }
 
     override void close()
     {
-        target.close();
+        if (out_ is null)
+            return;
+        try
+        {
+            out_.close();
+            out_ = null;
+        }
+        catch (IOException)
+            trouble_ = true;
     }
 }
 

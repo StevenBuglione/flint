@@ -2,11 +2,11 @@
 /** Original specification tests for the existing Java print writer. */
 module flint.java.io.print_writer_contract_test;
 
-import flint.java.io : ByteArrayOutputStream, OutputStream, PrintWriter, StringWriter, Writer;
+import flint.java.io : ByteArrayOutputStream, IOException, OutputStream, PrintWriter, StringWriter, Writer;
 
 import std.exception : assertThrown;
 
-import flint.java.lang : NullPointerException;
+import flint.java.lang : NullPointerException, System;
 
 @safe:
 
@@ -115,4 +115,182 @@ unittest
 
     assert(output.toString() == "named Ω|null");
     assert(named.calls == 1);
+}
+
+private final class CountingWriter : Writer
+{
+    string data;
+    size_t flushes;
+    size_t closes;
+
+    override void write(scope const(char)[] text)
+    {
+        data ~= text;
+    }
+
+    override void flush()
+    {
+        ++flushes;
+    }
+
+    override void close()
+    {
+        ++closes;
+    }
+}
+
+private final class FailingWriter : Writer
+{
+    bool failWrite;
+    bool failFlush;
+    bool failClose;
+    size_t writes;
+    size_t flushes;
+    size_t closes;
+
+    override void write(scope const(char)[] text)
+    {
+        ++writes;
+        if (failWrite)
+            throw new IOException("write failed");
+    }
+
+    override void flush()
+    {
+        ++flushes;
+        if (failFlush)
+            throw new IOException("flush failed");
+    }
+
+    override void close()
+    {
+        ++closes;
+        if (failClose)
+            throw new IOException("close failed");
+    }
+}
+
+private final class ProbePrintWriter : PrintWriter
+{
+    this(Writer target, bool autoFlush = false)
+    {
+        super(target, autoFlush);
+    }
+
+    void markError()
+    {
+        setError();
+    }
+
+    void resetError()
+    {
+        clearError();
+    }
+
+    Writer targetOut()
+    {
+        return out_;
+    }
+}
+
+@("PrintWriter.println terminates lines with the platform separator and auto-flushes")
+unittest
+{
+    auto sink = new CountingWriter;
+    auto printer = new PrintWriter(sink, true);
+
+    printer.print("a");
+    assert(sink.flushes == 0);
+    printer.println();
+    assert(sink.data == "a" ~ System.lineSeparator());
+    assert(sink.flushes == 1);
+
+    printer.println(7);
+    assert(sink.data == "a" ~ System.lineSeparator() ~ "7" ~ System.lineSeparator());
+    assert(sink.flushes == 2);
+}
+
+@("PrintWriter records a checked write failure and checkError flushes while open")
+unittest
+{
+    auto sink = new FailingWriter;
+    sink.failWrite = true;
+    auto printer = new ProbePrintWriter(sink);
+
+    printer.write("x");
+    assert(sink.writes == 1);
+    assert(printer.checkError());
+    assert(sink.flushes == 1);
+
+    printer.resetError();
+    sink.failWrite = false;
+    printer.write("y");
+    assert(!printer.checkError());
+    assert(sink.flushes == 2);
+}
+
+@("PrintWriter's protected error hooks control checkError")
+unittest
+{
+    auto sink = new CountingWriter;
+    auto printer = new ProbePrintWriter(sink);
+
+    assert(!printer.checkError());
+    printer.markError();
+    assert(printer.checkError());
+    printer.resetError();
+    assert(!printer.checkError());
+}
+
+@("PrintWriter records a checked flush failure")
+unittest
+{
+    auto sink = new FailingWriter;
+    sink.failFlush = true;
+    auto printer = new ProbePrintWriter(sink);
+
+    printer.flush();
+    assert(printer.checkError());
+    printer.resetError();
+    sink.failFlush = false;
+    printer.flush();
+    assert(!printer.checkError());
+}
+
+@("PrintWriter retains the sink after a failed close and clears it on success")
+unittest
+{
+    auto sink = new FailingWriter;
+    sink.failClose = true;
+    auto printer = new ProbePrintWriter(sink);
+
+    printer.close();
+    assert(sink.closes == 1);
+    assert(printer.targetOut() is sink);
+    assert(printer.checkError());
+
+    printer.resetError();
+    sink.failClose = false;
+    printer.close();
+    assert(sink.closes == 2);
+    assert(printer.targetOut() is null);
+
+    const writes = sink.writes;
+    printer.write("ignored");
+    assert(sink.writes == writes);
+    assert(printer.checkError());
+    printer.close();
+    assert(sink.closes == 2);
+}
+
+@("PrintWriter's checkError reports a nested PrintWriter's error")
+unittest
+{
+    auto sink = new FailingWriter;
+    sink.failWrite = true;
+    auto inner = new PrintWriter(sink);
+    inner.write("x");
+
+    auto outer = new PrintWriter(inner);
+    assert(outer.checkError());
 }

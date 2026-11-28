@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,248 | 864 | 0 | 1,957 | 13,352 |
+| framework | openjdk@21.0.13 | 2,267 | 876 | 0 | 1,957 | 13,321 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -220,6 +220,23 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.io.OutputStreamWriter#close()` | `flint.java.io.OutputStreamWriter.close` | Flushes the sink, closes it once even when that flush fails, and rejects later writes and flushes with IOException "Stream closed". The UTF-8 write is eager, so there is no encoder buffer to drain. |
 | framework | `java.io.OutputStreamWriter#flush()` | `flint.java.io.OutputStreamWriter.flush` | Forwards to the sink and rejects use after close with IOException "Stream closed". |
 | framework | `java.io.PrintWriter#<init>(Writer)` | `flint.java.io.PrintWriter.this` | A null writer is rejected during construction with NullPointerException. |
+| framework | `java.io.PrintWriter#<init>(Writer,boolean)` | `flint.java.io.PrintWriter.this` | A null writer is rejected and auto-flush is stored; println flushes the target after the separator. |
+| framework | `java.io.PrintWriter#checkError()` | `flint.java.io.PrintWriter.checkError` | Flushes while open, then returns the local error state or a nested PrintWriter's error. There is no PrintStream sink error to consult. |
+| framework | `java.io.PrintWriter#close()` | `flint.java.io.PrintWriter.close` | A successful close clears the sink, so later closes do nothing; a checked close failure is recorded and the sink is retained for a retry. |
+| framework | `java.io.PrintWriter#flush()` | `flint.java.io.PrintWriter.flush` | A checked flush failure, or a flush after close, is recorded in the error state instead of escaping. |
+| framework | `java.io.PrintWriter#print(Object)` | `flint.java.io.PrintWriter.print` | The print template writes String.valueOf(value); a checked failure is recorded in the error state. |
+| framework | `java.io.PrintWriter#print(boolean)` | `flint.java.io.PrintWriter.print` | The print template writes String.valueOf(value); a checked failure is recorded in the error state. |
+| framework | `java.io.PrintWriter#print(double)` | `flint.java.io.PrintWriter.print` | The print template writes String.valueOf(value); a checked failure is recorded in the error state. |
+| framework | `java.io.PrintWriter#print(float)` | `flint.java.io.PrintWriter.print` | The print template writes String.valueOf(value); a checked failure is recorded in the error state. |
+| framework | `java.io.PrintWriter#print(int)` | `flint.java.io.PrintWriter.print` | The print template writes String.valueOf(value); a checked failure is recorded in the error state. |
+| framework | `java.io.PrintWriter#print(long)` | `flint.java.io.PrintWriter.print` | The print template writes String.valueOf(value); a checked failure is recorded in the error state. |
+| framework | `java.io.PrintWriter#println()` | `flint.java.io.PrintWriter.println` | Writes System.lineSeparator(), then flushes when auto-flush is on; a checked failure is recorded. |
+| framework | `java.io.PrintWriter#println(Object)` | `flint.java.io.PrintWriter.println` | print(value) then the platform line separator, with auto-flush; checked failures are recorded. |
+| framework | `java.io.PrintWriter#println(boolean)` | `flint.java.io.PrintWriter.println` | print(value) then the platform line separator, with auto-flush; checked failures are recorded. |
+| framework | `java.io.PrintWriter#println(double)` | `flint.java.io.PrintWriter.println` | print(value) then the platform line separator, with auto-flush; checked failures are recorded. |
+| framework | `java.io.PrintWriter#println(float)` | `flint.java.io.PrintWriter.println` | print(value) then the platform line separator, with auto-flush; checked failures are recorded. |
+| framework | `java.io.PrintWriter#println(int)` | `flint.java.io.PrintWriter.println` | print(value) then the platform line separator, with auto-flush; checked failures are recorded. |
+| framework | `java.io.PrintWriter#println(long)` | `flint.java.io.PrintWriter.println` | print(value) then the platform line separator, with auto-flush; checked failures are recorded. |
 | framework | `java.io.SequenceInputStream#<init>(InputStream,InputStream)` | `flint.java.io.SequenceInputStream.this` | A null first stream is rejected during construction and a null second stream when it is reached, as Java's nextStream does. |
 | framework | `java.io.StringWriter#close()` | `flint.java.io.StringWriter.close` | Inherits the no-op close. Existing text and the ability to write survive repeated calls. |
 | framework | `java.io.StringWriter#flush()` | `flint.java.io.StringWriter.flush` | Inherits the no-op flush, preserving the stored text. |
@@ -2325,6 +2342,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.IOException` | `flint.java.io.IOException` | [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Uses the D checked-exception hierarchy. initCause follows Java's once-only lifecycle. The merged constructor treats an omitted cause and an explicit null cause identically under R8, so an explicit null still leaves initCause open; an empty detail message means no detail (R26). |
 | `java.io.IOException#<init>(String)` | `flint.java.io.IOException.this` | [R26](api-mapping.md#r26-null-arrays) | An empty message means no detail (R26). The cause stays open for one initCause call. |
 | `java.io.IOException#<init>(String,Throwable)` | `flint.java.io.IOException.this` | [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | A non-null cause is retained and closes initCause. Under R8 the merged constructor cannot distinguish an omitted cause from an explicit null, so an explicit null still leaves initCause open; an empty message means no detail (R26). |
+| `java.io.IOException#<init>(Throwable)` | `flint.java.io.IOException.this` | [R8](api-mapping.md#r8-exceptions) | The detail is cause.toString(), or null when absent. An absent cause stays open for one initCause call, where Java pre-closes it (R8). |
 | `java.io.InputStream` | `flint.java.io.InputStream` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Declared in the flint.java.io aggregate and implements Closeable; byte arrays are D slices (R26). readNBytes and transferTo are ported. |
 | `java.io.InputStream#read(byte[],int,int)` | `flint.java.io.InputStream.read` | [R26](api-mapping.md#r26-null-arrays), [R8](api-mapping.md#r8-exceptions) | Java byte arrays use D ubyte slices. A null slice counts as an empty array under R26. |
 | `java.io.InputStream#readNBytes(byte[],int,int)` | `flint.java.io.InputStream.readNBytes` | [R26](api-mapping.md#r26-null-arrays) | The destination range is a D ubyte slice and a null slice counts as empty under R26. The count read is returned, and zero means the stream was already at its end. |
@@ -2338,6 +2356,17 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.OutputStreamWriter#write(String,int,int)` | `flint.java.io.OutputStreamWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's UTF-16 range adapter and encodes the result as UTF-8; a split surrogate pair encodes U+FFFD for each lone half (R14). A null string is empty (R26). |
 | `java.io.OutputStreamWriter#write(char[],int,int)` | `flint.java.io.OutputStreamWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's concrete UTF-16 adapter and encodes the range as UTF-8; a lone half encodes U+FFFD (R14) and a null array is empty (R26). |
 | `java.io.OutputStreamWriter#write(int)` | `flint.java.io.OutputStreamWriter.write` | [R14](api-mapping.md#r14-strings-and-text) | Inherits Writer's single-character write; a lone surrogate encodes U+FFFD (R14). |
+| `java.io.PrintWriter#append(char)` | `flint.java.io.PrintWriter.append` | [R14](api-mapping.md#r14-strings-and-text) | One UTF-16 code unit through the single-character write (R14); a checked failure is recorded and the writer is returned. |
+| `java.io.PrintWriter#out` | `flint.java.io.PrintWriter.out_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Java's protected out takes the trailing underscore because out is a D keyword (R19). It is the underlying writer and is cleared after a successful close. |
+| `java.io.PrintWriter#print(char)` | `flint.java.io.PrintWriter.print` | [R14](api-mapping.md#r14-strings-and-text) | One UTF-16 code unit goes through the single-character write; a lone surrogate writes U+FFFD (R14) and a checked failure is recorded. |
+| `java.io.PrintWriter#print(char[])` | `flint.java.io.PrintWriter.print` | [R26](api-mapping.md#r26-null-arrays) | A null array counts as empty (R26); the ranged character-array write records a checked failure. |
+| `java.io.PrintWriter#println(char)` | `flint.java.io.PrintWriter.println` | [R14](api-mapping.md#r14-strings-and-text) | One UTF-16 code unit then the platform line separator; a lone surrogate writes U+FFFD (R14) and checked failures are recorded. |
+| `java.io.PrintWriter#println(char[])` | `flint.java.io.PrintWriter.println` | [R26](api-mapping.md#r26-null-arrays) | A null array counts as empty (R26); the line is the platform separator and checked failures are recorded. |
+| `java.io.PrintWriter#write(String)` | `flint.java.io.PrintWriter.write` | [R26](api-mapping.md#r26-null-arrays) | A null string counts as empty (R26). A checked failure is recorded in the error state. |
+| `java.io.PrintWriter#write(String,int,int)` | `flint.java.io.PrintWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Indices count UTF-16 units and a null string counts as empty (R14, R26). A checked failure is recorded in the error state. |
+| `java.io.PrintWriter#write(char[])` | `flint.java.io.PrintWriter.write` | [R26](api-mapping.md#r26-null-arrays) | A null array counts as empty (R26); the ranged write forwards to the target and records a checked failure. |
+| `java.io.PrintWriter#write(char[],int,int)` | `flint.java.io.PrintWriter.write` | [R26](api-mapping.md#r26-null-arrays) | A null array counts as empty (R26); the ranged write forwards the supplied indices to the target and records a checked failure. |
+| `java.io.PrintWriter#write(int)` | `flint.java.io.PrintWriter.write` | [R14](api-mapping.md#r14-strings-and-text) | Flint's single-character write takes a code point; a lone surrogate or out-of-range value writes U+FFFD (R14). A checked failure is recorded in the error state. |
 | `java.io.PushbackInputStream` | `flint.java.io.PushbackInputStream` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Declared in the flint.java.io aggregate; byte arrays are D ubyte slices (R26). Synchronization on the stream monitor is omitted because a Flint stream is confined to one fiber. |
 | `java.io.PushbackInputStream#buf` | `flint.java.io.PushbackInputStream.buf` | [R1](api-mapping.md#r1-packages-and-names) | Null marks the closed stream, as in Java. |
 | `java.io.PushbackInputStream#close()` | `flint.java.io.PushbackInputStream.close` | [R1](api-mapping.md#r1-packages-and-names) | Java takes an internal lock for the exact class; a Flint stream is confined to one fiber, so close is direct. |
@@ -11301,7 +11330,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 546 | 0 |
+| java.io | 515 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -12196,49 +12225,18 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.File#length()` | 2 | The current method returns zero for all non-regular paths. The pinned Linux Java implementation returns the native size for a directory. |
 | framework | `java.io.FileInputStream` | 2 | The existing class derives from ByteArrayInputStream and retains a byte snapshot. Java derives directly from InputStream and owns a file descriptor until close. |
 | framework | `java.io.FileInputStream#<init>(File)` | 2 | The existing constructor checks the virtual isFile method and reads a byte snapshot. Java opens the pathname and owns the descriptor. The null File check required by R8 is pending. |
-| framework | `java.io.IOException#<init>(Throwable)` | 2 | Missing cause-only constructor. Java initializes the cause even if it is null and derives the detail from a non-null cause's virtual toString. |
 | framework | `java.io.PrintWriter#<init>(File)` | 2 | The existing type has no File constructor. |
 | framework | `java.io.PrintWriter#<init>(OutputStream)` | 2 | A null output is now rejected, but Java buffers writes and uses the charset of a PrintStream sink or the default charset. The existing constructor wraps an eager UTF-8 writer. |
 | framework | `java.io.PrintWriter#<init>(OutputStream,boolean)` | 2 | Missing buffered output-stream constructor with selectable auto-flush and charset inherited from a PrintStream sink or the default charset. |
 | framework | `java.io.PrintWriter#<init>(OutputStream,boolean,Charset)` | 2 | Missing buffered output-stream constructor with selectable auto-flush and explicit charset. |
-| framework | `java.io.PrintWriter#<init>(Writer,boolean)` | 2 | Missing constructor with selectable auto-flush for println, printf and format. An ordinary print containing a newline does not trigger it. |
 | framework | `java.io.PrintWriter#append(CharSequence)` | 2 | Java appends literal null for an absent character sequence. The existing UTF-8 slice treats it as empty. The distinct nullable text contract needs R5. |
 | framework | `java.io.PrintWriter#append(CharSequence,int,int)` | 2 | Missing UTF-16 subsequence append through the virtual whole-sequence overload. Java selects from the text null when the sequence is absent. |
-| framework | `java.io.PrintWriter#append(char)` | 2 | Missing fluent append of one UTF-16 code unit through the virtual write(int) overload. |
-| framework | `java.io.PrintWriter#checkError()` | 2 | Missing error query that flushes while open and returns a nested PrintWriter or captured PrintStream error when present, otherwise the local error flag. |
-| framework | `java.io.PrintWriter#clearError()` | 2 | Missing protected hook that resets the local error flag without clearing a nested sink error. |
-| framework | `java.io.PrintWriter#close()` | 2 | Java records checked close failures and retains the sink for retry. A successful close clears the sink and subsequent closes do nothing. The existing method forwards every close and propagates checked failures. |
-| framework | `java.io.PrintWriter#flush()` | 2 | A checked flush failure or a flush after closure sets Java's error state. The existing method forwards flush and propagates checked failures. |
 | framework | `java.io.PrintWriter#format(Locale,String,Object[])` | 2 | Missing explicit-locale formatting and writer return. Java disables localization for a null locale, honors auto-flush, records checked sink errors, and restores interruption for InterruptedIOException. |
 | framework | `java.io.PrintWriter#format(String,Object[])` | 2 | Missing formatting using the current default locale and returning this writer. Java honors auto-flush and records checked sink errors while invalid conversions propagate. |
-| framework | `java.io.PrintWriter#out` | 2 | Missing subclass access to the protected Writer target, which Java clears after a successful close. |
-| framework | `java.io.PrintWriter#print(Object)` | 2 | Java records checked errors in the PrintWriter error state. The existing Object overload propagates the sink's write failure. |
-| framework | `java.io.PrintWriter#print(String)` | 2 | Java prints literal null for an absent string. The existing UTF-8 slice treats it as empty. The distinct nullable text contract needs R5. |
-| framework | `java.io.PrintWriter#print(boolean)` | 2 | Checked write errors must be recorded in the PrintWriter error state. |
-| framework | `java.io.PrintWriter#print(char)` | 2 | Java invokes the virtual single-character write. The existing template formats the character and invokes the text overload directly. |
-| framework | `java.io.PrintWriter#print(char[])` | 2 | Java routes through the ranged character-array write and records checked write errors. The existing slice overload writes directly and propagates those errors. R26 covers the null-array case. |
-| framework | `java.io.PrintWriter#print(double)` | 2 | Checked write errors must be recorded in the PrintWriter error state. |
-| framework | `java.io.PrintWriter#print(float)` | 2 | Checked write errors must be recorded in the PrintWriter error state. |
-| framework | `java.io.PrintWriter#print(int)` | 2 | Checked write errors must be recorded in the PrintWriter error state. |
-| framework | `java.io.PrintWriter#print(long)` | 2 | Checked write errors must be recorded in the PrintWriter error state. |
+| framework | `java.io.PrintWriter#print(String)` | 2 | Java prints literal null for an absent string; a D null slice is indistinguishable from empty and counts as empty (R26). The nullable-text contract is pending (R5). |
 | framework | `java.io.PrintWriter#printf(Locale,String,Object[])` | 2 | Missing forwarding overload for format with an explicit locale. |
 | framework | `java.io.PrintWriter#printf(String,Object[])` | 2 | Missing forwarding overload for format using the current default locale. |
-| framework | `java.io.PrintWriter#println()` | 2 | Java uses its platform line separator. The existing method always emits LF. |
-| framework | `java.io.PrintWriter#println(Object)` | 2 | The platform line separator and checked write error state contracts are pending. |
-| framework | `java.io.PrintWriter#println(String)` | 2 | Java prints literal null for an absent string and uses its platform line separator. The existing slice treats null as empty and always emits LF. |
-| framework | `java.io.PrintWriter#println(boolean)` | 2 | The platform line separator and checked write error state contracts are pending. |
-| framework | `java.io.PrintWriter#println(char)` | 2 | The single-character write dispatch and platform line separator contracts are pending. |
-| framework | `java.io.PrintWriter#println(char[])` | 2 | The character-array write dispatch, checked error state and platform line separator contracts are pending. |
-| framework | `java.io.PrintWriter#println(double)` | 2 | The platform line separator and checked write error state contracts are pending. |
-| framework | `java.io.PrintWriter#println(float)` | 2 | The platform line separator and checked write error state contracts are pending. |
-| framework | `java.io.PrintWriter#println(int)` | 2 | The platform line separator and checked write error state contracts are pending. |
-| framework | `java.io.PrintWriter#println(long)` | 2 | The platform line separator and checked write error state contracts are pending. |
-| framework | `java.io.PrintWriter#setError()` | 2 | Missing protected hook that sets the local error flag. A nested sink error query takes precedence over that flag. |
-| framework | `java.io.PrintWriter#write(String)` | 2 | Java forwards to the virtual UTF-16 ranged write and records checked errors. The existing method writes the slice directly and propagates errors. |
-| framework | `java.io.PrintWriter#write(String,int,int)` | 2 | Missing UTF-16 string-range dispatch to the sink. Java restores interruption for InterruptedIOException and records other checked sink failures. Java holds the supplied writer's monitor during callbacks on platform and virtual threads. Flint requires a fiber-aware lock or sink calls outside the lock on reactor fibers. |
-| framework | `java.io.PrintWriter#write(char[])` | 2 | Java invokes the virtual ranged character-array write. Flint forwards the UTF-8 slice directly and propagates checked sink failures. Null arrays follow R26. |
-| framework | `java.io.PrintWriter#write(char[],int,int)` | 2 | Missing ranged character-array dispatch to the sink. Java forwards the supplied indices, records checked sink failures and lets the sink's bounds exception propagate. |
-| framework | `java.io.PrintWriter#write(int)` | 2 | Java forwards the int to the sink's single UTF-16 code-unit write. Flint encodes a Unicode code point and forwards text, propagating checked sink failures. |
+| framework | `java.io.PrintWriter#println(String)` | 2 | Java prints literal null for an absent string and then the platform line separator; a D null slice counts as empty (R26), and the nullable-text contract is pending (R5). |
 | framework | `java.io.Reader` | 2 | Missing UTF-16 reader abstraction with Java Closeable. Its Readable implementation is deferred. Cross-package placement requires a java.lang type whose method takes a java.nio CharBuffer. Revisit after the compile-scope decision on 2026-11-27. |
 | framework | `java.io.Reader#<init>(Object)` | 2 | Missing protected constructor that uses the supplied monitor and rejects null eagerly. |
 | framework | `java.io.Reader#lock` | 2 | Missing protected monitor reference that defaults to the reader and may name a shared lock. |
