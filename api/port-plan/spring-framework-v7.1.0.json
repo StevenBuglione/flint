@@ -1367,6 +1367,13 @@
 "nothrow",
 "@nogc"
 ]
+},
+"methods": {
+"setCacheSeconds(int)": [
+"pure",
+"nothrow",
+"@nogc"
+]
 }
 },
 "org.springframework.context.support.DefaultLifecycleProcessor": {
