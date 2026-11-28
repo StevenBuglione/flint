@@ -1,0 +1,5 @@
+name "probe-java-net-http-retry-exception"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"
+dependency "flint:java-net-http-retry-exception" path="../../.."

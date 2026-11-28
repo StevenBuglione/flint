@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,940 | 705 | 0 | 1,921 | 13,855 |
+| framework | openjdk@21.0.13 | 1,941 | 710 | 0 | 1,921 | 13,849 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2411,6 +2411,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.net.HttpCookie#setPath(String)` | `flint.java.net.httpcookie.HttpCookie.setPath` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.net.HttpCookie#setPortlist(String)` | `flint.java.net.httpcookie.HttpCookie.setPortlist` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.net.HttpCookie#setValue(String)` | `flint.java.net.httpcookie.HttpCookie.setValue` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.HttpRetryException` | `flint.java.net.httpretryexception.HttpRetryException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.httpretryexception : HttpRetryException. Checked Java IOException subclass mapped to D Exception (D-8) with R26 detail message handling. |
+| `java.net.HttpRetryException#<init>(String,int)` | `flint.java.net.httpretryexception.HttpRetryException.this` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | One D constructor with an optional location covers both Java constructors; an empty detail normalizes to null under R26. |
+| `java.net.HttpRetryException#<init>(String,int,String)` | `flint.java.net.httpretryexception.HttpRetryException.this` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | One D constructor with an optional location covers both Java constructors; an empty detail normalizes to null under R26. |
+| `java.net.HttpRetryException#getLocation()` | `flint.java.net.httpretryexception.HttpRetryException.getLocation` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A null string denotes an absent location. |
+| `java.net.HttpRetryException#getReason()` | `flint.java.net.httpretryexception.HttpRetryException.getReason` | [R26](api-mapping.md#r26-null-arrays) | Returns the detail message; an empty detail normalized to null under R26. |
 | `java.net.Inet4Address` | `flint.java.net.inetaddress.Inet4Address` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.inetaddress : Inet4Address. Final class without Serializable. |
 | `java.net.Inet4Address#equals(Object)` | `flint.java.net.inetaddress.Inet4Address.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.net.Inet6Address` | `flint.java.net.inetaddress.Inet6Address` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.inetaddress : Inet6Address. Final class without Serializable; scoped interfaces are pending. |
@@ -11027,7 +11032,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
-| java.net | 593 | 0 |
+| java.net | 587 | 0 |
 | java.net.spi | 0 | 2 |
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |

@@ -391,6 +391,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-net-http-retry-exception": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-net-interface-address": {
       "repo": "framework",
       "version": "monorepo"

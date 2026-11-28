@@ -1242,6 +1242,40 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-net-http-retry-exception": {
+   "directory": "framework/java-net-http-retry-exception",
+   "module": "flint.java.net.httpretryexception",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.net.HttpRetryException"
+   ],
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-net-http-retry-exception/bench",
+    "baseline": "framework/java-net-http-retry-exception/bench/baseline",
+    "edit_source": "framework/java-net-http-retry-exception/source/flint/java/net/httpretryexception.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 3754,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 480
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java-net-interface-address": {
    "directory": "framework/java-net-interface-address",
    "module": "flint.java.net.interfaceaddress",

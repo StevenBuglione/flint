@@ -12,6 +12,7 @@
   "java.net.ConnectException": "flint.java.net.connectexception",
   "java.net.DatagramPacket": "flint.java.net.datagrampacket",
   "java.net.HttpCookie": "flint.java.net.httpcookie",
+  "java.net.HttpRetryException": "flint.java.net.httpretryexception",
   "java.net.Inet4Address": "flint.java.net.inetaddress",
   "java.net.Inet6Address": "flint.java.net.inetaddress",
   "java.net.InetAddress": "flint.java.net.inetaddress",

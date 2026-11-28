@@ -48726,5 +48726,11 @@
 "java.net.HttpCookie#toString()":{"status":"ported","d":"flint.java.net.httpcookie.HttpCookie.toString"},
 "java.net.HttpCookie#equals(Object)":{"status":"adapted","rules":["R11"],"d":"flint.java.net.httpcookie.HttpCookie.equals"},
 "java.net.HttpCookie#hashCode()":{"status":"adapted","rules":["R11"],"d":"flint.java.net.httpcookie.HttpCookie.hashCode"},
-"java.net.HttpCookie#clone()":{"status":"adapted","rules":["R23"],"d":"flint.java.net.httpcookie.HttpCookie.clone"}
+"java.net.HttpCookie#clone()":{"status":"adapted","rules":["R23"],"d":"flint.java.net.httpcookie.HttpCookie.clone"},
+"java.net.HttpRetryException":{"status":"adapted","rules":["R1","R8","R26"],"d":"flint.java.net.httpretryexception.HttpRetryException","note":"Leaf import: flint.java.net.httpretryexception : HttpRetryException. Checked Java IOException subclass mapped to D Exception (D-8) with R26 detail message handling."},
+"java.net.HttpRetryException#<init>(String,int)":{"status":"adapted","rules":["R1","R8","R26"],"d":"flint.java.net.httpretryexception.HttpRetryException.this","note":"One D constructor with an optional location covers both Java constructors; an empty detail normalizes to null under R26."},
+"java.net.HttpRetryException#<init>(String,int,String)":{"status":"adapted","rules":["R1","R8","R26"],"d":"flint.java.net.httpretryexception.HttpRetryException.this","note":"One D constructor with an optional location covers both Java constructors; an empty detail normalizes to null under R26."},
+"java.net.HttpRetryException#getLocation()":{"status":"adapted","rules":["R5"],"d":"flint.java.net.httpretryexception.HttpRetryException.getLocation","note":"A null string denotes an absent location."},
+"java.net.HttpRetryException#getReason()":{"status":"adapted","rules":["R26"],"d":"flint.java.net.httpretryexception.HttpRetryException.getReason","note":"Returns the detail message; an empty detail normalized to null under R26."},
+"java.net.HttpRetryException#responseCode()":{"status":"ported","d":"flint.java.net.httpretryexception.HttpRetryException.responseCode"}
 }}
