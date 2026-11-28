@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,936 | 689 | 0 | 1,921 | 13,875 |
+| framework | openjdk@21.0.13 | 1,948 | 697 | 0 | 1,921 | 13,855 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -3020,6 +3020,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.util.regex.MatchResult` | `flint.java.util.regex.MatchResult` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | The numbered capture contract is available. The Java default methods are deferred. |
+| `java.util.regex.MatchResult#group()` | `flint.java.util.regex.matchresult.MatchResult.group` | [R5](api-mapping.md#r5-optional-and-nullable-values) | An absent capture uses Nullable!string. |
+| `java.util.regex.MatchResult#group(int)` | `flint.java.util.regex.matchresult.MatchResult.group` | [R5](api-mapping.md#r5-optional-and-nullable-values) | An absent capture uses Nullable!string. |
+| `java.util.regex.Matcher` | `flint.java.util.regex.Matcher` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Implements numbered MatchResult captures for whole-input and prefix matches. Under R26 a null reset input counts as empty text. Java throws NullPointerException. Named capture and search operations remain deferred. |
+| `java.util.regex.Matcher#group()` | `flint.java.util.regex.pattern.Matcher.group` | [R5](api-mapping.md#r5-optional-and-nullable-values) | An absent capture uses Nullable!string. |
+| `java.util.regex.Matcher#group(int)` | `flint.java.util.regex.pattern.Matcher.group` | [R5](api-mapping.md#r5-optional-and-nullable-values) | An absent capture uses Nullable!string. |
+| `java.util.regex.Matcher#reset(CharSequence)` | `flint.java.util.regex.pattern.Matcher.reset` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.regex.Matcher#toMatchResult()` | `flint.java.util.regex.pattern.Matcher.toMatchResult` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Returns a detached snapshot of the numbered MatchResult state. Java default methods remain deferred. |
 | `java.util.regex.Pattern#matcher(CharSequence)` | `flint.java.util.regex.pattern.Pattern.matcher` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.regex.Pattern#pattern()` | `flint.java.util.regex.pattern.Pattern.pattern` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.regex.Pattern#toString()` | `flint.java.util.regex.pattern.Pattern.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -11044,7 +11052,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.function | 89 | 0 |
 | java.util.jar | 0 | 101 |
 | java.util.random | 67 | 0 |
-| java.util.regex | 63 | 0 |
+| java.util.regex | 43 | 0 |
 | java.util.spi | 0 | 43 |
 | java.util.stream | 287 | 0 |
 | java.util.zip | 258 | 0 |
@@ -12375,7 +12383,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.function.Predicate#not(Predicate)` | 2 | The existing D method accepts a null predicate at composition time (R8). Its call to the final negate method also prevents dispatch to an implementor's negate override (R3). |
 | framework | `java.util.function.Predicate#or(Predicate)` | 2 | The existing final D method prevents implementor overrides (R3) and accepts a null predicate at composition time. Java throws NullPointerException there (R8). |
 | framework | `java.util.function.UnaryOperator#identity()` | 2 | The inherited Function.identity factory returns Function. Java's UnaryOperator factory returns the nominal UnaryOperator. |
-| framework | `java.util.regex.Matcher` | 2 | Assignment to Java MatchResult and access to recorded match positions and groups await the Matcher state port. |
 | framework | `java.util.regex.Pattern#asMatchPredicate()` | 2 | Requires a Predicate adapter for whole-input matching. |
 | framework | `java.util.regex.Pattern#asPredicate()` | 2 | Requires the Matcher search API and a Predicate adapter. |
 | framework | `java.util.regex.Pattern#compile(String)` | 2 | Java supports extended grapheme clusters (\X) and grapheme boundaries (\b{g}). Flint throws RegexUnsupportedException for both. |
