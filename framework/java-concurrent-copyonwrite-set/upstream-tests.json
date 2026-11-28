@@ -1,0 +1,18 @@
+{
+  "classes": {
+    "java/util/concurrent/CopyOnWriteArraySet/RacingCows.java": {
+      "status": "excluded",
+      "reason": "The snapshot-iterator race is covered by the iterator test in tests/copyonwritearrayset_test.d; the JTReg harness needs the Executor stack that is still deferred."
+    },
+    "java/util/concurrent/CopyOnWriteArraySet/SerializationTest.java": {
+      "status": "excluded",
+      "reason": "Java object serialization is out of scope for the Flint port (ADR-030); the set's contents and equals/hashCode are covered by tests/copyonwritearrayset_test.d."
+    }
+  },
+  "module": "java-concurrent-copyonwrite-set",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":java-concurrent-copyonwrite-set"
+  ],
+  "upstream": "openjdk@21.0.13"
+}
