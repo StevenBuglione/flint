@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,126 | 764 | 0 | 1,957 | 13,574 |
+| framework | openjdk@21.0.13 | 2,124 | 764 | 0 | 1,957 | 13,576 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -11192,7 +11192,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,858 | 0 |
+| java.util | 1,860 | 0 |
 | java.util.concurrent | 1,177 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -12465,6 +12465,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Base64.Decoder#wrap(InputStream)` | 2 | The decoding InputStream needs java.io.InputStream, whose Closeable interface is pending. |
 | framework | `java.util.Base64.Encoder#encode(ByteBuffer)` | 2 | Needs flint:java-util to depend on flint:java-nio-buffers for flint.java.nio.bytebuffer.ByteBuffer, which java-util does not import yet. |
 | framework | `java.util.Base64.Encoder#wrap(OutputStream)` | 2 | The encoding OutputStream needs java.io.OutputStream, whose Closeable and Flushable interfaces are pending. |
+| framework | `java.util.BitSet#valueOf(ByteBuffer)` | 2 | The ByteBuffer overload would link flint.java.nio.bytebuffer into the java.nio-free flint.java.util.bitset leaf; deferred until a measured linkage and budget decision. |
+| framework | `java.util.BitSet#valueOf(LongBuffer)` | 2 | The LongBuffer overload would link flint.java.nio.longbuffer into the java.nio-free flint.java.util.bitset leaf; deferred until a measured linkage and budget decision. |
 | framework | `java.util.Collections#emptyList()` | 2 | Java permits no-op clear, removal of a missing element and removeIf on this empty factory result. The existing result throws UnsupportedOperationException. |
 | framework | `java.util.Collections#emptyMap()` | 2 | Java permits no-op clear and removal of a missing key on this empty factory result. The existing result throws UnsupportedOperationException. |
 | framework | `java.util.Collections#emptySet()` | 2 | Java permits no-op clear, removal of a missing element and removeIf on this empty factory result. The existing result throws UnsupportedOperationException. |
