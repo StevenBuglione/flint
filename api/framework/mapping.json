@@ -5784,7 +5784,7 @@
 "java.io.StringWriter#<init>(int)":{"status":"excluded","category":"deferred","phase":"2","reason":"Missing constructor that sets the initial buffer capacity, accepts zero and rejects negative capacity."},
 "java.io.StringWriter#append(CharSequence)":{"status":"excluded","category":"deferred","phase":"2","reason":"Java appends the text null for an absent sequence and returns StringWriter. The inherited D method accepts a plain slice and returns Writer."},
 "java.io.StringWriter#append(CharSequence,int,int)":{"status":"excluded","category":"deferred","phase":"2","reason":"Missing UTF-16 sequence range append with a StringWriter result. Java applies the range to the text null when the sequence is absent."},
-"java.io.StringWriter#append(char)":{"status":"excluded","category":"deferred","phase":"2","reason":"Missing single UTF-16 code-unit append with a StringWriter result."},
+"java.io.StringWriter#append(char)":{"d":"flint.java.io.StringWriter.append","rules":["R14"],"status":"adapted","note":"Writes one UTF-16 code unit through the single-character write and returns the StringWriter; a lone surrogate appends U+FFFD (R14), where Java stores the unpaired unit."},
 "java.io.StringWriter#close()":{"d":"flint.java.io.StringWriter.close","status":"ported","note":"Inherits the no-op close. Existing text and the ability to write survive repeated calls."},
 "java.io.StringWriter#flush()":{"d":"flint.java.io.StringWriter.flush","status":"ported","note":"Inherits the no-op flush, preserving the stored text."},
 "java.io.StringWriter#getBuffer()":{"status":"excluded","category":"deferred","phase":"2","reason":"Missing access to the same live mutable StringBuffer that the writer uses as its lock."},
