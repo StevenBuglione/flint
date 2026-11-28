@@ -1,0 +1,5 @@
+name "probe-java-net-unknown-service-exception"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"
+dependency "flint:java-net-unknown-service-exception" path="../../.."

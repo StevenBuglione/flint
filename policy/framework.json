@@ -1575,6 +1575,76 @@
    ]
   },
 
+  "java-net-protocol-exception": {
+   "directory": "framework/java-net-protocol-exception",
+   "module": "flint.java.net.protocolexception",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.net.ProtocolException"
+   ],
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-net-protocol-exception/bench",
+    "baseline": "framework/java-net-protocol-exception/bench/baseline",
+    "edit_source": "framework/java-net-protocol-exception/source/flint/java/net/protocolexception.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 3402,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 480
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
+
+  "java-net-unknown-service-exception": {
+   "directory": "framework/java-net-unknown-service-exception",
+   "module": "flint.java.net.unknownserviceexception",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.net.UnknownServiceException"
+   ],
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-net-unknown-service-exception/bench",
+    "baseline": "framework/java-net-unknown-service-exception/bench/baseline",
+    "edit_source": "framework/java-net-unknown-service-exception/source/flint/java/net/unknownserviceexception.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 3402,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 480
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
+
   "java-regex": {
    "directory": "framework/java-regex",
    "module": "flint.java.util.regex",

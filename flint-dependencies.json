@@ -387,11 +387,19 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-net-protocol-exception": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-net-proxy": {
       "repo": "framework",
       "version": "monorepo"
     },
     "flint:java-net-socket-address": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
+    "flint:java-net-unknown-service-exception": {
       "repo": "framework",
       "version": "monorepo"
     },
