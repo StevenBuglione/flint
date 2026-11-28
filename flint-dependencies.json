@@ -343,6 +343,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-collections-priorityqueue": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-concurrent": {
       "repo": "framework",
       "version": "monorepo"

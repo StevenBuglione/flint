@@ -1,0 +1,50 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "upstream": "openjdk@21.0.13",
+  "module": "java-collections-priorityqueue",
+  "test_packages": [
+    ":java-collections-priorityqueue"
+  ],
+  "classes": {
+    "java/util/PriorityQueue/AddNonComparable.java": {
+      "phase": "2",
+      "status": "excluded",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception. The natural-ordering rejection it exercises is covered by the port's ClassCastException path and the comparator tests.",
+      "covered_by": [
+        "framework/java-collections-priorityqueue/tests/priorityqueue_test.d"
+      ]
+    },
+    "java/util/PriorityQueue/NoNulls.java": {
+      "phase": "2",
+      "status": "excluded",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception; it also constructs SortedSet and concurrent queues that are not ported. The port's tests reject a null element and a null collection element.",
+      "covered_by": [
+        "framework/java-collections-priorityqueue/tests/priorityqueue_test.d"
+      ]
+    },
+    "java/util/PriorityQueue/PriorityQueueSort.java": {
+      "phase": "2",
+      "status": "excluded",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception. The port's ordered-drain and large-heap tests cover the same heap invariant.",
+      "covered_by": [
+        "framework/java-collections-priorityqueue/tests/priorityqueue_test.d"
+      ]
+    },
+    "java/util/PriorityQueue/RemoveContains.java": {
+      "phase": "2",
+      "status": "excluded",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception; it also exercises concurrent queues and ArrayDeque. The PriorityQueue contains/remove compatibility transcript is ported.",
+      "covered_by": [
+        "framework/java-collections-priorityqueue/tests/priorityqueue_test.d"
+      ]
+    },
+    "java/util/PriorityQueue/ForgetMeNot.java": {
+      "phase": "2",
+      "status": "excluded",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception. Its exact heap-array transcript, including the iterator's forget-me-not path, is ported.",
+      "covered_by": [
+        "framework/java-collections-priorityqueue/tests/priorityqueue_test.d"
+      ]
+    }
+  }
+}

@@ -105,6 +105,7 @@
   "java.util.IllegalFormatConversionException": "flint.java.util.formatter",
   "java.util.IllegalFormatException": "flint.java.util.formatter",
   "java.util.MissingFormatArgumentException": "flint.java.util.formatter",
+  "java.util.PriorityQueue": "flint.java.util.priorityqueue",
   "java.util.Queue": "flint.java.util.queue",
   "java.util.Random": "flint.java.util.random.random",
   "java.util.SplittableRandom": "flint.java.util.splittablerandom",
