@@ -338,7 +338,7 @@
 "org.springframework.ai.document.Document#<init>(String,String,Map)":{"d":"flint.ai.document.Document.this","rules":["R5","R23"],"status":"adapted"},
 "org.springframework.ai.document.Document#equals(Object)":{"d":"flint.ai.document.Document.equals","rules":["R11"],"status":"adapted"},
 "org.springframework.ai.document.Document#DEFAULT_CONTENT_FORMATTER":{"d":"flint.ai.document.Document.DEFAULT_CONTENT_FORMATTER","rules":["R17"],"note":"Flint builds a fresh default formatter per document, so Java's process-wide shared instance identity is not preserved (docs/spring/java-differences.md).","status":"adapted"},
-"org.springframework.ai.document.Document#getContentFormatter()":{"d":"flint.ai.document.Document.getContentFormatter","rules":["R23"],"note":"Creates and caches the default formatter on first use instead of returning Java's shared static.","status":"adapted"},
+"org.springframework.ai.document.Document#getContentFormatter()":{"d":"flint.ai.document.Document.getContentFormatter","status":"ported"},
 "org.springframework.ai.document.Document#setContentFormatter(ContentFormatter)":{"d":"flint.ai.document.Document.setContentFormatter","status":"ported"},
 "org.springframework.ai.document.Document#getFormattedContent()":{"d":"flint.ai.document.Document.getFormattedContent","status":"ported"},
 "org.springframework.ai.document.Document#getFormattedContent(MetadataMode)":{"d":"flint.ai.document.Document.getFormattedContent","rules":["R5"],"note":"The Nullable mode overload preserves Java null-mode validation.","status":"adapted"},
