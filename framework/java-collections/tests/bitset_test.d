@@ -183,6 +183,29 @@ unittest
     assert(digest == 3_010_527_271);
 }
 
+@("valueOf bytes reverses toByteArray for the live bits")
+unittest
+{
+    assert(BitSet.valueOf(new BitSet().toByteArray()).isEmpty());
+
+    uint state = 0x2545_f491;
+    foreach (step; 0 .. 256)
+    {
+        auto bits = new BitSet();
+        state = state * 1_664_525 + 1_013_904_223;
+        foreach (_; 0 .. (state & 31))
+        {
+            state = state * 1_664_525 + 1_013_904_223;
+            bits.set(cast(int)(state & 1_023));
+        }
+        auto imported = BitSet.valueOf(bits.toByteArray());
+        assert(imported.equals(bits));
+        assert(imported.toLongArray() == bits.toLongArray());
+        assert(imported.length() == bits.length());
+        assert(imported.cardinality() == bits.cardinality());
+    }
+}
+
 @("toByteArray copies the minimal little-endian bytes")
 unittest
 {
