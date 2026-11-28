@@ -21,123 +21,123 @@ enum BitwiseOp : ubyte
 }
 
 /// Return the index of the lowest set bit in a non-empty normalized magnitude.
-pragma(inline, false) int lowestSetBit(scope const(uint)[] words) pure nothrow @nogc
+pragma(inline, false) int lowestSetBit(scope const(uint)[] w) pure nothrow @nogc
 {
-    const size_t first = firstNonzeroLimb(words);
-    return cast(int)(first * 32 + bsf(words[first]));
+    const size_t first = firstNonzeroLimb(w);
+    return cast(int)(first * 32 + bsf(w[first]));
 }
 
 /// Return the number of bits in two's complement that differ from the sign bit.
-pragma(inline, false) int signedBitCount(scope const(uint)[] words, bool negative) pure nothrow @nogc
+pragma(inline, false) int signedBitCount(scope const(uint)[] w, bool neg) pure nothrow @nogc
 {
     int count = 0;
-    foreach (word; words)
+    foreach (word; w)
         count += popCount32(word);
-    if (negative && words.length)
-        count += lowestSetBit(words) - 1;
+    if (neg && w.length)
+        count += lowestSetBit(w) - 1;
     return count;
 }
 
-/// Return word `index` of the two's-complement representation given `firstNonzeroLimb(words)`.
-pragma(inline, false) uint twosComplementWord(scope const(uint)[] words, bool negative, size_t first, size_t index) pure nothrow @nogc
+/// Return word `i` of the two's-complement representation given `firstNonzeroLimb(w)`.
+pragma(inline, false) uint tcWord(scope const(uint)[] w, bool neg, size_t first, size_t i) pure nothrow @nogc
 {
-    if (!words.length)
+    if (!w.length)
         return 0;
-    if (!negative)
-        return index < words.length ? words[index] : 0;
-    if (index >= words.length)
+    if (!neg)
+        return i < w.length ? w[i] : 0;
+    if (i >= w.length)
         return uint.max;
-    if (index < first)
+    if (i < first)
         return 0;
-    const uint word = words[index];
-    return index == first ? 0U - word : ~word;
+    const uint word = w[i];
+    return i == first ? 0U - word : ~word;
 }
 
 /// Return bit `n` of the two's-complement representation.
-pragma(inline, false) bool testTwosComplementBit(scope const(uint)[] words, bool negative, size_t n) pure nothrow @nogc
+pragma(inline, false) bool testTwosComplementBit(scope const(uint)[] w, bool neg, size_t n) pure nothrow @nogc
 {
-    const size_t first = negative ? firstNonzeroLimb(words) : 0;
-    return ((twosComplementWord(words, negative, first, n / 32) >> (n & 31)) & 1U) != 0;
+    const size_t first = neg ? firstNonzeroLimb(w) : 0;
+    return ((tcWord(w, neg, first, n / 32) >> (n & 31)) & 1U) != 0;
 }
 
-/// Flip bit `n` in the two's-complement representation and write the resulting magnitude into `dest`.
-/// `dest` must have length `count + (negative ? 1 : 0)` where `count = max(words.length, n / 32 + 1)`.
-pragma(inline, false) void toggleBitLimbs(scope uint[] dest, scope const(uint)[] words, bool negative, size_t n) pure nothrow @nogc
+/// Flip bit `n` in the two's-complement representation and write the resulting magnitude into `dst`.
+/// `dst` must have length `count + (neg ? 1 : 0)` where `count = max(w.length, n / 32 + 1)`.
+pragma(inline, false) void flipLimbs(scope uint[] dst, scope const(uint)[] w, bool neg, size_t n) pure nothrow @nogc
 {
-    const size_t targetWord = n / 32;
-    const size_t count = words.length > targetWord + 1 ? words.length : targetWord + 1;
-    const size_t first = negative ? firstNonzeroLimb(words) : 0;
+    const size_t target = n / 32;
+    const size_t count = w.length > target + 1 ? w.length : target + 1;
+    const size_t first = neg ? firstNonzeroLimb(w) : 0;
     foreach (i; 0 .. count)
-        dest[i] = twosComplementWord(words, negative, first, i);
-    dest[targetWord] ^= 1U << (n & 31);
-    if (negative)
-        negateTwosComplement(dest, count);
+        dst[i] = tcWord(w, neg, first, i);
+    dst[target] ^= 1U << (n & 31);
+    if (neg)
+        negateTwosComplement(dst, count);
 }
 
-/// Apply a two's-complement bitwise operation and write the resulting magnitude into `dest`.
-/// `dest` must have length `max(left.length, right.length) + (resultNeg ? 1 : 0)`.
-pragma(inline, false) void bitwiseLimbs(scope uint[] dest, scope const(uint)[] left, bool leftNeg,
-    scope const(uint)[] right, bool rightNeg, BitwiseOp op, bool resultNeg) pure nothrow @nogc
+/// Apply a two's-complement bitwise operation and write the resulting magnitude into `dst`.
+/// `dst` must have length `max(left.length, right.length) + (resultNeg ? 1 : 0)`.
+pragma(inline, false) void bitwiseLimbs(scope uint[] dst, scope const(uint)[] left, bool leftNeg,
+        scope const(uint)[] right, bool rightNeg, BitwiseOp op, bool resultNeg) pure nothrow @nogc
 {
     const size_t count = left.length > right.length ? left.length : right.length;
     const size_t leftFirst = leftNeg ? firstNonzeroLimb(left) : 0;
     const size_t rightFirst = rightNeg ? firstNonzeroLimb(right) : 0;
     foreach (i; 0 .. count)
     {
-        const uint aw = twosComplementWord(left, leftNeg, leftFirst, i);
-        const uint bw = twosComplementWord(right, rightNeg, rightFirst, i);
-        dest[i] = combineBitwise(aw, bw, op);
+        const uint aw = tcWord(left, leftNeg, leftFirst, i);
+        const uint bw = tcWord(right, rightNeg, rightFirst, i);
+        dst[i] = combineBitwise(aw, bw, op);
     }
     if (resultNeg)
-        negateTwosComplement(dest, count);
+        negateTwosComplement(dst, count);
 }
 
-/// Shift a normalized magnitude left by `distance` bits into `dest` (zero-initialized).
-pragma(inline, false) void shiftLeftLimbs(scope uint[] dest, scope const(uint)[] words, size_t distance) pure nothrow @nogc
+/// Shift a normalized magnitude left by `distance` bits into `dst` (zero-initialized).
+pragma(inline, false) void shlLimbs(scope uint[] dst, scope const(uint)[] w, size_t distance) pure nothrow @nogc
 {
     const size_t wordShift = distance / 32;
     const uint bitShift = cast(uint)(distance & 31);
     if (bitShift == 0)
     {
-        foreach (i, word; words)
-            dest[wordShift + i] = word;
+        foreach (i, word; w)
+            dst[wordShift + i] = word;
         return;
     }
     const uint complement = 32 - bitShift;
     uint carry = 0;
-    foreach (i, word; words)
+    foreach (i, word; w)
     {
-        dest[wordShift + i] = (word << bitShift) | carry;
+        dst[wordShift + i] = (word << bitShift) | carry;
         carry = word >> complement;
     }
     if (carry)
-        dest[wordShift + words.length] = carry;
+        dst[wordShift + w.length] = carry;
 }
 
-/// Shift a normalized magnitude right by `distance` bits (< magnitudeBitLength) into `dest`.
-/// When `negative` is true and any shifted-out bit is nonzero, adds 1 to round toward -infinity.
-pragma(inline, false) void shiftRightLimbs(scope uint[] dest, scope const(uint)[] words, size_t distance, bool negative) pure nothrow @nogc
+/// Shift a normalized magnitude right by `dist` bits (< magnitudeBitLength) into `dst`.
+/// When `neg` is true and any shifted-out bit is nonzero, adds 1 to round toward -infinity.
+pragma(inline, false) void shrLimbs(scope uint[] dst, scope const(uint)[] w, size_t dist, bool neg) pure nothrow @nogc
 {
-    const size_t wordShift = distance / 32;
-    const uint bitShift = cast(uint)(distance & 31);
-    const size_t outLen = words.length - wordShift;
+    const size_t wordShift = dist / 32;
+    const uint bitShift = cast(uint)(dist & 31);
+    const size_t outLen = w.length - wordShift;
     bool lostBits = false;
-    if (negative)
+    if (neg)
     {
-        foreach (word; words[0 .. wordShift])
+        foreach (word; w[0 .. wordShift])
             if (word)
                 lostBits = true;
-        if (bitShift != 0 && (words[wordShift] << (32 - bitShift)) != 0)
+        if (bitShift != 0 && (w[wordShift] << (32 - bitShift)) != 0)
             lostBits = true;
     }
 
     const uint complement = 32 - bitShift;
     foreach (i; 0 .. outLen)
     {
-        uint word = words[wordShift + i] >> bitShift;
-        if (bitShift != 0 && wordShift + i + 1 < words.length)
-            word |= words[wordShift + i + 1] << complement;
-        dest[i] = word;
+        uint word = w[wordShift + i] >> bitShift;
+        if (bitShift != 0 && wordShift + i + 1 < w.length)
+            word |= w[wordShift + i + 1] << complement;
+        dst[i] = word;
     }
 
     if (lostBits)
@@ -145,25 +145,25 @@ pragma(inline, false) void shiftRightLimbs(scope uint[] dest, scope const(uint)[
         ulong carry = 1;
         foreach (i; 0 .. outLen)
         {
-            const ulong sum = cast(ulong) dest[i] + carry;
-            dest[i] = cast(uint) sum;
+            const ulong sum = cast(ulong) dst[i] + carry;
+            dst[i] = cast(uint) sum;
             carry = sum >> 32;
         }
         if (carry)
-            dest[outLen] = cast(uint) carry;
+            dst[outLen] = cast(uint) carry;
     }
 }
 
-pragma(inline, false) private void negateTwosComplement(scope uint[] dest, size_t count) pure nothrow @nogc
+pragma(inline, false) private void negateTwosComplement(scope uint[] dst, size_t count) pure nothrow @nogc
 {
     ulong carry = 1;
     foreach (i; 0 .. count)
     {
-        const ulong sum = cast(ulong)(~dest[i]) + carry;
-        dest[i] = cast(uint) sum;
+        const ulong sum = cast(ulong)(~dst[i]) + carry;
+        dst[i] = cast(uint) sum;
         carry = sum >> 32;
     }
-    dest[count] = cast(uint) carry;
+    dst[count] = cast(uint) carry;
 }
 
 pragma(inline, false) private uint combineBitwise(uint a, uint b, BitwiseOp op) pure nothrow @nogc

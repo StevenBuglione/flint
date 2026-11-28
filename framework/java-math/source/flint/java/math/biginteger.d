@@ -4,8 +4,8 @@ module flint.java.math.biginteger;
 import flint.java.lang : ArithmeticException, Comparable, IndexOutOfBoundsException, JavaObject,
     NullPointerException, NumberFormatException;
 import flint.java.lang.number : Number;
-import flint.java.math.internal.bits : bitwiseLimbs, BitwiseOp, lowestSetBit, shiftLeftLimbs,
-    shiftRightLimbs, signedBitCount, testTwosComplementBit, toggleBitLimbs;
+import flint.java.math.internal.bits : bitwiseLimbs, BitwiseOp, flipLimbs, lowestSetBit, shlLimbs,
+    shrLimbs, signedBitCount, testTwosComplementBit;
 import flint.java.math.internal.division : divideByWord, divideWords;
 import flint.java.math.internal.floating : roundedFloating;
 import flint.java.math.internal.limbs : combineLimbs, compareLimbs, firstNonzeroLimb, loadLimbs,
@@ -227,7 +227,7 @@ class BigInteger : Number, Comparable!BigInteger
         const size_t targetWord = bit / 32;
         const size_t count = magnitude.length > targetWord + 1 ? magnitude.length : targetWord + 1;
         auto words = new uint[count + (negative ? 1 : 0)];
-        toggleBitLimbs(words, magnitude, negative, bit);
+        flipLimbs(words, magnitude, negative, bit);
         return new BigInteger(words, negative ? -1 : 1);
     }
 
@@ -267,7 +267,7 @@ class BigInteger : Number, Comparable!BigInteger
         const size_t wordShift = distance / 32;
         const bool hasBitShift = (distance & 31) != 0;
         auto words = new uint[magnitude.length + wordShift + hasBitShift];
-        shiftLeftLimbs(words, magnitude, distance);
+        shlLimbs(words, magnitude, distance);
         return new BigInteger(words, sign);
     }
 
@@ -280,7 +280,7 @@ class BigInteger : Number, Comparable!BigInteger
         const size_t wordShift = dist / 32;
         const size_t outLen = magnitude.length - wordShift;
         auto words = new uint[outLen + (sign < 0 ? 1 : 0)];
-        shiftRightLimbs(words, magnitude, dist, sign < 0);
+        shrLimbs(words, magnitude, dist, sign < 0);
         return new BigInteger(words, sign);
     }
 
