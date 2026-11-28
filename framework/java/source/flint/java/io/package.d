@@ -2073,6 +2073,7 @@ class ByteArrayInputStream : InputStream
     /// One past the last readable byte.
     protected int count;
 
+    alias read = InputStream.read;
     alias readNBytes = InputStream.readNBytes;
 
     /// Read from `bytes`, which the stream does not copy.
