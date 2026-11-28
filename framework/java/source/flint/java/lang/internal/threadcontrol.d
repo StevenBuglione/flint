@@ -4,12 +4,12 @@ import core.atomic : atomicLoad, cas;
 
 @safe:
 
-/// Create the calling logical thread's `Thread` object on first use.
-package(flint.java) alias ThreadFactory = Object function() @safe;
-
-/// Resolve the calling logical thread's identity. The native provider is `flint.java.nativethreadidentity`;
-/// `flint:java-fiber` installs a fiber provider before any fiber calls `Thread.currentThread`.
-package(flint.java) alias ThreadIdentityProvider = Object function(bool create, ThreadFactory make) @safe;
+/// Resolve the calling logical thread's identity. The caller creates the `Thread` and passes it as `candidate`
+/// when `create` is true; a read-only lookup passes `create` false and a null candidate. The native provider is
+/// `flint.java.nativethreadidentity`; `flint:java-fiber` installs a fiber provider before any fiber calls
+/// `Thread.currentThread`. The provider allocates nothing, so an existing identity can be read from a `@nogc`
+/// wait.
+package(flint.java) alias ThreadIdentityProvider = Object function(bool create, Object candidate) @safe nothrow @nogc;
 
 private shared ThreadIdentityProvider selected;
 

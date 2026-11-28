@@ -9,10 +9,10 @@ module flint.java.nativethreadidentity;
 // reviewed thread root (policy/safety-policy.json), not per-task state.
 private Object identity;
 
-package(flint.java) Object nativeThreadIdentity(bool create, Object function() @safe makeValue)
+package(flint.java) Object nativeThreadIdentity(bool create, Object candidate) nothrow @nogc
 {
-    if (identity !is null || !create || makeValue is null)
+    if (identity !is null || !create || candidate is null)
         return identity;
-    identity = makeValue();
+    identity = candidate;
     return identity;
 }
