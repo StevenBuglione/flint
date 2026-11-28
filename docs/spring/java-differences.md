@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,182 | 795 | 0 | 1,957 | 13,487 |
+| framework | openjdk@21.0.13 | 2,198 | 802 | 0 | 1,957 | 13,464 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2259,7 +2259,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `java.io.ByteArrayInputStream#<init>(byte[])` | `flint.java.io.ByteArrayInputStream.this` | [R26](api-mapping.md#r26-null-arrays) | Uses the caller's backing array as an unsigned byte slice. A null slice counts as an empty array under R26. |
-| `java.io.IOException` | `flint.java.io.IOException` | [R8](api-mapping.md#r8-exceptions) | Uses the D checked-exception hierarchy. The merged constructor represents omitted and explicit null causes identically under R8. The checked family currently lacks initCause. |
+| `java.io.IOException` | `flint.java.io.IOException` | [R8](api-mapping.md#r8-exceptions) | Uses the D checked-exception hierarchy (D-8). The (String) constructors leave the cause open for one initCause. (String, Throwable), including an explicit null through a typeof(null) overload, and (Throwable) initialize it, as in Java. |
 | `java.io.InputStream#read(byte[],int,int)` | `flint.java.io.InputStream.read` | [R26](api-mapping.md#r26-null-arrays), [R8](api-mapping.md#r8-exceptions) | Java byte arrays use D ubyte slices. A null slice counts as an empty array under R26. |
 | `java.io.InputStream#skip(long)` | `flint.java.io.InputStream.skip` | [R8](api-mapping.md#r8-exceptions) |  |
 | `java.io.InterruptedIOException` | `flint.java.io.interruptedioexception.InterruptedIOException` | [R1](api-mapping.md#r1-packages-and-names) | Import InterruptedIOException from flint.java.io.interruptedioexception until the java.io aggregate re-exports it. |
@@ -2671,8 +2671,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.nio.charset.CharacterCodingException` | `flint.java.nio.charset.charactercodingexception.CharacterCodingException` | [R1](api-mapping.md#r1-packages-and-names) | Import CharacterCodingException from flint.java.nio.charset.charactercodingexception. It extends the checked IOException and leaves the cause open, as Java's constructor does. |
 | `java.nio.charset.Charset` | `flint.java.nio.charset.Charset` | [R11](api-mapping.md#r11-object-identity-and-equality) | An immutable value struct naming one of the six standard charsets (UTF-8, US-ASCII, ISO-8859-1, UTF-16, UTF-16BE, UTF-16LE). Java's identity comparison of the shared instances is == here, and Charset.init stands for Java's null. It is closed: a CharsetProvider can return only these six. newDecoder, newEncoder, decode and encode wait on a way to reach framework/java-nio-charset's coders, which flint:java cannot import. |
 | `java.nio.charset.CharsetDecoder` | `flint.java.nio.charset.charsetdecoder.CharsetDecoder` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Import CharsetDecoder from flint.java.nio.charset.charsetdecoder. An abstract class, as in Java; subclasses override decodeLoop. Charset is a value here, and Charset.init stands for Java's null charset. Java's in and out parameters are in_ and out_ (R19). decode(in, out, eoi) checks for null buffers before calling decodeLoop and throws CoderMalfunctionError caused by NullPointerException (R8), where Java's NullPointerException comes from inside the loop. CodingErrorAction is a value struct, so Java's "Null action" IllegalArgumentException cannot occur. |
+| `java.nio.charset.CharsetDecoder#decode(ByteBuffer)` | `flint.java.nio.charset.charsetdecoder.CharsetDecoder.decode` | [R8](api-mapping.md#r8-exceptions), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Resets the decoder, decodes with endOfInput, flushes, grows the output on overflow and flips it, as Java does. A null input throws NullPointerException; a REPORT action stops on a MalformedInputException or UnmappableCharacterException. |
 | `java.nio.charset.CharsetDecoder#decode(ByteBuffer,CharBuffer,boolean)` | `flint.java.nio.charset.charsetdecoder.CharsetDecoder.decode` | [R8](api-mapping.md#r8-exceptions), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Null buffers throw CoderMalfunctionError caused by NullPointerException before decodeLoop runs. |
 | `java.nio.charset.CharsetDecoder#decodeLoop(ByteBuffer,CharBuffer)` | `flint.java.nio.charset.charsetdecoder.CharsetDecoder.decodeLoop` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `java.nio.charset.CharsetDecoder#flush(CharBuffer)` | `flint.java.nio.charset.charsetdecoder.CharsetDecoder.flush` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
@@ -2681,6 +2683,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.nio.charset.CharsetEncoder#<init>(Charset,float,float,byte[])` | `flint.java.nio.charset.charsetencoder.CharsetEncoder.this` | [R26](api-mapping.md#r26-null-arrays) | A null replacement counts as empty, so it throws "Empty replacement" where Java says "Null replacement". |
 | `java.nio.charset.CharsetEncoder#canEncode(CharSequence)` | `flint.java.nio.charset.charsetencoder.CharsetEncoder.canEncode` | [R7](api-mapping.md#r7-overloads), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Two overloads stand in for CharSequence: a UTF-8 string, converted to UTF-16 units, and a CharBuffer, whose position is unchanged. A null string counts as empty and can be encoded; a null CharBuffer throws NullPointerException. |
 | `java.nio.charset.CharsetEncoder#canEncode(char)` | `flint.java.nio.charset.charsetencoder.CharsetEncoder.canEncode` | [R14](api-mapping.md#r14-strings-and-text) | Java's char is wchar. |
+| `java.nio.charset.CharsetEncoder#encode(CharBuffer)` | `flint.java.nio.charset.charsetencoder.CharsetEncoder.encode` | [R8](api-mapping.md#r8-exceptions), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Resets the encoder, encodes with endOfInput, flushes, grows the output on overflow and flips it, as Java does. A null input throws NullPointerException; a REPORT action stops on a MalformedInputException or UnmappableCharacterException. |
 | `java.nio.charset.CharsetEncoder#encode(CharBuffer,ByteBuffer,boolean)` | `flint.java.nio.charset.charsetencoder.CharsetEncoder.encode` | [R8](api-mapping.md#r8-exceptions), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Null buffers throw CoderMalfunctionError caused by NullPointerException before encodeLoop runs. |
 | `java.nio.charset.CharsetEncoder#encodeLoop(CharBuffer,ByteBuffer)` | `flint.java.nio.charset.charsetencoder.CharsetEncoder.encodeLoop` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `java.nio.charset.CharsetEncoder#flush(ByteBuffer)` | `flint.java.nio.charset.charsetencoder.CharsetEncoder.flush` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
@@ -2694,6 +2697,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.nio.charset.CodingErrorAction#IGNORE` | `flint.java.nio.charset.codingerroraction.CodingErrorAction.IGNORE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `java.nio.charset.CodingErrorAction#REPLACE` | `flint.java.nio.charset.codingerroraction.CodingErrorAction.REPLACE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `java.nio.charset.CodingErrorAction#REPORT` | `flint.java.nio.charset.codingerroraction.CodingErrorAction.REPORT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `java.nio.charset.MalformedInputException` | `flint.java.nio.charset.malformedinputexception.MalformedInputException` | [R1](api-mapping.md#r1-packages-and-names) | Import MalformedInputException from flint.java.nio.charset.malformedinputexception. It extends the checked CharacterCodingException and leaves the cause open, as Java's constructor does. |
+| `java.nio.charset.MalformedInputException#getMessage()` | `flint.java.io.IOException.getMessage` | [D-JDK-3](api-mapping.md#deviations) | The message, Input length = and the length, is formatted when constructed, because getMessage is @nogc. A subclass overriding getInputLength() keeps the constructed message. |
+| `java.nio.charset.UnmappableCharacterException` | `flint.java.nio.charset.unmappablecharacterexception.UnmappableCharacterException` | [R1](api-mapping.md#r1-packages-and-names) | Import UnmappableCharacterException from flint.java.nio.charset.unmappablecharacterexception. It extends the checked CharacterCodingException and leaves the cause open, as Java's constructor does. |
+| `java.nio.charset.UnmappableCharacterException#getMessage()` | `flint.java.io.IOException.getMessage` | [D-JDK-3](api-mapping.md#deviations) | The message, Input length = and the length, is formatted when constructed, because getMessage is @nogc. A subclass overriding getInputLength() keeps the constructed message. |
 
 #### java.nio.charset.spi
 
@@ -11236,7 +11243,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 770 | 0 |
+| java.io | 760 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -11246,7 +11253,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |
 | java.nio.channels.spi | 0 | 53 |
-| java.nio.charset | 32 | 0 |
+| java.nio.charset | 19 | 0 |
 | java.nio.file | 268 | 0 |
 | java.nio.file.attribute | 126 | 0 |
 | java.nio.file.spi | 0 | 35 |
@@ -12166,12 +12173,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.File#toString()` | 2 | Java calls the virtual getPath method. The existing implementation returns the stored pathname directly. |
 | framework | `java.io.FileInputStream` | 2 | The existing class derives from ByteArrayInputStream and retains a byte snapshot. Java derives directly from InputStream and owns a file descriptor until close. |
 | framework | `java.io.FileInputStream#<init>(File)` | 2 | The existing constructor checks the virtual isFile method and reads a byte snapshot. Java opens the pathname and owns the descriptor. The null File check required by R8 is pending. |
-| framework | `java.io.FileNotFoundException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
-| framework | `java.io.FileNotFoundException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
-| framework | `java.io.IOException#<init>()` | 2 | Java leaves the cause open to one later initCause call. Flint reports no cause and lacks that initialization API. |
-| framework | `java.io.IOException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. Flint lacks that API and its R26 detail accessor normalization is pending. |
-| framework | `java.io.IOException#<init>(String,Throwable)` | 2 | The current constructor retains a supplied non-null cause. The checked cause lifecycle and R26 detail accessor normalization are pending. R8 covers the merged constructor's explicit null projection. |
-| framework | `java.io.IOException#<init>(Throwable)` | 2 | Missing cause-only constructor. Java initializes the cause even if it is null and derives the detail from a non-null cause's virtual toString. |
 | framework | `java.io.InputStream` | 2 | The abstract source exists. The nominal Closeable interface required by Java is missing from the class. |
 | framework | `java.io.InputStream#available()` | 2 | Missing virtual base method that returns zero by default. |
 | framework | `java.io.InputStream#mark(int)` | 2 | Missing virtual mark operation with a no-op base implementation. |
@@ -12180,8 +12181,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.InputStream#readNBytes(int)` | 2 | Missing bounded read that returns a new byte array. Java uses this virtual overload to implement readAllBytes(). |
 | framework | `java.io.InputStream#reset()` | 2 | Missing virtual reset method that throws IOException with detail mark/reset not supported by default. |
 | framework | `java.io.InputStream#transferTo(OutputStream)` | 2 | Missing transfer through virtual ranged reads and writes. Java rejects a null sink before reading, returns the count, and leaves both streams open. |
-| framework | `java.io.InterruptedIOException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
-| framework | `java.io.InterruptedIOException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
 | framework | `java.io.OutputStream` | 2 | The abstract sink exists. The Java type also implements the Closeable and Flushable interfaces, which are pending. |
 | framework | `java.io.OutputStreamWriter#<init>(OutputStream)` | 2 | Java rejects a null output stream during construction. The existing constructor accepts one. |
 | framework | `java.io.OutputStreamWriter#close()` | 2 | Java flushes buffered output, closes once, and rejects subsequent writes and flushes. The existing method forwards every close without flushing or tracking the closed state. |
@@ -12249,8 +12248,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.UncheckedIOException#<init>(IOException)` | 2 | The existing constructor accepts a null cause. Java rejects it with NullPointerException. Java derives the detail from the cause's virtual toString. The current formatter uses the cause's type name and raw detail. |
 | framework | `java.io.UncheckedIOException#<init>(String,IOException)` | 2 | The existing constructor accepts a null cause. Java rejects it with NullPointerException. The inherited Java detail accessor still needs R26 empty-string normalization. |
 | framework | `java.io.UncheckedIOException#getCause()` | 2 | The inherited accessor returns Throwable. Java overrides it to return IOException. |
-| framework | `java.io.UnsupportedEncodingException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
-| framework | `java.io.UnsupportedEncodingException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
 | framework | `java.io.Writer` | 2 | The abstract sink exists. The Java type also implements Appendable, Closeable and Flushable, which are pending. |
 | framework | `java.io.Writer#<init>()` | 2 | Java initializes the protected lock to the writer itself. The existing type has no lock field. |
 | framework | `java.io.Writer#append(CharSequence)` | 2 | Java appends the four characters null for an absent character sequence. The existing method treats a null slice as empty. |
@@ -12378,9 +12375,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.charset.Charset#isSupported(String)` | 2 | An empty name or one with an illegal character returns false here; Java throws IllegalCharsetNameException. |
 | framework | `java.nio.charset.Charset#newDecoder()` | 2 | Charset lives in flint:java and cannot import framework/java-nio-charset's decoders. |
 | framework | `java.nio.charset.Charset#newEncoder()` | 2 | Charset lives in flint:java and cannot import framework/java-nio-charset's encoders. |
-| framework | `java.nio.charset.CharsetDecoder#decode(ByteBuffer)` | 2 | Throws CharacterCodingException (through CoderResult.throwException), which waits on checked IOException initCause (framework-core fc-io-charset). canEncode already runs the same loop privately. |
-| framework | `java.nio.charset.CharsetEncoder#encode(CharBuffer)` | 2 | Throws CharacterCodingException (through CoderResult.throwException), which waits on checked IOException initCause (framework-core fc-io-charset). canEncode already runs the same loop privately. |
-| framework | `java.nio.charset.CoderResult#throwException()` | 2 | Requires CharacterCodingException, MalformedInputException and UnmappableCharacterException, which wait on checked IOException initCause. |
 | framework | `java.nio.charset.IllegalCharsetNameException#getCharsetName()` | 2 | Not in D yet. The exception keeps the name only as its message; the field and accessor are still to add, as on UnsupportedCharsetException. |
 | framework | `java.nio.file.Path#compareTo(Path)` | 2 | Default-provider ordering and Comparable<Path> inheritance are deferred. |
 | framework | `java.nio.file.Path#equals(Object)` | 2 | Provider-specific path equality is deferred with hashCode. |
