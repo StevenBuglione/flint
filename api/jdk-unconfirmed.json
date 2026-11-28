@@ -739,10 +739,6 @@
   "java.util.concurrent.CopyOnWriteArraySet#retainAll(Collection)",
   "java.util.concurrent.CopyOnWriteArraySet#size()",
   "java.util.concurrent.CopyOnWriteArraySet#toArray()",
-  "java.util.concurrent.FutureTask#<init>(Runnable,V)",
-  "java.util.zip.Adler32#update(ByteBuffer)",
-  "java.util.zip.CRC32#update(ByteBuffer)",
-  "java.util.zip.CRC32C#update(ByteBuffer)",
-  "java.util.zip.Checksum#update(ByteBuffer)"
+  "java.util.concurrent.FutureTask#<init>(Runnable,V)"
  ]
 }

@@ -249,6 +249,7 @@ unittest
     static assert(!__traits(compiles, entry.setLastModifiedTime(null)));
     static assert(!__traits(compiles, entry.setLastAccessTime(null)));
     static assert(!__traits(compiles, entry.setCreationTime(null)));
+    static assert(!__traits(compiles, entry.setTimeLocal(null)));
 }
 
 @("clone copies the entry and its extra field, including a null extra field")
