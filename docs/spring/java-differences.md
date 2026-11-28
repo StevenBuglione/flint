@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,237 | 848 | 0 | 1,957 | 13,379 |
+| framework | openjdk@21.0.13 | 2,237 | 850 | 0 | 1,957 | 13,377 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2315,6 +2315,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.SequenceInputStream#close()` | `flint.java.io.SequenceInputStream.close` | [R1](api-mapping.md#r1-packages-and-names) | Closes the current stream and every stream that follows. The first failure is rethrown; later failures are dropped because Flint's Throwable has no suppressed-exception API. |
 | `java.io.SequenceInputStream#read(byte[],int,int)` | `flint.java.io.SequenceInputStream.read` | [R26](api-mapping.md#r26-null-arrays) | A D ubyte slice; a null slice counts as empty under R26. A zero length returns zero after the in-stream check, as Java does. |
 | `java.io.SequenceInputStream#transferTo(OutputStream)` | `flint.java.io.SequenceInputStream.transferTo` | [R1](api-mapping.md#r1-packages-and-names) | Copies through the sequence and returns zero when it is already exhausted, before touching the sink. The interrupt check is omitted because flint.java has no Thread.interrupted yet. |
+| `java.io.StringWriter#<init>()` | `flint.java.io.StringWriter.this` | [R1](api-mapping.md#r1-packages-and-names) | Starts empty. The buffer monitor is omitted because a Flint stream is confined to one fiber; getBuffer is a separate deferred element. |
+| `java.io.StringWriter#toString()` | `flint.java.io.StringWriter.toString` | [R1](api-mapping.md#r1-packages-and-names) | Returns a snapshot of the text. The buffer monitor is omitted because a Flint stream is confined to one fiber. |
 | `java.io.StringWriter#write(String)` | `flint.java.io.StringWriter.write` | [R26](api-mapping.md#r26-null-arrays) | Appends the text to the buffer; a null string is empty (R26). |
 | `java.io.StringWriter#write(String,int,int)` | `flint.java.io.StringWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's UTF-16 range adapter and appends the result; a split surrogate pair writes U+FFFD for each lone half (R14). A null string is empty (R26). |
 | `java.io.StringWriter#write(char[],int,int)` | `flint.java.io.StringWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's concrete UTF-16 adapter; a lone half writes U+FFFD (R14) and a null array is empty (R26). |
@@ -11259,7 +11261,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 575 | 0 |
+| java.io | 573 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -12223,13 +12225,11 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.Reader#read(CharBuffer)` | 2 | Missing UTF-16 transfer into the buffer's remaining window. Java rejects read-only targets before reading, reads directly into accessible arrays, and copies into other targets after a successful read. The position advances only by the returned count. |
 | framework | `java.io.Reader#transferTo(Writer)` | 2 | Missing transfer via virtual UTF-16 ranged reads and writes. Java rejects a null sink before reading and counts code units. Sink failures propagate after the source advances. Neither stream is flushed or closed. |
 | framework | `java.io.SequenceInputStream#<init>(Enumeration)` | 2 | Java takes a java.util.Enumeration of streams. Enumeration is not ported yet. |
-| framework | `java.io.StringWriter#<init>()` | 2 | The writer starts empty, but it has no mutable StringBuffer bound to the inherited lock or exposed through getBuffer. |
 | framework | `java.io.StringWriter#<init>(int)` | 2 | Missing constructor that sets the initial buffer capacity, accepts zero and rejects negative capacity. |
 | framework | `java.io.StringWriter#append(CharSequence)` | 2 | Java appends the text null for an absent sequence and returns StringWriter. The inherited D method accepts a plain slice and returns Writer. |
 | framework | `java.io.StringWriter#append(CharSequence,int,int)` | 2 | Missing UTF-16 sequence range append with a StringWriter result. Java applies the range to the text null when the sequence is absent. |
 | framework | `java.io.StringWriter#append(char)` | 2 | Missing single UTF-16 code-unit append with a StringWriter result. |
 | framework | `java.io.StringWriter#getBuffer()` | 2 | Missing access to the same live mutable StringBuffer that the writer uses as its lock. |
-| framework | `java.io.StringWriter#toString()` | 2 | Sequential snapshots preserve the text, but the method does not synchronize on the underlying buffer monitor as Java does. |
 | framework | `java.io.UTFDataFormatException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.io.UTFDataFormatException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
 | framework | `java.io.UncheckedIOException#<init>(IOException)` | 2 | The constructor checks null causes. Java derives the message from the virtual IOException.toString method. The current formatter uses the cause's type and raw detail. |
