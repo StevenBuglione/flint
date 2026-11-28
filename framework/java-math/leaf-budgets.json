@@ -1,6 +1,6 @@
 {
   "flint.java.math.biginteger": {
-    "incremental_linked_bytes": 27584,
+    "incremental_linked_bytes": 35108,
     "template_instances": 1040,
     "template_compile": "separate"
   },
