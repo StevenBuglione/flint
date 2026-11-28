@@ -453,6 +453,26 @@ public class GoldenFormatterBuilder {
         recipe("p:kkk", none);
         recipe("p:KKK", none);
         recipe("p:HH k", k("time"), "13 1", "00 24", "00 1", "12 12");
+        // Quarter-of-year and aligned week-of-month letters. Q/q take one or two number letters, three to five text
+        // letters (SHORT 'Q1', FULL '1st quarter', NARROW '1'; q is standalone). A quarter is not a date by itself,
+        // so a parse into a date fails as Java's does; a full date plus Q is cross-checked. F takes one letter.
+        for (String recipe : new String[] {"p:Q", "p:QQ", "p:QQQ", "p:QQQQ", "p:QQQQQ", "p:q", "p:qq", "p:qqq",
+                "p:qqqq", "p:qqqqq"}) {
+            recipe(recipe, k("date"), "1", "2", "4", "5", "0", "01", "Q1", "Q2", "Q5", "q1", "1st quarter",
+                    "2nd quarter", "4th quarter", "first quarter");
+        }
+        recipe("p:QQQQQQ", none);
+        recipe("p:qqqqqq", none);
+        recipe("p:uuuu-QQ", k("date"), "2024-02", "2024-01", "2024-05");
+        recipe("p:uuuu-MM-dd Q", k("date"), "2024-03-05 1", "2024-03-05 2");
+        recipe("p:uuuu-MM-dd qq", k("date"), "2024-03-05 01", "2024-03-05 02");
+        recipe("p:Q|s:x", k("date"), "1x", "5x");
+        recipe("p:F", k("date"), "1", "2", "3", "5", "0");
+        recipe("p:FF", none);
+        recipe("p:uuuu-MM-F", k("date"), "2024-03-1");
+        recipe("p:uuuu-MM-dd F", k("date"), "2024-03-05 1", "2024-03-05 2", "2024-03-05 5",
+                "2024-03-05 0");
+        recipe("p:uuuu-MM-dd F|s:x", k("date"), "2024-03-05 1x", "2024-03-05 2x");
         Files.write(Path.of(a[0]), lines);
     }
 }

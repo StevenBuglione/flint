@@ -258,6 +258,8 @@ private enum Field : ubyte
     dayOfMonth,
     dayOfYear,
     dayOfWeek,
+    quarterOfYear, // Java's IsoFields.QUARTER_OF_YEAR
+    alignedWeekOfMonth, // ChronoField.ALIGNED_WEEK_OF_MONTH
     hourOfDay,
     clockHourOfAmPm,
     hourOfAmPm,
@@ -274,9 +276,10 @@ private enum Field : ubyte
 private enum fieldCount = Field.max + 1;
 
 private immutable string[fieldCount] fieldNames = [
-    "Year", "YearOfEra", "MonthOfYear", "DayOfMonth", "DayOfYear", "DayOfWeek", "HourOfDay",
-    "ClockHourOfAmPm", "HourOfAmPm", "ClockHourOfDay", "MinuteOfHour", "SecondOfMinute",
-    "NanoOfSecond", "AmPmOfDay", "InstantSeconds", "WeekBasedYear", "WeekOfWeekBasedYear"
+    "Year", "YearOfEra", "MonthOfYear", "DayOfMonth", "DayOfYear", "DayOfWeek", "QuarterOfYear",
+    "AlignedWeekOfMonth", "HourOfDay", "ClockHourOfAmPm", "HourOfAmPm", "ClockHourOfDay",
+    "MinuteOfHour", "SecondOfMinute", "NanoOfSecond", "AmPmOfDay", "InstantSeconds",
+    "WeekBasedYear", "WeekOfWeekBasedYear"
 ];
 
 /**
@@ -324,6 +327,8 @@ struct Fields
         set(Field.dayOfMonth, d.getDayOfMonth());
         set(Field.dayOfYear, d.getDayOfYear());
         set(Field.dayOfWeek, d.getDayOfWeek() + 1);
+        set(Field.quarterOfYear, (d.getMonthValue() - 1) / 3 + 1);
+        set(Field.alignedWeekOfMonth, (d.getDayOfMonth() - 1) / 7 + 1);
     }
 
     private void addTime(LocalTime t) pure nothrow @nogc
@@ -566,16 +571,29 @@ struct Fields
                     "Invalid value for " ~ field ~ " (valid values 1 - " ~ maximums ~ "): " ~ decimal(value));
     }
 
-    // Java's cross-check of a parsed day-of-week against the resolved date.
+    // Java's cross-check of the parsed date fields against the resolved date. QuarterOfYear and
+    // AlignedWeekOfMonth are supplied by a date too, so a parsed value that disagrees is the same conflict.
     private void crossCheck(scope const(char)[] text, LocalDate date) const
+    {
+        if (has(Field.dayOfWeek))
+            crossCheckField(text, "DayOfWeek", date.getDayOfWeek() + 1, values_[Field.dayOfWeek], date);
+        if (has(Field.alignedWeekOfMonth))
+            crossCheckField(text, "AlignedWeekOfMonth", (date.getDayOfMonth() - 1) / 7 + 1,
+                    values_[Field.alignedWeekOfMonth], date);
+        if (has(Field.quarterOfYear))
+            crossCheckField(text, "QuarterOfYear", (date.getMonthValue() - 1) / 3 + 1,
+                    values_[Field.quarterOfYear], date);
+    }
+
+    private static void crossCheckField(scope const(char)[] text, string field, long derived,
+            long parsed, LocalDate date)
     {
         import flint.engine.aot.text : decimal;
 
-        if (!has(Field.dayOfWeek) || date.getDayOfWeek() + 1 == values_[Field.dayOfWeek])
+        if (derived == parsed)
             return;
-        const derived = decimal(date.getDayOfWeek() + 1), parsed = decimal(values_[Field.dayOfWeek]);
-        throw failed(text, new DateTimeException("Conflict found: Field DayOfWeek " ~ derived
-                ~ " differs from DayOfWeek " ~ parsed ~ " derived from " ~ date.toString()));
+        throw failed(text, new DateTimeException("Conflict found: Field " ~ field ~ " " ~ decimal(
+                derived) ~ " differs from " ~ field ~ " " ~ decimal(parsed) ~ " derived from " ~ date.toString()));
     }
 
     // Java's cross-check of a parsed am/pm against the resolved time.
@@ -1604,11 +1622,31 @@ private string describeElement(const Element e) pure
     case Op.literal:
         return e.text == "'" ? "''" : "'" ~ doubledQuotes(e.text) ~ "'";
     case Op.text:
-        return "Text(" ~ fieldNames[e.field] ~ (e.text == "full" ? ")" : ",SHORT)");
+        return "Text(" ~ fieldNames[e.field] ~ describeTextStyle(e.text) ~ ")";
     case Op.localizedOffset:
         return e.text == "full" ? "LocalizedOffset(FULL)" : "LocalizedOffset(SHORT)";
     default:
         return "Offset(" ~ e.text ~ ",'" ~ doubledQuotes(e.noOffsetText) ~ "')";
+    }
+}
+
+// The TextStyle Java's description writes for a text element; FULL has no suffix.
+private string describeTextStyle(string style) pure nothrow @nogc
+{
+    switch (style)
+    {
+    case "full":
+        return "";
+    case "narrow":
+        return ",NARROW";
+    case "full_standalone":
+        return ",FULL_STANDALONE";
+    case "short_standalone":
+        return ",SHORT_STANDALONE";
+    case "narrow_standalone":
+        return ",NARROW_STANDALONE";
+    default:
+        return ",SHORT";
     }
 }
 
@@ -1926,7 +1964,7 @@ private struct Printer
         if (!fields.has(e.field))
             return false;
         const value = cast(size_t) fields.values_[e.field];
-        const full = e.text == "full";
+        const style = normalStyle(e.text), full = style == "full";
         switch (e.field)
         {
         case Field.monthOfYear:
@@ -1934,6 +1972,10 @@ private struct Printer
             break;
         case Field.dayOfWeek:
             output ~= full ? dayFull[value - 1] : dayFull[value - 1][0 .. 3];
+            break;
+        case Field.quarterOfYear:
+            output ~= style == "full" ? quarterFull[value - 1] : style == "narrow"
+                ? quarterNarrow[value - 1] : quarterShort[value - 1];
             break;
         default:
             output ~= value == 0 ? "AM" : "PM";
@@ -2058,6 +2100,12 @@ private immutable string[12] monthFull = [
 private immutable string[7] dayFull = [
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
 ];
+// The English quarter names of Java's `DateTimeTextProvider`: SHORT and NARROW are 'Q1' and '1'; FULL spells them.
+private immutable string[4] quarterFull = [
+    "1st quarter", "2nd quarter", "3rd quarter", "4th quarter"
+];
+private immutable string[4] quarterShort = ["Q1", "Q2", "Q3", "Q4"];
+private immutable string[4] quarterNarrow = ["1", "2", "3", "4"];
 
 // The index of the end matching the optionalStart, groupStart or padStart at `start`, or the end of the list.
 private size_t sectionEnd(scope const(Element)[] elements, size_t start) pure nothrow @nogc
@@ -2472,13 +2520,21 @@ private struct Parser
 
     int parseText(const Element e, int position) scope
     {
-        const full = e.text == "full";
+        const style = normalStyle(e.text), full = style == "full";
         static immutable string[2] amPm = ["AM", "PM"];
-        const(string)[] names = e.field == Field.monthOfYear ? monthFull[] : e.field == Field.dayOfWeek
-            ? dayFull[] : amPm[];
+        const(string)[] names;
+        if (e.field == Field.quarterOfYear)
+            names = style == "full" ? quarterFull[] : style == "narrow" ? quarterNarrow[] : quarterShort[];
+        else if (e.field == Field.monthOfYear)
+            names = monthFull[];
+        else if (e.field == Field.dayOfWeek)
+            names = dayFull[];
+        else
+            names = amPm[];
         foreach (i, name; names)
         {
-            const candidate = full || e.field == Field.amPmOfDay ? name : name[0 .. 3];
+            const whole = full || e.field == Field.amPmOfDay || e.field == Field.quarterOfYear;
+            const candidate = whole ? name : name[0 .. 3];
             if (matches(candidate, position))
             {
                 fields.set(e.field, e.field == Field.amPmOfDay ? cast(long) i : cast(long) i + 1);
@@ -2876,6 +2932,27 @@ private Element textElement(Field f, int count) pure nothrow @nogc
     return e;
 }
 
+// The quarter-of-year text letters: QQQ/qqq is SHORT, QQQQ/qqqq FULL and QQQQQ/qqqqq NARROW; q is standalone.
+private Element quarterText(bool standalone, int count)
+{
+    Element e;
+    e.op = Op.text;
+    e.field = Field.quarterOfYear;
+    static immutable string[6] styles = [
+        "short", "full", "narrow", "short_standalone", "full_standalone", "narrow_standalone"
+    ];
+    e.text = styles[(count - 3) + (standalone ? 3 : 0)];
+    return e;
+}
+
+// The style without a `_standalone` suffix: English quarter, month and day names do not differ by standalone.
+private string normalStyle(string style) pure nothrow @nogc
+{
+    enum suffix = "_standalone";
+    return style.length > suffix.length && style[$ - suffix.length .. $] == suffix ? style[0 .. $ - suffix.length]
+        : style;
+}
+
 private Element yearElement(Field f, int count) pure nothrow @nogc
 {
     if (count == 2)
@@ -2912,6 +2989,35 @@ private Element letterElement(char c, int count)
     return dateLetter(c, count);
 }
 
+private Element monthLetter(char c, int count)
+{
+    return count <= 2 ? twoWide(Field.monthOfYear, c, count) : textElement(Field.monthOfYear, count);
+}
+
+private Element dayOfYearLetter(int count)
+{
+    if (count > 3)
+        throw new IllegalArgumentException("Too many pattern letters: D");
+    return count == 1 ? num(Field.dayOfYear, 1, 19, SignStyle.NORMAL) : num(Field.dayOfYear, count, 3);
+}
+
+// The quarter-of-year number or text letters: QQ is zero-padded, QQQ/Q4 SHORT, QQQQ FULL and QQQQQ NARROW.
+private Element quarterLetter(bool standalone, int count)
+{
+    if (count <= 2)
+        return count == 1 ? num(Field.quarterOfYear, 1, 19, SignStyle.NORMAL) : num(Field.quarterOfYear, 2);
+    if (count > 5)
+        throw new IllegalArgumentException("Too many pattern letters: " ~ (standalone ? "q" : "Q"));
+    return quarterText(standalone, count);
+}
+
+private Element alignedWeekLetter(int count)
+{
+    if (count != 1)
+        throw new IllegalArgumentException("Too many pattern letters: F");
+    return num(Field.alignedWeekOfMonth, 1, 19, SignStyle.NORMAL);
+}
+
 private Element dateLetter(char c, int count)
 {
     switch (c)
@@ -2922,13 +3028,16 @@ private Element dateLetter(char c, int count)
         return yearElement(Field.yearOfEra, count);
     case 'M':
     case 'L':
-        return count <= 2 ? twoWide(Field.monthOfYear, c, count) : textElement(Field.monthOfYear, count);
+        return monthLetter(c, count);
     case 'D':
-        if (count > 3)
-            throw new IllegalArgumentException("Too many pattern letters: D");
-        return count == 1 ? num(Field.dayOfYear, 1, 19, SignStyle.NORMAL) : num(Field.dayOfYear, count, 3);
+        return dayOfYearLetter(count);
     case 'E':
         return textElement(Field.dayOfWeek, count);
+    case 'Q':
+    case 'q':
+        return quarterLetter(c == 'q', count);
+    case 'F':
+        return alignedWeekLetter(count);
     default:
         return timeLetter(c, count);
     }

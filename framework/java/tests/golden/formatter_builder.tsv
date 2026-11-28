@@ -3572,3 +3572,511 @@ parse	p:HH k	time	00 24	00:00
 parse	p:HH k	time	00 1	!Text '00 1' could not be parsed: Conflict found: HourOfDay 0 differs from HourOfDay 1 while resolving  ClockHourOfDay	0
 parse	p:HH k	time	12 12	12:00
 parse	p:HH k	time	10 10	10:00
+build	p:Q	-	-	Value(QuarterOfYear)
+format	p:Q	date	2024-03-05	1
+format	p:Q	date	0001-12-31	4
+format	p:Q	date	+12345-06-07	2
+format	p:Q	time	10:15	!Unsupported field: QuarterOfYear
+format	p:Q	time	10:15:30	!Unsupported field: QuarterOfYear
+format	p:Q	time	10:15:30.123456789	!Unsupported field: QuarterOfYear
+format	p:Q	time	00:00	!Unsupported field: QuarterOfYear
+format	p:Q	dateTime	2024-03-05T10:15:30	1
+format	p:Q	dateTime	2024-03-05T00:00:00.000001	1
+format	p:Q	offset	2024-03-05T10:15:30+01:00	1
+format	p:Q	offset	2024-03-05T10:15:30Z	1
+format	p:Q	offset	2024-03-05T10:15:30.500-05:30:15	1
+format	p:Q	offset	2024-03-05T10:15:30+00:00:45	1
+format	p:Q	zoned	2024-03-05T10:15:30+02:00	1
+format	p:Q	zoned	2024-03-05T10:15:30Z[UTC]	1
+format	p:Q	instant	2024-03-05T10:15:30Z	!Unsupported field: QuarterOfYear
+format	p:Q	instant	2024-03-05T10:15:30.120Z	!Unsupported field: QuarterOfYear
+parse	p:Q	date	1	!Text '1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:Q	date	2	!Text '2' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:Q	date	4	!Text '4' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:Q	date	5	!Text '5' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:Q	date	0	!Text '0' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:Q	date	01	!Text '01' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:Q	date	Q1	!Text 'Q1' could not be parsed at index 0	0
+parse	p:Q	date	Q2	!Text 'Q2' could not be parsed at index 0	0
+parse	p:Q	date	Q5	!Text 'Q5' could not be parsed at index 0	0
+parse	p:Q	date	q1	!Text 'q1' could not be parsed at index 0	0
+parse	p:Q	date	1st quarter	!Text '1st quarter' could not be parsed, unparsed text found at index 1	1
+parse	p:Q	date	2nd quarter	!Text '2nd quarter' could not be parsed, unparsed text found at index 1	1
+parse	p:Q	date	4th quarter	!Text '4th quarter' could not be parsed, unparsed text found at index 1	1
+parse	p:Q	date	first quarter	!Text 'first quarter' could not be parsed at index 0	0
+build	p:QQ	-	-	Value(QuarterOfYear,2)
+format	p:QQ	date	2024-03-05	01
+format	p:QQ	date	0001-12-31	04
+format	p:QQ	date	+12345-06-07	02
+format	p:QQ	time	10:15	!Unsupported field: QuarterOfYear
+format	p:QQ	time	10:15:30	!Unsupported field: QuarterOfYear
+format	p:QQ	time	10:15:30.123456789	!Unsupported field: QuarterOfYear
+format	p:QQ	time	00:00	!Unsupported field: QuarterOfYear
+format	p:QQ	dateTime	2024-03-05T10:15:30	01
+format	p:QQ	dateTime	2024-03-05T00:00:00.000001	01
+format	p:QQ	offset	2024-03-05T10:15:30+01:00	01
+format	p:QQ	offset	2024-03-05T10:15:30Z	01
+format	p:QQ	offset	2024-03-05T10:15:30.500-05:30:15	01
+format	p:QQ	offset	2024-03-05T10:15:30+00:00:45	01
+format	p:QQ	zoned	2024-03-05T10:15:30+02:00	01
+format	p:QQ	zoned	2024-03-05T10:15:30Z[UTC]	01
+format	p:QQ	instant	2024-03-05T10:15:30Z	!Unsupported field: QuarterOfYear
+format	p:QQ	instant	2024-03-05T10:15:30.120Z	!Unsupported field: QuarterOfYear
+parse	p:QQ	date	1	!Text '1' could not be parsed at index 0	0
+parse	p:QQ	date	2	!Text '2' could not be parsed at index 0	0
+parse	p:QQ	date	4	!Text '4' could not be parsed at index 0	0
+parse	p:QQ	date	5	!Text '5' could not be parsed at index 0	0
+parse	p:QQ	date	0	!Text '0' could not be parsed at index 0	0
+parse	p:QQ	date	01	!Text '01' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:QQ	date	Q1	!Text 'Q1' could not be parsed at index 0	0
+parse	p:QQ	date	Q2	!Text 'Q2' could not be parsed at index 0	0
+parse	p:QQ	date	Q5	!Text 'Q5' could not be parsed at index 0	0
+parse	p:QQ	date	q1	!Text 'q1' could not be parsed at index 0	0
+parse	p:QQ	date	1st quarter	!Text '1st quarter' could not be parsed at index 0	0
+parse	p:QQ	date	2nd quarter	!Text '2nd quarter' could not be parsed at index 0	0
+parse	p:QQ	date	4th quarter	!Text '4th quarter' could not be parsed at index 0	0
+parse	p:QQ	date	first quarter	!Text 'first quarter' could not be parsed at index 0	0
+parse	p:QQ	date	04	!Text '04' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:QQ	date	02	!Text '02' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:QQQ	-	-	Text(QuarterOfYear,SHORT)
+format	p:QQQ	date	2024-03-05	Q1
+format	p:QQQ	date	0001-12-31	Q4
+format	p:QQQ	date	+12345-06-07	Q2
+format	p:QQQ	time	10:15	!Unsupported field: QuarterOfYear
+format	p:QQQ	time	10:15:30	!Unsupported field: QuarterOfYear
+format	p:QQQ	time	10:15:30.123456789	!Unsupported field: QuarterOfYear
+format	p:QQQ	time	00:00	!Unsupported field: QuarterOfYear
+format	p:QQQ	dateTime	2024-03-05T10:15:30	Q1
+format	p:QQQ	dateTime	2024-03-05T00:00:00.000001	Q1
+format	p:QQQ	offset	2024-03-05T10:15:30+01:00	Q1
+format	p:QQQ	offset	2024-03-05T10:15:30Z	Q1
+format	p:QQQ	offset	2024-03-05T10:15:30.500-05:30:15	Q1
+format	p:QQQ	offset	2024-03-05T10:15:30+00:00:45	Q1
+format	p:QQQ	zoned	2024-03-05T10:15:30+02:00	Q1
+format	p:QQQ	zoned	2024-03-05T10:15:30Z[UTC]	Q1
+format	p:QQQ	instant	2024-03-05T10:15:30Z	!Unsupported field: QuarterOfYear
+format	p:QQQ	instant	2024-03-05T10:15:30.120Z	!Unsupported field: QuarterOfYear
+parse	p:QQQ	date	1	!Text '1' could not be parsed at index 0	0
+parse	p:QQQ	date	2	!Text '2' could not be parsed at index 0	0
+parse	p:QQQ	date	4	!Text '4' could not be parsed at index 0	0
+parse	p:QQQ	date	5	!Text '5' could not be parsed at index 0	0
+parse	p:QQQ	date	0	!Text '0' could not be parsed at index 0	0
+parse	p:QQQ	date	01	!Text '01' could not be parsed at index 0	0
+parse	p:QQQ	date	Q1	!Text 'Q1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:QQQ	date	Q2	!Text 'Q2' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:QQQ	date	Q5	!Text 'Q5' could not be parsed at index 0	0
+parse	p:QQQ	date	q1	!Text 'q1' could not be parsed at index 0	0
+parse	p:QQQ	date	1st quarter	!Text '1st quarter' could not be parsed at index 0	0
+parse	p:QQQ	date	2nd quarter	!Text '2nd quarter' could not be parsed at index 0	0
+parse	p:QQQ	date	4th quarter	!Text '4th quarter' could not be parsed at index 0	0
+parse	p:QQQ	date	first quarter	!Text 'first quarter' could not be parsed at index 0	0
+parse	p:QQQ	date	Q4	!Text 'Q4' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:QQQQ	-	-	Text(QuarterOfYear)
+format	p:QQQQ	date	2024-03-05	1st quarter
+format	p:QQQQ	date	0001-12-31	4th quarter
+format	p:QQQQ	date	+12345-06-07	2nd quarter
+format	p:QQQQ	time	10:15	!Unsupported field: QuarterOfYear
+format	p:QQQQ	time	10:15:30	!Unsupported field: QuarterOfYear
+format	p:QQQQ	time	10:15:30.123456789	!Unsupported field: QuarterOfYear
+format	p:QQQQ	time	00:00	!Unsupported field: QuarterOfYear
+format	p:QQQQ	dateTime	2024-03-05T10:15:30	1st quarter
+format	p:QQQQ	dateTime	2024-03-05T00:00:00.000001	1st quarter
+format	p:QQQQ	offset	2024-03-05T10:15:30+01:00	1st quarter
+format	p:QQQQ	offset	2024-03-05T10:15:30Z	1st quarter
+format	p:QQQQ	offset	2024-03-05T10:15:30.500-05:30:15	1st quarter
+format	p:QQQQ	offset	2024-03-05T10:15:30+00:00:45	1st quarter
+format	p:QQQQ	zoned	2024-03-05T10:15:30+02:00	1st quarter
+format	p:QQQQ	zoned	2024-03-05T10:15:30Z[UTC]	1st quarter
+format	p:QQQQ	instant	2024-03-05T10:15:30Z	!Unsupported field: QuarterOfYear
+format	p:QQQQ	instant	2024-03-05T10:15:30.120Z	!Unsupported field: QuarterOfYear
+parse	p:QQQQ	date	1	!Text '1' could not be parsed at index 0	0
+parse	p:QQQQ	date	2	!Text '2' could not be parsed at index 0	0
+parse	p:QQQQ	date	4	!Text '4' could not be parsed at index 0	0
+parse	p:QQQQ	date	5	!Text '5' could not be parsed at index 0	0
+parse	p:QQQQ	date	0	!Text '0' could not be parsed at index 0	0
+parse	p:QQQQ	date	01	!Text '01' could not be parsed at index 0	0
+parse	p:QQQQ	date	Q1	!Text 'Q1' could not be parsed at index 0	0
+parse	p:QQQQ	date	Q2	!Text 'Q2' could not be parsed at index 0	0
+parse	p:QQQQ	date	Q5	!Text 'Q5' could not be parsed at index 0	0
+parse	p:QQQQ	date	q1	!Text 'q1' could not be parsed at index 0	0
+parse	p:QQQQ	date	1st quarter	!Text '1st quarter' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:QQQQ	date	2nd quarter	!Text '2nd quarter' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:QQQQ	date	4th quarter	!Text '4th quarter' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:QQQQ	date	first quarter	!Text 'first quarter' could not be parsed at index 0	0
+build	p:QQQQQ	-	-	Text(QuarterOfYear,NARROW)
+format	p:QQQQQ	date	2024-03-05	1
+format	p:QQQQQ	date	0001-12-31	4
+format	p:QQQQQ	date	+12345-06-07	2
+format	p:QQQQQ	time	10:15	!Unsupported field: QuarterOfYear
+format	p:QQQQQ	time	10:15:30	!Unsupported field: QuarterOfYear
+format	p:QQQQQ	time	10:15:30.123456789	!Unsupported field: QuarterOfYear
+format	p:QQQQQ	time	00:00	!Unsupported field: QuarterOfYear
+format	p:QQQQQ	dateTime	2024-03-05T10:15:30	1
+format	p:QQQQQ	dateTime	2024-03-05T00:00:00.000001	1
+format	p:QQQQQ	offset	2024-03-05T10:15:30+01:00	1
+format	p:QQQQQ	offset	2024-03-05T10:15:30Z	1
+format	p:QQQQQ	offset	2024-03-05T10:15:30.500-05:30:15	1
+format	p:QQQQQ	offset	2024-03-05T10:15:30+00:00:45	1
+format	p:QQQQQ	zoned	2024-03-05T10:15:30+02:00	1
+format	p:QQQQQ	zoned	2024-03-05T10:15:30Z[UTC]	1
+format	p:QQQQQ	instant	2024-03-05T10:15:30Z	!Unsupported field: QuarterOfYear
+format	p:QQQQQ	instant	2024-03-05T10:15:30.120Z	!Unsupported field: QuarterOfYear
+parse	p:QQQQQ	date	1	!Text '1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:QQQQQ	date	2	!Text '2' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:QQQQQ	date	4	!Text '4' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:QQQQQ	date	5	!Text '5' could not be parsed at index 0	0
+parse	p:QQQQQ	date	0	!Text '0' could not be parsed at index 0	0
+parse	p:QQQQQ	date	01	!Text '01' could not be parsed at index 0	0
+parse	p:QQQQQ	date	Q1	!Text 'Q1' could not be parsed at index 0	0
+parse	p:QQQQQ	date	Q2	!Text 'Q2' could not be parsed at index 0	0
+parse	p:QQQQQ	date	Q5	!Text 'Q5' could not be parsed at index 0	0
+parse	p:QQQQQ	date	q1	!Text 'q1' could not be parsed at index 0	0
+parse	p:QQQQQ	date	1st quarter	!Text '1st quarter' could not be parsed, unparsed text found at index 1	1
+parse	p:QQQQQ	date	2nd quarter	!Text '2nd quarter' could not be parsed, unparsed text found at index 1	1
+parse	p:QQQQQ	date	4th quarter	!Text '4th quarter' could not be parsed, unparsed text found at index 1	1
+parse	p:QQQQQ	date	first quarter	!Text 'first quarter' could not be parsed at index 0	0
+build	p:q	-	-	Value(QuarterOfYear)
+format	p:q	date	2024-03-05	1
+format	p:q	date	0001-12-31	4
+format	p:q	date	+12345-06-07	2
+format	p:q	time	10:15	!Unsupported field: QuarterOfYear
+format	p:q	time	10:15:30	!Unsupported field: QuarterOfYear
+format	p:q	time	10:15:30.123456789	!Unsupported field: QuarterOfYear
+format	p:q	time	00:00	!Unsupported field: QuarterOfYear
+format	p:q	dateTime	2024-03-05T10:15:30	1
+format	p:q	dateTime	2024-03-05T00:00:00.000001	1
+format	p:q	offset	2024-03-05T10:15:30+01:00	1
+format	p:q	offset	2024-03-05T10:15:30Z	1
+format	p:q	offset	2024-03-05T10:15:30.500-05:30:15	1
+format	p:q	offset	2024-03-05T10:15:30+00:00:45	1
+format	p:q	zoned	2024-03-05T10:15:30+02:00	1
+format	p:q	zoned	2024-03-05T10:15:30Z[UTC]	1
+format	p:q	instant	2024-03-05T10:15:30Z	!Unsupported field: QuarterOfYear
+format	p:q	instant	2024-03-05T10:15:30.120Z	!Unsupported field: QuarterOfYear
+parse	p:q	date	1	!Text '1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:q	date	2	!Text '2' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:q	date	4	!Text '4' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:q	date	5	!Text '5' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:q	date	0	!Text '0' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:q	date	01	!Text '01' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:q	date	Q1	!Text 'Q1' could not be parsed at index 0	0
+parse	p:q	date	Q2	!Text 'Q2' could not be parsed at index 0	0
+parse	p:q	date	Q5	!Text 'Q5' could not be parsed at index 0	0
+parse	p:q	date	q1	!Text 'q1' could not be parsed at index 0	0
+parse	p:q	date	1st quarter	!Text '1st quarter' could not be parsed, unparsed text found at index 1	1
+parse	p:q	date	2nd quarter	!Text '2nd quarter' could not be parsed, unparsed text found at index 1	1
+parse	p:q	date	4th quarter	!Text '4th quarter' could not be parsed, unparsed text found at index 1	1
+parse	p:q	date	first quarter	!Text 'first quarter' could not be parsed at index 0	0
+build	p:qq	-	-	Value(QuarterOfYear,2)
+format	p:qq	date	2024-03-05	01
+format	p:qq	date	0001-12-31	04
+format	p:qq	date	+12345-06-07	02
+format	p:qq	time	10:15	!Unsupported field: QuarterOfYear
+format	p:qq	time	10:15:30	!Unsupported field: QuarterOfYear
+format	p:qq	time	10:15:30.123456789	!Unsupported field: QuarterOfYear
+format	p:qq	time	00:00	!Unsupported field: QuarterOfYear
+format	p:qq	dateTime	2024-03-05T10:15:30	01
+format	p:qq	dateTime	2024-03-05T00:00:00.000001	01
+format	p:qq	offset	2024-03-05T10:15:30+01:00	01
+format	p:qq	offset	2024-03-05T10:15:30Z	01
+format	p:qq	offset	2024-03-05T10:15:30.500-05:30:15	01
+format	p:qq	offset	2024-03-05T10:15:30+00:00:45	01
+format	p:qq	zoned	2024-03-05T10:15:30+02:00	01
+format	p:qq	zoned	2024-03-05T10:15:30Z[UTC]	01
+format	p:qq	instant	2024-03-05T10:15:30Z	!Unsupported field: QuarterOfYear
+format	p:qq	instant	2024-03-05T10:15:30.120Z	!Unsupported field: QuarterOfYear
+parse	p:qq	date	1	!Text '1' could not be parsed at index 0	0
+parse	p:qq	date	2	!Text '2' could not be parsed at index 0	0
+parse	p:qq	date	4	!Text '4' could not be parsed at index 0	0
+parse	p:qq	date	5	!Text '5' could not be parsed at index 0	0
+parse	p:qq	date	0	!Text '0' could not be parsed at index 0	0
+parse	p:qq	date	01	!Text '01' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:qq	date	Q1	!Text 'Q1' could not be parsed at index 0	0
+parse	p:qq	date	Q2	!Text 'Q2' could not be parsed at index 0	0
+parse	p:qq	date	Q5	!Text 'Q5' could not be parsed at index 0	0
+parse	p:qq	date	q1	!Text 'q1' could not be parsed at index 0	0
+parse	p:qq	date	1st quarter	!Text '1st quarter' could not be parsed at index 0	0
+parse	p:qq	date	2nd quarter	!Text '2nd quarter' could not be parsed at index 0	0
+parse	p:qq	date	4th quarter	!Text '4th quarter' could not be parsed at index 0	0
+parse	p:qq	date	first quarter	!Text 'first quarter' could not be parsed at index 0	0
+parse	p:qq	date	04	!Text '04' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:qq	date	02	!Text '02' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:qqq	-	-	Text(QuarterOfYear,SHORT_STANDALONE)
+format	p:qqq	date	2024-03-05	Q1
+format	p:qqq	date	0001-12-31	Q4
+format	p:qqq	date	+12345-06-07	Q2
+format	p:qqq	time	10:15	!Unsupported field: QuarterOfYear
+format	p:qqq	time	10:15:30	!Unsupported field: QuarterOfYear
+format	p:qqq	time	10:15:30.123456789	!Unsupported field: QuarterOfYear
+format	p:qqq	time	00:00	!Unsupported field: QuarterOfYear
+format	p:qqq	dateTime	2024-03-05T10:15:30	Q1
+format	p:qqq	dateTime	2024-03-05T00:00:00.000001	Q1
+format	p:qqq	offset	2024-03-05T10:15:30+01:00	Q1
+format	p:qqq	offset	2024-03-05T10:15:30Z	Q1
+format	p:qqq	offset	2024-03-05T10:15:30.500-05:30:15	Q1
+format	p:qqq	offset	2024-03-05T10:15:30+00:00:45	Q1
+format	p:qqq	zoned	2024-03-05T10:15:30+02:00	Q1
+format	p:qqq	zoned	2024-03-05T10:15:30Z[UTC]	Q1
+format	p:qqq	instant	2024-03-05T10:15:30Z	!Unsupported field: QuarterOfYear
+format	p:qqq	instant	2024-03-05T10:15:30.120Z	!Unsupported field: QuarterOfYear
+parse	p:qqq	date	1	!Text '1' could not be parsed at index 0	0
+parse	p:qqq	date	2	!Text '2' could not be parsed at index 0	0
+parse	p:qqq	date	4	!Text '4' could not be parsed at index 0	0
+parse	p:qqq	date	5	!Text '5' could not be parsed at index 0	0
+parse	p:qqq	date	0	!Text '0' could not be parsed at index 0	0
+parse	p:qqq	date	01	!Text '01' could not be parsed at index 0	0
+parse	p:qqq	date	Q1	!Text 'Q1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:qqq	date	Q2	!Text 'Q2' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:qqq	date	Q5	!Text 'Q5' could not be parsed at index 0	0
+parse	p:qqq	date	q1	!Text 'q1' could not be parsed at index 0	0
+parse	p:qqq	date	1st quarter	!Text '1st quarter' could not be parsed at index 0	0
+parse	p:qqq	date	2nd quarter	!Text '2nd quarter' could not be parsed at index 0	0
+parse	p:qqq	date	4th quarter	!Text '4th quarter' could not be parsed at index 0	0
+parse	p:qqq	date	first quarter	!Text 'first quarter' could not be parsed at index 0	0
+parse	p:qqq	date	Q4	!Text 'Q4' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:qqqq	-	-	Text(QuarterOfYear,FULL_STANDALONE)
+format	p:qqqq	date	2024-03-05	1st quarter
+format	p:qqqq	date	0001-12-31	4th quarter
+format	p:qqqq	date	+12345-06-07	2nd quarter
+format	p:qqqq	time	10:15	!Unsupported field: QuarterOfYear
+format	p:qqqq	time	10:15:30	!Unsupported field: QuarterOfYear
+format	p:qqqq	time	10:15:30.123456789	!Unsupported field: QuarterOfYear
+format	p:qqqq	time	00:00	!Unsupported field: QuarterOfYear
+format	p:qqqq	dateTime	2024-03-05T10:15:30	1st quarter
+format	p:qqqq	dateTime	2024-03-05T00:00:00.000001	1st quarter
+format	p:qqqq	offset	2024-03-05T10:15:30+01:00	1st quarter
+format	p:qqqq	offset	2024-03-05T10:15:30Z	1st quarter
+format	p:qqqq	offset	2024-03-05T10:15:30.500-05:30:15	1st quarter
+format	p:qqqq	offset	2024-03-05T10:15:30+00:00:45	1st quarter
+format	p:qqqq	zoned	2024-03-05T10:15:30+02:00	1st quarter
+format	p:qqqq	zoned	2024-03-05T10:15:30Z[UTC]	1st quarter
+format	p:qqqq	instant	2024-03-05T10:15:30Z	!Unsupported field: QuarterOfYear
+format	p:qqqq	instant	2024-03-05T10:15:30.120Z	!Unsupported field: QuarterOfYear
+parse	p:qqqq	date	1	!Text '1' could not be parsed at index 0	0
+parse	p:qqqq	date	2	!Text '2' could not be parsed at index 0	0
+parse	p:qqqq	date	4	!Text '4' could not be parsed at index 0	0
+parse	p:qqqq	date	5	!Text '5' could not be parsed at index 0	0
+parse	p:qqqq	date	0	!Text '0' could not be parsed at index 0	0
+parse	p:qqqq	date	01	!Text '01' could not be parsed at index 0	0
+parse	p:qqqq	date	Q1	!Text 'Q1' could not be parsed at index 0	0
+parse	p:qqqq	date	Q2	!Text 'Q2' could not be parsed at index 0	0
+parse	p:qqqq	date	Q5	!Text 'Q5' could not be parsed at index 0	0
+parse	p:qqqq	date	q1	!Text 'q1' could not be parsed at index 0	0
+parse	p:qqqq	date	1st quarter	!Text '1st quarter' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:qqqq	date	2nd quarter	!Text '2nd quarter' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:qqqq	date	4th quarter	!Text '4th quarter' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:qqqq	date	first quarter	!Text 'first quarter' could not be parsed at index 0	0
+build	p:qqqqq	-	-	Text(QuarterOfYear,NARROW_STANDALONE)
+format	p:qqqqq	date	2024-03-05	1
+format	p:qqqqq	date	0001-12-31	4
+format	p:qqqqq	date	+12345-06-07	2
+format	p:qqqqq	time	10:15	!Unsupported field: QuarterOfYear
+format	p:qqqqq	time	10:15:30	!Unsupported field: QuarterOfYear
+format	p:qqqqq	time	10:15:30.123456789	!Unsupported field: QuarterOfYear
+format	p:qqqqq	time	00:00	!Unsupported field: QuarterOfYear
+format	p:qqqqq	dateTime	2024-03-05T10:15:30	1
+format	p:qqqqq	dateTime	2024-03-05T00:00:00.000001	1
+format	p:qqqqq	offset	2024-03-05T10:15:30+01:00	1
+format	p:qqqqq	offset	2024-03-05T10:15:30Z	1
+format	p:qqqqq	offset	2024-03-05T10:15:30.500-05:30:15	1
+format	p:qqqqq	offset	2024-03-05T10:15:30+00:00:45	1
+format	p:qqqqq	zoned	2024-03-05T10:15:30+02:00	1
+format	p:qqqqq	zoned	2024-03-05T10:15:30Z[UTC]	1
+format	p:qqqqq	instant	2024-03-05T10:15:30Z	!Unsupported field: QuarterOfYear
+format	p:qqqqq	instant	2024-03-05T10:15:30.120Z	!Unsupported field: QuarterOfYear
+parse	p:qqqqq	date	1	!Text '1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:qqqqq	date	2	!Text '2' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:qqqqq	date	4	!Text '4' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:qqqqq	date	5	!Text '5' could not be parsed at index 0	0
+parse	p:qqqqq	date	0	!Text '0' could not be parsed at index 0	0
+parse	p:qqqqq	date	01	!Text '01' could not be parsed at index 0	0
+parse	p:qqqqq	date	Q1	!Text 'Q1' could not be parsed at index 0	0
+parse	p:qqqqq	date	Q2	!Text 'Q2' could not be parsed at index 0	0
+parse	p:qqqqq	date	Q5	!Text 'Q5' could not be parsed at index 0	0
+parse	p:qqqqq	date	q1	!Text 'q1' could not be parsed at index 0	0
+parse	p:qqqqq	date	1st quarter	!Text '1st quarter' could not be parsed, unparsed text found at index 1	1
+parse	p:qqqqq	date	2nd quarter	!Text '2nd quarter' could not be parsed, unparsed text found at index 1	1
+parse	p:qqqqq	date	4th quarter	!Text '4th quarter' could not be parsed, unparsed text found at index 1	1
+parse	p:qqqqq	date	first quarter	!Text 'first quarter' could not be parsed at index 0	0
+build	p:QQQQQQ	-	-	!Too many pattern letters: Q
+build	p:qqqqqq	-	-	!Too many pattern letters: q
+build	p:uuuu-QQ	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(QuarterOfYear,2)
+format	p:uuuu-QQ	date	2024-03-05	2024-01
+format	p:uuuu-QQ	date	0001-12-31	0001-04
+format	p:uuuu-QQ	date	+12345-06-07	+12345-02
+format	p:uuuu-QQ	time	10:15	!Unsupported field: Year
+format	p:uuuu-QQ	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-QQ	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-QQ	time	00:00	!Unsupported field: Year
+format	p:uuuu-QQ	dateTime	2024-03-05T10:15:30	2024-01
+format	p:uuuu-QQ	dateTime	2024-03-05T00:00:00.000001	2024-01
+format	p:uuuu-QQ	offset	2024-03-05T10:15:30+01:00	2024-01
+format	p:uuuu-QQ	offset	2024-03-05T10:15:30Z	2024-01
+format	p:uuuu-QQ	offset	2024-03-05T10:15:30.500-05:30:15	2024-01
+format	p:uuuu-QQ	offset	2024-03-05T10:15:30+00:00:45	2024-01
+format	p:uuuu-QQ	zoned	2024-03-05T10:15:30+02:00	2024-01
+format	p:uuuu-QQ	zoned	2024-03-05T10:15:30Z[UTC]	2024-01
+format	p:uuuu-QQ	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-QQ	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-QQ	date	2024-02	!Text '2024-02' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:uuuu-QQ	date	2024-01	!Text '2024-01' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:uuuu-QQ	date	2024-05	!Text '2024-05' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:uuuu-QQ	date	0001-04	!Text '0001-04' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:uuuu-QQ	date	+12345-02	!Text '+12345-02' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:uuuu-MM-dd Q	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)' 'Value(QuarterOfYear)
+format	p:uuuu-MM-dd Q	date	2024-03-05	2024-03-05 1
+format	p:uuuu-MM-dd Q	date	0001-12-31	0001-12-31 4
+format	p:uuuu-MM-dd Q	date	+12345-06-07	+12345-06-07 2
+format	p:uuuu-MM-dd Q	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd Q	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd Q	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd Q	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd Q	dateTime	2024-03-05T10:15:30	2024-03-05 1
+format	p:uuuu-MM-dd Q	dateTime	2024-03-05T00:00:00.000001	2024-03-05 1
+format	p:uuuu-MM-dd Q	offset	2024-03-05T10:15:30+01:00	2024-03-05 1
+format	p:uuuu-MM-dd Q	offset	2024-03-05T10:15:30Z	2024-03-05 1
+format	p:uuuu-MM-dd Q	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05 1
+format	p:uuuu-MM-dd Q	offset	2024-03-05T10:15:30+00:00:45	2024-03-05 1
+format	p:uuuu-MM-dd Q	zoned	2024-03-05T10:15:30+02:00	2024-03-05 1
+format	p:uuuu-MM-dd Q	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05 1
+format	p:uuuu-MM-dd Q	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd Q	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd Q	date	2024-03-05 1	2024-03-05
+parse	p:uuuu-MM-dd Q	date	2024-03-05 2	!Text '2024-03-05 2' could not be parsed: Conflict found: Field QuarterOfYear 1 differs from QuarterOfYear 2 derived from 2024-03-05	0
+parse	p:uuuu-MM-dd Q	date	0001-12-31 4	0001-12-31
+parse	p:uuuu-MM-dd Q	date	+12345-06-07 2	+12345-06-07
+build	p:uuuu-MM-dd qq	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)' 'Value(QuarterOfYear,2)
+format	p:uuuu-MM-dd qq	date	2024-03-05	2024-03-05 01
+format	p:uuuu-MM-dd qq	date	0001-12-31	0001-12-31 04
+format	p:uuuu-MM-dd qq	date	+12345-06-07	+12345-06-07 02
+format	p:uuuu-MM-dd qq	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd qq	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd qq	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd qq	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd qq	dateTime	2024-03-05T10:15:30	2024-03-05 01
+format	p:uuuu-MM-dd qq	dateTime	2024-03-05T00:00:00.000001	2024-03-05 01
+format	p:uuuu-MM-dd qq	offset	2024-03-05T10:15:30+01:00	2024-03-05 01
+format	p:uuuu-MM-dd qq	offset	2024-03-05T10:15:30Z	2024-03-05 01
+format	p:uuuu-MM-dd qq	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05 01
+format	p:uuuu-MM-dd qq	offset	2024-03-05T10:15:30+00:00:45	2024-03-05 01
+format	p:uuuu-MM-dd qq	zoned	2024-03-05T10:15:30+02:00	2024-03-05 01
+format	p:uuuu-MM-dd qq	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05 01
+format	p:uuuu-MM-dd qq	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd qq	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd qq	date	2024-03-05 01	2024-03-05
+parse	p:uuuu-MM-dd qq	date	2024-03-05 02	!Text '2024-03-05 02' could not be parsed: Conflict found: Field QuarterOfYear 1 differs from QuarterOfYear 2 derived from 2024-03-05	0
+parse	p:uuuu-MM-dd qq	date	0001-12-31 04	0001-12-31
+parse	p:uuuu-MM-dd qq	date	+12345-06-07 02	+12345-06-07
+build	p:Q|s:x	-	-	Value(QuarterOfYear)'x'
+format	p:Q|s:x	date	2024-03-05	1x
+format	p:Q|s:x	date	0001-12-31	4x
+format	p:Q|s:x	date	+12345-06-07	2x
+format	p:Q|s:x	time	10:15	!Unsupported field: QuarterOfYear
+format	p:Q|s:x	time	10:15:30	!Unsupported field: QuarterOfYear
+format	p:Q|s:x	time	10:15:30.123456789	!Unsupported field: QuarterOfYear
+format	p:Q|s:x	time	00:00	!Unsupported field: QuarterOfYear
+format	p:Q|s:x	dateTime	2024-03-05T10:15:30	1x
+format	p:Q|s:x	dateTime	2024-03-05T00:00:00.000001	1x
+format	p:Q|s:x	offset	2024-03-05T10:15:30+01:00	1x
+format	p:Q|s:x	offset	2024-03-05T10:15:30Z	1x
+format	p:Q|s:x	offset	2024-03-05T10:15:30.500-05:30:15	1x
+format	p:Q|s:x	offset	2024-03-05T10:15:30+00:00:45	1x
+format	p:Q|s:x	zoned	2024-03-05T10:15:30+02:00	1x
+format	p:Q|s:x	zoned	2024-03-05T10:15:30Z[UTC]	1x
+format	p:Q|s:x	instant	2024-03-05T10:15:30Z	!Unsupported field: QuarterOfYear
+format	p:Q|s:x	instant	2024-03-05T10:15:30.120Z	!Unsupported field: QuarterOfYear
+parse	p:Q|s:x	date	1x	!Text '1x' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:Q|s:x	date	5x	!Text '5x' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:Q|s:x	date	4x	!Text '4x' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:Q|s:x	date	2x	!Text '2x' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:F	-	-	Value(AlignedWeekOfMonth)
+format	p:F	date	2024-03-05	1
+format	p:F	date	0001-12-31	5
+format	p:F	date	+12345-06-07	1
+format	p:F	time	10:15	!Unsupported field: AlignedWeekOfMonth
+format	p:F	time	10:15:30	!Unsupported field: AlignedWeekOfMonth
+format	p:F	time	10:15:30.123456789	!Unsupported field: AlignedWeekOfMonth
+format	p:F	time	00:00	!Unsupported field: AlignedWeekOfMonth
+format	p:F	dateTime	2024-03-05T10:15:30	1
+format	p:F	dateTime	2024-03-05T00:00:00.000001	1
+format	p:F	offset	2024-03-05T10:15:30+01:00	1
+format	p:F	offset	2024-03-05T10:15:30Z	1
+format	p:F	offset	2024-03-05T10:15:30.500-05:30:15	1
+format	p:F	offset	2024-03-05T10:15:30+00:00:45	1
+format	p:F	zoned	2024-03-05T10:15:30+02:00	1
+format	p:F	zoned	2024-03-05T10:15:30Z[UTC]	1
+format	p:F	instant	2024-03-05T10:15:30Z	!Unsupported field: AlignedWeekOfMonth
+format	p:F	instant	2024-03-05T10:15:30.120Z	!Unsupported field: AlignedWeekOfMonth
+parse	p:F	date	1	!Text '1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:F	date	2	!Text '2' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:F	date	3	!Text '3' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:F	date	5	!Text '5' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:F	date	0	!Text '0' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:FF	-	-	!Too many pattern letters: F
+build	p:uuuu-MM-F	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(AlignedWeekOfMonth)
+format	p:uuuu-MM-F	date	2024-03-05	2024-03-1
+format	p:uuuu-MM-F	date	0001-12-31	0001-12-5
+format	p:uuuu-MM-F	date	+12345-06-07	+12345-06-1
+format	p:uuuu-MM-F	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-F	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-F	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-F	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-F	dateTime	2024-03-05T10:15:30	2024-03-1
+format	p:uuuu-MM-F	dateTime	2024-03-05T00:00:00.000001	2024-03-1
+format	p:uuuu-MM-F	offset	2024-03-05T10:15:30+01:00	2024-03-1
+format	p:uuuu-MM-F	offset	2024-03-05T10:15:30Z	2024-03-1
+format	p:uuuu-MM-F	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-1
+format	p:uuuu-MM-F	offset	2024-03-05T10:15:30+00:00:45	2024-03-1
+format	p:uuuu-MM-F	zoned	2024-03-05T10:15:30+02:00	2024-03-1
+format	p:uuuu-MM-F	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-1
+format	p:uuuu-MM-F	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-F	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-F	date	2024-03-1	!Text '2024-03-1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:uuuu-MM-F	date	0001-12-5	!Text '0001-12-5' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:uuuu-MM-F	date	+12345-06-1	!Text '+12345-06-1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:uuuu-MM-dd F	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)' 'Value(AlignedWeekOfMonth)
+format	p:uuuu-MM-dd F	date	2024-03-05	2024-03-05 1
+format	p:uuuu-MM-dd F	date	0001-12-31	0001-12-31 5
+format	p:uuuu-MM-dd F	date	+12345-06-07	+12345-06-07 1
+format	p:uuuu-MM-dd F	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd F	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd F	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd F	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd F	dateTime	2024-03-05T10:15:30	2024-03-05 1
+format	p:uuuu-MM-dd F	dateTime	2024-03-05T00:00:00.000001	2024-03-05 1
+format	p:uuuu-MM-dd F	offset	2024-03-05T10:15:30+01:00	2024-03-05 1
+format	p:uuuu-MM-dd F	offset	2024-03-05T10:15:30Z	2024-03-05 1
+format	p:uuuu-MM-dd F	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05 1
+format	p:uuuu-MM-dd F	offset	2024-03-05T10:15:30+00:00:45	2024-03-05 1
+format	p:uuuu-MM-dd F	zoned	2024-03-05T10:15:30+02:00	2024-03-05 1
+format	p:uuuu-MM-dd F	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05 1
+format	p:uuuu-MM-dd F	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd F	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd F	date	2024-03-05 1	2024-03-05
+parse	p:uuuu-MM-dd F	date	2024-03-05 2	!Text '2024-03-05 2' could not be parsed: Conflict found: Field AlignedWeekOfMonth 1 differs from AlignedWeekOfMonth 2 derived from 2024-03-05	0
+parse	p:uuuu-MM-dd F	date	2024-03-05 5	!Text '2024-03-05 5' could not be parsed: Conflict found: Field AlignedWeekOfMonth 1 differs from AlignedWeekOfMonth 5 derived from 2024-03-05	0
+parse	p:uuuu-MM-dd F	date	2024-03-05 0	!Text '2024-03-05 0' could not be parsed: Conflict found: Field AlignedWeekOfMonth 1 differs from AlignedWeekOfMonth 0 derived from 2024-03-05	0
+parse	p:uuuu-MM-dd F	date	0001-12-31 5	0001-12-31
+parse	p:uuuu-MM-dd F	date	+12345-06-07 1	+12345-06-07
+build	p:uuuu-MM-dd F|s:x	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)' 'Value(AlignedWeekOfMonth)'x'
+format	p:uuuu-MM-dd F|s:x	date	2024-03-05	2024-03-05 1x
+format	p:uuuu-MM-dd F|s:x	date	0001-12-31	0001-12-31 5x
+format	p:uuuu-MM-dd F|s:x	date	+12345-06-07	+12345-06-07 1x
+format	p:uuuu-MM-dd F|s:x	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd F|s:x	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd F|s:x	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd F|s:x	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd F|s:x	dateTime	2024-03-05T10:15:30	2024-03-05 1x
+format	p:uuuu-MM-dd F|s:x	dateTime	2024-03-05T00:00:00.000001	2024-03-05 1x
+format	p:uuuu-MM-dd F|s:x	offset	2024-03-05T10:15:30+01:00	2024-03-05 1x
+format	p:uuuu-MM-dd F|s:x	offset	2024-03-05T10:15:30Z	2024-03-05 1x
+format	p:uuuu-MM-dd F|s:x	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05 1x
+format	p:uuuu-MM-dd F|s:x	offset	2024-03-05T10:15:30+00:00:45	2024-03-05 1x
+format	p:uuuu-MM-dd F|s:x	zoned	2024-03-05T10:15:30+02:00	2024-03-05 1x
+format	p:uuuu-MM-dd F|s:x	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05 1x
+format	p:uuuu-MM-dd F|s:x	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd F|s:x	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd F|s:x	date	2024-03-05 1x	2024-03-05
+parse	p:uuuu-MM-dd F|s:x	date	2024-03-05 2x	!Text '2024-03-05 2x' could not be parsed: Conflict found: Field AlignedWeekOfMonth 1 differs from AlignedWeekOfMonth 2 derived from 2024-03-05	0
+parse	p:uuuu-MM-dd F|s:x	date	0001-12-31 5x	0001-12-31
+parse	p:uuuu-MM-dd F|s:x	date	+12345-06-07 1x	+12345-06-07
