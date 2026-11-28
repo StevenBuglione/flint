@@ -5656,7 +5656,7 @@
 "java.io.ByteArrayOutputStream#reset()":{"d":"flint.java.io.ByteArrayOutputStream.reset","status":"ported"},
 "java.io.ByteArrayOutputStream#size()":{"d":"flint.java.io.ByteArrayOutputStream.size","status":"ported"},
 "java.io.ByteArrayOutputStream#toByteArray()":{"d":"flint.java.io.ByteArrayOutputStream.toByteArray","rules":["R26"],"status":"adapted","note":"Returns a detached D ubyte slice of the count valid bytes; empty at zero count under R26."},
-"java.io.ByteArrayOutputStream#toString()":{"status":"excluded","category":"deferred","phase":"2","reason":"The current method returns raw UTF-8 bytes as D text. Java decodes using the default charset and replaces malformed input."},
+"java.io.ByteArrayOutputStream#toString()":{"d":"flint.java.io.ByteArrayOutputStream.toString","rules":["R14"],"status":"adapted","note":"Decodes the accumulated bytes as UTF-8, Flint's default charset, replacing each malformed sequence with U+FFFD as Java's default-charset decoder does. Java's default charset is platform-selected; Flint's is UTF-8."},
 "java.io.ByteArrayOutputStream#write(byte[],int,int)":{"d":"flint.java.io.ByteArrayOutputStream.write","rules":["R26"],"status":"adapted","note":"A D ubyte slice; a null slice counts as empty under R26 and the range is checked first. The stream monitor is omitted because a Flint stream is confined to one fiber."},
 "java.io.ByteArrayOutputStream#writeBytes(byte[])":{"d":"flint.java.io.ByteArrayOutputStream.writeBytes","rules":["R26"],"status":"adapted","note":"Added in Java 11. A D ubyte slice; a null slice counts as empty under R26."},
 "java.io.ByteArrayOutputStream#write(int)":{"d":"flint.java.io.ByteArrayOutputStream.write","status":"ported"},
