@@ -122,7 +122,8 @@ int increment()
 - `equals`, `hashCode` and `toString` keep their names (R11), with `mixin JavaObject;` when the class declares `equals` or `hashCode`;
 - an interface's default methods are declared in the interface and carried, with their bodies, by `mixin template Defaults` (R3). A class mixes in each interface it implements directly whose D declaration has `Defaults` (or, before the interface lands, whose Java declaration has default methods). An interface whose plan kind is `abstract class` becomes one (deviation D-3);
 - a `public` or `protected` `final` instance field becomes R24's `final` accessor over a private `name_` field, a non-final one stays a D field, and a `static final` field with a literal initializer becomes an `enum`;
-- a field initializer that isn't a literal, or an initializer block, makes every constructor body a marked region, since Java runs them there.
+- a field initializer that isn't a literal, or an initializer block, makes every constructor body a marked region, since Java runs them there;
+- a non-accessor method's function attributes come from the type's port plan under `"methods"`, keyed by the Java signature (`"applyRelativePath(String,String)": ["pure", "nothrow"]`): a hand port's mechanical body often carries `pure nothrow @nogc` that no rule can infer from the Java declaration. Accessors read their own `"accessors"` entry the same way.
 
 A member the rules can't declare yet (a generic method, varargs under R7, an unmapped type, a nested type under R13) is left out with a `// port:pending <element id>: <reason>` line, so the rest of the skeleton stays usable. Generic types and unmapped bases are rejected.
 

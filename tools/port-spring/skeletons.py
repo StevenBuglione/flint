@@ -224,7 +224,13 @@ def derive_method(method, ctx, plan):
             method['type'] + (method.get('dimensions') or ''), nullable(method), ctx.scope, rules, throwables=True)
         params = parameters_of(method, ctx.scope, rules)
         head = f'{returns} {name}({", ".join(params)})'
-    text = ' '.join(prefix + [head])
+    # The function attributes a lane recorded for this member in the type's port plan (`"methods"` keyed by the
+    # Java signature, e.g. `"applyRelativePath(String,String)": ["pure", "nothrow"]`). A hand port's mechanical
+    # bodies often carry `pure nothrow @nogc` that no rule can infer from the Java declaration, so it is plan data
+    # the way an accessor's attributes are.
+    extra = plan.get('methods', {}).get(sig, ())
+    suffix = (' ' + ' '.join(extra)) if extra else ''
+    text = ' '.join(prefix + [head]) + suffix
     if default:
         rules.add('R3')
     if not body:

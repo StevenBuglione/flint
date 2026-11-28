@@ -3536,7 +3536,13 @@
 "kind": "abstract class",
 "module": "flint.util",
 "d": "StringUtils",
-"status": "ported"
+"status": "ported",
+"methods": {
+"applyRelativePath(String,String)": [
+"pure",
+"nothrow"
+]
+}
 },
 "org.springframework.util.StringValueResolver": {
 "kind": "interface",

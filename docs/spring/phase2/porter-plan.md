@@ -25,7 +25,8 @@ The JDK's about 14,900 in-scope remaining members follow the same split. Today's
    - erased or templated storage;
    - whether a GC-free path is required;
    - the destination module;
-   - the rules with their IDs.
+   - the rules with their IDs;
+   - per-member function attributes a hand port chose that no rule can infer: `"accessors"` by getter/setter kind and `"methods"` by Java signature (for example `"applyRelativePath(String,String)": ["pure", "nothrow"]`).
 
    Seed it from the existing 12,000 mapped elements, which already record these decisions. For a mechanical shape, a lane edits the plan, not D code.
 2. **Declarations and mechanical bodies**, in order of yield:

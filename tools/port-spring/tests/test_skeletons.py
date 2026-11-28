@@ -214,6 +214,21 @@ class SkeletonTests(unittest.TestCase):
         self.assertIn('    static Counter of(string name)\n', text)
         self.assertIn('    protected abstract void reset(List!(string) reasons);', text)
 
+    def test_method_attributes_come_from_the_port_plan(self):
+        # A non-accessor method's function attributes are plan data, keyed by its Java signature: no rule can infer
+        # the `pure nothrow @nogc` a hand port's mechanical body happens to carry.
+        type_id = 'org.springframework.example.Counter'
+        plan = self.universe.plans[type_id]
+        plan['methods'] = {'increment()': ['pure', 'nothrow', '@nogc'], 'reset(List)': ['const']}
+        try:
+            d = skeletons.derive(self.items['Counter'], self.universe)
+        finally:
+            del plan['methods']
+        self.assertIn('    int increment() pure nothrow @nogc\n    {', d['text'])
+        self.assertIn('    protected abstract void reset(List!(string) reasons) const;', d['text'])
+        # A signature the plan doesn't name keeps the attributes the rules derive.
+        self.assertIn('    static Counter of(string name)\n', d['text'])
+
     def test_r11_members_keep_java_names(self):
         text = self.counter['text']
         # `mixin JavaObject;` maps them onto opEquals and toHash; D's Object has neither name to override.
