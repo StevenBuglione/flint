@@ -25,6 +25,8 @@ import flint.engine.aot.objects : assumeClass, assumeClasses, asObjects, objectE
 import flint.java.lang : ClassCastException, IllegalArgumentException, IndexOutOfBoundsException, Iterable,
     NullPointerException, RuntimeException, System, UnsupportedOperationException, javaEquals, javaHashCode, valueOf;
 import flint.java.util.stream : Stream;
+import flint.java.util.enumeration : Enumeration;
+public import flint.java.util.internal.iterator : Iterator;
 public import flint.java.util.calendar : Calendar, GregorianCalendar;
 public import flint.java.util.date : Date;
 public import flint.java.util.timezone : SimpleTimeZone, TimeZone;
@@ -339,17 +341,6 @@ interface RawMap
 
 // ---------------------------------------------------------------------------------------------------------------
 // Iterator, Comparator
-
-/// Java's `Iterator`.
-interface Iterator(T)
-{
-    /// Whether another element follows.
-    bool hasNext();
-    /// The next element. Throws `NoSuchElementException` at the end.
-    T next();
-    /// Remove the element last returned. Throws `UnsupportedOperationException` unless supported.
-    void remove();
-}
 
 /// Java's `Comparator`: an ordering of `T`.
 interface Comparator(T)
@@ -3100,6 +3091,29 @@ class Properties : LinkedHashMap!(string, string)
         return result;
     }
 
+    /// Java's `Properties.propertyNames()`: every key, including the defaults' keys not overridden, in insertion
+    /// order with the defaults first (Java's `Hashtable` order is unspecified, as `stringPropertyNames` notes).
+    /// The result is a snapshot; later changes are not seen. Java types the elements `?`; R23 makes them `Any`.
+    Enumeration!Any propertyNames()
+    {
+        return new AnyEnumeration(stringPropertyNames().toAnyArray());
+    }
+
+    /// Java's `Properties.keys()`: this set's own keys, without the defaults, in insertion order (Java's
+    /// `Hashtable` order is unspecified). The result is a snapshot. Java types the elements `Object`; R23 makes
+    /// them `Any`.
+    Enumeration!Any keys()
+    {
+        return new AnyEnumeration(keySet().toAnyArray());
+    }
+
+    /// Java's `Properties.elements()`: this set's own values, without the defaults, in insertion order. The
+    /// result is a snapshot. Java types the elements `Object`; R23 makes them `Any`.
+    Enumeration!Any elements()
+    {
+        return new AnyEnumeration(values().toAnyArray());
+    }
+
     /// Store these properties, preceded by `comments` (may be null) and a date comment, as ISO-8859-1 bytes,
     /// leaving `output` open. Java declares `IOException`; D has no checked exceptions (R8, D-8).
     void store(imported!"flint.java.io".OutputStream output, string comments)
@@ -3673,6 +3687,32 @@ class Properties : LinkedHashMap!(string, string)
         i += 4;
         return value;
     }
+}
+
+/// The `Enumeration` behind `Properties.propertyNames`, `keys` and `elements`: a snapshot array walked by index.
+private final class AnyEnumeration : Enumeration!Any
+{
+    private Any[] items;
+    private size_t position;
+
+    this(Any[] items) pure nothrow @nogc
+    {
+        this.items = items;
+    }
+
+    bool hasMoreElements() pure nothrow @nogc
+    {
+        return position < items.length;
+    }
+
+    Any nextElement()
+    {
+        if (position >= items.length)
+            throw new NoSuchElementException();
+        return items[position++];
+    }
+
+    mixin Enumeration!Any.Defaults;
 }
 
 // ---------------------------------------------------------------------------------------------------------------
