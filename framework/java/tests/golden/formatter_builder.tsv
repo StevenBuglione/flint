@@ -5822,3 +5822,310 @@ parse	p:ww	date	10	!Text '10' could not be parsed: Unable to obtain LocalDate fr
 parse	p:W	date	2	!Text '2' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
 parse	p:e	date	3	!Text '3' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
 parse	p:e	date	9	!Text '9' could not be parsed: Invalid value for DayOfWeek[WeekFields[SUNDAY,1]] (valid values 1 - 7): 9	0
+format	p:B	time	00:00	midnight
+format	p:B	time	00:01	at night
+format	p:B	time	05:59	at night
+format	p:B	time	06:00	in the morning
+format	p:B	time	06:59	in the morning
+format	p:B	time	11:59	in the morning
+format	p:B	time	12:00	noon
+format	p:B	time	12:01	in the afternoon
+format	p:B	time	17:59	in the afternoon
+format	p:B	time	18:00	in the evening
+format	p:B	time	20:59	in the evening
+format	p:B	time	21:00	at night
+format	p:B	time	23:59	at night
+format	p:BBBB	time	00:00	midnight
+format	p:BBBB	time	00:01	at night
+format	p:BBBB	time	05:59	at night
+format	p:BBBB	time	06:00	in the morning
+format	p:BBBB	time	06:59	in the morning
+format	p:BBBB	time	11:59	in the morning
+format	p:BBBB	time	12:00	noon
+format	p:BBBB	time	12:01	in the afternoon
+format	p:BBBB	time	17:59	in the afternoon
+format	p:BBBB	time	18:00	in the evening
+format	p:BBBB	time	20:59	in the evening
+format	p:BBBB	time	21:00	at night
+format	p:BBBB	time	23:59	at night
+format	p:BBBBB	time	00:00	mi
+format	p:BBBBB	time	00:01	at night
+format	p:BBBBB	time	05:59	at night
+format	p:BBBBB	time	06:00	in the morning
+format	p:BBBBB	time	06:59	in the morning
+format	p:BBBBB	time	11:59	in the morning
+format	p:BBBBB	time	12:00	n
+format	p:BBBBB	time	12:01	in the afternoon
+format	p:BBBBB	time	17:59	in the afternoon
+format	p:BBBBB	time	18:00	in the evening
+format	p:BBBBB	time	20:59	in the evening
+format	p:BBBBB	time	21:00	at night
+format	p:BBBBB	time	23:59	at night
+build	p:B	-	-	DayPeriod(SHORT)
+format	p:B	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:B	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:B	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:B	time	10:15	in the morning
+format	p:B	time	10:15:30	in the morning
+format	p:B	time	10:15:30.123456789	in the morning
+format	p:B	dateTime	2024-03-05T10:15:30	in the morning
+format	p:B	dateTime	2024-03-05T00:00:00.000001	midnight
+format	p:B	offset	2024-03-05T10:15:30+01:00	in the morning
+format	p:B	offset	2024-03-05T10:15:30Z	in the morning
+format	p:B	offset	2024-03-05T10:15:30.500-05:30:15	in the morning
+format	p:B	offset	2024-03-05T10:15:30+00:00:45	in the morning
+format	p:B	zoned	2024-03-05T10:15:30+02:00	in the morning
+format	p:B	zoned	2024-03-05T10:15:30Z[UTC]	in the morning
+format	p:B	instant	2024-03-05T10:15:30Z	!Unsupported field: HourOfDay
+format	p:B	instant	2024-03-05T10:15:30.120Z	!Unsupported field: HourOfDay
+parse	p:B	date	in the morning	!Text 'in the morning' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 09:00 of type java.time.format.Parsed	0
+parse	p:B	time	in the morning	09:00
+parse	p:B	dateTime	in the morning	!Text 'in the morning' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 09:00 of type java.time.format.Parsed	0
+parse	p:B	offset	in the morning	!Text 'in the morning' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 09:00 of type java.time.format.Parsed	0
+parse	p:B	zoned	in the morning	!Text 'in the morning' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 09:00 of type java.time.format.Parsed	0
+parse	p:B	date	at night	!Text 'at night' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 01:30 of type java.time.format.Parsed	0
+parse	p:B	time	at night	01:30
+parse	p:B	dateTime	at night	!Text 'at night' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 01:30 of type java.time.format.Parsed	0
+parse	p:B	offset	at night	!Text 'at night' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 01:30 of type java.time.format.Parsed	0
+parse	p:B	zoned	at night	!Text 'at night' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 01:30 of type java.time.format.Parsed	0
+parse	p:B	date	midnight	!Text 'midnight' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:B	time	midnight	00:00
+parse	p:B	dateTime	midnight	!Text 'midnight' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:B	offset	midnight	!Text 'midnight' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	p:B	zoned	midnight	!Text 'midnight' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+build	p:BBBB	-	-	DayPeriod(FULL)
+format	p:BBBB	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:BBBB	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:BBBB	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:BBBB	time	10:15	in the morning
+format	p:BBBB	time	10:15:30	in the morning
+format	p:BBBB	time	10:15:30.123456789	in the morning
+format	p:BBBB	dateTime	2024-03-05T10:15:30	in the morning
+format	p:BBBB	dateTime	2024-03-05T00:00:00.000001	midnight
+format	p:BBBB	offset	2024-03-05T10:15:30+01:00	in the morning
+format	p:BBBB	offset	2024-03-05T10:15:30Z	in the morning
+format	p:BBBB	offset	2024-03-05T10:15:30.500-05:30:15	in the morning
+format	p:BBBB	offset	2024-03-05T10:15:30+00:00:45	in the morning
+format	p:BBBB	zoned	2024-03-05T10:15:30+02:00	in the morning
+format	p:BBBB	zoned	2024-03-05T10:15:30Z[UTC]	in the morning
+format	p:BBBB	instant	2024-03-05T10:15:30Z	!Unsupported field: HourOfDay
+format	p:BBBB	instant	2024-03-05T10:15:30.120Z	!Unsupported field: HourOfDay
+parse	p:BBBB	time	in the evening	19:30
+parse	p:BBBB	time	noon	12:00
+parse	p:BBBB	time	in the morning	09:00
+parse	p:BBBB	time	midnight	00:00
+build	p:BBBBB	-	-	DayPeriod(NARROW)
+format	p:BBBBB	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:BBBBB	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:BBBBB	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:BBBBB	time	10:15	in the morning
+format	p:BBBBB	time	10:15:30	in the morning
+format	p:BBBBB	time	10:15:30.123456789	in the morning
+format	p:BBBBB	dateTime	2024-03-05T10:15:30	in the morning
+format	p:BBBBB	dateTime	2024-03-05T00:00:00.000001	mi
+format	p:BBBBB	offset	2024-03-05T10:15:30+01:00	in the morning
+format	p:BBBBB	offset	2024-03-05T10:15:30Z	in the morning
+format	p:BBBBB	offset	2024-03-05T10:15:30.500-05:30:15	in the morning
+format	p:BBBBB	offset	2024-03-05T10:15:30+00:00:45	in the morning
+format	p:BBBBB	zoned	2024-03-05T10:15:30+02:00	in the morning
+format	p:BBBBB	zoned	2024-03-05T10:15:30Z[UTC]	in the morning
+format	p:BBBBB	instant	2024-03-05T10:15:30Z	!Unsupported field: HourOfDay
+format	p:BBBBB	instant	2024-03-05T10:15:30.120Z	!Unsupported field: HourOfDay
+parse	p:BBBBB	time	mi	00:00
+parse	p:BBBBB	time	n	12:00
+parse	p:BBBBB	time	a	06:00
+parse	p:BBBBB	time	p	18:00
+parse	p:BBBBB	time	midnight	!Text 'midnight' could not be parsed, unparsed text found at index 2	2
+parse	p:BBBBB	time	in the morning	09:00
+build	p:BB	-	-	!Wrong number of pattern letters: B
+build	p:BBB	-	-	!Wrong number of pattern letters: B
+build	p:BBBBBB	-	-	!Wrong number of pattern letters: B
+build	p:HH B	-	-	Value(HourOfDay,2)' 'DayPeriod(SHORT)
+format	p:HH B	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:HH B	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:HH B	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:HH B	time	10:15	10 in the morning
+format	p:HH B	time	10:15:30	10 in the morning
+format	p:HH B	time	10:15:30.123456789	10 in the morning
+format	p:HH B	time	00:00	00 midnight
+format	p:HH B	dateTime	2024-03-05T10:15:30	10 in the morning
+format	p:HH B	dateTime	2024-03-05T00:00:00.000001	00 midnight
+format	p:HH B	offset	2024-03-05T10:15:30+01:00	10 in the morning
+format	p:HH B	offset	2024-03-05T10:15:30Z	10 in the morning
+format	p:HH B	offset	2024-03-05T10:15:30.500-05:30:15	10 in the morning
+format	p:HH B	offset	2024-03-05T10:15:30+00:00:45	10 in the morning
+format	p:HH B	zoned	2024-03-05T10:15:30+02:00	10 in the morning
+format	p:HH B	zoned	2024-03-05T10:15:30Z[UTC]	10 in the morning
+format	p:HH B	instant	2024-03-05T10:15:30Z	!Unsupported field: HourOfDay
+format	p:HH B	instant	2024-03-05T10:15:30.120Z	!Unsupported field: HourOfDay
+parse	p:HH B	time	10 in the morning	10:00
+parse	p:HH B	time	10 in the afternoon	!Text '10 in the afternoon' could not be parsed: Conflict found: Resolved time 10:00 conflicts with DayPeriod(12:00-18:00)	0
+parse	p:HH B	time	13 in the afternoon	13:00
+parse	p:HH B	time	00 midnight	00:00
+build	p:h B	-	-	Value(ClockHourOfAmPm)' 'DayPeriod(SHORT)
+format	p:h B	date	2024-03-05	!Unsupported field: ClockHourOfAmPm
+format	p:h B	date	0001-12-31	!Unsupported field: ClockHourOfAmPm
+format	p:h B	date	+12345-06-07	!Unsupported field: ClockHourOfAmPm
+format	p:h B	time	10:15	10 in the morning
+format	p:h B	time	10:15:30	10 in the morning
+format	p:h B	time	10:15:30.123456789	10 in the morning
+format	p:h B	time	00:00	12 midnight
+format	p:h B	dateTime	2024-03-05T10:15:30	10 in the morning
+format	p:h B	dateTime	2024-03-05T00:00:00.000001	12 midnight
+format	p:h B	offset	2024-03-05T10:15:30+01:00	10 in the morning
+format	p:h B	offset	2024-03-05T10:15:30Z	10 in the morning
+format	p:h B	offset	2024-03-05T10:15:30.500-05:30:15	10 in the morning
+format	p:h B	offset	2024-03-05T10:15:30+00:00:45	10 in the morning
+format	p:h B	zoned	2024-03-05T10:15:30+02:00	10 in the morning
+format	p:h B	zoned	2024-03-05T10:15:30Z[UTC]	10 in the morning
+format	p:h B	instant	2024-03-05T10:15:30Z	!Unsupported field: ClockHourOfAmPm
+format	p:h B	instant	2024-03-05T10:15:30.120Z	!Unsupported field: ClockHourOfAmPm
+parse	p:h B	time	12 midnight	00:00
+parse	p:h B	time	12 noon	12:00
+parse	p:h B	time	1 in the afternoon	13:00
+parse	p:h B	time	1 in the morning	01:00
+parse	p:h B	time	12 at night	00:00
+parse	p:h B	time	10 in the morning	10:00
+build	strict|p:B	-	-	ParseStrict(true)DayPeriod(SHORT)
+format	strict|p:B	date	2024-03-05	!Unsupported field: HourOfDay
+format	strict|p:B	date	0001-12-31	!Unsupported field: HourOfDay
+format	strict|p:B	date	+12345-06-07	!Unsupported field: HourOfDay
+format	strict|p:B	time	10:15	in the morning
+format	strict|p:B	time	10:15:30	in the morning
+format	strict|p:B	time	10:15:30.123456789	in the morning
+format	strict|p:B	time	00:00	midnight
+format	strict|p:B	dateTime	2024-03-05T10:15:30	in the morning
+format	strict|p:B	dateTime	2024-03-05T00:00:00.000001	midnight
+format	strict|p:B	offset	2024-03-05T10:15:30+01:00	in the morning
+format	strict|p:B	offset	2024-03-05T10:15:30Z	in the morning
+format	strict|p:B	offset	2024-03-05T10:15:30.500-05:30:15	in the morning
+format	strict|p:B	offset	2024-03-05T10:15:30+00:00:45	in the morning
+format	strict|p:B	zoned	2024-03-05T10:15:30+02:00	in the morning
+format	strict|p:B	zoned	2024-03-05T10:15:30Z[UTC]	in the morning
+format	strict|p:B	instant	2024-03-05T10:15:30Z	!Unsupported field: HourOfDay
+format	strict|p:B	instant	2024-03-05T10:15:30.120Z	!Unsupported field: HourOfDay
+parse	strict|p:B	time	in the morning	09:00
+parse	strict|p:B	time	midnight	00:00
+build	lenient|p:B	-	-	ParseStrict(false)DayPeriod(SHORT)
+format	lenient|p:B	date	2024-03-05	!Unsupported field: HourOfDay
+format	lenient|p:B	date	0001-12-31	!Unsupported field: HourOfDay
+format	lenient|p:B	date	+12345-06-07	!Unsupported field: HourOfDay
+format	lenient|p:B	time	10:15	in the morning
+format	lenient|p:B	time	10:15:30	in the morning
+format	lenient|p:B	time	10:15:30.123456789	in the morning
+format	lenient|p:B	time	00:00	midnight
+format	lenient|p:B	dateTime	2024-03-05T10:15:30	in the morning
+format	lenient|p:B	dateTime	2024-03-05T00:00:00.000001	midnight
+format	lenient|p:B	offset	2024-03-05T10:15:30+01:00	in the morning
+format	lenient|p:B	offset	2024-03-05T10:15:30Z	in the morning
+format	lenient|p:B	offset	2024-03-05T10:15:30.500-05:30:15	in the morning
+format	lenient|p:B	offset	2024-03-05T10:15:30+00:00:45	in the morning
+format	lenient|p:B	zoned	2024-03-05T10:15:30+02:00	in the morning
+format	lenient|p:B	zoned	2024-03-05T10:15:30Z[UTC]	in the morning
+format	lenient|p:B	instant	2024-03-05T10:15:30Z	!Unsupported field: HourOfDay
+format	lenient|p:B	instant	2024-03-05T10:15:30.120Z	!Unsupported field: HourOfDay
+parse	lenient|p:B	time	mi	00:00
+parse	lenient|p:B	time	in the morning	09:00
+parse	lenient|p:B	time	midnight	00:00
+build	d:FULL	-	-	DayPeriod(FULL)
+format	d:FULL	date	2024-03-05	!Unsupported field: HourOfDay
+format	d:FULL	date	0001-12-31	!Unsupported field: HourOfDay
+format	d:FULL	date	+12345-06-07	!Unsupported field: HourOfDay
+format	d:FULL	time	10:15	in the morning
+format	d:FULL	time	10:15:30	in the morning
+format	d:FULL	time	10:15:30.123456789	in the morning
+format	d:FULL	time	00:00	midnight
+format	d:FULL	dateTime	2024-03-05T10:15:30	in the morning
+format	d:FULL	dateTime	2024-03-05T00:00:00.000001	midnight
+format	d:FULL	offset	2024-03-05T10:15:30+01:00	in the morning
+format	d:FULL	offset	2024-03-05T10:15:30Z	in the morning
+format	d:FULL	offset	2024-03-05T10:15:30.500-05:30:15	in the morning
+format	d:FULL	offset	2024-03-05T10:15:30+00:00:45	in the morning
+format	d:FULL	zoned	2024-03-05T10:15:30+02:00	in the morning
+format	d:FULL	zoned	2024-03-05T10:15:30Z[UTC]	in the morning
+format	d:FULL	instant	2024-03-05T10:15:30Z	!Unsupported field: HourOfDay
+format	d:FULL	instant	2024-03-05T10:15:30.120Z	!Unsupported field: HourOfDay
+parse	d:FULL	time	in the morning	09:00
+parse	d:FULL	time	midnight	00:00
+build	d:NARROW	-	-	DayPeriod(NARROW)
+format	d:NARROW	date	2024-03-05	!Unsupported field: HourOfDay
+format	d:NARROW	date	0001-12-31	!Unsupported field: HourOfDay
+format	d:NARROW	date	+12345-06-07	!Unsupported field: HourOfDay
+format	d:NARROW	time	10:15	in the morning
+format	d:NARROW	time	10:15:30	in the morning
+format	d:NARROW	time	10:15:30.123456789	in the morning
+format	d:NARROW	time	00:00	mi
+format	d:NARROW	dateTime	2024-03-05T10:15:30	in the morning
+format	d:NARROW	dateTime	2024-03-05T00:00:00.000001	mi
+format	d:NARROW	offset	2024-03-05T10:15:30+01:00	in the morning
+format	d:NARROW	offset	2024-03-05T10:15:30Z	in the morning
+format	d:NARROW	offset	2024-03-05T10:15:30.500-05:30:15	in the morning
+format	d:NARROW	offset	2024-03-05T10:15:30+00:00:45	in the morning
+format	d:NARROW	zoned	2024-03-05T10:15:30+02:00	in the morning
+format	d:NARROW	zoned	2024-03-05T10:15:30Z[UTC]	in the morning
+format	d:NARROW	instant	2024-03-05T10:15:30Z	!Unsupported field: HourOfDay
+format	d:NARROW	instant	2024-03-05T10:15:30.120Z	!Unsupported field: HourOfDay
+parse	d:NARROW	time	mi	00:00
+parse	d:NARROW	time	in the morning	09:00
+build	d:SHORT_STANDALONE	-	-	DayPeriod(SHORT)
+format	d:SHORT_STANDALONE	date	2024-03-05	!Unsupported field: HourOfDay
+format	d:SHORT_STANDALONE	date	0001-12-31	!Unsupported field: HourOfDay
+format	d:SHORT_STANDALONE	date	+12345-06-07	!Unsupported field: HourOfDay
+format	d:SHORT_STANDALONE	time	10:15	in the morning
+format	d:SHORT_STANDALONE	time	10:15:30	in the morning
+format	d:SHORT_STANDALONE	time	10:15:30.123456789	in the morning
+format	d:SHORT_STANDALONE	time	00:00	midnight
+format	d:SHORT_STANDALONE	dateTime	2024-03-05T10:15:30	in the morning
+format	d:SHORT_STANDALONE	dateTime	2024-03-05T00:00:00.000001	midnight
+format	d:SHORT_STANDALONE	offset	2024-03-05T10:15:30+01:00	in the morning
+format	d:SHORT_STANDALONE	offset	2024-03-05T10:15:30Z	in the morning
+format	d:SHORT_STANDALONE	offset	2024-03-05T10:15:30.500-05:30:15	in the morning
+format	d:SHORT_STANDALONE	offset	2024-03-05T10:15:30+00:00:45	in the morning
+format	d:SHORT_STANDALONE	zoned	2024-03-05T10:15:30+02:00	in the morning
+format	d:SHORT_STANDALONE	zoned	2024-03-05T10:15:30Z[UTC]	in the morning
+format	d:SHORT_STANDALONE	instant	2024-03-05T10:15:30Z	!Unsupported field: HourOfDay
+format	d:SHORT_STANDALONE	instant	2024-03-05T10:15:30.120Z	!Unsupported field: HourOfDay
+parse	d:SHORT_STANDALONE	time	in the morning	09:00
+parse	d:SHORT_STANDALONE	time	midnight	00:00
+build	p:HH:mm[ B]	-	-	Value(HourOfDay,2)':'Value(MinuteOfHour,2)[' 'DayPeriod(SHORT)]
+format	p:HH:mm[ B]	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:HH:mm[ B]	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:HH:mm[ B]	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:HH:mm[ B]	time	10:15	10:15 in the morning
+format	p:HH:mm[ B]	time	10:15:30	10:15 in the morning
+format	p:HH:mm[ B]	time	10:15:30.123456789	10:15 in the morning
+format	p:HH:mm[ B]	time	00:00	00:00 midnight
+format	p:HH:mm[ B]	dateTime	2024-03-05T10:15:30	10:15 in the morning
+format	p:HH:mm[ B]	dateTime	2024-03-05T00:00:00.000001	00:00 midnight
+format	p:HH:mm[ B]	offset	2024-03-05T10:15:30+01:00	10:15 in the morning
+format	p:HH:mm[ B]	offset	2024-03-05T10:15:30Z	10:15 in the morning
+format	p:HH:mm[ B]	offset	2024-03-05T10:15:30.500-05:30:15	10:15 in the morning
+format	p:HH:mm[ B]	offset	2024-03-05T10:15:30+00:00:45	10:15 in the morning
+format	p:HH:mm[ B]	zoned	2024-03-05T10:15:30+02:00	10:15 in the morning
+format	p:HH:mm[ B]	zoned	2024-03-05T10:15:30Z[UTC]	10:15 in the morning
+format	p:HH:mm[ B]	instant	2024-03-05T10:15:30Z	!Unsupported field: HourOfDay
+format	p:HH:mm[ B]	instant	2024-03-05T10:15:30.120Z	!Unsupported field: HourOfDay
+parse	p:HH:mm[ B]	time	10:15 in the morning	10:15
+parse	p:HH:mm[ B]	time	10:15	10:15
+parse	p:HH:mm[ B]	time	00:00 midnight	00:00
+build	p:B|p:HH	-	-	DayPeriod(SHORT)Value(HourOfDay,2)
+format	p:B|p:HH	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:B|p:HH	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:B|p:HH	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:B|p:HH	time	10:15	in the morning10
+format	p:B|p:HH	time	10:15:30	in the morning10
+format	p:B|p:HH	time	10:15:30.123456789	in the morning10
+format	p:B|p:HH	time	00:00	midnight00
+format	p:B|p:HH	dateTime	2024-03-05T10:15:30	in the morning10
+format	p:B|p:HH	dateTime	2024-03-05T00:00:00.000001	midnight00
+format	p:B|p:HH	offset	2024-03-05T10:15:30+01:00	in the morning10
+format	p:B|p:HH	offset	2024-03-05T10:15:30Z	in the morning10
+format	p:B|p:HH	offset	2024-03-05T10:15:30.500-05:30:15	in the morning10
+format	p:B|p:HH	offset	2024-03-05T10:15:30+00:00:45	in the morning10
+format	p:B|p:HH	zoned	2024-03-05T10:15:30+02:00	in the morning10
+format	p:B|p:HH	zoned	2024-03-05T10:15:30Z[UTC]	in the morning10
+format	p:B|p:HH	instant	2024-03-05T10:15:30Z	!Unsupported field: HourOfDay
+format	p:B|p:HH	instant	2024-03-05T10:15:30.120Z	!Unsupported field: HourOfDay
+parse	p:B|p:HH	time	in the morning 10	!Text 'in the morning 10' could not be parsed at index 14	14
+parse	p:B|p:HH	time	in the morning10	10:00
+parse	p:B|p:HH	time	midnight00	00:00

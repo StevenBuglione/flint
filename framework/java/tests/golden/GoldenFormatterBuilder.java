@@ -8,6 +8,7 @@
 //   c:X s:TEXT p:PATTERN   appendLiteral(char), appendLiteral(String), appendPattern
 //   o:PATTERN,TEXT         appendOffset
 //   l:STYLE                appendLocalizedOffset(TextStyle.valueOf(STYLE))
+//   d:STYLE                appendDayPeriodText(TextStyle.valueOf(STYLE))
 //   i:N                    appendInstant(N)
 //   P:W or P:W,CHAR        padNext(W) or padNext(W, CHAR)
 //   a:NAME q:NAME          append, appendOptional of an ISO constant, or of ofPattern(P) for NAME `=P`
@@ -108,6 +109,7 @@ public class GoldenFormatterBuilder {
                 case "p" -> b.appendPattern(arg);
                 case "o" -> b.appendOffset(arg.substring(0, arg.indexOf(',')), arg.substring(arg.indexOf(',') + 1));
                 case "l" -> b.appendLocalizedOffset(TextStyle.valueOf(arg));
+                case "d" -> b.appendDayPeriodText(TextStyle.valueOf(arg));
                 case "i" -> b.appendInstant(Integer.parseInt(arg));
                 case "P" -> padNext(b, arg);
                 case "a" -> b.append(named(arg));
@@ -205,6 +207,20 @@ public class GoldenFormatterBuilder {
                 out = err(e);
             }
             row("format", recipe, "instant", v, out);
+        }
+    }
+
+    // Format rows of the recipe for extra LocalTime values beyond the samples.
+    static void times(String recipe, String... values) {
+        DateTimeFormatter f = build(recipe);
+        for (String v : values) {
+            String out;
+            try {
+                out = esc(f.format(LocalTime.parse(v)));
+            } catch (DateTimeException e) {
+                out = err(e);
+            }
+            row("format", recipe, "time", v, out);
         }
     }
 
@@ -576,6 +592,29 @@ public class GoldenFormatterBuilder {
         parses("p:ww", k("date"), "10");
         parses("p:W", k("date"), "2");
         parses("p:e", k("date"), "3", "9");
+        // Day periods: pattern letter B (one letter SHORT, four FULL, five NARROW) and appendDayPeriodText. The names
+        // are the CLDR en-US periods: midnight, noon, in the morning (06:00-12:00), in the afternoon (12:00-18:00),
+        // in the evening (18:00-21:00) and at night (21:00-06:00); NARROW writes midnight, noon, am and pm as mi, n,
+        // a and p. A day period alone resolves to its midpoint in SMART and LENIENT mode and stays unresolved in
+        // STRICT; with an hour of am/pm it chooses the 12-hour excess, and with an hour of day it is cross-checked.
+        for (String recipe : new String[] {"p:B", "p:BBBB", "p:BBBBB"})
+            times(recipe, "00:00", "00:01", "05:59", "06:00", "06:59", "11:59", "12:00", "12:01", "17:59", "18:00",
+                    "20:59", "21:00", "23:59");
+        recipe("p:B", k("date", "time", "dateTime", "offset", "zoned"), "in the morning", "at night");
+        recipe("p:BBBB", k("time"), "in the evening", "noon");
+        recipe("p:BBBBB", k("time"), "mi", "n", "a", "p", "midnight", "in the morning");
+        recipe("p:BB", none);
+        recipe("p:BBB", none);
+        recipe("p:BBBBBB", none);
+        recipe("p:HH B", k("time"), "10 in the morning", "10 in the afternoon", "13 in the afternoon", "00 midnight");
+        recipe("p:h B", k("time"), "12 midnight", "12 noon", "1 in the afternoon", "1 in the morning", "12 at night");
+        recipe("strict|p:B", k("time"), "in the morning");
+        recipe("lenient|p:B", k("time"), "mi", "in the morning");
+        recipe("d:FULL", k("time"), "in the morning");
+        recipe("d:NARROW", k("time"), "mi");
+        recipe("d:SHORT_STANDALONE", k("time"));
+        recipe("p:HH:mm[ B]", k("time"), "10:15 in the morning", "10:15");
+        recipe("p:B|p:HH", k("time"), "in the morning 10");
         Files.write(Path.of(a[0]), lines);
     }
 }

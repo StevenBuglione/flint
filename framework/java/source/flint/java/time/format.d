@@ -318,6 +318,8 @@ struct Fields
     private string zoneId_;
     private bool zoneIsRegion_;
     private bool smart_; // ResolverStyle.SMART, as ofPattern and RFC_1123_DATE_TIME resolve; otherwise STRICT
+    private bool hasDayPeriod_; // a parsed day-period text (pattern letter B), and its index in `dayPeriodRules`
+    private ubyte dayPeriodIndex_;
 
     private void set(Field f, long value) pure nothrow @nogc
     {
@@ -328,6 +330,12 @@ struct Fields
     private bool has(Field f) const pure nothrow @nogc
     {
         return (present_ & (1u << f)) != 0;
+    }
+
+    private void setDayPeriod(ubyte index) pure nothrow @nogc
+    {
+        dayPeriodIndex_ = index;
+        hasDayPeriod_ = true;
     }
 
     private void addDate(LocalDate d) pure nothrow @nogc
@@ -474,7 +482,8 @@ struct Fields
     private bool hasTime() const pure nothrow @nogc
     {
         return has(Field.hourOfDay) || has(Field.clockHourOfDay) || has(Field.milliOfDay)
-            || has(Field.nanoOfDay) || ((has(Field.clockHourOfAmPm) || has(Field.hourOfAmPm)) && has(Field.amPmOfDay));
+            || has(Field.nanoOfDay) || ((has(Field.clockHourOfAmPm) || has(Field.hourOfAmPm))
+                    && (has(Field.amPmOfDay) || hasDayPeriod_)) || dayPeriodAlone();
     }
 
     /// The value these fields came from, as its `toString`; for parsed fields, Java's `Parsed` description.
@@ -726,9 +735,10 @@ struct Fields
     }
 
     // The hour of am/pm the parsed hour fields give, as Java's Parsed.resolveTimeFields: a clock hour of am/pm
-    // maps to the hour of am/pm (SMART reads 0 as 12), and the am/pm field makes it an hour of the day. False
-    // when neither hour source was parsed.
-    private bool resolveAmPmHour(scope const(char)[] text, string type, out long value) const
+    // maps to the hour of am/pm (SMART reads 0 as 12), and the am/pm field or the parsed day period makes it an hour
+    // of the day. False when neither hour source was parsed. `consumed` is set when the day period chose the
+    // 12-hour excess, as Java's Parsed does before its conflict check.
+    private bool resolveAmPmHour(scope const(char)[] text, string type, out long value, out bool consumed) const
     {
         bool have;
         long hour;
@@ -746,18 +756,32 @@ struct Fields
         }
         if (!have)
             return false;
-        if (!has(Field.amPmOfDay))
-            throw unresolved(text, type);
-        checkRange("AmPmOfDay", values_[Field.amPmOfDay], 0, 1);
-        checkRange("HourOfAmPm", hour, 0, 11);
-        value = hour + 12 * values_[Field.amPmOfDay];
-        return true;
+        if (has(Field.amPmOfDay))
+        {
+            checkRange("AmPmOfDay", values_[Field.amPmOfDay], 0, 1);
+            checkRange("HourOfAmPm", hour, 0, 11);
+            value = hour + 12 * values_[Field.amPmOfDay];
+            return true;
+        }
+        if (hasDayPeriod_)
+        {
+            // Java's Parsed.resolveTimeFields HOUR_OF_AMPM path: the pm-shifted hour selects 12 more hours when the
+            // day period includes it.
+            const minute = has(Field.minuteOfHour) ? values_[Field.minuteOfHour] : 0;
+            const shifted = ((hour % 12) + 12) * 60 + ((minute % 60) + 60) % 60;
+            const excess = dayPeriodIncludes(dayPeriodRules[dayPeriodIndex_], shifted) ? 12 : 0;
+            checkRange("HourOfAmPm", hour, 0, 11);
+            consumed = true;
+            value = hour + excess;
+            return true;
+        }
+        throw unresolved(text, type);
     }
 
     // The hour of the day the parsed hour fields give, as Java's Parsed.resolveTimeFields: a clock hour of the
-    // day maps to it (SMART reads 0 as midnight), an hour of am/pm needs am/pm, and two parsed sources that
-    // disagree are Java's conflict.
-    private long resolveHour(scope const(char)[] text, string type) const
+    // day maps to it (SMART reads 0 as midnight), an hour of am/pm needs am/pm or a day period, and two parsed
+    // sources that disagree are Java's conflict.
+    private long resolveHour(scope const(char)[] text, string type, out bool consumedDayPeriod) const
     {
         bool haveHour;
         long hour;
@@ -774,7 +798,7 @@ struct Fields
             mergeHour(text, haveHour, hour, clock == 24 ? 0 : clock, "HourOfDay", "ClockHourOfDay");
         }
         long amPmHour;
-        if (resolveAmPmHour(text, type, amPmHour))
+        if (resolveAmPmHour(text, type, amPmHour, consumedDayPeriod))
             mergeHour(text, haveHour, hour, amPmHour, "HourOfDay", "AmPmOfDay");
         if (!haveHour)
             throw unresolved(text, type);
@@ -868,7 +892,15 @@ struct Fields
     {
         try
         {
-            const hour = resolveHour(text, type);
+            if (dayPeriodAlone())
+            {
+                // Java's Parsed.resolveTimeLenient: a day period with no time field resolves to its midpoint in
+                // SMART and LENIENT mode.
+                const mid = dayPeriodMidpoint(dayPeriodRules[dayPeriodIndex_]);
+                return LocalTime.of(cast(int)(mid / 60), cast(int)(mid % 60));
+            }
+            bool consumedDayPeriod;
+            const hour = resolveHour(text, type, consumedDayPeriod);
             if (endOfDay())
                 return LocalTime.of(0, 0);
             checkRange("HourOfDay", hour, 0, 23);
@@ -877,12 +909,26 @@ struct Fields
             const nano = has(Field.nanoOfSecond) ? values_[Field.nanoOfSecond] : 0;
             checkRange("MinuteOfHour", minute, 0, 59);
             checkRange("SecondOfMinute", second, 0, 59);
+            if (hasDayPeriod_ && !consumedDayPeriod
+                    && !dayPeriodIncludes(dayPeriodRules[dayPeriodIndex_], hour * 60 + minute))
+                throw new DateTimeException("Conflict found: Resolved time " ~ padded(hour, 2) ~ ":" ~ padded(minute,
+                        2) ~ " conflicts with " ~ dayPeriodDescription(dayPeriodRules[dayPeriodIndex_]));
             return LocalTime.of(cast(int) hour, cast(int) minute, cast(int) second, cast(int) nano);
         }
         catch (DateTimeParseException e)
             throw e;
         catch (DateTimeException e)
             throw failed(text, e);
+    }
+
+    // Whether the parsed day period is the only time information, as Java's Parsed.resolveTimeLenient checks before
+    // it sets the midpoint.
+    private bool dayPeriodAlone() const pure nothrow @nogc
+    {
+        return hasDayPeriod_ && smart_ && !has(Field.hourOfDay) && !has(Field.clockHourOfDay)
+            && !has(Field.hourOfAmPm) && !has(Field.clockHourOfAmPm) && !has(Field.minuteOfHour)
+            && !has(Field.secondOfMinute) && !has(Field.nanoOfSecond) && !has(Field.milliOfDay)
+            && !has(Field.nanoOfDay);
     }
 
     // Resolves a parsed week-based year, week and day-of-week into the date, as Java's
@@ -1162,6 +1208,7 @@ private enum Op : ubyte
     fraction,
     literal,
     text,
+    dayPeriod, // `text` is "short", "full" or "narrow"
     offset,
     localizedOffset, // `text` is "full" or "short"
     zoneId,
@@ -1714,6 +1761,31 @@ struct DateTimeFormatterBuilder
         return this;
     }
 
+    /**
+     * Appends the day period, such as 'in the morning' or 'at night' for `TextStyle.FULL` and `TextStyle.SHORT`, and
+     * 'mi' or 'n' for midnight and noon with `TextStyle.NARROW`. The text is the English CLDR en-US names, the same
+     * locale the rest of this module's text uses; a stand-alone style is read as its standard style.
+     */
+    ref DateTimeFormatterBuilder appendDayPeriodText(TextStyle style) return
+    {
+        Element e;
+        e.op = Op.dayPeriod;
+        final switch (style)
+        {
+        case TextStyle.FULL, TextStyle.FULL_STANDALONE:
+            e.text = "full";
+            break;
+        case TextStyle.SHORT, TextStyle.SHORT_STANDALONE:
+            e.text = "short";
+            break;
+        case TextStyle.NARROW, TextStyle.NARROW_STANDALONE:
+            e.text = "narrow";
+            break;
+        }
+        appendElement(e);
+        return this;
+    }
+
     /// Appends the zone ID, such as 'Europe/Paris' or '+02:00'.
     ref DateTimeFormatterBuilder appendZoneId() return
     {
@@ -1981,6 +2053,13 @@ private string describeElement(const Element e) pure
         return controlNames[e.op - Op.optionalStart];
     if (e.op >= Op.zoneId)
         return zoneInstantNames[e.op - Op.zoneId];
+    if (e.op == Op.dayPeriod)
+        return "DayPeriod(" ~ (e.text == "narrow" ? "NARROW" : e.text == "full" ? "FULL" : "SHORT") ~ ")";
+    return describeSimpleElement(e);
+}
+
+private string describeSimpleElement(const Element e) pure
+{
     switch (e.op)
     {
     case Op.reducedYear:
@@ -2242,6 +2321,8 @@ private struct Printer
             return "ZoneId";
         case Op.instant:
             return "InstantSeconds";
+        case Op.dayPeriod:
+            return "HourOfDay";
         default:
             // Java's modified Julian day reads EPOCH_DAY, so a value without a date reports that field.
             if (e.op == Op.number && e.field == Field.modifiedJulianDay)
@@ -2259,6 +2340,13 @@ private struct Printer
             return true;
         if (e.op >= Op.zoneId && e.op < Op.instant)
             return printZone(e);
+        if (e.op == Op.dayPeriod)
+            return printDayPeriod(e);
+        return printSimple(e);
+    }
+
+    bool printSimple(const Element e)
+    {
         switch (e.op)
         {
         case Op.number:
@@ -2396,6 +2484,17 @@ private struct Printer
         return true;
     }
 
+    bool printDayPeriod(const Element e)
+    {
+        if (!fields.has(Field.hourOfDay))
+            return false;
+        long mod = fields.values_[Field.hourOfDay] * 60;
+        if (fields.has(Field.minuteOfHour))
+            mod += fields.values_[Field.minuteOfHour];
+        output ~= dayPeriodName(selectDayPeriod(mod), e.text);
+        return true;
+    }
+
     bool printOffset(const Element e)
     {
         if (e.op == Op.localizedOffset)
@@ -2523,6 +2622,89 @@ private immutable string[2] eraFull = ["Before Christ", "Anno Domini"];
 private immutable string[2] eraShort = ["BC", "AD"];
 private immutable string[2] eraNarrow = ["B", "A"];
 private immutable string[2] amPmNames = ["AM", "PM"];
+
+// The day periods of Java's CLDR en-US rules, as `DateTimeFormatterBuilder.DayPeriod` derives them: the boundaries
+// are minutes of the day, `to` equal to `from` marks a fixed period, and a `to` before `from` wraps past midnight.
+private struct DayPeriodRule
+{
+    ushort from;
+    ushort to;
+}
+
+private immutable DayPeriodRule[] dayPeriodRules = [
+    DayPeriodRule(0, 720), // am
+    DayPeriodRule(720, 1440), // pm
+    DayPeriodRule(0, 0), // midnight
+    DayPeriodRule(720, 720), // noon
+    DayPeriodRule(360, 720), // morning1
+    DayPeriodRule(720, 1080), // afternoon1
+    DayPeriodRule(1080, 1260), // evening1
+    DayPeriodRule(1260, 360), // night1
+];
+
+// The English day-period text of Java's `DateTimeTextProvider` for en-US: SHORT and FULL agree except at midnight and
+// noon, where NARROW is `mi` and `n`; NARROW writes am and pm as `a` and `p`.
+private immutable string[] dayPeriodShort = [
+    "AM", "PM", "midnight", "noon", "in the morning", "in the afternoon", "in the evening", "at night"
+];
+private immutable string[] dayPeriodNarrow = [
+    "a", "p", "mi", "n", "in the morning", "in the afternoon", "in the evening", "at night"
+];
+
+private long dayPeriodDuration(DayPeriodRule r) pure nothrow @nogc
+{
+    return r.from > r.to ? 1_440 - r.from + r.to : r.to - r.from;
+}
+
+// Whether a minute of the day belongs to the period, as Java's `DayPeriod.includes`.
+private bool dayPeriodIncludes(DayPeriodRule r, long mod) pure nothrow @nogc
+{
+    if (r.from == 0 && r.to == 0 && mod == 1_440)
+        return true;
+    return (r.from == mod && r.to == mod) || (r.from <= mod && mod < r.to) || (r.from > r.to
+            && (r.from <= mod || r.to > mod));
+}
+
+// The midpoint of the period, where a day period with no time resolves in SMART mode.
+private long dayPeriodMidpoint(DayPeriodRule r) pure nothrow @nogc
+{
+    return (r.from + dayPeriodDuration(r) / 2) % 1_440;
+}
+
+// The period a minute of the day prints as: Java takes the shortest period that includes it, and falls back to
+// am/pm.
+private ubyte selectDayPeriod(long mod) pure nothrow @nogc
+{
+    ubyte best;
+    long shortest;
+    bool found;
+    foreach (i, rule; dayPeriodRules)
+        if (dayPeriodIncludes(rule, mod))
+        {
+            const duration = dayPeriodDuration(rule);
+            if (!found || duration < shortest)
+            {
+                shortest = duration;
+                best = cast(ubyte) i;
+                found = true;
+            }
+        }
+    return found ? best : cast(ubyte)(mod / 720);
+}
+
+private string dayPeriodName(ubyte index, string style) pure nothrow @nogc
+{
+    return normalStyle(style) == "narrow" ? dayPeriodNarrow[index] : dayPeriodShort[index];
+}
+
+// Java's `DayPeriod.toString`, used in the conflict message.
+private string dayPeriodDescription(DayPeriodRule r) pure nothrow
+{
+    auto text = "DayPeriod(" ~ padded(r.from / 60, 2) ~ ":" ~ padded(r.from % 60, 2);
+    if (r.from == r.to)
+        return text ~ ")";
+    return text ~ "-" ~ padded(r.to / 60, 2) ~ ":" ~ padded(r.to % 60, 2) ~ ")";
+}
 
 // The names a text element matches: its field's style table, or the two am/pm names.
 private const(string)[] textNames(Field f, string style) pure nothrow @nogc
@@ -2729,6 +2911,13 @@ private struct Parser
             return control(e, position);
         if (e.op >= Op.zoneId && e.op < Op.instant)
             return parseZone(position);
+        if (e.op == Op.dayPeriod)
+            return parseDayPeriod(e, position);
+        return parseSimple(e, following, position);
+    }
+
+    int parseSimple(const Element e, scope const(Element)[] following, int position) scope
+    {
         switch (e.op)
         {
         case Op.number:
@@ -2973,6 +3162,36 @@ private struct Parser
         }
         // A lenient parse falls back to the field's number.
         return lenient ? parseNumber(num(e.field, 1, 19, SignStyle.NORMAL), null, position) : ~position;
+    }
+
+    // The day-period names an element matches: a strict parse uses the element's style, a lenient one matches every
+    // style. The longest name wins, as Java's `LocaleStore` parses longest first.
+    int parseDayPeriod(const Element e, int position) scope
+    {
+        int bestEnd = ~position, bestIndex = -1;
+        if (lenient)
+        {
+            matchDayPeriodNames(dayPeriodShort, position, bestEnd, bestIndex);
+            matchDayPeriodNames(dayPeriodNarrow, position, bestEnd, bestIndex);
+        }
+        else if (normalStyle(e.text) == "narrow")
+            matchDayPeriodNames(dayPeriodNarrow, position, bestEnd, bestIndex);
+        else
+            matchDayPeriodNames(dayPeriodShort, position, bestEnd, bestIndex);
+        if (bestIndex < 0)
+            return ~position;
+        fields.setDayPeriod(cast(ubyte) bestIndex);
+        return bestEnd;
+    }
+
+    void matchDayPeriodNames(scope const(string)[] names, int position, ref int bestEnd, ref int bestIndex) scope const
+    {
+        foreach (i, name; names)
+            if (matches(name, position) && (bestIndex < 0 || name.length > bestEnd - position))
+            {
+                bestEnd = position + cast(int) name.length;
+                bestIndex = cast(int) i;
+            }
     }
 
     int twoDigits(int position) scope const pure nothrow @nogc
@@ -3469,6 +3688,28 @@ private Element eraLetter(int count)
     return e;
 }
 
+// The day-period letter: one letter SHORT, four FULL and five NARROW; any other count is Java's widths error.
+private Element dayPeriodElement(int count)
+{
+    Element e;
+    e.op = Op.dayPeriod;
+    switch (count)
+    {
+    case 1:
+        e.text = "short";
+        break;
+    case 4:
+        e.text = "full";
+        break;
+    case 5:
+        e.text = "narrow";
+        break;
+    default:
+        throw new IllegalArgumentException("Wrong number of pattern letters: B");
+    }
+    return e;
+}
+
 private Element dateLetter(char c, int count)
 {
     switch (c)
@@ -3558,6 +3799,13 @@ private Element localizedDayOfWeekLetter(char c, int count)
 }
 
 private Element timeLetter(char c, int count)
+{
+    if (c == 'B')
+        return dayPeriodElement(count);
+    return simpleTimeLetter(c, count);
+}
+
+private Element simpleTimeLetter(char c, int count)
 {
     switch (c)
     {

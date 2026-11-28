@@ -1373,6 +1373,9 @@ private void builderStep(ref DateTimeFormatterBuilder b, char step, string arg,
     case 'l':
         b.appendLocalizedOffset(arg.to!TextStyle);
         break;
+    case 'd':
+        b.appendDayPeriodText(arg.to!TextStyle);
+        break;
     case 'i':
         b.appendInstant(arg.to!int);
         break;
@@ -1466,7 +1469,7 @@ unittest
         ++count;
     }
     assert(failures == 0, report);
-    assert(count == 5824);
+    assert(count == 6131);
 }
 
 @("appendInstant(int) parses exactly its fractional digits, or up to nine for -1")
