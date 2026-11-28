@@ -9,6 +9,8 @@ import flint.conc.park : park, wakeAll;
 import flint.engine.reactor : Backend, ReactorOptions;
 import flint.java.lang : NullPointerException;
 import flint.java.lang.runnable : Runnable;
+import flint.java.util : ArrayList, Collection;
+import flint.java.util.concurrent : TimeUnit;
 import flint.java.util.concurrent.callable : Callable;
 import flint.java.util.concurrent.cancellationexception : CancellationException;
 import flint.java.util.concurrent.executionexception : ExecutionException;
@@ -349,4 +351,100 @@ unittest
     service.shutdownNow();
     assertThrown!RejectedExecutionException(service.submit(new Doubling(1)));
     assertThrown!RejectedExecutionException(service.submit(new Work));
+}
+
+private final class BlockingCall : Callable!int
+{
+    shared uint started;
+    shared uint released;
+
+    override int call()
+    {
+        atomicStore(started, 1u);
+        wakeAll(started);
+        while (atomicLoad(released) == 0)
+            park(released, 0, 100_000_000L);
+        return 9;
+    }
+
+    void release() nothrow @nogc
+    {
+        atomicStore(released, 1u);
+        wakeAll(released);
+    }
+}
+
+private ArrayList!(Callable!int) callables(Callable!int[] tasks...)
+{
+    auto result = new ArrayList!(Callable!int)();
+    foreach (task; tasks)
+        result.add(task);
+    return result;
+}
+
+@("invokeAll runs every task and returns futures in iteration order")
+@system unittest
+{
+    auto host = new OffloadExecutorService(3, options());
+    ExecutorService service = host;
+    auto tasks = callables(new Doubling(21), new FailingCall, new Doubling(2));
+
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        host.requestStop();
+        driver.join();
+    }
+
+    auto futures = service.invokeAll(tasks);
+    assert(futures.size() == 3);
+    assert(!(futures.get(0) is null) && !(futures.get(1) is null) && !(futures.get(2) is null));
+    assert(futures.get(0).get() == 42 && futures.get(2).get() == 4);
+    assertThrown!ExecutionException(futures.get(1).get());
+    assert(futures.get(0).isDone() && futures.get(1).isDone() && futures.get(2).isDone());
+}
+
+@("timed invokeAll cancels unfinished futures and does not throw TimeoutException")
+@system unittest
+{
+    auto host = new OffloadExecutorService(2, options());
+    ExecutorService service = host;
+    auto blocked = new BlockingCall;
+    auto tasks = callables(blocked, new Doubling(3));
+
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        host.requestStop();
+        blocked.release();
+        driver.join();
+    }
+
+    auto started = Deadline.afterMillis(0).monotonicNanoseconds;
+    auto futures = service.invokeAll(tasks, 50, TimeUnit.MILLISECONDS);
+    auto elapsed = Deadline.afterMillis(0).monotonicNanoseconds - started;
+
+    assert(elapsed >= 50_000_000L);
+    assert(futures.size() == 2);
+    assert(futures.get(0).isCancelled() && futures.get(1).isDone());
+    assertThrown!CancellationException(futures.get(0).get());
+}
+
+@("a nonpositive invokeAll timeout returns unstarted cancelled futures")
+unittest
+{
+    ExecutorService service = new OffloadExecutorService(1, options());
+    auto task = new Doubling(1);
+    auto futures = service.invokeAll(callables(task), -1, TimeUnit.SECONDS);
+    assert(futures.size() == 1);
+    assert(futures.get(0).isCancelled() && futures.get(0).isDone());
+}
+
+@("invokeAll takes an empty collection and rejects a null one")
+unittest
+{
+    ExecutorService service = new OffloadExecutorService(1, options());
+    assert(service.invokeAll(new ArrayList!(Callable!int)()).isEmpty());
+    assertThrown!NullPointerException(service.invokeAll(cast(Collection!(Callable!int)) null));
+    assertThrown!NullPointerException(service.invokeAll(cast(Collection!(Callable!int)) null, 1, TimeUnit.SECONDS));
 }
