@@ -2,7 +2,7 @@
 /** Original specification tests for writing UTF-8 text to a Java byte stream. */
 module flint.java.io.output_stream_writer_contract_test;
 
-import flint.java.io : OutputStream, OutputStreamWriter, Writer;
+import flint.java.io : IOException, OutputStream, OutputStreamWriter, Writer;
 
 import std.exception : assertThrown;
 
@@ -43,6 +43,27 @@ private final class RecordingOutput : OutputStream
     }
 }
 
+private final class FailingFlushOutput : OutputStream
+{
+    bool flushed;
+    bool closed;
+
+    override void write(int value)
+    {
+    }
+
+    override void flush()
+    {
+        flushed = true;
+        throw new IOException("flush failed");
+    }
+
+    override void close()
+    {
+        closed = true;
+    }
+}
+
 @("OutputStreamWriter writes UTF-8 for an OutputStream and forwards lifecycle calls")
 unittest
 {
@@ -57,7 +78,43 @@ unittest
     writer.write("!");
     writer.close();
     assert(output.bytes == cast(const(ubyte)[]) "é😀!");
+    assert(output.flushes == 2);
     assert(output.closes == 1);
+}
+
+@("OutputStreamWriter flushes before closing once and rejects use after close")
+unittest
+{
+    auto output = new RecordingOutput;
+    auto writer = new OutputStreamWriter(output);
+
+    writer.write("x");
+    writer.close();
+    assert(output.flushes == 1);
+    assert(output.closes == 1);
+
+    writer.close();
+    assert(output.flushes == 1);
+    assert(output.closes == 1);
+
+    assertThrown!IOException(writer.write("y"));
+    assertThrown!IOException(writer.flush());
+    assert(output.flushes == 1);
+    assert(output.closes == 1);
+}
+
+@("OutputStreamWriter closes the stream even when its final flush fails")
+unittest
+{
+    auto output = new FailingFlushOutput;
+    auto writer = new OutputStreamWriter(output);
+
+    assertThrown!IOException(writer.close());
+    assert(output.flushed);
+    assert(output.closed);
+
+    writer.close();
+    assert(output.closed);
 }
 
 @("OutputStreamWriter encodes UTF-16 ranges and character arrays as UTF-8")
