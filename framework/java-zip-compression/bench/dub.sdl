@@ -1,0 +1,6 @@
+name "probe-java-zip-compression"
+targetType "executable"
+targetPath "build"
+targetName "probe-java-zip-compression"
+dflags "-preview=dip1000"
+dependency "flint:java-zip-compression" path="../../.."
