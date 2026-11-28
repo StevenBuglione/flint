@@ -3,6 +3,8 @@
 module flint.java.io.eof_exception_test;
 
 import flint.java.io : EOFException, IOException;
+import flint.java.lang : IllegalStateException;
+import std.exception : assertThrown;
 
 @safe:
 
@@ -27,4 +29,20 @@ unittest
         assert(cast(EOFException) failure !is null);
         assert(failure.getMessage() == "premature end");
     }
+}
+
+@("EOFException's cause stays open for one initCause call")
+unittest
+{
+    auto cause = new IOException("inner");
+    auto noMessage = new EOFException;
+    assert(noMessage.getCause() is null);
+    assert(noMessage.initCause(cause) is noMessage);
+    assert(noMessage.getCause() is cause);
+    assertThrown!IllegalStateException(noMessage.initCause(cause));
+
+    auto withMessage = new EOFException("premature end");
+    assert(withMessage.getCause() is null);
+    assert(withMessage.initCause(cause) is withMessage);
+    assertThrown!IllegalStateException(withMessage.initCause(cause));
 }

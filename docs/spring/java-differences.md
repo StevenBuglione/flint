@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,319 | 886 | 0 | 1,957 | 13,259 |
+| framework | openjdk@21.0.13 | 2,323 | 886 | 0 | 1,957 | 13,255 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -11386,7 +11386,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 453 | 0 |
+| java.io | 449 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -12274,8 +12274,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `jakarta.validation.spi.ValidationProvider#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `java.io.CharArrayWriter#append(CharSequence)` | 2 | Java appends the text null for an absent sequence and returns CharArrayWriter. The inherited D method accepts a plain slice and returns Writer; CharSequence is not ported yet. |
 | framework | `java.io.CharArrayWriter#append(CharSequence,int,int)` | 2 | Missing UTF-16 sequence range append with a CharArrayWriter result; CharSequence is not ported yet. |
-| framework | `java.io.EOFException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
-| framework | `java.io.EOFException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
 | framework | `java.io.File#<init>(URI)` | 2 | The URI overload, file URI validation and conversion to a platform pathname are pending. |
 | framework | `java.io.File#canRead()` | 2 | The existing method checks existence. Java checks read access and can reject an existing unreadable file. |
 | framework | `java.io.File#exists()` | 2 | POSIX tests cover existing, absent and invalid paths. On Windows the Java implementation resolves reparse points before testing existence. The current metadata query uses the attributes of the reparse point itself. |
@@ -12313,8 +12311,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.StringWriter#append(CharSequence)` | 2 | Java appends the text null for an absent sequence and returns StringWriter. The inherited D method accepts a plain slice and returns Writer. |
 | framework | `java.io.StringWriter#append(CharSequence,int,int)` | 2 | Missing UTF-16 sequence range append with a StringWriter result. Java applies the range to the text null when the sequence is absent. |
 | framework | `java.io.StringWriter#getBuffer()` | 2 | Missing access to the same live mutable StringBuffer that the writer uses as its lock. |
-| framework | `java.io.UTFDataFormatException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
-| framework | `java.io.UTFDataFormatException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
 | framework | `java.io.Writer` | 2 | The abstract sink implements Closeable and Flushable and the UTF-16 write hooks; Appendable is still pending. |
 | framework | `java.io.Writer#<init>()` | 2 | Java initializes the protected lock to the writer itself. The existing type has no lock field. |
 | framework | `java.io.Writer#append(CharSequence)` | 2 | Java appends the four characters null for an absent character sequence. The existing method treats a null slice as empty. |

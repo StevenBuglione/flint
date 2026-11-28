@@ -3757,19 +3757,19 @@ class FileInputStream : ByteArrayInputStream
 /// Java's checked `EOFException`: an end of file was reached unexpectedly.
 class EOFException : IOException
 {
-    /// `message`, or null.
+    /// Java's `EOFException()` and `(String)`: `message` and a cause that a later `initCause` can still set.
     this(string message = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        super(message, null, file, line);
+        super(message, file, line);
     }
 }
 
 /// Java's checked `UTFDataFormatException`: malformed modified UTF-8, or text too long for `writeUTF`.
 class UTFDataFormatException : IOException
 {
-    /// `message`, or null.
+    /// Java's `UTFDataFormatException()` and `(String)`: `message` and a cause that a later `initCause` can set.
     this(string message = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        super(message, null, file, line);
+        super(message, file, line);
     }
 }
