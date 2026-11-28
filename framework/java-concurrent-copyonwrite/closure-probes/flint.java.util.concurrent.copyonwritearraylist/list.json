@@ -1,0 +1,16 @@
+{
+  "source": "closure/copyonwritearraylist.d",
+  "leaves": [
+    "flint.java.character",
+    "flint.java.lang",
+    "flint.java.sql",
+    "flint.java.text.simpledateformat",
+    "flint.java.time",
+    "flint.java.time.format",
+    "flint.java.util",
+    "flint.java.util.calendar",
+    "flint.java.util.date",
+    "flint.java.util.timezone"
+  ],
+  "data": []
+}

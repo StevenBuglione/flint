@@ -612,6 +612,41 @@
     "flint.java.util.concurrent.scheduledfuture"
    ]
   },
+  "java-concurrent-copyonwrite": {
+   "directory": "framework/java-concurrent-copyonwrite",
+   "module": "flint.java.util.concurrent.copyonwritearraylist",
+   "java_types": [
+    "java.util.concurrent.CopyOnWriteArrayList"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "conc",
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-concurrent-copyonwrite/bench",
+    "baseline": "framework/java-concurrent-copyonwrite/bench/baseline",
+    "edit_source": "framework/java-concurrent-copyonwrite/source/flint/java/util/concurrent/copyonwritearraylist.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 100000000,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 1000000
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java-concurrent-sync": {
    "directory": "framework/java-concurrent-sync",
    "module": "flint.java.util.concurrent.locks",
@@ -622,7 +657,6 @@
     "java.util.concurrent.ConcurrentHashMap",
     "java.util.concurrent.ConcurrentLinkedQueue",
     "java.util.concurrent.ConcurrentMap",
-    "java.util.concurrent.CopyOnWriteArrayList",
     "java.util.concurrent.CopyOnWriteArraySet",
     "java.util.concurrent.CountDownLatch",
     "java.util.concurrent.CyclicBarrier",
