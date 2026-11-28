@@ -2,7 +2,9 @@
   "source": "closure/futuretask.d",
   "leaves": [
     "flint.java.lang",
+    "flint.java.lang.nullpointerexception",
     "flint.java.lang.runnable",
+    "flint.java.lang.runtimeexception",
     "flint.java.util.concurrent",
     "flint.java.util.concurrent.callable",
     "flint.java.util.concurrent.cancellationexception",
