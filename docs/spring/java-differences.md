@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,197 | 800 | 0 | 1,957 | 13,467 |
+| framework | openjdk@21.0.13 | 2,201 | 803 | 0 | 1,957 | 13,460 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2671,6 +2671,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.nio.channels.UnsupportedAddressTypeException` | `flint.java.nio.channels.unsupportedaddresstypeexception.UnsupportedAddressTypeException` | [R1](api-mapping.md#r1-packages-and-names) | Import UnsupportedAddressTypeException from flint.java.nio.channels.unsupportedaddresstypeexception. It extends IllegalArgumentException. |
 | `java.nio.channels.WritableByteChannel` | `flint.java.nio.channels.writablebytechannel.WritableByteChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import WritableByteChannel from flint.java.nio.channels.writablebytechannel. |
 | `java.nio.channels.WritePendingException` | `flint.java.nio.channels.writependingexception.WritePendingException` | [R1](api-mapping.md#r1-packages-and-names) | Import WritePendingException from flint.java.nio.channels.writependingexception. It extends IllegalStateException. |
+
+#### java.nio.channels.spi
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.nio.channels.spi.AbstractInterruptibleChannel` | `flint.java.nio.channels.spi.abstractinterruptiblechannel.AbstractInterruptibleChannel` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Import AbstractInterruptibleChannel from flint.java.nio.channels.spi.abstractinterruptiblechannel. Java's closeLock monitor is a compare-and-swap on the closed flag, so close runs implCloseChannel at most once. begin's Thread interrupt hook is deferred until the Thread façade lands, exactly as in the java.util.concurrent ports; end still throws AsynchronousCloseException for an incomplete operation on a closed channel, and its ClosedByInterruptException half waits on the same façade. |
+| `java.nio.channels.spi.AbstractInterruptibleChannel#begin()` | `flint.java.nio.channels.spi.abstractinterruptiblechannel.AbstractInterruptibleChannel.begin` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | A no-op until the Thread façade lands: Java arms the current thread's interrupt hook here. |
+| `java.nio.channels.spi.AbstractInterruptibleChannel#end(boolean)` | `flint.java.nio.channels.spi.abstractinterruptiblechannel.AbstractInterruptibleChannel.end` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Throws AsynchronousCloseException for an incomplete operation on a closed channel; the ClosedByInterruptException half waits on the Thread façade. |
 
 #### java.nio.charset
 
@@ -11250,7 +11258,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.net.spi | 0 | 1 |
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 254 |
-| java.nio.channels.spi | 0 | 53 |
+| java.nio.channels.spi | 0 | 46 |
 | java.nio.charset | 32 | 0 |
 | java.nio.file | 268 | 0 |
 | java.nio.file.attribute | 126 | 0 |

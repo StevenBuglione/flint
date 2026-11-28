@@ -39,8 +39,26 @@ import flint.java.nio.channels.unresolvedaddressexception : UnresolvedAddressExc
 import flint.java.nio.channels.unsupportedaddresstypeexception : UnsupportedAddressTypeException;
 import flint.java.nio.channels.writablebytechannel : WritableByteChannel;
 import flint.java.nio.channels.writependingexception : WritePendingException;
+import flint.java.nio.channels.spi.abstractinterruptiblechannel : AbstractInterruptibleChannel;
 
 @safe:
+
+private final class InterruptibleProbeChannel : AbstractInterruptibleChannel
+{
+    int closeCount;
+
+    override protected void implCloseChannel()
+    {
+        closeCount++;
+    }
+
+    int probeEnd(bool completed)
+    {
+        begin();
+        end(completed);
+        return closeCount;
+    }
+}
 
 private final class MemoryChannel : SeekableByteChannel, InterruptibleChannel, AsynchronousChannel,
     ScatteringByteChannel, GatheringByteChannel, CompletionHandler!(int, int)
@@ -260,5 +278,16 @@ int main(string[] args)
         ach.close();
     else
         closeable.close();
+
+    auto interruptible = new InterruptibleProbeChannel;
+    total += interruptible.probeEnd(true);
+    if (args.length == 6)
+        interruptible.close();
+    total += interruptible.isOpen() ? 1 : 0;
+    try
+        interruptible.probeEnd(false);
+    catch (AsynchronousCloseException)
+        total += 2;
+
     return ch.isOpen() ? -1 : total;
 }

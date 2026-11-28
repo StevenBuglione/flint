@@ -157,6 +157,10 @@
     "control": "tools/jdk-closure-controls/illegal-state-exception.d",
     "template_compile": "separate"
   },
+  "flint.java.nio.channels.spi.abstractinterruptiblechannel": {
+    "incremental_linked_bytes": 7639,
+    "template_instances": 293
+  },
   "flint.java.nio.channels.unresolvedaddressexception": {
     "incremental_linked_bytes": 863,
     "template_instances": 480,

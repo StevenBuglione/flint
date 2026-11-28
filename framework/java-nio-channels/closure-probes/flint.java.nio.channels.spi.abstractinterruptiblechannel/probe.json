@@ -1,0 +1,14 @@
+{
+  "source": "closure/abstract_interruptible_channel.d",
+  "leaves": [
+    "flint.java.io",
+    "flint.java.io.closeable",
+    "flint.java.lang",
+    "flint.java.nio.channels.asynchronouscloseexception",
+    "flint.java.nio.channels.channel",
+    "flint.java.nio.channels.closedchannelexception",
+    "flint.java.nio.channels.interruptiblechannel",
+    "flint.java.nio.channels.spi.abstractinterruptiblechannel"
+  ],
+  "data": []
+}
