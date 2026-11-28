@@ -2,8 +2,11 @@
   "source": "closure/form_encode.d",
   "leaves": [
     "flint.java.io",
+    "flint.java.io.closeable",
+    "flint.java.io.flushable",
     "flint.java.io.unsupportedencodingexception",
     "flint.java.lang",
+    "flint.java.lang.system",
     "flint.java.net.internal.formcharset",
     "flint.java.net.internal.formcharsetname",
     "flint.java.net.internal.formencode",

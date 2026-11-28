@@ -2,8 +2,11 @@
   "source": "closure/sockettimeoutexception.d",
   "leaves": [
     "flint.java.io",
+    "flint.java.io.closeable",
+    "flint.java.io.flushable",
     "flint.java.io.interruptedioexception",
-    "flint.java.lang"
+    "flint.java.lang",
+    "flint.java.lang.system"
   ],
   "data": []
 }
