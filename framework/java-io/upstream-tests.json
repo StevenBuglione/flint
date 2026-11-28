@@ -84,42 +84,42 @@
       "phase": "2"
     },
     "java/io/ByteArrayInputStream/ChunkedTransferTo.java": {
-      "status": "deferred",
-      "phase": "2",
-      "reason": "GPL-2.0-only without the Classpath exception."
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers the original Flint test covers transferTo copying the remaining bytes in bounded writes and leaving the stream open.",
+      "covered_by": "framework/java-io/tests/byte_array_input_contract_test.d"
     },
     "java/io/ByteArrayInputStream/ReadAllReadNTransferTo.java": {
-      "status": "deferred",
-      "phase": "2",
-      "reason": "GPL-2.0-only without the Classpath exception."
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers the original Flint test covers readAllBytes, ranged readNBytes and transferTo against the same byte-array source.",
+      "covered_by": "framework/java-io/tests/byte_array_input_contract_test.d"
     },
     "java/io/ByteArrayInputStream/Skip.java": {
-      "status": "deferred",
-      "phase": "2",
-      "reason": "GPL-2.0-only without the Classpath exception."
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers the original Flint test covers skip, mark, reset and the ranged constructor offset.",
+      "covered_by": "framework/java-io/tests/byte_array_input_contract_test.d"
     },
     "java/io/ByteArrayOutputStream/EncodingTest.java": {
       "status": "deferred",
       "phase": "2"
     },
     "java/io/ByteArrayOutputStream/MaxCapacity.java": {
-      "status": "deferred",
-      "phase": "2",
-      "reason": "GPL-2.0-only without the Classpath exception."
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers the original Flint test covers capacity growth past the initial buffer and a negative initial capacity.",
+      "covered_by": "framework/java-io/tests/byte_array_output_contract_test.d"
     },
     "java/io/ByteArrayOutputStream/ToString.java": {
       "status": "deferred",
       "phase": "2"
     },
     "java/io/ByteArrayOutputStream/Write.java": {
-      "status": "deferred",
-      "phase": "2",
-      "reason": "GPL-2.0-only without the Classpath exception."
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers the original Flint test covers integer writes, ranged writes, writeBytes and range rejection.",
+      "covered_by": "framework/java-io/tests/byte_array_output_contract_test.d"
     },
     "java/io/ByteArrayOutputStream/WriteToReleasesCarrier.java": {
-      "status": "deferred",
-      "phase": "2",
-      "reason": "GPL-2.0-only without the Classpath exception."
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers the original Flint test covers writeTo copying the accumulated bytes without clearing them and rejecting a null sink.",
+      "covered_by": "framework/java-io/tests/byte_array_output_contract_test.d"
     },
     "java/io/CharArrayReader/Constructor.java": {
       "status": "deferred",

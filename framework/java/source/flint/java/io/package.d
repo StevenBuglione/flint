@@ -863,43 +863,113 @@ package(flint) size_t byteWriteEnd(size_t capacity, int offset, int count)
 /// An `OutputStream` collecting bytes in memory.
 class ByteArrayOutputStream : OutputStream
 {
-    private ubyte[] bytes;
+    /// Java's `buf`: the capacity buffer. A D `ubyte` slice under R26.
+    protected ubyte[] buf;
+
+    /// The number of valid bytes in `buf`.
+    protected int count;
 
     alias write = OutputStream.write;
 
+    /// A stream with the default 32-byte capacity.
+    this()
+    {
+        this(32);
+    }
+
+    /// A stream with `size` bytes of initial capacity.
+    this(int size)
+    {
+        if (size < 0)
+        {
+            import flint.java.lang : IllegalArgumentException;
+
+            throw new IllegalArgumentException(negativeSizeMessage(size));
+        }
+        buf = new ubyte[size];
+    }
+
+    private void ensureCapacity(int minimum)
+    {
+        const oldCapacity = cast(int) buf.length;
+        const minimumGrowth = minimum - oldCapacity;
+        if (minimumGrowth <= 0)
+            return;
+        const growth = minimumGrowth > oldCapacity ? minimumGrowth : oldCapacity;
+        ubyte[] grown = new ubyte[oldCapacity + growth];
+        copyRange(grown, 0, buf, 0, buf.length);
+        buf = grown;
+    }
+
     override void write(int b)
     {
-        bytes ~= cast(ubyte) b;
+        ensureCapacity(count + 1);
+        buf[count] = cast(ubyte) b;
+        count += 1;
     }
 
     override void write(scope const(ubyte)[] b, int off, int len)
     {
-        bytes ~= b[off .. byteWriteEnd(b.length, off, len)];
+        byteWriteEnd(b.length, off, len);
+        ensureCapacity(count + len);
+        copyRange(buf, count, b, off, len);
+        count += len;
+    }
+
+    /// Write every byte of `b`.
+    void writeBytes(scope const(ubyte)[] b)
+    {
+        write(b, 0, cast(int) b.length);
+    }
+
+    /// Write the accumulated bytes to `out` without clearing them.
+    void writeTo(OutputStream target)
+    {
+        import flint.java.lang : NullPointerException;
+
+        if (target is null)
+            throw new NullPointerException("out");
+        target.write(buf[0 .. count].dup);
     }
 
     /// A copy of the bytes written.
-    ubyte[] toByteArray() const pure nothrow
+    ubyte[] toByteArray() const pure
     {
-        return bytes.dup;
+        return buf[0 .. count].dup;
     }
 
     /// How many bytes were written.
     int size() const pure nothrow @nogc
     {
-        return cast(int) bytes.length;
+        return count;
     }
 
-    /// Discard the bytes written.
+    /// Discard the bytes written, keeping the capacity.
     void reset() pure nothrow @nogc
     {
-        bytes = null;
+        count = 0;
     }
 
     /// The bytes as UTF-8 text.
     override string toString() const
     {
-        return cast(string) bytes.idup;
+        return cast(string) buf[0 .. count].idup;
     }
+}
+
+private string negativeSizeMessage(int size)
+{
+    char[12] digits;
+    size_t start = digits.length;
+    auto value = -cast(long) size;
+    do
+    {
+        digits[--start] = cast(char)('0' + value % 10);
+        value /= 10;
+    }
+    while (value != 0);
+    digits[--start] = '-';
+    return ("Negative initial size: " ~ digits[start .. $]).idup;
 }
 
 /// Java's `FilterOutputStream`: an output stream that delegates to a wrapped one.
@@ -1988,69 +2058,126 @@ class PrintWriter : Writer
 /// An `InputStream` over bytes in memory.
 class ByteArrayInputStream : InputStream
 {
-    private const(ubyte)[] bytes;
-    private size_t position;
+    private enum int maxTransferSize = 128 * 1024;
+
+    /// Java's `buf`: the caller's bytes, not copied. A D `const(ubyte)` slice under R26.
+    protected const(ubyte)[] buf;
+
+    /// The index of the next byte to read.
+    protected int pos;
+
+    /// The mark index; `reset` returns here. Zero before any mark or a plain constructor.
+    /// Java names it `mark`, which D cannot share with the `mark(int)` method.
+    protected int markpos;
+
+    /// One past the last readable byte.
+    protected int count;
+
+    alias readNBytes = InputStream.readNBytes;
 
     /// Read from `bytes`, which the stream does not copy.
     this(const(ubyte)[] bytes) pure nothrow @nogc
     {
-        this.bytes = bytes;
+        buf = bytes;
+        count = cast(int) bytes.length;
+    }
+
+    /// Read at most `length` bytes from `bytes` starting at `offset`.
+    this(const(ubyte)[] bytes, int offset, int length) pure nothrow @nogc
+    {
+        buf = bytes;
+        pos = offset;
+        const end = offset + length;
+        count = end < cast(int) bytes.length ? end : cast(int) bytes.length;
+        markpos = offset;
     }
 
     override int read()
     {
-        return position < bytes.length ? bytes[position++] : -1;
-    }
-
-    override int read(scope ubyte[] buffer)
-    {
-        if (buffer.length == 0)
-            return 0;
-        if (position >= bytes.length)
-            return -1;
-        const n = buffer.length < bytes.length - position ? buffer.length : bytes.length - position;
-        auto destination = buffer[0 .. n];
-        auto source = bytes[position .. position + n];
-        if (destination.ptr > source.ptr && destination.ptr <= &source[$ - 1])
-        {
-            foreach_reverse (index, ref value; destination)
-                value = source[index];
-        }
-        else if (source.ptr > destination.ptr && source.ptr <= &destination[$ - 1])
-        {
-            foreach (index, ref value; destination)
-                value = source[index];
-        }
-        else if (destination.ptr != source.ptr)
-        {
-            destination[] = source[];
-        }
-        position += n;
-        return cast(int) n;
+        return pos < count ? (buf[pos++] & 0xff) : -1;
     }
 
     override int read(scope ubyte[] buffer, int offset, int length)
     {
         checkReadRange(buffer.length, offset, length);
-        if (position >= bytes.length)
+        if (pos >= count)
             return -1;
-        return read(buffer[offset .. cast(size_t) offset + length]);
+        const available = count - pos;
+        if (length > available)
+            length = available;
+        if (length <= 0)
+            return 0;
+        copyRange(buffer, offset, buf, pos, length);
+        pos += length;
+        return length;
     }
 
-    override long skip(long count) pure nothrow @nogc
+    override ubyte[] readAllBytes()
     {
-        if (count <= 0)
-            return 0;
-        const available = bytes.length - position;
-        const skipped = cast(ulong) count < available ? cast(size_t) count : available;
-        position += skipped;
-        return cast(long) skipped;
+        auto result = buf[pos .. count].dup;
+        pos = count;
+        return result;
+    }
+
+    override int readNBytes(scope ubyte[] buffer, int offset, int length)
+    {
+        const n = read(buffer, offset, length);
+        return n == -1 ? 0 : n;
+    }
+
+    /// Copy the remaining bytes to `target` but keep this stream open.
+    override long transferTo(OutputStream target)
+    {
+        const remaining = count - pos;
+        if (remaining > 0)
+        {
+            import flint.java.lang : NullPointerException;
+
+            if (target is null)
+                throw new NullPointerException("out");
+            int written;
+            while (written < remaining)
+            {
+                const chunk = remaining - written < maxTransferSize ? remaining - written : maxTransferSize;
+                target.write(buf, pos, chunk);
+                pos += chunk;
+                written += chunk;
+            }
+        }
+        return remaining;
+    }
+
+    override long skip(long amount) pure nothrow @nogc
+    {
+        long skipped = count - pos;
+        if (amount < skipped)
+            skipped = amount < 0 ? 0 : amount;
+        pos += cast(int) skipped;
+        return skipped;
     }
 
     /// How many bytes remain.
     override int available() pure nothrow @nogc
     {
-        return cast(int)(bytes.length - position);
+        return count - pos;
+    }
+
+    /// A byte-array source always supports mark and reset.
+    override bool markSupported() pure nothrow @nogc
+    {
+        return true;
+    }
+
+    /// Record the current position; the read-ahead limit has no meaning here.
+    override void mark(int)
+    {
+        markpos = pos;
+    }
+
+    /// Return to the last mark, initially zero or the ranged constructor's offset.
+    override void reset() pure nothrow @nogc
+    {
+        pos = markpos;
     }
 }
 
