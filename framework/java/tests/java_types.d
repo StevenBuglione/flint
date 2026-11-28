@@ -809,4 +809,3 @@ unittest
     }
     assert(empty.size() == 0);
 }
-
