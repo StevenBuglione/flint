@@ -400,6 +400,16 @@ class Document
     private string id_;
     private DocumentText text_;
     private DocumentMetadataMap metadata_;
+    private ContentFormatter contentFormatter_;
+
+    /// Java's shared default formatter. Flint builds a fresh default per document, so the
+    /// process-wide identity of `Document.DEFAULT_CONTENT_FORMATTER` is not preserved
+    /// (docs/spring/java-differences.md).
+    static @property ContentFormatter DEFAULT_CONTENT_FORMATTER()
+    {
+        return DefaultContentFormatter.defaultConfig();
+    }
+
     /// Creates a text document with a generated ID and a copy of its metadata.
     this(DocumentText text, DocumentMetadataMap metadata)
     {
@@ -452,6 +462,40 @@ class Document
     DocumentMetadataMap getMetadata()
     {
         return metadata_;
+    }
+
+    /// Returns the document's content formatter, creating the default on first use.
+    ContentFormatter getContentFormatter()
+    {
+        if (contentFormatter_ is null)
+            contentFormatter_ = DEFAULT_CONTENT_FORMATTER;
+        return contentFormatter_;
+    }
+
+    /// Replaces the document's content formatter.
+    void setContentFormatter(ContentFormatter contentFormatter)
+    {
+        contentFormatter_ = contentFormatter;
+    }
+
+    /// Formats the content with this document's formatter using `MetadataMode.ALL`.
+    string getFormattedContent()
+    {
+        return getFormattedContent(MetadataMode.ALL);
+    }
+
+    /// Formats the content with this document's formatter.
+    string getFormattedContent(MetadataMode metadataMode)
+    {
+        return getFormattedContent(Nullable!MetadataMode(metadataMode));
+    }
+
+    /// Preserves Java's null-mode validation for the default-formatter overload (R5).
+    string getFormattedContent(Nullable!MetadataMode metadataMode)
+    {
+        if (metadataMode.isNull)
+            throw new IllegalArgumentException("Metadata mode must not be null");
+        return getContentFormatter().format(this, metadataMode.get());
     }
 
     /// Formats the document using the supplied formatter and mode.

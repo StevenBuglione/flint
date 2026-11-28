@@ -135,7 +135,53 @@ unittest
         assert(new Document(id, Text("text"), entries).getId() == id);
 }
 
-@("standalone default configuration formats the pinned document")
+@("noExplicitlySetFormatter")
+unittest
+{
+    auto metadata = new HashMap!(string, Any)();
+    metadata.put("embedKey1", Any.of("value1"));
+    metadata.put("llmKey2", Any.of("value4"));
+    auto document = new Document(Text("The World is Big and Salvation Lurks Around the Corner"), metadata);
+    assert(document.getText().get() == "The World is Big and Salvation Lurks Around the Corner");
+    assert(document.getFormattedContent() == document.getFormattedContent(MetadataMode.ALL));
+    assert(document.getFormattedContent() == document.getFormattedContent(Document.DEFAULT_CONTENT_FORMATTER,
+            MetadataMode.ALL));
+}
+
+private final class ConstantFormatter : ContentFormatter
+{
+    private string formatted;
+
+    this(string formatted)
+    {
+        this.formatted = formatted;
+    }
+
+    override string format(Document document, MetadataMode mode)
+    {
+        return formatted;
+    }
+}
+
+@("setCustomContentFormatter")
+unittest
+{
+    auto document = new Document(Text("Sample text"), new HashMap!(string, Any)());
+    ContentFormatter customFormatter = new ConstantFormatter("Custom formatted content");
+    document.setContentFormatter(customFormatter);
+    assert(document.getContentFormatter() is customFormatter);
+    assert(document.getFormattedContent() == "Custom formatted content");
+}
+
+@("shouldThrowWhenMetadataModeIsNull")
+unittest
+{
+    auto document = new Document(Text("Sample text"), new HashMap!(string, Any)());
+    const error = collectException!IllegalArgumentException(document.getFormattedContent(Nullable!MetadataMode.init));
+    assert(error !is null && error.msg == "Metadata mode must not be null");
+}
+
+@("defaultConfigTextFormatter")
 unittest
 {
     auto metadata = new HashMap!(string, Any)();
@@ -152,6 +198,8 @@ unittest
     enum expected = "llmKey2: value4" ~ separator ~ "embedKey1: value1" ~ separator ~ "embedKey2: value2"
         ~ separator ~ "embedKey3: value3\n\n" ~ "The World is Big and Salvation Lurks Around the Corner";
     assert(document.getFormattedContent(formatter, MetadataMode.ALL) == expected);
+    assert(document.getFormattedContent(formatter, MetadataMode.ALL) == document.getFormattedContent());
+    assert(document.getFormattedContent(formatter, MetadataMode.ALL) == formatter.format(document, MetadataMode.ALL));
     assert(formatter.format(document, MetadataMode.ALL) == expected);
     assert(document.getFormattedContent(formatter, MetadataMode.EMBED) == expected);
     assert(document.getFormattedContent(formatter, MetadataMode.INFERENCE) == expected);

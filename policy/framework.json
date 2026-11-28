@@ -3105,6 +3105,7 @@
     "flint.ai.reader",
     "flint.ai.template_",
     "flint.ai.tokenizer",
+    "flint.ai.transformer",
     "flint.ai.util"
    ],
    "repo": "ai",

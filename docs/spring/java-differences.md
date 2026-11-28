@@ -179,7 +179,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 
 | Repo | Upstream | Ported | Adapted | By porter | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 248 | 394 | 0 | 0 | 15,154 |
+| ai | spring-ai@v2.1.0 | 253 | 398 | 0 | 0 | 15,145 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
 | framework | spring-framework@v7.1.0 | 3,662 | 1,549 | 0 | 4,870 | 29,753 |
@@ -452,8 +452,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#withMetadataTemplate(String)` | `flint.ai.document.DefaultContentFormatter.Builder.withMetadataTemplate` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#withTextTemplate(String)` | `flint.ai.document.DefaultContentFormatter.Builder.withTextTemplate` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.Document#<init>(String,String,Map)` | `flint.ai.document.Document.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.document.Document#DEFAULT_CONTENT_FORMATTER` | `flint.ai.document.Document.DEFAULT_CONTENT_FORMATTER` | [R17](api-mapping.md#r17-shared-constants-of-generic-classes) | Flint builds a fresh default formatter per document, so Java's process-wide shared instance identity is not preserved (docs/spring/java-differences.md). |
 | `org.springframework.ai.document.Document#equals(Object)` | `flint.ai.document.Document.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.document.Document#getContentFormatter()` | `flint.ai.document.Document.getContentFormatter` | [R23](api-mapping.md#r23-object-typed-values) | Creates and caches the default formatter on first use instead of returning Java's shared static. |
 | `org.springframework.ai.document.Document#getFormattedContent(ContentFormatter,MetadataMode)` | `flint.ai.document.Document.getFormattedContent` | [R5](api-mapping.md#r5-optional-and-nullable-values) | The Nullable mode overload preserves Java null-mode validation. |
+| `org.springframework.ai.document.Document#getFormattedContent(MetadataMode)` | `flint.ai.document.Document.getFormattedContent` | [R5](api-mapping.md#r5-optional-and-nullable-values) | The Nullable mode overload preserves Java null-mode validation. |
 | `org.springframework.ai.document.Document#getMetadata()` | `flint.ai.document.Document.getMetadata` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.document.Document#getText()` | `flint.ai.document.Document.getText` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.document.Document#hashCode()` | `flint.ai.document.Document.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -715,6 +718,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.ai.tokenizer.TokenCountEstimator#estimate(String)` | `flint.ai.tokenizer.TokenCountEstimator.estimate` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+
+#### org.springframework.ai.transformer
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.ai.transformer.ContentFormatTransformer#apply(List)` | `flint.ai.transformer.ContentFormatTransformer.apply` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | DocumentTransformer.transform delegates to apply (R3). |
 
 #### org.springframework.ai.util
 
@@ -10373,7 +10382,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.deepseek.api | 0 | 210 |
 | org.springframework.ai.deepseek.api.common | 0 | 5 |
 | org.springframework.ai.docker.compose.service.connection.typesense | 0 | 3 |
-| org.springframework.ai.document | 22 | 0 |
+| org.springframework.ai.document | 17 | 0 |
 | org.springframework.ai.document.id | 4 | 0 |
 | org.springframework.ai.elevenlabs | 0 | 61 |
 | org.springframework.ai.elevenlabs.aot | 0 | 3 |
@@ -10564,7 +10573,6 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.tool.toolsearch.index.lucene | 14 | 0 |
 | org.springframework.ai.tool.toolsearch.index.regex | 11 | 0 |
 | org.springframework.ai.tool.toolsearch.index.vectorstore | 9 | 0 |
-| org.springframework.ai.transformer | 4 | 0 |
 | org.springframework.ai.transformer.splitter | 29 | 0 |
 | org.springframework.ai.transformers | 0 | 34 |
 | org.springframework.ai.util | 22 | 0 |

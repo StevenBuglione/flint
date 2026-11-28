@@ -4,16 +4,20 @@
       "d": "ai/ai-commons/tests/document_explicit_formatter_tests.d",
       "methods": {
         "ported": [
+          "defaultConfigTextFormatter",
           "differentIds",
           "differentText",
           "equalDocuments",
           "metadataImmutability",
+          "noExplicitlySetFormatter",
+          "setCustomContentFormatter",
           "shouldThrowWhenFormatterIsNull",
           "shouldThrowWhenIdIsEmpty",
           "shouldThrowWhenIdIsNull",
           "shouldThrowWhenMetadataHasNullKey",
           "shouldThrowWhenMetadataHasNullValue",
-          "shouldThrowWhenMetadataIsNull"
+          "shouldThrowWhenMetadataIsNull",
+          "shouldThrowWhenMetadataModeIsNull"
         ],
         "skipped": {
           "builderShouldThrowWhenIdGeneratorIsNull": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
@@ -21,13 +25,9 @@
           "builderShouldThrowWhenMetadataValueIsNull": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
           "builderWithCustomIdGenerator": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
           "builderWithMetadataMap": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
-          "defaultConfigTextFormatter": "The explicit formatter assertions run locally. The comparison with the default getFormattedContent overload requires the process-wide Document default formatter.",
           "isTextReturnsTrueForTextDocument": "The text assertions are covered locally. The pinned method also requires the typed Media accessor.",
           "mutateTextDocument": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
-          "noExplicitlySetFormatter": "Requires the shared default formatter, its configuration, or the default formatter overload.",
           "scoreHandling": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
-          "setCustomContentFormatter": "Requires the shared default formatter, its configuration, or the default formatter overload.",
-          "shouldThrowWhenMetadataModeIsNull": "Requires the shared default formatter, its configuration, or the default formatter overload.",
           "shouldThrowWhenNeitherTextNorMediaAreSet": "Requires Document.Builder and its default ID path."
         }
       },
@@ -207,6 +207,14 @@
     "org/springframework/ai/util/ParsingUtilsTests.java": {
       "phase": "2",
       "status": "deferred"
+    },
+    "org/springframework/ai/transformer/splitter/TextSplitterTests.java": {
+      "status": "excluded",
+      "reason": "Its class TextSplitter is deferred: it needs Document.Builder and score, which are not ported yet."
+    },
+    "org/springframework/ai/transformer/splitter/TokenTextSplitterTest.java": {
+      "status": "excluded",
+      "reason": "Its class TokenTextSplitter is deferred: it needs Document.Builder, score and the jtokkit tokenizer, which are not ported yet."
     }
   },
   "module": "ai-commons",
