@@ -685,6 +685,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Pad a pattern letter with the existing pad element instead of a new printer-parser.** `p` only looks ahead from the pattern parser to the next letter run and calls `padNext`, so the padded value, text or fraction is the same element `appendPattern` already builds and `Pad(...)` prints, parses and reports its width error. The only new code is the lookahead, the run helper and an ASCII-letter predicate; no new parsing or printing table. On venus (v4.2 toolchain) against the parent `534559ed9`, the Java module stays at 129,512 incremental linked bytes (O3 129,512, Oz 122,344) and DMD templates rise from 4,787 to 4,789 against the 7,350 cap (measured at `6027badfc`, whose code is identical to this entry's commit).
 
+- **Resolve the localized week letters from the date, with no new printing table.** `Y`, `w`, `W`, `e` and `c` reuse the existing number, reduced-year and text elements and the four-byte `uint` presence mask gains four week fields; the week values are computed from the resolved date by the `WeekFields.of(Locale.ROOT)` arithmetic (Sunday first, minimally one day), so printing and cross-checking add integer helpers only. Parsing converts the localized day-of-week into the ISO field before the other date rules, and a week date resolves through the same `LocalDate` path as the ISO week. On venus (v4.2 toolchain) against the parent `f8d5b073e`, the Java module stays at 129,512 incremental linked bytes (O3 129,512, Oz 122,344) and DMD templates rise from 4,789 to 4,817 against the 7,350 cap (measured at `5cf4f496a`, whose code is identical to this entry's commit).
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:

@@ -5453,3 +5453,372 @@ parse	p:uuuu y	date	-0001 1	!Text '-0001 1' could not be parsed: Conflict found:
 parse	p:uuuu y	date	-0001 2	!Text '-0001 2' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
 parse	p:uuuu y	date	0001 1	!Text '0001 1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
 parse	p:uuuu y	date	+12345 12345	!Text '+12345 12345' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:Y	-	-	Localized(WeekBasedYear)
+format	p:Y	date	2024-03-05	2024
+format	p:Y	date	0001-12-31	2
+format	p:Y	date	+12345-06-07	12345
+format	p:Y	time	10:15	!Unsupported field: DayOfWeek
+format	p:Y	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:Y	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:Y	time	00:00	!Unsupported field: DayOfWeek
+format	p:Y	dateTime	2024-03-05T10:15:30	2024
+format	p:Y	dateTime	2024-03-05T00:00:00.000001	2024
+format	p:Y	offset	2024-03-05T10:15:30+01:00	2024
+format	p:Y	offset	2024-03-05T10:15:30Z	2024
+format	p:Y	offset	2024-03-05T10:15:30.500-05:30:15	2024
+format	p:Y	offset	2024-03-05T10:15:30+00:00:45	2024
+format	p:Y	zoned	2024-03-05T10:15:30+02:00	2024
+format	p:Y	zoned	2024-03-05T10:15:30Z[UTC]	2024
+format	p:Y	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:Y	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+build	p:YY	-	-	Localized(ReducedValue(WeekBasedYear,2,2,2000-01-01))
+format	p:YY	date	2024-03-05	24
+format	p:YY	date	0001-12-31	02
+format	p:YY	date	+12345-06-07	45
+format	p:YY	time	10:15	!Unsupported field: DayOfWeek
+format	p:YY	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:YY	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:YY	time	00:00	!Unsupported field: DayOfWeek
+format	p:YY	dateTime	2024-03-05T10:15:30	24
+format	p:YY	dateTime	2024-03-05T00:00:00.000001	24
+format	p:YY	offset	2024-03-05T10:15:30+01:00	24
+format	p:YY	offset	2024-03-05T10:15:30Z	24
+format	p:YY	offset	2024-03-05T10:15:30.500-05:30:15	24
+format	p:YY	offset	2024-03-05T10:15:30+00:00:45	24
+format	p:YY	zoned	2024-03-05T10:15:30+02:00	24
+format	p:YY	zoned	2024-03-05T10:15:30Z[UTC]	24
+format	p:YY	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:YY	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+build	p:YYY	-	-	Localized(WeekBasedYear,3,19,NORMAL)
+format	p:YYY	date	2024-03-05	2024
+format	p:YYY	date	0001-12-31	002
+format	p:YYY	date	+12345-06-07	12345
+format	p:YYY	time	10:15	!Unsupported field: DayOfWeek
+format	p:YYY	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:YYY	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:YYY	time	00:00	!Unsupported field: DayOfWeek
+format	p:YYY	dateTime	2024-03-05T10:15:30	2024
+format	p:YYY	dateTime	2024-03-05T00:00:00.000001	2024
+format	p:YYY	offset	2024-03-05T10:15:30+01:00	2024
+format	p:YYY	offset	2024-03-05T10:15:30Z	2024
+format	p:YYY	offset	2024-03-05T10:15:30.500-05:30:15	2024
+format	p:YYY	offset	2024-03-05T10:15:30+00:00:45	2024
+format	p:YYY	zoned	2024-03-05T10:15:30+02:00	2024
+format	p:YYY	zoned	2024-03-05T10:15:30Z[UTC]	2024
+format	p:YYY	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:YYY	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+build	p:YYYY	-	-	Localized(WeekBasedYear,4,19,EXCEEDS_PAD)
+format	p:YYYY	date	2024-03-05	2024
+format	p:YYYY	date	0001-12-31	0002
+format	p:YYYY	date	+12345-06-07	+12345
+format	p:YYYY	time	10:15	!Unsupported field: DayOfWeek
+format	p:YYYY	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:YYYY	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:YYYY	time	00:00	!Unsupported field: DayOfWeek
+format	p:YYYY	dateTime	2024-03-05T10:15:30	2024
+format	p:YYYY	dateTime	2024-03-05T00:00:00.000001	2024
+format	p:YYYY	offset	2024-03-05T10:15:30+01:00	2024
+format	p:YYYY	offset	2024-03-05T10:15:30Z	2024
+format	p:YYYY	offset	2024-03-05T10:15:30.500-05:30:15	2024
+format	p:YYYY	offset	2024-03-05T10:15:30+00:00:45	2024
+format	p:YYYY	zoned	2024-03-05T10:15:30+02:00	2024
+format	p:YYYY	zoned	2024-03-05T10:15:30Z[UTC]	2024
+format	p:YYYY	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:YYYY	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+build	p:YYYYY	-	-	Localized(WeekBasedYear,5,19,EXCEEDS_PAD)
+format	p:YYYYY	date	2024-03-05	02024
+format	p:YYYYY	date	0001-12-31	00002
+format	p:YYYYY	date	+12345-06-07	12345
+format	p:YYYYY	time	10:15	!Unsupported field: DayOfWeek
+format	p:YYYYY	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:YYYYY	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:YYYYY	time	00:00	!Unsupported field: DayOfWeek
+format	p:YYYYY	dateTime	2024-03-05T10:15:30	02024
+format	p:YYYYY	dateTime	2024-03-05T00:00:00.000001	02024
+format	p:YYYYY	offset	2024-03-05T10:15:30+01:00	02024
+format	p:YYYYY	offset	2024-03-05T10:15:30Z	02024
+format	p:YYYYY	offset	2024-03-05T10:15:30.500-05:30:15	02024
+format	p:YYYYY	offset	2024-03-05T10:15:30+00:00:45	02024
+format	p:YYYYY	zoned	2024-03-05T10:15:30+02:00	02024
+format	p:YYYYY	zoned	2024-03-05T10:15:30Z[UTC]	02024
+format	p:YYYYY	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:YYYYY	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+build	p:w	-	-	Localized(WeekOfWeekBasedYear,1)
+format	p:w	date	2024-03-05	10
+format	p:w	date	0001-12-31	1
+format	p:w	date	+12345-06-07	23
+format	p:w	time	10:15	!Unsupported field: DayOfWeek
+format	p:w	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:w	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:w	time	00:00	!Unsupported field: DayOfWeek
+format	p:w	dateTime	2024-03-05T10:15:30	10
+format	p:w	dateTime	2024-03-05T00:00:00.000001	10
+format	p:w	offset	2024-03-05T10:15:30+01:00	10
+format	p:w	offset	2024-03-05T10:15:30Z	10
+format	p:w	offset	2024-03-05T10:15:30.500-05:30:15	10
+format	p:w	offset	2024-03-05T10:15:30+00:00:45	10
+format	p:w	zoned	2024-03-05T10:15:30+02:00	10
+format	p:w	zoned	2024-03-05T10:15:30Z[UTC]	10
+format	p:w	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:w	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+build	p:ww	-	-	Localized(WeekOfWeekBasedYear,2)
+format	p:ww	date	2024-03-05	10
+format	p:ww	date	0001-12-31	01
+format	p:ww	date	+12345-06-07	23
+format	p:ww	time	10:15	!Unsupported field: DayOfWeek
+format	p:ww	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:ww	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:ww	time	00:00	!Unsupported field: DayOfWeek
+format	p:ww	dateTime	2024-03-05T10:15:30	10
+format	p:ww	dateTime	2024-03-05T00:00:00.000001	10
+format	p:ww	offset	2024-03-05T10:15:30+01:00	10
+format	p:ww	offset	2024-03-05T10:15:30Z	10
+format	p:ww	offset	2024-03-05T10:15:30.500-05:30:15	10
+format	p:ww	offset	2024-03-05T10:15:30+00:00:45	10
+format	p:ww	zoned	2024-03-05T10:15:30+02:00	10
+format	p:ww	zoned	2024-03-05T10:15:30Z[UTC]	10
+format	p:ww	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:ww	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+build	p:W	-	-	Localized(WeekOfMonth,1)
+format	p:W	date	2024-03-05	2
+format	p:W	date	0001-12-31	6
+format	p:W	date	+12345-06-07	2
+format	p:W	time	10:15	!Unsupported field: DayOfWeek
+format	p:W	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:W	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:W	time	00:00	!Unsupported field: DayOfWeek
+format	p:W	dateTime	2024-03-05T10:15:30	2
+format	p:W	dateTime	2024-03-05T00:00:00.000001	2
+format	p:W	offset	2024-03-05T10:15:30+01:00	2
+format	p:W	offset	2024-03-05T10:15:30Z	2
+format	p:W	offset	2024-03-05T10:15:30.500-05:30:15	2
+format	p:W	offset	2024-03-05T10:15:30+00:00:45	2
+format	p:W	zoned	2024-03-05T10:15:30+02:00	2
+format	p:W	zoned	2024-03-05T10:15:30Z[UTC]	2
+format	p:W	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:W	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+build	p:e	-	-	Localized(DayOfWeek,1)
+format	p:e	date	2024-03-05	3
+format	p:e	date	0001-12-31	2
+format	p:e	date	+12345-06-07	5
+format	p:e	time	10:15	!Unsupported field: DayOfWeek
+format	p:e	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:e	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:e	time	00:00	!Unsupported field: DayOfWeek
+format	p:e	dateTime	2024-03-05T10:15:30	3
+format	p:e	dateTime	2024-03-05T00:00:00.000001	3
+format	p:e	offset	2024-03-05T10:15:30+01:00	3
+format	p:e	offset	2024-03-05T10:15:30Z	3
+format	p:e	offset	2024-03-05T10:15:30.500-05:30:15	3
+format	p:e	offset	2024-03-05T10:15:30+00:00:45	3
+format	p:e	zoned	2024-03-05T10:15:30+02:00	3
+format	p:e	zoned	2024-03-05T10:15:30Z[UTC]	3
+format	p:e	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:e	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+build	p:ee	-	-	Localized(DayOfWeek,2)
+format	p:ee	date	2024-03-05	03
+format	p:ee	date	0001-12-31	02
+format	p:ee	date	+12345-06-07	05
+format	p:ee	time	10:15	!Unsupported field: DayOfWeek
+format	p:ee	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:ee	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:ee	time	00:00	!Unsupported field: DayOfWeek
+format	p:ee	dateTime	2024-03-05T10:15:30	03
+format	p:ee	dateTime	2024-03-05T00:00:00.000001	03
+format	p:ee	offset	2024-03-05T10:15:30+01:00	03
+format	p:ee	offset	2024-03-05T10:15:30Z	03
+format	p:ee	offset	2024-03-05T10:15:30.500-05:30:15	03
+format	p:ee	offset	2024-03-05T10:15:30+00:00:45	03
+format	p:ee	zoned	2024-03-05T10:15:30+02:00	03
+format	p:ee	zoned	2024-03-05T10:15:30Z[UTC]	03
+format	p:ee	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:ee	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+build	p:c	-	-	Localized(DayOfWeek,1)
+format	p:c	date	2024-03-05	3
+format	p:c	date	0001-12-31	2
+format	p:c	date	+12345-06-07	5
+format	p:c	time	10:15	!Unsupported field: DayOfWeek
+format	p:c	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:c	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:c	time	00:00	!Unsupported field: DayOfWeek
+format	p:c	dateTime	2024-03-05T10:15:30	3
+format	p:c	dateTime	2024-03-05T00:00:00.000001	3
+format	p:c	offset	2024-03-05T10:15:30+01:00	3
+format	p:c	offset	2024-03-05T10:15:30Z	3
+format	p:c	offset	2024-03-05T10:15:30.500-05:30:15	3
+format	p:c	offset	2024-03-05T10:15:30+00:00:45	3
+format	p:c	zoned	2024-03-05T10:15:30+02:00	3
+format	p:c	zoned	2024-03-05T10:15:30Z[UTC]	3
+format	p:c	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:c	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+build	p:ccc	-	-	Text(DayOfWeek,SHORT_STANDALONE)
+format	p:ccc	date	2024-03-05	Tue
+format	p:ccc	date	0001-12-31	Mon
+format	p:ccc	date	+12345-06-07	Thu
+format	p:ccc	time	10:15	!Unsupported field: DayOfWeek
+format	p:ccc	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:ccc	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:ccc	time	00:00	!Unsupported field: DayOfWeek
+format	p:ccc	dateTime	2024-03-05T10:15:30	Tue
+format	p:ccc	dateTime	2024-03-05T00:00:00.000001	Tue
+format	p:ccc	offset	2024-03-05T10:15:30+01:00	Tue
+format	p:ccc	offset	2024-03-05T10:15:30Z	Tue
+format	p:ccc	offset	2024-03-05T10:15:30.500-05:30:15	Tue
+format	p:ccc	offset	2024-03-05T10:15:30+00:00:45	Tue
+format	p:ccc	zoned	2024-03-05T10:15:30+02:00	Tue
+format	p:ccc	zoned	2024-03-05T10:15:30Z[UTC]	Tue
+format	p:ccc	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:ccc	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+build	p:cccc	-	-	Text(DayOfWeek,FULL_STANDALONE)
+format	p:cccc	date	2024-03-05	Tuesday
+format	p:cccc	date	0001-12-31	Monday
+format	p:cccc	date	+12345-06-07	Thursday
+format	p:cccc	time	10:15	!Unsupported field: DayOfWeek
+format	p:cccc	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:cccc	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:cccc	time	00:00	!Unsupported field: DayOfWeek
+format	p:cccc	dateTime	2024-03-05T10:15:30	Tuesday
+format	p:cccc	dateTime	2024-03-05T00:00:00.000001	Tuesday
+format	p:cccc	offset	2024-03-05T10:15:30+01:00	Tuesday
+format	p:cccc	offset	2024-03-05T10:15:30Z	Tuesday
+format	p:cccc	offset	2024-03-05T10:15:30.500-05:30:15	Tuesday
+format	p:cccc	offset	2024-03-05T10:15:30+00:00:45	Tuesday
+format	p:cccc	zoned	2024-03-05T10:15:30+02:00	Tuesday
+format	p:cccc	zoned	2024-03-05T10:15:30Z[UTC]	Tuesday
+format	p:cccc	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:cccc	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+build	p:ccccc	-	-	Text(DayOfWeek,NARROW_STANDALONE)
+format	p:ccccc	date	2024-03-05	T
+format	p:ccccc	date	0001-12-31	M
+format	p:ccccc	date	+12345-06-07	T
+format	p:ccccc	time	10:15	!Unsupported field: DayOfWeek
+format	p:ccccc	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:ccccc	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:ccccc	time	00:00	!Unsupported field: DayOfWeek
+format	p:ccccc	dateTime	2024-03-05T10:15:30	T
+format	p:ccccc	dateTime	2024-03-05T00:00:00.000001	T
+format	p:ccccc	offset	2024-03-05T10:15:30+01:00	T
+format	p:ccccc	offset	2024-03-05T10:15:30Z	T
+format	p:ccccc	offset	2024-03-05T10:15:30.500-05:30:15	T
+format	p:ccccc	offset	2024-03-05T10:15:30+00:00:45	T
+format	p:ccccc	zoned	2024-03-05T10:15:30+02:00	T
+format	p:ccccc	zoned	2024-03-05T10:15:30Z[UTC]	T
+format	p:ccccc	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:ccccc	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+build	p:cc	-	-	!Invalid pattern "cc"
+build	p:www	-	-	!Too many pattern letters: w
+build	p:WW	-	-	!Too many pattern letters: W
+build	p:eeeeee	-	-	!Too many pattern letters: e
+build	p:cccccc	-	-	!Too many pattern letters: c
+build	p:YYYY-'W'ww-e	-	-	Localized(WeekBasedYear,4,19,EXCEEDS_PAD)'-''W'Localized(WeekOfWeekBasedYear,2)'-'Localized(DayOfWeek,1)
+format	p:YYYY-'W'ww-e	date	2024-03-05	2024-W10-3
+format	p:YYYY-'W'ww-e	date	0001-12-31	0002-W01-2
+format	p:YYYY-'W'ww-e	date	+12345-06-07	+12345-W23-5
+format	p:YYYY-'W'ww-e	time	10:15	!Unsupported field: DayOfWeek
+format	p:YYYY-'W'ww-e	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:YYYY-'W'ww-e	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:YYYY-'W'ww-e	time	00:00	!Unsupported field: DayOfWeek
+format	p:YYYY-'W'ww-e	dateTime	2024-03-05T10:15:30	2024-W10-3
+format	p:YYYY-'W'ww-e	dateTime	2024-03-05T00:00:00.000001	2024-W10-3
+format	p:YYYY-'W'ww-e	offset	2024-03-05T10:15:30+01:00	2024-W10-3
+format	p:YYYY-'W'ww-e	offset	2024-03-05T10:15:30Z	2024-W10-3
+format	p:YYYY-'W'ww-e	offset	2024-03-05T10:15:30.500-05:30:15	2024-W10-3
+format	p:YYYY-'W'ww-e	offset	2024-03-05T10:15:30+00:00:45	2024-W10-3
+format	p:YYYY-'W'ww-e	zoned	2024-03-05T10:15:30+02:00	2024-W10-3
+format	p:YYYY-'W'ww-e	zoned	2024-03-05T10:15:30Z[UTC]	2024-W10-3
+format	p:YYYY-'W'ww-e	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:YYYY-'W'ww-e	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+parse	p:YYYY-'W'ww-e	date	2024-W10-3	2024-03-05
+parse	p:YYYY-'W'ww-e	date	0002-W01-2	0001-12-31
+parse	p:YYYY-'W'ww-e	date	+12345-W23-5	+12345-06-07
+build	p:uuuu-MM-dd e	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)' 'Localized(DayOfWeek,1)
+format	p:uuuu-MM-dd e	date	2024-03-05	2024-03-05 3
+format	p:uuuu-MM-dd e	date	0001-12-31	0001-12-31 2
+format	p:uuuu-MM-dd e	date	+12345-06-07	+12345-06-07 5
+format	p:uuuu-MM-dd e	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd e	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd e	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd e	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd e	dateTime	2024-03-05T10:15:30	2024-03-05 3
+format	p:uuuu-MM-dd e	dateTime	2024-03-05T00:00:00.000001	2024-03-05 3
+format	p:uuuu-MM-dd e	offset	2024-03-05T10:15:30+01:00	2024-03-05 3
+format	p:uuuu-MM-dd e	offset	2024-03-05T10:15:30Z	2024-03-05 3
+format	p:uuuu-MM-dd e	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05 3
+format	p:uuuu-MM-dd e	offset	2024-03-05T10:15:30+00:00:45	2024-03-05 3
+format	p:uuuu-MM-dd e	zoned	2024-03-05T10:15:30+02:00	2024-03-05 3
+format	p:uuuu-MM-dd e	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05 3
+format	p:uuuu-MM-dd e	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd e	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd e	date	2024-03-05 3	2024-03-05
+parse	p:uuuu-MM-dd e	date	0001-12-31 2	0001-12-31
+parse	p:uuuu-MM-dd e	date	+12345-06-07 5	+12345-06-07
+build	p:uuuu-MM-dd cccc	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)' 'Text(DayOfWeek,FULL_STANDALONE)
+format	p:uuuu-MM-dd cccc	date	2024-03-05	2024-03-05 Tuesday
+format	p:uuuu-MM-dd cccc	date	0001-12-31	0001-12-31 Monday
+format	p:uuuu-MM-dd cccc	date	+12345-06-07	+12345-06-07 Thursday
+format	p:uuuu-MM-dd cccc	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd cccc	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd cccc	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd cccc	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd cccc	dateTime	2024-03-05T10:15:30	2024-03-05 Tuesday
+format	p:uuuu-MM-dd cccc	dateTime	2024-03-05T00:00:00.000001	2024-03-05 Tuesday
+format	p:uuuu-MM-dd cccc	offset	2024-03-05T10:15:30+01:00	2024-03-05 Tuesday
+format	p:uuuu-MM-dd cccc	offset	2024-03-05T10:15:30Z	2024-03-05 Tuesday
+format	p:uuuu-MM-dd cccc	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05 Tuesday
+format	p:uuuu-MM-dd cccc	offset	2024-03-05T10:15:30+00:00:45	2024-03-05 Tuesday
+format	p:uuuu-MM-dd cccc	zoned	2024-03-05T10:15:30+02:00	2024-03-05 Tuesday
+format	p:uuuu-MM-dd cccc	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05 Tuesday
+format	p:uuuu-MM-dd cccc	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd cccc	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd cccc	date	2024-03-05 Tue	!Text '2024-03-05 Tue' could not be parsed at index 11	11
+parse	p:uuuu-MM-dd cccc	date	2024-03-05 Tuesday	2024-03-05
+parse	p:uuuu-MM-dd cccc	date	0001-12-31 Monday	0001-12-31
+parse	p:uuuu-MM-dd cccc	date	+12345-06-07 Thursday	+12345-06-07
+build	p:uuuu-MM W	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)' 'Localized(WeekOfMonth,1)
+format	p:uuuu-MM W	date	2024-03-05	2024-03 2
+format	p:uuuu-MM W	date	0001-12-31	0001-12 6
+format	p:uuuu-MM W	date	+12345-06-07	+12345-06 2
+format	p:uuuu-MM W	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM W	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM W	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM W	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM W	dateTime	2024-03-05T10:15:30	2024-03 2
+format	p:uuuu-MM W	dateTime	2024-03-05T00:00:00.000001	2024-03 2
+format	p:uuuu-MM W	offset	2024-03-05T10:15:30+01:00	2024-03 2
+format	p:uuuu-MM W	offset	2024-03-05T10:15:30Z	2024-03 2
+format	p:uuuu-MM W	offset	2024-03-05T10:15:30.500-05:30:15	2024-03 2
+format	p:uuuu-MM W	offset	2024-03-05T10:15:30+00:00:45	2024-03 2
+format	p:uuuu-MM W	zoned	2024-03-05T10:15:30+02:00	2024-03 2
+format	p:uuuu-MM W	zoned	2024-03-05T10:15:30Z[UTC]	2024-03 2
+format	p:uuuu-MM W	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM W	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM W	date	2024-03 2	!Text '2024-03 2' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:uuuu-MM W	date	0001-12 6	!Text '0001-12 6' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:uuuu-MM W	date	+12345-06 2	!Text '+12345-06 2' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:YYYY-'W'ww-e	date	2023-W53-1	!Text '2023-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear[WeekFields[SUNDAY,1]] (valid values 1 - 52): 53	0
+parse	p:YYYY-'W'ww-e	date	2024-W54-1	!Text '2024-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear[WeekFields[SUNDAY,1]] (valid values 1 - 52): 54	0
+parse	p:YYYY-'W'ww-e	date	2020-W01-1	2019-12-29
+parse	p:YYYY-'W'ww-e	date	2022-W53-1	2022-12-25
+parse	p:YYYY-'W'ww-e	date	2022-W54-1	!Text '2022-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear[WeekFields[SUNDAY,1]] (valid values 1 - 53): 54	0
+parse	p:uuuu-MM W e	date	2024-03 2 3	2024-03-05
+parse	p:uuuu-MM W e	date	2024-03 6 3	2024-04-02
+parse	p:uuuu-MM W e	date	2024-03 7 3	!Text '2024-03 7 3' could not be parsed: Invalid value for WeekOfMonth[WeekFields[SUNDAY,1]] (valid values 0/1 - 4/6): 7	0
+parse	p:uuuu-MM W e	date	2024-03 2 9	!Text '2024-03 2 9' could not be parsed: Invalid value for DayOfWeek[WeekFields[SUNDAY,1]] (valid values 1 - 7): 9	0
+parse	p:uuuu-MM-dd W	date	2024-03-05 2	2024-03-05
+parse	p:uuuu-MM-dd W	date	2024-03-05 1	!Text '2024-03-05 1' could not be parsed: Conflict found: Field WeekOfMonth[WeekFields[SUNDAY,1]] 2 differs from WeekOfMonth[WeekFields[SUNDAY,1]] 1 derived from 2024-03-05	0
+parse	p:uuuu-MM-dd W	date	2024-03-05 3	!Text '2024-03-05 3' could not be parsed: Conflict found: Field WeekOfMonth[WeekFields[SUNDAY,1]] 2 differs from WeekOfMonth[WeekFields[SUNDAY,1]] 3 derived from 2024-03-05	0
+parse	p:uuuu-MM-dd w	date	2024-03-05 10	2024-03-05
+parse	p:uuuu-MM-dd w	date	2024-03-05 11	!Text '2024-03-05 11' could not be parsed: Conflict found: Field WeekOfWeekBasedYear[WeekFields[SUNDAY,1]] 10 differs from WeekOfWeekBasedYear[WeekFields[SUNDAY,1]] 11 derived from 2024-03-05	0
+parse	p:uuuu-MM-dd Y	date	2024-03-05 2024	2024-03-05
+parse	p:uuuu-MM-dd Y	date	2024-03-05 2025	!Text '2024-03-05 2025' could not be parsed: Conflict found: Field WeekBasedYear[WeekFields[SUNDAY,1]] 2024 differs from WeekBasedYear[WeekFields[SUNDAY,1]] 2025 derived from 2024-03-05	0
+parse	p:uuuu-MM-dd e	date	2024-03-05 2	!Text '2024-03-05 2' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 1 derived from 2024-03-05	0
+parse	p:uuuu-MM-dd e	date	2024-03-05 9	!Text '2024-03-05 9' could not be parsed: Invalid value for DayOfWeek[WeekFields[SUNDAY,1]] (valid values 1 - 7): 9	0
+parse	p:uuuu-MM-dd c	date	2024-03-05 3	2024-03-05
+parse	p:uuuu-MM-dd c	date	2024-03-05 0	!Text '2024-03-05 0' could not be parsed: Invalid value for DayOfWeek[WeekFields[SUNDAY,1]] (valid values 1 - 7): 0	0
+parse	p:uuuu-MM-dd c	date	2024-03-05 8	!Text '2024-03-05 8' could not be parsed: Invalid value for DayOfWeek[WeekFields[SUNDAY,1]] (valid values 1 - 7): 8	0
+parse	p:uuuu-MM-dd cccc	date	2024-03-05 Monday	!Text '2024-03-05 Monday' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 1 derived from 2024-03-05	0
+parse	p:Y	date	2024	!Text '2024' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:ww	date	10	!Text '10' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:W	date	2	!Text '2' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:e	date	3	!Text '3' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:e	date	9	!Text '9' could not be parsed: Invalid value for DayOfWeek[WeekFields[SUNDAY,1]] (valid values 1 - 7): 9	0

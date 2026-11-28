@@ -275,6 +275,10 @@ private enum Field : ubyte
     weekBasedYear, // Java's IsoFields.WEEK_BASED_YEAR
     weekOfWeekBasedYear, // IsoFields.WEEK_OF_WEEK_BASED_YEAR
     era, // ChronoField.ERA: 0 is BC, 1 is CE
+    localWeekBasedYear, // Java's WeekFields.weekBasedYear(), English/root: Sunday first, minimally one day
+    localWeekOfWeekBasedYear, // Java's WeekFields.weekOfWeekBasedYear()
+    weekOfMonth, // Java's WeekFields.weekOfMonth()
+    localDayOfWeek, // Java's WeekFields.dayOfWeek(): a localized value 1-7, Sunday being 1
 }
 
 private enum fieldCount = Field.max + 1;
@@ -282,8 +286,11 @@ private enum fieldCount = Field.max + 1;
 private immutable string[fieldCount] fieldNames = [
     "Year", "YearOfEra", "MonthOfYear", "DayOfMonth", "DayOfYear", "DayOfWeek", "QuarterOfYear",
     "AlignedWeekOfMonth", "HourOfDay", "ClockHourOfAmPm", "HourOfAmPm", "ClockHourOfDay",
-    "MinuteOfHour", "SecondOfMinute", "NanoOfSecond", "MilliOfDay", "NanoOfDay", "AmPmOfDay",
-    "InstantSeconds", "ModifiedJulianDay", "WeekBasedYear", "WeekOfWeekBasedYear", "Era"
+    "MinuteOfHour", "SecondOfMinute", "NanoOfSecond",
+    "MilliOfDay", "NanoOfDay", "AmPmOfDay",
+    "InstantSeconds", "ModifiedJulianDay", "WeekBasedYear", "WeekOfWeekBasedYear", "Era",
+    "WeekBasedYear[WeekFields[SUNDAY,1]]", "WeekOfWeekBasedYear[WeekFields[SUNDAY,1]]",
+    "WeekOfMonth[WeekFields[SUNDAY,1]]", "DayOfWeek[WeekFields[SUNDAY,1]]"
 ];
 
 /**
@@ -670,6 +677,15 @@ struct Fields
                     values_[Field.quarterOfYear], date);
         if (has(Field.era))
             crossCheckField(text, "Era", date.getYear() >= 1 ? 1 : 0, values_[Field.era], date);
+        if (has(Field.localWeekBasedYear))
+            crossCheckField(text, fieldNames[Field.localWeekBasedYear],
+                    localizedWeekBasedYear(date), values_[Field.localWeekBasedYear], date);
+        if (has(Field.localWeekOfWeekBasedYear))
+            crossCheckField(text, fieldNames[Field.localWeekOfWeekBasedYear],
+                    localizedWeekOfWeekBasedYear(date), values_[Field.localWeekOfWeekBasedYear], date);
+        if (has(Field.weekOfMonth))
+            crossCheckField(text, fieldNames[Field.weekOfMonth], localizedWeekOfMonth(date),
+                    values_[Field.weekOfMonth], date);
     }
 
     private static void crossCheckField(scope const(char)[] text, string field, long derived,
@@ -897,6 +913,80 @@ struct Fields
         addDate(date);
     }
 
+    // Converts a localized day-of-week (the pattern letters e and c), a value 1-7 with Sunday being 1, into the ISO
+    // day-of-week the other date rules use, as Java's `WeekFields.dayOfWeek().resolve` does first. An out-of-range
+    // value names the localized field, but a later cross-check names the ISO DayOfWeek, as Java does.
+    private void resolveLocalizedDayOfWeek(scope const(char)[] text)
+    {
+        if (!has(Field.localDayOfWeek))
+            return;
+        const value = values_[Field.localDayOfWeek];
+        if (value < 1 || value > 7)
+        {
+            import flint.engine.aot.text : decimal;
+
+            throw failed(text, new DateTimeException(
+                    "Invalid value for DayOfWeek[WeekFields[SUNDAY,1]] (valid values 1 - 7): " ~ decimal(value)));
+        }
+        const iso = (rootFirstDay - 1 + cast(int) value - 1) % 7 + 1;
+        present_ &= ~(1u << Field.localDayOfWeek);
+        set(Field.dayOfWeek, iso);
+    }
+
+    // Resolves a parsed localized week date into the date, as Java's `WeekFields` fields do: a week-based year with
+    // its week, or a week of a month, needs the day-of-week too. The parsed week fields are then removed, as Java
+    // removes them from the field map.
+    private void resolveLocalizedWeek(scope const(char)[] text)
+    {
+        if (!has(Field.dayOfWeek))
+            return;
+        const localDow = localizedDayOfWeek(cast(int) values_[Field.dayOfWeek]);
+        try
+        {
+            if (has(Field.localWeekBasedYear) && has(Field.localWeekOfWeekBasedYear))
+            {
+                checkRange(fieldNames[Field.localWeekBasedYear], values_[Field.localWeekBasedYear],
+                        -999_999_999, 999_999_999);
+                const year = cast(int) values_[Field.localWeekBasedYear];
+                const week = values_[Field.localWeekOfWeekBasedYear];
+                const weeks = localizedWeeksInYear(year);
+                if (week < 1 || week > weeks)
+                {
+                    import flint.engine.aot.text : decimal;
+
+                    throw new DateTimeException("Invalid value for " ~ fieldNames[Field.localWeekOfWeekBasedYear]
+                            ~ " (valid values 1 - " ~ decimal(weeks) ~ "): " ~ decimal(week));
+                }
+                const date = ofLocalizedWeekBasedYear(year, cast(int) week, localDow);
+                present_ &= ~((1u << Field.localWeekBasedYear) | (1u << Field.localWeekOfWeekBasedYear));
+                addDate(date);
+                return;
+            }
+            if (has(Field.weekOfMonth) && has(Field.year) && has(Field.monthOfYear))
+            {
+                checkRange("Year", values_[Field.year], -999_999_999, 999_999_999);
+                checkRange("MonthOfYear", values_[Field.monthOfYear], 1, 12);
+                const wom = values_[Field.weekOfMonth];
+                if (wom < 0 || wom > 6)
+                {
+                    import flint.engine.aot.text : decimal;
+
+                    const field = fieldNames[Field.weekOfMonth];
+                    const message = "Invalid value for " ~ field ~ " (valid values 0/1 - 4/6): " ~ decimal(wom);
+                    throw new DateTimeException(message);
+                }
+                const date = LocalDate.of(cast(int) values_[Field.year], cast(int) values_[Field.monthOfYear], 1);
+                const weeks = wom - localizedWeekOfMonth(date);
+                const days = localDow - localizedDayOfWeek(date.getDayOfWeek() + 1);
+                present_ &= ~((1u << Field.weekOfMonth) | (1u << Field.year) | (
+                        1u << Field.monthOfYear) | (1u << Field.dayOfWeek));
+                addDate(date.plusDays(weeks * 7 + days));
+            }
+        }
+        catch (DateTimeException e)
+            throw failed(text, e);
+    }
+
     // The value a printer prints for `f`: the supplied or parsed value, or a week field or the modified Julian day
     // derived from the date.
     private bool printedValue(Field f, out long value) const
@@ -925,14 +1015,24 @@ struct Fields
         return true;
     }
 
-    // The ISO week-based year or week of the date these fields hold; false when they hold no date. A week belongs
-    // to the year of its Thursday, so the first days of January can be in the previous week-based year and the
-    // last days of December in the next.
+    // The week-based value of the date these fields hold, or of a parsed value; false when they hold no date. The
+    // ISO week-based year and week use IsoFields (Monday first, minimally four days); the localized ones use
+    // WeekFields.of(Locale.ROOT), Sunday first and minimally one day, the English/root text this formatter uses.
     private bool weekValue(Field f, out long value) const
     {
         if (!hasDate())
             return false;
         const date = toLocalDate("");
+        if (f == Field.localDayOfWeek)
+        {
+            value = localizedDayOfWeek(date.getDayOfWeek() + 1);
+            return true;
+        }
+        if (f == Field.localWeekBasedYear || f == Field.localWeekOfWeekBasedYear || f == Field.weekOfMonth)
+        {
+            value = localizedWeekValue(f, date);
+            return true;
+        }
         long year = date.getYear();
         long thursday = date.getDayOfYear() + 3 - date.getDayOfWeek(); // its day-of-year, Monday being 0
         if (thursday < 1)
@@ -941,6 +1041,16 @@ struct Fields
             thursday -= daysInYear(year++);
         value = f == Field.weekBasedYear ? year : (thursday - 1) / 7 + 1;
         return true;
+    }
+
+    // The localized week values of `date`, as `WeekFields.of(Locale.ROOT)` computes them.
+    private long localizedWeekValue(Field f, LocalDate date) const
+    {
+        if (f == Field.localWeekBasedYear)
+            return localizedWeekBasedYear(date);
+        if (f == Field.weekOfMonth)
+            return localizedWeekOfMonth(date);
+        return localizedWeekOfWeekBasedYear(date);
     }
 
     /// The parsed offset; throws `DateTimeParseException` when none was parsed.
@@ -967,6 +1077,82 @@ private long weeksInWeekBasedYear(int year)
 
     const first = LocalDate.of(year, 1, 1).getDayOfWeek();
     return first == DayOfWeek.THURSDAY || (first == DayOfWeek.WEDNESDAY && daysInYear(year) == 366) ? 53 : 52;
+}
+
+// Java's `WeekFields.of(Locale.ROOT)`: Sunday is the first day of the week and one day makes the first week. These
+// localized week functions mirror `WeekFields.ComputedDayOfField` for those settings, so pattern letters Y, w, W, e
+// and c print, parse and resolve as Java does with the English/root locale.
+private enum int rootFirstDay = 7; // Sunday, in ChronoField.DAY_OF_WEEK terms (Monday is 1)
+private enum int rootMinimalDays = 1;
+
+// The localized day-of-week value 1-7 of an ISO day-of-week, Sunday being 1.
+private int localizedDayOfWeek(int isoDayOfWeek) pure nothrow @nogc
+{
+    return (isoDayOfWeek - rootFirstDay + 7) % 7 + 1;
+}
+
+// The offset that aligns `day` with the start of the first full week, as WeekFields.startOfWeekOffset.
+private int weekStartOffset(int day, int dow) pure nothrow @nogc
+{
+    const weekStart = (day - dow + 7) % 7;
+    return weekStart + 1 > rootMinimalDays ? 7 - weekStart : -weekStart;
+}
+
+private int computeWeek(int offset, int day) pure nothrow @nogc
+{
+    return (7 + offset + (day - 1)) / 7;
+}
+
+private long localizedWeekOfMonth(LocalDate date)
+{
+    const dow = localizedDayOfWeek(date.getDayOfWeek() + 1), dom = date.getDayOfMonth();
+    return computeWeek(weekStartOffset(dom, dow), dom);
+}
+
+private long localizedWeekBasedYear(LocalDate date)
+{
+    const dow = localizedDayOfWeek(date.getDayOfWeek() + 1);
+    const year = date.getYear(), doy = date.getDayOfYear();
+    const offset = weekStartOffset(doy, dow), week = computeWeek(offset, doy);
+    if (week == 0)
+        return year - 1;
+    const newYearWeek = computeWeek(offset, date.lengthOfYear() + rootMinimalDays);
+    return week >= newYearWeek ? year + 1 : year;
+}
+
+private long localizedWeekOfWeekBasedYear(LocalDate date)
+{
+    const dow = localizedDayOfWeek(date.getDayOfWeek() + 1), doy = date.getDayOfYear();
+    const offset = weekStartOffset(doy, dow), week = computeWeek(offset, doy);
+    if (week == 0)
+        return localizedWeekOfWeekBasedYear(date.minusDays(doy)); // the last day of the previous year
+    if (week > 50)
+    {
+        const newYearWeek = computeWeek(offset, date.lengthOfYear() + rootMinimalDays);
+        if (week >= newYearWeek)
+            return week - newYearWeek + 1;
+    }
+    return week;
+}
+
+// The number of localized weeks in week-based year `year`, as `WeekFields.weekOfWeekBasedYear().rangeRefinedBy` reports
+// it: the offset is constant within the year, so January 1 gives the same answer as the refined range's mid-year date.
+private long localizedWeeksInYear(int year)
+{
+    const date = LocalDate.of(year, 1, 1);
+    const offset = weekStartOffset(1, localizedDayOfWeek(date.getDayOfWeek() + 1));
+    return computeWeek(offset, date.lengthOfYear() + rootMinimalDays) - 1;
+}
+
+// The date of week `week`, day `localDow` of localized week-based year `year`, as WeekFields.ofWeekBasedYear.
+private LocalDate ofLocalizedWeekBasedYear(int year, int week, int localDow)
+{
+    LocalDate date = LocalDate.of(year, 1, 1);
+    const offset = weekStartOffset(1, localizedDayOfWeek(date.getDayOfWeek() + 1));
+    const newYearWeek = computeWeek(offset, date.lengthOfYear() + rootMinimalDays);
+    const clamped = week < newYearWeek - 1 ? week : newYearWeek - 1;
+    const days = -offset + (localDow - 1) + (clamped - 1) * 7;
+    return date.plusDays(days);
 }
 
 private enum Op : ubyte
@@ -1334,7 +1520,9 @@ struct DateTimeFormatter
         }
         if (hasZone_ && !fields.zoneId_.length)
             fields.addZone(zone_);
+        fields.resolveLocalizedDayOfWeek(text);
         fields.resolveWeekDate(text);
+        fields.resolveLocalizedWeek(text);
         fields.resolveWholeDay(text);
         fields.resolveAll(text);
         return fields;
@@ -1352,7 +1540,8 @@ Builder to create date-time formatters. Java's `DateTimeFormatterBuilder` is a m
 `this`; Flint's is a struct whose methods return it by `ref` (ADR-030, R12), so Java's chain reads the same:
 `DateTimeFormatterBuilder().appendPattern("uuuu-MM-dd").appendLiteral('T').appendOffsetId().toFormatter()`.
 
-Only the methods that take no `TemporalField`, `Locale` or text lookup exist yet. Text is English.
+Only the methods that take no `TemporalField`, `Locale` or text lookup exist yet. Text is English, and the localized
+week letters use `WeekFields.of(Locale.ROOT)`.
 +/
 struct DateTimeFormatterBuilder
 {
@@ -1622,9 +1811,12 @@ struct DateTimeFormatterBuilder
 
     /**
      * Appends the elements of `pattern`, as `DateTimeFormatter.ofPattern` describes: `u y D M L d E a h H k K m s S
-     * n VV X x Z G`, `p` to pad the next letter, quoted text, `''` and `[ ]` optional sections. A `]` ends an
-     * optional section this builder started; one left open stays open. Other pattern letters throw
-     * `IllegalArgumentException`.
+     * n VV X x Z G Q q F A N g O`, the localized week letters `Y w W e c` (see below), `p` to pad the next letter,
+     * quoted text, `''` and `[ ]` optional sections. A `]` ends an optional section this builder started; one left
+     * open stays open. Other pattern letters throw `IllegalArgumentException`. `Y`, `w`, `W`, `e` and `c` use
+     * `WeekFields.of(Locale.ROOT)`: Sunday is the first day of the week and one day makes the first week, the
+     * English/root settings; `Y` is the week-based year, `w` its week, `W` the week of the month, and `e` and `c`
+     * the localized day-of-week (Sunday being 1).
      */
     ref DateTimeFormatterBuilder appendPattern(string pattern) return
     {
@@ -1792,7 +1984,9 @@ private string describeElement(const Element e) pure
     switch (e.op)
     {
     case Op.reducedYear:
-        return "ReducedValue(" ~ fieldNames[e.field] ~ ",2,2,2000-01-01)";
+        return e.field == Field.localWeekBasedYear
+            ? "Localized(ReducedValue(WeekBasedYear,2,2,2000-01-01))" : "ReducedValue("
+            ~ fieldNames[e.field] ~ ",2,2,2000-01-01)";
     case Op.literal:
         return e.text == "'" ? "''" : "'" ~ doubledQuotes(e.text) ~ "'";
     case Op.text:
@@ -1857,11 +2051,38 @@ private string describeNumber(const Element e) pure
     const min = decimal(cast(int) e.minWidth), max = decimal(cast(int) e.maxWidth);
     if (e.op == Op.fraction)
         return "Fraction(NanoOfSecond," ~ min ~ "," ~ max ~ (e.lenient ? ",DecimalPoint)" : ")");
+    if (isLocalizedWeekField(e.field))
+        return describeLocalizedWeek(e);
     if (e.minWidth == 1 && e.maxWidth == 19 && e.sign == SignStyle.NORMAL)
         return "Value(" ~ fieldNames[e.field] ~ ")";
     if (e.minWidth == e.maxWidth && e.sign == SignStyle.NOT_NEGATIVE)
         return "Value(" ~ fieldNames[e.field] ~ "," ~ min ~ ")";
     return "Value(" ~ fieldNames[e.field] ~ "," ~ min ~ "," ~ max ~ "," ~ signNames[e.sign] ~ ")";
+}
+
+// Whether `f` is one of the localized week fields the pattern letters Y, w, W, e and c use.
+private bool isLocalizedWeekField(Field f) pure nothrow @nogc
+{
+    return f == Field.localWeekBasedYear || f == Field.localWeekOfWeekBasedYear
+        || f == Field.weekOfMonth || f == Field.localDayOfWeek;
+}
+
+// Java's `WeekBasedFieldPrinterParser.toString`: Localized(...), with the week-based year's width and sign as for
+// its Y letter, and the day or week name with just the letter count.
+private string describeLocalizedWeek(const Element e) pure
+{
+    import flint.engine.aot.text : decimal;
+
+    const min = decimal(cast(int) e.minWidth);
+    if (e.field == Field.localWeekBasedYear)
+    {
+        if (e.minWidth == 1 && e.maxWidth == 19 && e.sign == SignStyle.NORMAL)
+            return "Localized(WeekBasedYear)";
+        return "Localized(WeekBasedYear," ~ min ~ "," ~ decimal(cast(int) e.maxWidth) ~ "," ~ signNames[e.sign] ~ ")";
+    }
+    const name = e.field == Field.localWeekOfWeekBasedYear
+        ? "WeekOfWeekBasedYear" : e.field == Field.weekOfMonth ? "WeekOfMonth" : "DayOfWeek";
+    return "Localized(" ~ name ~ "," ~ min ~ ")";
 }
 
 private int utf16ErrorIndex(scope const(char)[] prefix) pure nothrow @nogc
@@ -2025,6 +2246,9 @@ private struct Printer
             // Java's modified Julian day reads EPOCH_DAY, so a value without a date reports that field.
             if (e.op == Op.number && e.field == Field.modifiedJulianDay)
                 return "EpochDay";
+            // The localized week fields read DAY_OF_WEEK first, so a value without a date reports that field.
+            if ((e.op == Op.number || e.op == Op.reducedYear) && isLocalizedWeekField(e.field))
+                return "DayOfWeek";
             return fieldNames[e.field];
         }
     }
@@ -2058,9 +2282,10 @@ private struct Printer
 
     bool printReducedYear(const Element e)
     {
-        if (!fields.has(e.field))
+        long value;
+        if (!fields.printedValue(e.field, value))
             return false;
-        putDigits(padded(((fields.values_[e.field] % 100) + 100) % 100, 2));
+        putDigits(padded(((value % 100) + 100) % 100, 2));
         return true;
     }
 
@@ -2154,7 +2379,8 @@ private struct Printer
             output ~= full ? monthFull[value - 1] : monthFull[value - 1][0 .. 3];
             break;
         case Field.dayOfWeek:
-            output ~= full ? dayFull[value - 1] : dayFull[value - 1][0 .. 3];
+            output ~= style == "full" ? dayFull[value - 1] : style == "narrow"
+                ? dayFull[value - 1][0 .. 1] : dayFull[value - 1][0 .. 3];
             break;
         case Field.quarterOfYear:
             output ~= style == "full" ? quarterFull[value - 1] : style == "narrow"
@@ -2735,9 +2961,10 @@ private struct Parser
         const names = textNames(e.field, style);
         const whole = style == "full" || e.field == Field.amPmOfDay
             || e.field == Field.quarterOfYear || e.field == Field.era;
+        const width = whole ? size_t.max : style == "narrow" ? 1 : 3;
         foreach (i, name; names)
         {
-            const candidate = whole ? name : name[0 .. 3];
+            const candidate = whole ? name : name[0 .. (width < name.length ? width : name.length)];
             if (matches(candidate, position))
             {
                 fields.set(e.field, textValue(e.field, i));
@@ -3246,6 +3473,21 @@ private Element dateLetter(char c, int count)
 {
     switch (c)
     {
+    case 'Y':
+    case 'w':
+    case 'W':
+    case 'e':
+    case 'c':
+        return localizedWeekLetter(c, count);
+    default:
+        return calendricalLetter(c, count);
+    }
+}
+
+private Element calendricalLetter(char c, int count)
+{
+    switch (c)
+    {
     case 'u':
         return yearElement(Field.year, count);
     case 'y':
@@ -3265,6 +3507,54 @@ private Element dateLetter(char c, int count)
     default:
         return timeLetter(c, count);
     }
+}
+
+// The localized week pattern letters, as Java's `WeekBasedFieldPrinterParser` with `WeekFields.of(Locale.ROOT)`:
+// Y is the week-based year, w the week of the week-based year (one or two letters), W the week of the month (one
+// letter), and e and c the localized day-of-week as a number or, from three letters, SHORT, FULL and NARROW text.
+private Element localizedWeekLetter(char c, int count)
+{
+    switch (c)
+    {
+    case 'Y':
+        return yearElement(Field.localWeekBasedYear, count);
+    case 'w':
+        return weekOfWeekBasedYearLetter(count);
+    case 'W':
+        return weekOfMonthLetter(count);
+    default: // 'e' or 'c'
+        return localizedDayOfWeekLetter(c, count);
+    }
+}
+
+private Element weekOfWeekBasedYearLetter(int count)
+{
+    if (count > 2)
+        throw new IllegalArgumentException("Too many pattern letters: w");
+    return num(Field.localWeekOfWeekBasedYear, count, 2, SignStyle.NOT_NEGATIVE);
+}
+
+private Element weekOfMonthLetter(int count)
+{
+    if (count != 1)
+        throw new IllegalArgumentException("Too many pattern letters: W");
+    return num(Field.weekOfMonth, 1, 1, SignStyle.NOT_NEGATIVE);
+}
+
+private Element localizedDayOfWeekLetter(char c, int count)
+{
+    if (c == 'c' && count == 2)
+        throw new IllegalArgumentException("Invalid pattern \"cc\"");
+    if (count <= (c == 'c' ? 1 : 2))
+        return num(Field.localDayOfWeek, count, count, SignStyle.NOT_NEGATIVE);
+    if (count > 5)
+        throw new IllegalArgumentException("Too many pattern letters: " ~ c);
+    Element e;
+    e.op = Op.text;
+    e.field = Field.dayOfWeek;
+    const style = count == 3 ? "short" : count == 4 ? "full" : "narrow";
+    e.text = c == 'c' ? style ~ "_standalone" : style;
+    return e;
 }
 
 private Element timeLetter(char c, int count)

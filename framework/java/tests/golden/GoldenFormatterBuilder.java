@@ -244,6 +244,8 @@ public class GoldenFormatterBuilder {
     }
 
     public static void main(String[] a) throws Exception {
+        // The localized week rules are WeekFields.of(Locale.ROOT) (Sunday first, minimally one day); the default
+        // locale here is en-US, whose localized weeks are the same, so the golden does not depend on it.
         String[] none = {};
         // Builder errors.
         recipe("]", none);
@@ -548,6 +550,32 @@ public class GoldenFormatterBuilder {
                 "-0001-03-05 BC", "-0001-03-05 AD");
         recipe("p:G uuuu y", k("date"), "AD 2024 2024", "AD 2024 2025", "BC 2024 2025");
         recipe("p:uuuu y", k("date"), "2024 2024", "2024 24", "0000 1", "0000 2", "-0001 1", "-0001 2");
+        // Localized week letters, as WeekFields.of(Locale.ROOT) defines them: Sunday is the first day and one day
+        // makes the first week. Y is the week-based year (reduced at two letters), w the week of the week-based year
+        // (one or two letters), W the week of the month (one letter), and e and c the localized day-of-week: a
+        // number at one or two letters, then SHORT, FULL and NARROW text (c has no two-letter form).
+        for (String recipe : new String[] {"p:Y", "p:YY", "p:YYY", "p:YYYY", "p:YYYYY", "p:w", "p:ww", "p:W",
+                "p:e", "p:ee", "p:c", "p:ccc", "p:cccc", "p:ccccc"})
+            formatsAll(recipe);
+        for (String recipe : new String[] {"p:cc", "p:www", "p:WW", "p:eeeeee", "p:cccccc"})
+            recipe(recipe, none);
+        recipe("p:YYYY-'W'ww-e", k("date"), "2024-W10-3");
+        recipe("p:uuuu-MM-dd e", k("date"), "2024-03-05 3");
+        recipe("p:uuuu-MM-dd cccc", k("date"), "2024-03-05 Tue");
+        recipe("p:uuuu-MM W", k("date"), "2024-03 2");
+        parses("p:YYYY-'W'ww-e", k("date"), "2024-W10-3", "2023-W53-1", "2024-W54-1", "2020-W01-1", "2022-W53-1",
+                "2022-W54-1");
+        parses("p:uuuu-MM W e", k("date"), "2024-03 2 3", "2024-03 6 3", "2024-03 7 3", "2024-03 2 9");
+        parses("p:uuuu-MM-dd W", k("date"), "2024-03-05 2", "2024-03-05 1", "2024-03-05 3");
+        parses("p:uuuu-MM-dd w", k("date"), "2024-03-05 10", "2024-03-05 11");
+        parses("p:uuuu-MM-dd Y", k("date"), "2024-03-05 2024", "2024-03-05 2025");
+        parses("p:uuuu-MM-dd e", k("date"), "2024-03-05 3", "2024-03-05 2", "2024-03-05 9");
+        parses("p:uuuu-MM-dd c", k("date"), "2024-03-05 3", "2024-03-05 0", "2024-03-05 8");
+        parses("p:uuuu-MM-dd cccc", k("date"), "2024-03-05 Tue", "2024-03-05 Monday");
+        parses("p:Y", k("date"), "2024");
+        parses("p:ww", k("date"), "10");
+        parses("p:W", k("date"), "2");
+        parses("p:e", k("date"), "3", "9");
         Files.write(Path.of(a[0]), lines);
     }
 }
