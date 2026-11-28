@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,951 | 708 | 0 | 1,921 | 13,841 |
+| framework | openjdk@21.0.13 | 1,951 | 710 | 0 | 1,921 | 13,839 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -3035,6 +3035,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.regex.Matcher#replaceFirst(String)` | `flint.java.util.regex.pattern.Matcher.replaceFirst` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | Java's replacement syntax; a null replacement counts as empty text under R26. |
 | `java.util.regex.Matcher#reset(CharSequence)` | `flint.java.util.regex.pattern.Matcher.reset` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.regex.Matcher#toMatchResult()` | `flint.java.util.regex.pattern.Matcher.toMatchResult` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Returns a detached snapshot of the numbered MatchResult state. Java default methods remain deferred. |
+| `java.util.regex.Pattern#asMatchPredicate()` | `flint.java.util.regex.pattern.Pattern.asMatchPredicate` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R26](api-mapping.md#r26-null-arrays) | Returns a Predicate!string whose test is Java's whole-input matches(); a null slice matches as empty text under R26. |
+| `java.util.regex.Pattern#asPredicate()` | `flint.java.util.regex.pattern.Pattern.asPredicate` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R26](api-mapping.md#r26-null-arrays) | Returns a Predicate!string whose test is Java's find(); a null slice searches as empty text under R26. |
 | `java.util.regex.Pattern#matcher(CharSequence)` | `flint.java.util.regex.pattern.Pattern.matcher` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.regex.Pattern#pattern()` | `flint.java.util.regex.pattern.Pattern.pattern` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.regex.Pattern#quote(String)` | `flint.java.util.regex.pattern.Pattern.quote` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | A null slice is quoted as empty text. Java throws NullPointerException. |
@@ -11063,7 +11065,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.function | 89 | 0 |
 | java.util.jar | 0 | 101 |
 | java.util.random | 67 | 0 |
-| java.util.regex | 29 | 0 |
+| java.util.regex | 27 | 0 |
 | java.util.spi | 0 | 43 |
 | java.util.stream | 287 | 0 |
 | java.util.zip | 258 | 0 |
@@ -12395,8 +12397,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.function.Predicate#or(Predicate)` | 2 | The existing final D method prevents implementor overrides (R3) and accepts a null predicate at composition time. Java throws NullPointerException there (R8). |
 | framework | `java.util.function.UnaryOperator#identity()` | 2 | The inherited Function.identity factory returns Function. Java's UnaryOperator factory returns the nominal UnaryOperator. |
 | framework | `java.util.regex.Matcher#toString()` | 2 | Java's debug form needs the region length and assembled text; a lean implementation adds about 920 linked bytes and the java-regex leaf sits 668 bytes under its whole-input cap. It waits for that headroom rather than a cap raise. |
-| framework | `java.util.regex.Pattern#asMatchPredicate()` | 2 | Requires a Predicate adapter for whole-input matching. |
-| framework | `java.util.regex.Pattern#asPredicate()` | 2 | Requires a Predicate adapter over the Matcher search API. |
 | framework | `java.util.regex.Pattern#compile(String)` | 2 | Java supports extended grapheme clusters (\X) and grapheme boundaries (\b{g}). Flint throws RegexUnsupportedException for both. |
 | framework | `java.util.regex.Pattern#compile(String,int)` | 2 | CANON_EQ and UNICODE_CHARACTER_CLASS still throw RegexUnsupportedException. Java supports extended grapheme clusters (\X) and grapheme boundaries (\b{g}). Flint throws RegexUnsupportedException for both. |
 | framework | `java.util.regex.Pattern#matches(String,CharSequence)` | 2 | Java supports extended grapheme clusters (\X) and grapheme boundaries (\b{g}). Flint throws RegexUnsupportedException for both. |

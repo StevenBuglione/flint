@@ -1,6 +1,7 @@
 module flint.java.util.regex.pattern_test;
 
 import flint.java.lang : IllegalArgumentException;
+import flint.java.util.function_ : Predicate;
 import flint.java.util.regex.pattern : Matcher, Pattern, PatternSyntaxException;
 
 @safe:
@@ -329,4 +330,27 @@ unittest
         assert(literal.pattern() == Pattern.quote(text));
     }
     assert(!Pattern.compile(Pattern.quote("a.b")).matcher("axb").matches());
+}
+
+@("Pattern.asPredicate finds and asMatchPredicate matches whole inputs, as Java SE 21 does")
+unittest
+{
+    auto word = Pattern.compile("[a-z]+");
+    auto find = word.asPredicate();
+    auto whole = word.asMatchPredicate();
+    assert(find.test("abc"));
+    assert(find.test("  abc  "));
+    assert(!whole.test("  abc  "));
+    assert(whole.test("abc"));
+    assert(!find.test("123"));
+    assert(!find.test(null));
+    assert(!whole.test(null));
+    assert(whole.test("one"));
+    assert(!whole.test("one two"));
+
+    auto empty = Pattern.compile("");
+    assert(empty.asPredicate().test(""));
+    assert(empty.asMatchPredicate().test(""));
+    assert(empty.asPredicate().test(null));
+    assert(empty.asMatchPredicate().test(null));
 }

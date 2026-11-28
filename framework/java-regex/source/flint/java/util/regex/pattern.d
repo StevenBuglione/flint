@@ -3,7 +3,7 @@ module flint.java.util.regex.pattern;
 
 import flint.java.lang : IllegalArgumentException, IllegalStateException, IndexOutOfBoundsException,
     NullPointerException;
-import flint.java.util.function_ : Function;
+import flint.java.util.function_ : Function, Predicate;
 import flint.java.util.regex.internal.engine : Regex, RegexFlag, RegexSyntaxException, compileRegex;
 import flint.java.util.regex.matchresult : MatchResult;
 import std.typecons : Nullable;
@@ -51,6 +51,20 @@ final class Pattern
     static bool matches(string regex, scope const(char)[] input)
     {
         return compilePattern(regex, 0).matches(input);
+    }
+
+    /// A predicate that finds this expression in each input (R3, R26).
+    Predicate!string asPredicate()
+    {
+        auto self = this;
+        return Predicate!string.of((string input) => self.matcher(input).find());
+    }
+
+    /// A predicate that matches this expression against each whole input (R3, R26).
+    Predicate!string asMatchPredicate()
+    {
+        auto self = this;
+        return Predicate!string.of((string input) => self.matcher(input).matches());
     }
 
     /// Test the entire borrowed input against this pattern without constructing a Matcher.
