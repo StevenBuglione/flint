@@ -147,7 +147,7 @@ unittest
     try
         throw new ControlFlow("skip");
     catch (ControlFlow e)
-        assert(typeid(cast(Object) e.info).name == "flint.java.lang.NoTrace");
+        assert(typeid(cast(Object) e.info).name == "flint.java.lang.runtimeexception.NoTrace");
     try
         throw new IllegalStateException("traced");
     catch (IllegalStateException e)
