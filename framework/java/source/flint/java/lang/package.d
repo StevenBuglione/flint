@@ -27,6 +27,9 @@ public import flint.java.lang.runnable : Runnable;
 public import flint.java.lang.runtimeexception : IllegalArgumentException, IllegalStateException,
     JavaExceptionConstructors, RuntimeException, javaToString;
 public import flint.java.lang.system : System;
+public import flint.java.lang.thread : Thread;
+public import flint.java.lang.inheritablethreadlocal : InheritableThreadLocal;
+public import flint.java.lang.threadlocal : ThreadLocal;
 
 import flint.engine.aot.objects : objectEquals, objectToHash, objectToString;
 public import flint.java.classref : ClassRef, classOf; // a leaf, so annotation-only clients skip this module
