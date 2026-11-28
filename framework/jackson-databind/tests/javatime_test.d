@@ -226,7 +226,7 @@ unittest
             ++reads;
         }
     }
-    assert(writes == 23 && reads == 59);
+    assert(writes == 23 && reads == 69);
 }
 
 @("javatime: DecimalUtils seconds print as BigDecimal at scale 9")

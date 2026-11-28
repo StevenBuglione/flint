@@ -23,6 +23,7 @@ import flint.jackson.core : JsonGenerator, JsonParser, JsonToken;
 import flint.jackson.databind.cfg : DateTimeFeature, MapperConfig;
 public import flint.jackson.databind.cfg : JavaTimeFormat;
 import flint.jackson.databind.exc : InvalidFormatException, MismatchedInputException;
+import flint.java.lang : ArithmeticException;
 import flint.java.time : DateTimeException, Duration, Instant, LocalDate, LocalDateTime, LocalTime,
     OffsetDateTime, ZoneId, ZoneOffset, ZonedDateTime;
 import flint.java.time.format : DateTimeFormatter, DateTimeParseException, ResolverStyle;
@@ -501,7 +502,10 @@ private Any parseText(MapperConfig config, Kind kind, scope const(char)[] text, 
         return Any.of(ZoneId.of(text.idup));
     default:
         if (!custom && numeric(text))
-            return instantAs(kind, readDecimal(text, true));
+        {
+            const decimal = readDecimal(text, true);
+            return instantAs(kind, Instant.ofEpochSecond(decimal.seconds, decimal.nanos));
+        }
         return parseInstant(config, kind, text, dtf, custom);
     }
 }
@@ -577,15 +581,24 @@ private bool numeric(scope const(char)[] text) pure nothrow @nogc
     return periods <= 1 && text != "-" && text != ".";
 }
 
+// A parsed decimal timestamp: signed whole seconds and a signed nanosecond fraction, or whole milliseconds when the
+// fraction is not read. Keeping the two apart lets an Instant check its range without forcing a Duration through the
+// smaller instant range.
+private struct DecimalSeconds
+{
+    long seconds;
+    int nanos;
+}
+
 // A decimal number of seconds, the fraction truncated to nanoseconds; or of milliseconds when not `seconds`.
-private Instant readDecimal(scope const(char)[] text, bool seconds) pure nothrow
+private DecimalSeconds readDecimal(scope const(char)[] text, bool seconds) pure nothrow @nogc
 {
     const negative = text[0] == '-';
     long whole, nanos;
     size_t i = negative ? 1 : 0;
     for (; i < text.length && text[i] != '.'; ++i)
         whole = whole * 10 + (text[i] - '0');
-    if (i < text.length)
+    if (i < text.length && seconds)
     {
         long scale = 100_000_000;
         foreach (c; text[i + 1 .. $])
@@ -595,11 +608,39 @@ private Instant readDecimal(scope const(char)[] text, bool seconds) pure nothrow
         }
     }
     if (!seconds)
-        return Instant.ofEpochMilli(negative ? -whole : whole);
-    // Unchecked against the instant range: the Duration path reads its seconds through here too.
-    if (!negative)
-        return Instant(whole, cast(int) nanos);
-    return nanos == 0 ? Instant(-whole, 0) : Instant(-whole - 1, cast(int)(1_000_000_000 - nanos));
+        return DecimalSeconds(negative ? -whole : whole, 0);
+    return negative ? DecimalSeconds(-whole, cast(int) -nanos) : DecimalSeconds(whole, cast(int) nanos);
+}
+
+// Jackson's DateTimeParseException message, which folds the java.time failure into the deserialization error.
+private MismatchedInputException decimalFailure(string msg, string value, bool integral, string type, JsonParser p)
+{
+    return new MismatchedInputException("Failed to deserialize " ~ javaName(type) ~ " from " ~ (integral
+            ? "timestamp value " : "decimal value ") ~ value ~ ": " ~ msg, type, p.currentLocation());
+}
+
+private Any instantNumber(Kind kind, JsonParser p, string type, string text, bool integral, bool asSeconds)
+{
+    const decimal = readDecimal(text, asSeconds);
+    if (!asSeconds)
+        return instantAs(kind, Instant.ofEpochMilli(decimal.seconds));
+    try
+        return instantAs(kind, Instant.ofEpochSecond(decimal.seconds, decimal.nanos));
+    catch (DateTimeException e)
+        throw decimalFailure(e.msg, text.idup, integral, type, p);
+    catch (ArithmeticException e)
+        throw decimalFailure(e.msg, text.idup, integral, type, p);
+}
+
+private Any durationNumber(JsonParser p, string type, string text, bool integral)
+{
+    const decimal = readDecimal(text, true);
+    try
+        return Any.of(Duration.ofSeconds(decimal.seconds, decimal.nanos));
+    catch (DateTimeException e)
+        throw decimalFailure(e.msg, text.idup, integral, type, p);
+    catch (ArithmeticException e)
+        throw decimalFailure(e.msg, text.idup, integral, type, p);
 }
 
 private Any readNumber(MapperConfig config, JsonParser p, Kind kind, string type, bool integral)
@@ -620,11 +661,9 @@ private Any readNumber(MapperConfig config, JsonParser p, Kind kind, string type
     case Kind.instant:
     case Kind.offsetDateTime:
     case Kind.zonedDateTime:
-        return instantAs(kind,
-                readDecimal(text, asSeconds));
+        return instantNumber(kind, p, type, text, integral, asSeconds);
     case Kind.duration:
-        const instant = readDecimal(text, true);
-        return Any.of(Duration.ofSeconds(instant.getEpochSecond(), instant.getNano()));
+        return durationNumber(p, type, text, integral);
     default:
         break;
     }
