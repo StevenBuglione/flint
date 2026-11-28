@@ -4,6 +4,8 @@ module flint.java.math.biginteger;
 import flint.java.lang : ArithmeticException, Comparable, IndexOutOfBoundsException, JavaObject,
     NullPointerException, NumberFormatException;
 import flint.java.lang.number : Number;
+import flint.java.math.internal.bits : bitwiseLimbs, BitwiseOp, lowestSetBit, shiftLeftLimbs,
+    shiftRightLimbs, signedBitCount, testTwosComplementBit, toggleBitLimbs;
 import flint.java.math.internal.division : divideByWord, divideWords;
 import flint.java.math.internal.floating : roundedFloating;
 import flint.java.math.internal.limbs : combineLimbs, compareLimbs, firstNonzeroLimb, loadLimbs,
@@ -55,7 +57,7 @@ class BigInteger : Number, Comparable!BigInteger
         sign = magnitude.length ? signum : 0;
     }
 
-    private this(const(uint)[] words, int sign)
+    pragma(inline, false) private this(const(uint)[] words, int sign)
     {
         const length = significantLimbs(words);
         checkRange(words[0 .. length]);
@@ -67,6 +69,30 @@ class BigInteger : Number, Comparable!BigInteger
     static BigInteger valueOf(long value) pure nothrow
     {
         return new BigInteger(value);
+    }
+
+    /// The BigInteger constant zero (R17).
+    static BigInteger ZERO() pure nothrow
+    {
+        return valueOf(0);
+    }
+
+    /// The BigInteger constant one (R17).
+    static BigInteger ONE() pure nothrow
+    {
+        return valueOf(1);
+    }
+
+    /// The BigInteger constant two (R17).
+    static BigInteger TWO() pure nothrow
+    {
+        return valueOf(2);
+    }
+
+    /// The BigInteger constant ten (R17).
+    static BigInteger TEN() pure nothrow
+    {
+        return valueOf(10);
     }
 
     private this(long value) pure nothrow
@@ -94,6 +120,178 @@ class BigInteger : Number, Comparable!BigInteger
     {
         const int bits = cast(int) magnitudeBitLength(magnitude);
         return bits - (sign < 0 && hasSingleMagnitudeBit());
+    }
+
+    /// Return the number of bits in the two's-complement representation that differ from the sign bit.
+    int bitCount() const scope pure nothrow @nogc
+    {
+        return signedBitCount(magnitude, sign < 0);
+    }
+
+    /// Return the index of the rightmost one bit in two's complement, or -1 if this integer is zero.
+    int getLowestSetBit() const scope pure nothrow @nogc
+    {
+        return sign ? lowestSetBit(magnitude) : -1;
+    }
+
+    /// Return true if and only if the designated bit in two's complement is set.
+    bool testBit(int n) const
+    {
+        if (n < 0)
+            failNegativeBit();
+        return testTwosComplementBit(magnitude, sign < 0, cast(size_t) n);
+    }
+
+    /// Return a BigInteger whose value is equivalent to this integer with bit `n` set.
+    BigInteger setBit(int n)
+    {
+        return mutateBit(n, 1);
+    }
+
+    /// Return a BigInteger whose value is equivalent to this integer with bit `n` cleared.
+    BigInteger clearBit(int n)
+    {
+        return mutateBit(n, 0);
+    }
+
+    /// Return a BigInteger whose value is equivalent to this integer with bit `n` flipped.
+    BigInteger flipBit(int n)
+    {
+        return mutateBit(n, 2);
+    }
+
+    /// Return the bitwise complement (`~this`, equal to `-(this + 1)`).
+    BigInteger not()
+    {
+        static immutable uint[1] oneWord = [1U];
+        return combine(oneWord[], 1).negate();
+    }
+
+    /// Return the bitwise AND (`this & other`).
+    BigInteger and(BigInteger other)
+    {
+        return bitwiseOp(other, BitwiseOp.and);
+    }
+
+    /// Return the bitwise OR (`this | other`).
+    BigInteger or(BigInteger other)
+    {
+        return bitwiseOp(other, BitwiseOp.or);
+    }
+
+    /// Return the bitwise XOR (`this ^ other`).
+    BigInteger xor(BigInteger other)
+    {
+        return bitwiseOp(other, BitwiseOp.xor);
+    }
+
+    /// Return the bitwise AND-NOT (`this & ~other`).
+    BigInteger andNot(BigInteger other)
+    {
+        return bitwiseOp(other, BitwiseOp.andNot);
+    }
+
+    /// Return a BigInteger whose value is `this << n` (arithmetic right shift when `n < 0`).
+    BigInteger shiftLeft(int n)
+    {
+        if (n == 0 || !sign)
+            return this;
+        if (n > 0)
+            return shiftMagnitudeLeft(cast(size_t) n);
+        return shiftMagnitudeRight(0UL - cast(ulong) n);
+    }
+
+    /// Return a BigInteger whose value is `this >> n` (left shift when `n < 0`).
+    BigInteger shiftRight(int n)
+    {
+        if (n == 0 || !sign)
+            return this;
+        if (n > 0)
+            return shiftMagnitudeRight(cast(ulong) n);
+        const ulong distance = 0UL - cast(ulong) n;
+        if (distance >= int.max)
+            failShiftOverflow();
+        return shiftMagnitudeLeft(cast(size_t) distance);
+    }
+
+    private BigInteger mutateBit(int n, ubyte mode)
+    {
+        if (n < 0)
+            failNegativeBit();
+        const bool negative = sign < 0;
+        const size_t bit = cast(size_t) n;
+        if (mode != 2 && testTwosComplementBit(magnitude, negative, bit) == (mode == 1))
+            return this;
+        if (n == int.max)
+            failShiftOverflow();
+        const size_t targetWord = bit / 32;
+        const size_t count = magnitude.length > targetWord + 1 ? magnitude.length : targetWord + 1;
+        auto words = new uint[count + (negative ? 1 : 0)];
+        toggleBitLimbs(words, magnitude, negative, bit);
+        return new BigInteger(words, negative ? -1 : 1);
+    }
+
+    private BigInteger bitwiseOp(BigInteger other, BitwiseOp op)
+    {
+        if (other is null)
+            throw new NullPointerException();
+        const bool aNeg = sign < 0;
+        const bool bNeg = other.sign < 0;
+        bool resultNeg;
+        final switch (op)
+        {
+        case BitwiseOp.and:
+            resultNeg = aNeg && bNeg;
+            break;
+        case BitwiseOp.or:
+            resultNeg = aNeg || bNeg;
+            break;
+        case BitwiseOp.xor:
+            resultNeg = aNeg != bNeg;
+            break;
+        case BitwiseOp.andNot:
+            resultNeg = aNeg && !bNeg;
+            break;
+        }
+        const size_t count = magnitude.length > other.magnitude.length ? magnitude.length : other.magnitude.length;
+        auto words = new uint[count + (resultNeg ? 1 : 0)];
+        bitwiseLimbs(words, magnitude, aNeg, other.magnitude, bNeg, op, resultNeg);
+        return new BigInteger(words, resultNeg ? -1 : 1);
+    }
+
+    private BigInteger shiftMagnitudeLeft(size_t distance)
+    {
+        const ulong topBit = cast(ulong)(magnitudeBitLength(magnitude) - 1) + distance;
+        if (topBit >= int.max)
+            failShiftOverflow();
+        const size_t wordShift = distance / 32;
+        const bool hasBitShift = (distance & 31) != 0;
+        auto words = new uint[magnitude.length + wordShift + hasBitShift];
+        shiftLeftLimbs(words, magnitude, distance);
+        return new BigInteger(words, sign);
+    }
+
+    private BigInteger shiftMagnitudeRight(ulong distance)
+    {
+        const ulong bits = magnitudeBitLength(magnitude);
+        if (distance >= bits)
+            return valueOf(sign < 0 ? -1 : 0);
+        const size_t dist = cast(size_t) distance;
+        const size_t wordShift = dist / 32;
+        const size_t outLen = magnitude.length - wordShift;
+        auto words = new uint[outLen + (sign < 0 ? 1 : 0)];
+        shiftRightLimbs(words, magnitude, dist, sign < 0);
+        return new BigInteger(words, sign);
+    }
+
+    pragma(inline, false) private static void failNegativeBit()
+    {
+        throw new ArithmeticException("Negative bit address");
+    }
+
+    pragma(inline, false) private static void failShiftOverflow()
+    {
+        throw new ArithmeticException("BigInteger would overflow supported range");
     }
 
     /// Return the low 64 bits in two's complement.

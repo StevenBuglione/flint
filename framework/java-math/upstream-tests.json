@@ -206,6 +206,7 @@
     }
   },
   "flint_tests": [
+    "framework/java-math/tests/biginteger_bit_ops_tests.d",
     "framework/java-math/tests/biginteger_bit_query_tests.d",
     "framework/java-math/tests/biginteger_equality_tests.d",
     "framework/java-math/tests/biginteger_exact_tests.d",
