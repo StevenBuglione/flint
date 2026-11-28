@@ -2376,7 +2376,15 @@
         "link|java-nio-numeric-buffers|flint.java.nio.shortbuffer|heap-short-cursor|Oz|undeclared module records flint.java.nio.doublebuffer",
         "link|java-nio-numeric-buffers|flint.java.nio.shortbuffer|heap-short-cursor|Oz|undeclared module records flint.java.nio.floatbuffer",
         "link|java-nio-numeric-buffers|flint.java.nio.shortbuffer|heap-short-cursor|Oz|undeclared module records flint.java.nio.intbuffer",
-        "link|java-nio-numeric-buffers|flint.java.nio.shortbuffer|heap-short-cursor|Oz|undeclared module records flint.java.nio.longbuffer"
+        "link|java-nio-numeric-buffers|flint.java.nio.shortbuffer|heap-short-cursor|Oz|undeclared module records flint.java.nio.longbuffer",
+        "link|java-text|flint.java.text.simpledateformat|date-format|O3|undeclared module records flint.java.internal.math.fdbiginteger",
+        "link|java-text|flint.java.text.simpledateformat|date-format|O3|undeclared module records flint.java.text.internal.binarydecimal",
+        "link|java-text|flint.java.text.simpledateformat|date-format|Oz|undeclared module records flint.java.internal.math.fdbiginteger",
+        "link|java-text|flint.java.text.simpledateformat|date-format|Oz|undeclared module records flint.java.text.internal.binarydecimal",
+        "link|java-text|flint.java.text|message-format|O3|undeclared module records flint.java.internal.math.fdbiginteger",
+        "link|java-text|flint.java.text|message-format|O3|undeclared module records flint.java.text.internal.binarydecimal",
+        "link|java-text|flint.java.text|message-format|Oz|undeclared module records flint.java.internal.math.fdbiginteger",
+        "link|java-text|flint.java.text|message-format|Oz|undeclared module records flint.java.text.internal.binarydecimal"
       ]
     }
   }
