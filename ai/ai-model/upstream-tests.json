@@ -312,8 +312,26 @@
       "status": "deferred"
     },
     "org/springframework/ai/chat/prompt/ChatOptionsBuilderTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "ai/ai-model/tests/chat_options_builder_tests.d",
+      "methods": {
+        "ported": [
+          "shouldAllowBuilderReuse",
+          "shouldBeImmutableAfterBuild",
+          "shouldBuildWithAllOptions",
+          "shouldBuildWithMinimalOptions",
+          "shouldHandleEmptyStopSequences",
+          "shouldHandleFrequencyAndPresencePenalties",
+          "shouldHandleNullStopSequences",
+          "shouldHandleSpecialStringValues",
+          "shouldHaveExpectedDefaultValues",
+          "shouldMaintainStopSequencesOrder",
+          "shouldReturnSameBuilderInstanceOnEachMethod"
+        ],
+        "skipped": {
+          "shouldUpcastToChatOptions": "Requires ToolCallingChatOptions and FunctionToolCallback from the deferred model.tool package."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/ai/chat/prompt/PromptTemplateBuilderTests.java": {
       "phase": "2",

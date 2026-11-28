@@ -113,13 +113,11 @@ final class EmbeddingUtils
     /// Copies primitive values to a new array of boxed floats (R5).
     static Nullable!float[] toFloatArray(scope const(float)[] array) pure
     {
-        if (array.length == 0)
-            return (new Nullable!float[1])[0 .. 0];
-
-        auto result = new Nullable!float[array.length];
+        // One allocation site; empty input still returns a distinct non-null slice.
+        auto result = new Nullable!float[array.length == 0 ? 1 : array.length];
         foreach (i, value; array)
             result[i] = Nullable!float(value);
-        return result;
+        return result[0 .. array.length];
     }
 }
 

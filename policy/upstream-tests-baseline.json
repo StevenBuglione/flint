@@ -53,7 +53,6 @@
       "org/springframework/ai/chat/observation/ChatModelObservationContextTests.java",
       "org/springframework/ai/chat/observation/ChatModelPromptContentObservationHandlerTests.java",
       "org/springframework/ai/chat/observation/DefaultChatModelObservationConventionTests.java",
-      "org/springframework/ai/chat/prompt/ChatOptionsBuilderTests.java",
       "org/springframework/ai/chat/prompt/PromptTemplateBuilderTests.java",
       "org/springframework/ai/chat/prompt/PromptTemplateTests.java",
       "org/springframework/ai/chat/prompt/PromptTests.java",

@@ -78,6 +78,13 @@ private final class FixtureOptions : ChatOptions
     {
         return Ratio(0.875);
     }
+
+    override ChatOptions.Builder mutate()
+    {
+        return ChatOptions.builder().model(getModel()).frequencyPenalty(getFrequencyPenalty())
+            .maxTokens(getMaxTokens()).presencePenalty(getPresencePenalty())
+            .stopSequences(getStopSequences()).temperature(getTemperature()).topK(getTopK()).topP(getTopP());
+    }
 }
 
 @("chat option getters keep missing values distinct from configured zero and empty values")

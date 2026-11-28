@@ -57,6 +57,46 @@ interface ChatOptions : ModelOptions
 
     /// Returns the top P, when specified.
     Ratio getTopP();
+
+    /// Returns a new builder initialized with the values of these options.
+    Builder mutate();
+
+    /// Creates a builder for the default chat options.
+    static Builder builder()
+    {
+        return new DefaultChatOptionsBuilder();
+    }
+
+    /// Fluent builder for chat options: the erased `Builder<B extends Builder<B>>` of the upstream API.
+    interface Builder
+    {
+        /// Sets or clears the model name.
+        Builder model(ModelName model);
+
+        /// Sets or clears the frequency penalty.
+        Builder frequencyPenalty(Ratio frequencyPenalty);
+
+        /// Sets or clears the maximum number of tokens.
+        Builder maxTokens(Count maxTokens);
+
+        /// Sets or clears the presence penalty.
+        Builder presencePenalty(Ratio presencePenalty);
+
+        /// Sets or clears the stop sequences.
+        Builder stopSequences(StopSequences stopSequences);
+
+        /// Sets or clears the temperature.
+        Builder temperature(Ratio temperature);
+
+        /// Sets or clears the top K.
+        Builder topK(Count topK);
+
+        /// Sets or clears the top P.
+        Builder topP(Ratio topP);
+
+        /// Builds a chat options snapshot.
+        ChatOptions build();
+    }
 }
 
 /// A snapshot of common chat model options.
@@ -143,6 +183,14 @@ class DefaultChatOptions : ChatOptions
         return topP_;
     }
 
+    /// Returns a builder initialized with a copy of every captured value.
+    override ChatOptions.Builder mutate()
+    {
+        return ChatOptions.builder().model(model_).frequencyPenalty(frequencyPenalty_).maxTokens(maxTokens_)
+            .presencePenalty(presencePenalty_).stopSequences(stopSequences_)
+            .temperature(temperature_).topK(topK_).topP(topP_);
+    }
+
     /// Compares the captured values of options with the same runtime class.
     bool equals(Object other)
     {
@@ -180,6 +228,93 @@ class DefaultChatOptions : ChatOptions
     mixin JavaObject;
 }
 
+/// The default `ChatOptions.Builder` implementation: the erased `DefaultChatOptionsBuilder<B>`.
+class DefaultChatOptionsBuilder : ChatOptions.Builder
+{
+    protected ModelName model_;
+    protected Ratio frequencyPenalty_;
+    protected Count maxTokens_;
+    protected Ratio presencePenalty_;
+    protected StopSequences stopSequences_;
+    protected Ratio temperature_;
+    protected Count topK_;
+    protected Ratio topP_;
+
+    /// Starts a builder with every setting absent.
+    this()
+    {
+    }
+
+    /// Returns this builder as its fluent type (the erased self type of the generic builder).
+    protected ChatOptions.Builder self()
+    {
+        return this;
+    }
+
+    /// Sets or clears the model name.
+    override ChatOptions.Builder model(ModelName model)
+    {
+        model_ = model;
+        return this;
+    }
+
+    /// Sets or clears the frequency penalty.
+    override ChatOptions.Builder frequencyPenalty(Ratio frequencyPenalty)
+    {
+        frequencyPenalty_ = frequencyPenalty;
+        return this;
+    }
+
+    /// Sets or clears the maximum number of tokens.
+    override ChatOptions.Builder maxTokens(Count maxTokens)
+    {
+        maxTokens_ = maxTokens;
+        return this;
+    }
+
+    /// Sets or clears the presence penalty.
+    override ChatOptions.Builder presencePenalty(Ratio presencePenalty)
+    {
+        presencePenalty_ = presencePenalty;
+        return this;
+    }
+
+    /// Sets or clears the stop sequences, copying them like `new ArrayList<>(...)`.
+    override ChatOptions.Builder stopSequences(StopSequences stopSequences)
+    {
+        stopSequences_ = stopSequences is null ? null : StopSequences.copyOf(stopSequences);
+        return this;
+    }
+
+    /// Sets or clears the temperature.
+    override ChatOptions.Builder temperature(Ratio temperature)
+    {
+        temperature_ = temperature;
+        return this;
+    }
+
+    /// Sets or clears the top K.
+    override ChatOptions.Builder topK(Count topK)
+    {
+        topK_ = topK;
+        return this;
+    }
+
+    /// Sets or clears the top P.
+    override ChatOptions.Builder topP(Ratio topP)
+    {
+        topP_ = topP;
+        return this;
+    }
+
+    /// Builds a snapshot that survives later changes to this builder.
+    override ChatOptions build()
+    {
+        return new DefaultChatOptions(model_, frequencyPenalty_, maxTokens_, presencePenalty_,
+                stopSequences_, temperature_, topK_, topP_);
+    }
+}
+
 private bool sameCount(Count left, Count right)
 {
     return left.isNull == right.isNull && (left.isNull || left.get() == right.get());
@@ -196,7 +331,11 @@ private bool sameRatio(Ratio left, Ratio right)
     const b = right.get();
     if (a != b)
         return a != a && b != b; // Java Double.equals treats all NaNs as equal.
-    return a != 0.0 || javaHashCode(a) == javaHashCode(b); // Distinguish signed zeros.
+    // Hash through one call site so both values share the template instance.
+    uint[2] hashes;
+    foreach (i, value; [a, b])
+        hashes[i] = javaHashCode(value);
+    return a != 0.0 || hashes[0] == hashes[1]; // Distinguish signed zeros.
 }
 
 private uint ratioHash(Ratio ratio)
