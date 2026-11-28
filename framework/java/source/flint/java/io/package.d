@@ -850,6 +850,19 @@ abstract class OutputStream : Closeable, Flushable
     void close()
     {
     }
+
+    /// Flint-internal: the charset a wrapping `OutputStreamWriter` or `PrintWriter` inherits, as Java inherits a
+    /// `PrintStream` sink's charset. A plain stream names the default, UTF-8.
+    protected Charset charsetForWrapping() const pure nothrow @nogc
+    {
+        return StandardCharsets.UTF_8;
+    }
+
+    /// Flint-internal: a wrapped `PrintStream`'s error state, or -1 when the sink has none.
+    protected int nestedStreamError()
+    {
+        return -1;
+    }
 }
 
 package(flint) size_t byteWriteEnd(size_t capacity, int offset, int count)
@@ -2622,7 +2635,7 @@ class PrintWriter : Writer
     protected Writer out_;
     private bool autoFlush_;
     private bool trouble_;
-    private PrintStream psOut_;
+    private OutputStream psOut_;
 
     /// A print writer over `target`, without automatic flushing. A null writer is rejected.
     this(Writer target)
@@ -2665,8 +2678,7 @@ class PrintWriter : Writer
             throw new NullPointerException("out");
         out_ = new BufferedWriter(new OutputStreamWriter(output, charset));
         autoFlush_ = autoFlush;
-        if (auto stream = cast(PrintStream) output)
-            psOut_ = stream;
+        psOut_ = output;
     }
 
     alias write = Writer.write;
@@ -2818,8 +2830,9 @@ class PrintWriter : Writer
         const nested = out_ is null ? -1 : out_.nestedCheckError();
         if (nested >= 0)
             return nested != 0;
-        if (psOut_ !is null)
-            return psOut_.checkError();
+        const streamError = psOut_ is null ? -1 : psOut_.nestedStreamError();
+        if (streamError >= 0)
+            return streamError != 0;
         return trouble_;
     }
 
@@ -2871,9 +2884,7 @@ class PrintWriter : Writer
 // `OutputStreamWriter` inherit a print stream's charset.
 private Charset inheritedCharset(OutputStream output) pure nothrow @nogc
 {
-    if (auto stream = cast(PrintStream) output)
-        return stream.charset();
-    return StandardCharsets.UTF_8;
+    return output is null ? StandardCharsets.UTF_8 : output.charsetForWrapping();
 }
 
 /++
@@ -2941,6 +2952,16 @@ class PrintStream : FilterOutputStream
     Charset charset() const pure nothrow @nogc
     {
         return charset_;
+    }
+
+    override protected Charset charsetForWrapping() const pure nothrow @nogc
+    {
+        return charset_;
+    }
+
+    override protected int nestedStreamError()
+    {
+        return checkError() ? 1 : 0;
     }
 
     override void write(int b)
@@ -3138,8 +3159,9 @@ class PrintStream : FilterOutputStream
     {
         if (out_ !is null)
             flush();
-        if (auto stream = cast(PrintStream) out_)
-            return stream.checkError();
+        const streamError = out_ is null ? -1 : out_.nestedStreamError();
+        if (streamError >= 0)
+            return streamError != 0;
         return trouble_;
     }
 
