@@ -3366,14 +3366,11 @@ class Properties : LinkedHashMap!(string, string)
     /// `\uXXXX` escape, with Java's message.
     void load(string text)
     {
-        size_t position;
-        while (position < text.length)
-        {
-            auto line = logicalLine(text, position);
-            if (line.length == 0)
-                continue;
+        PropertyText input;
+        input.text = text;
+        char[] line;
+        while (input.readLine(line))
             parseLine(line);
-        }
     }
 
     /// Load ISO-8859-1 properties from `stream`, leaving it open.
@@ -3490,33 +3487,77 @@ class Properties : LinkedHashMap!(string, string)
         }
     }
 
-    private static string logicalLine(string text, ref size_t position)
+    /// Java's `LineReader` over the in-memory UTF-8 `text`: paragraphs joined by trailing-backslash
+    /// continuations, with leading blanks and line breaks skipped. A logical line that a trailing
+    /// backslash leaves empty at the end of the input is still returned, so `parseLine` stores
+    /// `("", "")`, as Java's reader returns a zero-length line there; blank lines that follow a
+    /// continuation collapse to nothing.
+    private struct PropertyText
     {
-        string line;
-        bool continuing;
-        while (position < text.length)
+        const(char)[] text;
+        size_t position;
+
+        bool readLine(ref char[] line)
         {
-            size_t end = position;
-            while (end < text.length && text[end] != '\n' && text[end] != '\r')
-                end++;
-            auto raw = text[position .. end];
-            position = end;
-            if (position < text.length && text[position] == '\r')
-                position++;
-            if (position < text.length && text[position] == '\n')
-                position++;
-            raw = raw[skipBlanks(raw, 0) .. $];
-            if (!continuing && isComment(raw))
-                return null;
-            if (trailingBackslashes(raw) % 2 == 1)
+            line.length = 0;
+            bool escaped;
+            skipLeading(false);
+            while (position < text.length)
             {
-                line ~= raw[0 .. $ - 1];
-                continuing = true;
-                continue;
+                const octet = cast(ubyte) text[position++];
+                if (line.length == 0 && (octet == '#' || octet == '!'))
+                {
+                    skipComment();
+                    skipLeading(false);
+                    continue;
+                }
+                if (isLineBreak(octet))
+                {
+                    if (line.length == 0)
+                    {
+                        skipLeading(false);
+                        continue;
+                    }
+                    if (position >= text.length || !escaped)
+                        break;
+                    line.length--;
+                    escaped = false;
+                    skipContinuation(octet);
+                    continue;
+                }
+                line ~= cast(char) octet;
+                escaped = octet == '\\' && !escaped;
             }
-            return line ~ raw;
+            if (line.length == 0)
+                return false;
+            if (escaped)
+                line.length--;
+            return true;
         }
-        return line;
+
+        void skipLeading(bool continuation)
+        {
+            while (position < text.length)
+            {
+                const octet = cast(ubyte) text[position];
+                if (!isBlank(cast(char) octet) && (continuation || !isLineBreak(octet)))
+                    return;
+                position++;
+            }
+        }
+
+        void skipComment()
+        {
+            while (position < text.length && !isLineBreak(cast(ubyte) text[position]))
+                position++;
+        }
+
+        void skipContinuation(ubyte terminator)
+        {
+            if (terminator == '\r' && position < text.length && text[position] == '\n')
+                position++;
+            skipLeading(true);
+        }
     }
 
     private void parseLine(scope const(char)[] line)
@@ -3550,19 +3591,6 @@ class Properties : LinkedHashMap!(string, string)
         while (from < text.length && isBlank(text[from]))
             from++;
         return from;
-    }
-
-    private static bool isComment(string line) pure nothrow @nogc
-    {
-        return line.length == 0 || line[0] == '#' || line[0] == '!';
-    }
-
-    private static size_t trailingBackslashes(string line) pure nothrow @nogc
-    {
-        size_t count;
-        while (count < line.length && line[line.length - (count + 1)] == '\\')
-            count++;
-        return count;
     }
 
     private static string unescape(scope const(char)[] text)
