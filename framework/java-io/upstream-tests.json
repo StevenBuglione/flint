@@ -162,24 +162,28 @@
       "phase": "2"
     },
     "java/io/DataInputStream/OpsAfterClose.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers reads failing after close when the wrapped stream fails.",
+      "covered_by": "framework/java-io/tests/data_input_stream_contract_test.d"
     },
     "java/io/DataInputStream/ReadFully.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers readFully filling a range, EOFException at the end and the range checks.",
+      "covered_by": "framework/java-io/tests/data_input_stream_contract_test.d"
     },
     "java/io/DataInputStream/ReadLinePushback.java": {
       "status": "deferred",
       "phase": "2"
     },
     "java/io/DataInputStream/ReadUTF.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers modified UTF-8 round-trips, malformed input and a non-null UTFDataFormatException message.",
+      "covered_by": "framework/java-io/tests/data_input_stream_contract_test.d"
     },
     "java/io/DataInputStream/SkipBytes.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers skipBytes returning the count actually skipped past the end.",
+      "covered_by": "framework/java-io/tests/data_input_stream_contract_test.d"
     },
     "java/io/DataOutputStream/CounterOverflow.java": {
       "status": "excluded",

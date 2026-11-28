@@ -1231,6 +1231,346 @@ class DataOutputStream : FilterOutputStream, DataOutput
     }
 }
 
+/// Java's `DataInput`: a portable source of primitive Java values.
+interface DataInput
+{
+    /// Read `b.length` bytes or fail at the end of the stream.
+    void readFully(scope ubyte[] b);
+
+    /// Read `len` bytes from `off` or fail at the end of the stream.
+    void readFully(scope ubyte[] b, int off, int len);
+
+    /// Skip `n` bytes, returning the count actually skipped.
+    int skipBytes(int n);
+
+    /// Read a boolean.
+    bool readBoolean();
+
+    /// Read a signed byte.
+    byte readByte();
+
+    /// Read an unsigned byte as 0..255.
+    int readUnsignedByte();
+
+    /// Read a signed short.
+    short readShort();
+
+    /// Read an unsigned short as 0..65535.
+    int readUnsignedShort();
+
+    /// Read a UTF-16 code unit.
+    wchar readChar();
+
+    /// Read an int.
+    int readInt();
+
+    /// Read a long.
+    long readLong();
+
+    /// Read a float.
+    float readFloat();
+
+    /// Read a double.
+    double readDouble();
+
+    /// Read modified UTF-8 with a two-byte length prefix.
+    string readUTF();
+}
+
+private int readIntBits(scope const(ubyte)[] buffer, int offset) pure nothrow @nogc
+{
+    return (cast(int) buffer[offset] << 24) | (cast(int) buffer[offset + 1] << 16) | (
+            cast(int) buffer[offset + 2] << 8) | cast(int) buffer[offset + 3];
+}
+
+private long readLongBits(scope const(ubyte)[] buffer, int offset) pure nothrow @nogc
+{
+    return (cast(long) buffer[offset] << 56) | (cast(long) buffer[offset + 1] << 48) | (
+            cast(long) buffer[offset + 2] << 40) | (cast(long) buffer[offset + 3] << 32) | (
+            cast(long) buffer[offset + 4] << 24) | (cast(long) buffer[offset + 5] << 16) | (
+            cast(long) buffer[offset + 6] << 8) | cast(long) buffer[offset + 7];
+}
+
+private void putCodePoint(scope char[] output, ref size_t used, int codePoint) pure nothrow @nogc
+{
+    if (codePoint >= 0xD800 && codePoint <= 0xDFFF)
+        codePoint = 0xFFFD; // an unpaired surrogate has no UTF-8 form
+    if (codePoint < 0x80)
+        output[used++] = cast(char) codePoint;
+    else if (codePoint < 0x800)
+    {
+        output[used++] = cast(char)(0xC0 | (codePoint >> 6));
+        output[used++] = cast(char)(0x80 | (codePoint & 0x3F));
+    }
+    else if (codePoint < 0x10000)
+    {
+        output[used++] = cast(char)(0xE0 | (codePoint >> 12));
+        output[used++] = cast(char)(0x80 | ((codePoint >> 6) & 0x3F));
+        output[used++] = cast(char)(0x80 | (codePoint & 0x3F));
+    }
+    else
+    {
+        output[used++] = cast(char)(0xF0 | (codePoint >> 18));
+        output[used++] = cast(char)(0x80 | ((codePoint >> 12) & 0x3F));
+        output[used++] = cast(char)(0x80 | ((codePoint >> 6) & 0x3F));
+        output[used++] = cast(char)(0x80 | (codePoint & 0x3F));
+    }
+}
+
+/// Java's `DataInputStream`: primitive values read in Java's portable form.
+class DataInputStream : FilterInputStream, DataInput
+{
+    private ubyte[8] readBuffer;
+
+    /// Wrap `input`.
+    this(InputStream input)
+    {
+        super(input);
+    }
+
+    alias read = FilterInputStream.read;
+
+    /// Read every byte of `b` through the wrapped stream.
+    override final int read(scope ubyte[] b)
+    {
+        return in_.read(b);
+    }
+
+    /// Read a range through the wrapped stream.
+    override final int read(scope ubyte[] b, int off, int len)
+    {
+        return in_.read(b, off, len);
+    }
+
+    /// Read `b.length` bytes or fail at the end of the stream.
+    final void readFully(scope ubyte[] b)
+    {
+        readFully(b, 0, cast(int) b.length);
+    }
+
+    /// Read `len` bytes from `off` or fail at the end of the stream.
+    final void readFully(scope ubyte[] b, int off, int len)
+    {
+        checkReadRange(b.length, off, len);
+        int n = 0;
+        while (n < len)
+        {
+            const count = in_.read(b, off + n, len - n);
+            if (count < 0)
+                throw new EOFException;
+            n += count;
+        }
+    }
+
+    /// Skip `n` bytes, returning the count actually skipped.
+    final int skipBytes(int n)
+    {
+        int total;
+        int cur;
+        while (total < n && (cur = cast(int) in_.skip(n - total)) > 0)
+            total += cur;
+        return total;
+    }
+
+    /// Read a boolean.
+    final bool readBoolean()
+    {
+        return readUnsignedByte() != 0;
+    }
+
+    /// Read a signed byte.
+    final byte readByte()
+    {
+        return cast(byte) readUnsignedByte();
+    }
+
+    /// Read an unsigned byte as 0..255.
+    final int readUnsignedByte()
+    {
+        const ch = in_.read();
+        if (ch < 0)
+            throw new EOFException;
+        return ch;
+    }
+
+    /// Read a signed short.
+    final short readShort()
+    {
+        readFully(readBuffer, 0, 2);
+        return cast(short)((cast(int) readBuffer[0] << 8) | cast(int) readBuffer[1]);
+    }
+
+    /// Read an unsigned short as 0..65535.
+    final int readUnsignedShort()
+    {
+        readFully(readBuffer, 0, 2);
+        return (cast(int) readBuffer[0] << 8) | cast(int) readBuffer[1];
+    }
+
+    /// Read a UTF-16 code unit.
+    final wchar readChar()
+    {
+        readFully(readBuffer, 0, 2);
+        return cast(wchar)((cast(int) readBuffer[0] << 8) | cast(int) readBuffer[1]);
+    }
+
+    /// Read an int.
+    final int readInt()
+    {
+        readFully(readBuffer, 0, 4);
+        return readIntBits(readBuffer, 0);
+    }
+
+    /// Read a long.
+    final long readLong()
+    {
+        readFully(readBuffer, 0, 8);
+        return readLongBits(readBuffer, 0);
+    }
+
+    /// Read a float.
+    final float readFloat()
+    {
+        readFully(readBuffer, 0, 4);
+        union Bits
+        {
+            int i;
+            float f;
+        }
+
+        Bits bits;
+        bits.i = readIntBits(readBuffer, 0);
+        return bits.f;
+    }
+
+    /// Read a double.
+    final double readDouble()
+    {
+        readFully(readBuffer, 0, 8);
+        union Bits
+        {
+            long l;
+            double d;
+        }
+
+        Bits bits;
+        bits.l = readLongBits(readBuffer, 0);
+        return bits.d;
+    }
+
+    /// Read modified UTF-8 with a two-byte length prefix.
+    final string readUTF()
+    {
+        return readUTF(this);
+    }
+
+    /// Read modified UTF-8 from `input`.
+    static string readUTF(DataInput input)
+    {
+        const utflen = input.readUnsignedShort();
+        ubyte[256] stackBytes;
+        char[768] stackChars;
+        ubyte[] bytes = stackBytes[];
+        char[] output = stackChars[];
+        if (utflen > stackBytes.length)
+            bytes = new ubyte[utflen];
+        if (cast(size_t) utflen * 3 > stackChars.length)
+            output = new char[utflen * 3];
+        input.readFully(bytes, 0, utflen);
+
+        size_t count;
+        size_t used;
+        while (count < utflen)
+        {
+            const c = bytes[count] & 0xFF;
+            if (c > 127)
+                break;
+            ++count;
+            output[used++] = cast(char) c;
+        }
+        while (count < utflen)
+            count = decodeUnit(bytes, count, utflen, output, used);
+        return output[0 .. used].idup;
+    }
+
+    private static size_t decodeUnit(scope const(ubyte)[] bytes, size_t count, size_t utflen,
+            scope char[] output, ref size_t used)
+    {
+        const c = bytes[count] & 0xFF;
+        if (c < 0x80)
+        {
+            output[used++] = cast(char) c;
+            return count + 1;
+        }
+        if ((c & 0xE0) == 0xC0)
+            return decodeTwoByte(bytes, count, utflen, output, used, c);
+        if ((c & 0xF0) == 0xE0)
+            return decodeThreeByte(bytes, count, utflen, output, used, c);
+        throw malformedAt(count);
+    }
+
+    private static size_t decodeTwoByte(scope const(ubyte)[] bytes, size_t count, size_t utflen,
+            scope char[] output, ref size_t used, int c)
+    {
+        count += 2;
+        if (count > utflen)
+            throw partialCharacter();
+        const char2 = bytes[count - 1];
+        if ((char2 & 0xC0) != 0x80)
+            throw malformedAt(count);
+        putCodePoint(output, used, ((c & 0x1F) << 6) | (char2 & 0x3F));
+        return count;
+    }
+
+    private static size_t decodeThreeByte(scope const(ubyte)[] bytes, size_t count, size_t utflen,
+            scope char[] output, ref size_t used, int c)
+    {
+        count += 3;
+        if (count > utflen)
+            throw partialCharacter();
+        const char2 = bytes[count - 2];
+        const char3 = bytes[count - 1];
+        if (((char2 & 0xC0) != 0x80) || ((char3 & 0xC0) != 0x80))
+            throw malformedAt(count - 1);
+        const unit = ((c & 0x0F) << 12) | ((char2 & 0x3F) << 6) | (char3 & 0x3F);
+        int low;
+        if (unit >= 0xD800 && unit <= 0xDBFF && lowSurrogateAt(bytes, count, utflen, low))
+        {
+            putCodePoint(output, used, 0x10000 + ((unit - 0xD800) << 10) + (low - 0xDC00));
+            return count + 3;
+        }
+        putCodePoint(output, used, unit);
+        return count;
+    }
+
+    private static bool lowSurrogateAt(scope const(ubyte)[] bytes, size_t count, size_t utflen, out int low)
+    {
+        if (count + 3 > utflen)
+            return false;
+        const c = bytes[count] & 0xFF;
+        if ((c & 0xF0) != 0xE0)
+            return false;
+        const char2 = bytes[count + 1];
+        const char3 = bytes[count + 2];
+        if (((char2 & 0xC0) != 0x80) || ((char3 & 0xC0) != 0x80))
+            return false;
+        low = ((c & 0x0F) << 12) | ((char2 & 0x3F) << 6) | (char3 & 0x3F);
+        return low >= 0xDC00 && low <= 0xDFFF;
+    }
+
+    private static UTFDataFormatException partialCharacter() pure nothrow
+    {
+        return new UTFDataFormatException("malformed input: partial character at end");
+    }
+
+    private static UTFDataFormatException malformedAt(size_t offset) pure nothrow
+    {
+        import flint.engine.aot.text : decimal;
+
+        return new UTFDataFormatException("malformed input around byte " ~ decimal(offset));
+    }
+}
+
 /// Java's `Writer`: a sink of characters (UTF-8 text in Flint).
 abstract class Writer : Closeable, Flushable
 {
