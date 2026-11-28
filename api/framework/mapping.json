@@ -8518,6 +8518,8 @@
 "java.util.Properties#load(InputStream)":{"status":"adapted","d":"flint.java.util.Properties.load","rules":["R14"],"note":"Decodes ISO-8859-1 and leaves the stream open. An isolated UTF-16 surrogate escape becomes U+FFFD in the D UTF-8 string."},
 "java.util.Properties#setProperty(String,String)":{"d":"flint.java.util.Properties.setProperty","rules":["R23","R26"],"status":"adapted"},
 "java.util.Properties#stringPropertyNames()":{"d":"flint.java.util.Properties.stringPropertyNames","status":"ported"},
+"java.util.Properties#store(OutputStream,String)":{"d":"flint.java.util.Properties.store","rules":["R8","R14"],"status":"adapted","note":"Writes ISO-8859-1 bytes and leaves the stream open. D has no checked IOException (D-8)."},
+"java.util.Properties#store(Writer,String)":{"d":"flint.java.util.Properties.store","rules":["R8","R14"],"status":"adapted","note":"D has no checked IOException (D-8). The date comment uses the default time-zone (UTC)."},
 "java.util.Scanner#<init>(Readable)":{"category":"deferred","note":"The Readable constructor awaits the interface's cross-package placement. Its method takes a java.nio CharBuffer. Revisit after the compile-scope decision on 2026-11-27.","phase":"2","status":"excluded"},
 "java.util.Set":{"d":"flint.java.util.Set","status":"ported"},
 "java.util.Set#copyOf(Collection)":{"d":"flint.java.util.Set.copyOf","status":"ported"},
