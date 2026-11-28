@@ -23,7 +23,7 @@ import flint.engine.aot.descriptor : TypeKind;
 import flint.engine.aot.name : typeNameOf;
 import flint.engine.aot.objects : assumeClass, assumeClasses, asObjects, objectEquals, statelessInstance;
 import flint.java.lang : ClassCastException, IllegalArgumentException, IndexOutOfBoundsException, Iterable,
-    NullPointerException, RuntimeException, UnsupportedOperationException, javaEquals, javaHashCode, valueOf;
+    NullPointerException, RuntimeException, System, UnsupportedOperationException, javaEquals, javaHashCode, valueOf;
 import flint.java.util.stream : Stream;
 public import flint.java.util.calendar : Calendar, GregorianCalendar;
 public import flint.java.util.date : Date;
@@ -3098,6 +3098,174 @@ class Properties : LinkedHashMap!(string, string)
             result.add(key);
         result.freeze();
         return result;
+    }
+
+    /// Store these properties, preceded by `comments` (may be null) and a date comment, as ISO-8859-1 bytes,
+    /// leaving `output` open. Java declares `IOException`; D has no checked exceptions (R8, D-8).
+    void store(imported!"flint.java.io".OutputStream output, string comments)
+    {
+        if (output is null)
+            throw new NullPointerException();
+        auto text = render(comments);
+        import flint.engine.aot.text : decodeUtf8;
+
+        // The rendered text is ASCII or Latin-1, so each code point is one ISO-8859-1 byte.
+        ubyte[] bytes;
+        size_t position;
+        while (position < text.length)
+            bytes ~= cast(ubyte) decodeUtf8(text, position);
+        output.write(bytes);
+        output.flush();
+    }
+
+    /// Store these properties, preceded by `comments` (may be null) and a date comment. Java declares `IOException`;
+    /// D has no checked exceptions (R8, D-8).
+    void store(imported!"flint.java.io".Writer writer, string comments)
+    {
+        if (writer is null)
+            throw new NullPointerException();
+        writer.write(render(comments));
+        writer.flush();
+    }
+
+    private string render(string comments)
+    {
+        string text;
+        if (comments !is null)
+            text ~= commentsText(comments);
+        text ~= "#" ~ new Date().toString() ~ System.lineSeparator();
+        foreach (key; keySet().toArray())
+            text ~= saveConvert(key, true) ~ "=" ~ saveConvert(get(key), false) ~ System.lineSeparator();
+        return text;
+    }
+
+    /// Java's `writeComments`: a leading `#`, non-Latin-1 units as `\uXXXX`, and a `#` on each continuation line
+    /// unless it already starts with `#` or `!`.
+    private static string commentsText(scope const(char)[] comments)
+    {
+        const units = utf16Units(comments);
+        string text = "#";
+        size_t current;
+        size_t last;
+        while (current < units.length)
+        {
+            const unit = units[current];
+            if (unit > 0x00ff || unit == '\n' || unit == '\r')
+            {
+                if (last != current)
+                    text ~= latin1Text(units[last .. current]);
+                if (unit > 0x00ff)
+                    text ~= "\\u" ~ hexUnit(unit);
+                else
+                {
+                    text ~= System.lineSeparator();
+                    if (unit == '\r' && current + 1 != units.length && units[current + 1] == '\n')
+                        current++;
+                    if (current + 1 == units.length || (units[current + 1] != '#' && units[current + 1] != '!'))
+                        text ~= "#";
+                }
+                last = current + 1;
+            }
+            current++;
+        }
+        if (last != current)
+            text ~= latin1Text(units[last .. current]);
+        text ~= System.lineSeparator();
+        return text;
+    }
+
+    /// Java's `saveConvert`: escape a key or value for the `.properties` format.
+    private static string saveConvert(scope const(char)[] text, bool escapeSpace)
+    {
+        const units = utf16Units(text);
+        string result;
+        foreach (position, unit; units)
+        {
+            if (unit > 61 && unit < 127)
+            {
+                if (unit == '\\')
+                    result ~= "\\\\";
+                else
+                    result ~= cast(char) unit;
+                continue;
+            }
+            switch (unit)
+            {
+            case ' ':
+                if (position == 0 || escapeSpace)
+                    result ~= '\\';
+                result ~= ' ';
+                break;
+            case '\t':
+                result ~= "\\t";
+                break;
+            case '\n':
+                result ~= "\\n";
+                break;
+            case '\r':
+                result ~= "\\r";
+                break;
+            case '\f':
+                result ~= "\\f";
+                break;
+            case '=':
+            case ':':
+            case '#':
+            case '!':
+                result ~= '\\';
+                result ~= cast(char) unit;
+                break;
+            default:
+                if (unit < 0x20 || unit > 0x7e)
+                    result ~= "\\u" ~ hexUnit(unit);
+                else
+                    result ~= cast(char) unit;
+            }
+        }
+        return result;
+    }
+
+    /// The UTF-16 code units of `text`, as Java's `String.charAt` sees them.
+    private static ushort[] utf16Units(scope const(char)[] text)
+    {
+        import flint.engine.aot.text : decodeUtf8;
+
+        ushort[] units;
+        size_t position;
+        while (position < text.length)
+        {
+            const codePoint = decodeUtf8(text, position);
+            if (codePoint <= 0xFFFF)
+                units ~= cast(ushort) codePoint;
+            else
+            {
+                const offset = codePoint - 0x10000;
+                units ~= cast(ushort)(0xd800 + (offset >> 10));
+                units ~= cast(ushort)(0xdc00 + (offset & 0x3ff));
+            }
+        }
+        return units;
+    }
+
+    private static string hexUnit(ushort value)
+    {
+        static immutable char[] digits = "0123456789ABCDEF";
+        char[4] buffer;
+        buffer[0] = digits[(value >> 12) & 0xf];
+        buffer[1] = digits[(value >> 8) & 0xf];
+        buffer[2] = digits[(value >> 4) & 0xf];
+        buffer[3] = digits[value & 0xf];
+        return buffer.idup;
+    }
+
+    private static string latin1Text(scope const(ushort)[] units)
+    {
+        import flint.engine.aot.text : utf8;
+
+        string text;
+        foreach (unit; units)
+            text ~= utf8(cast(dchar) unit);
+        return text;
     }
 
     /// Load properties from `text` in the `.properties` format. Throws `IllegalArgumentException` on a malformed
