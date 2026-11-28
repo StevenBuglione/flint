@@ -1,0 +1,5 @@
+{
+ "id": "D-IO-2",
+ "deviation": "`PrintWriter` records an `InterruptedIOException` from its sink in its error state. Java instead restores the current thread's interrupt flag and leaves the error state unchanged.",
+ "reason": "Flint has no per-thread interrupt flag: a stream is confined to one fiber, and interruption is not modelled (AGENTS.md). The error state keeps the failure observable. This deviation is removed when an interrupt flag or equivalent cancellation state exists."
+}
