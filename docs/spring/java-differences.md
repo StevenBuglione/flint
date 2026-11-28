@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,956 | 733 | 0 | 1,921 | 13,811 |
+| framework | openjdk@21.0.13 | 1,962 | 734 | 0 | 1,921 | 13,804 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2471,6 +2471,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.net.URI#getScheme()` | `flint.java.net.URI.getScheme` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A null string denotes an absent scheme. Every present scheme is nonempty. |
 | `java.net.URI#getUserInfo()` | `flint.java.net.URI.getUserInfo` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Null denotes undefined user-information. |
 | `java.net.URI#hashCode()` | `flint.java.net.URI.toHash` | [R11](api-mapping.md#r11-object-identity-and-equality), [D-NET-1](api-mapping.md#deviations) | Java's component hash, including UTF-16 code units and case-normalized escapes. |
+| `java.net.URISyntaxException` | `flint.java.net.urisyntaxexception.URISyntaxException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Import from flint.java.net.urisyntaxexception; flint.java.net does not re-export it until the JDK aggregate exists. Checked Java Exception mapped to D Exception (D-8) with R26 detail message handling; null input or reason raises NullPointerException as Java does. |
 | `java.net.URL` | `flint.java.net.url.URL` | [R1](api-mapping.md#r1-packages-and-names), [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality), [R26](api-mapping.md#r26-null-arrays), [D-NET-1](api-mapping.md#deviations) | Leaf import: flint.java.net.url : URL. Parsing-only subset (no I/O or global URLStreamHandlerFactory). Optional components (authority, userInfo, host, query, ref) use R5 Nullable!string; null string slices count as empty under R26; equals, sameFile, and hashCode compare normalized components without DNS resolution (D-NET-1). Implements JavaObject without Serializable. |
 | `java.net.URL#<init>(String)` | `flint.java.net.url.URL.this` | [R26](api-mapping.md#r26-null-arrays) | Null spec slice counts as empty under R26 and throws MalformedURLException. |
 | `java.net.URL#<init>(String,String,String)` | `flint.java.net.url.URL.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | Accepts string or Nullable!string host; null protocol or file counts as empty under R26. |
@@ -11055,7 +11056,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
-| java.net | 557 | 0 |
+| java.net | 550 | 0 |
 | java.net.spi | 0 | 2 |
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |
