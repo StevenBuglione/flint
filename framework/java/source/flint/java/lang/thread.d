@@ -39,6 +39,8 @@ A wait that an interrupt ends.
 The code that parks installs one before its final flag check, then retires it after it wakes. `wake` runs at
 most once per installed wait, on the thread that called `interrupt`, and must not throw, allocate or block. It
 may run after the waiter retired the wait, so the waiter re-checks `ThreadState.isInterrupted` after waking.
+The delegate's target must be GC-managed and outlive the copied delegate: a stale `wake` can run after the
+waiter retired or re-armed its wait, so the target must never be a stack or struct waiter.
 +/
 package(flint.java) struct InterruptSink
 {
