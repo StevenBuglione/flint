@@ -30,22 +30,33 @@
 module flint.java.net.socketexception;
 
 import flint.java.io : IOException;
-import flint.java.lang : javaToString;
 
 @safe:
 
 /// Thrown to indicate that there is an error creating or accessing a Socket.
 class SocketException : IOException
 {
-    /// Constructs a `SocketException` with an optional detail message and cause.
-    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    /// Java's `SocketException()` and `SocketException(String)`: `message`, with a cause one later `initCause` may set.
+    this(string message = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message.length == 0 ? null : message, file, line);
+    }
+
+    /// Java's `SocketException(String, Throwable)`: `message` and an initialized `cause`, even `null`.
+    this(string message, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message.length == 0 ? null : message, cause, file, line);
     }
 
-    /// Constructs a `SocketException` whose detail message is `cause.toString()`.
+    /// Selects the cause overload for a `null` literal, as Java's overload resolution does.
+    this(string message, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(message, cast(Throwable) null, file, line);
+    }
+
+    /// Java's `SocketException(Throwable)`: the detail message is `cause.toString()`, or null.
     this(Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        super(cause is null ? null : javaToString(cause), cause, file, line);
+        super(cause, file, line);
     }
 }

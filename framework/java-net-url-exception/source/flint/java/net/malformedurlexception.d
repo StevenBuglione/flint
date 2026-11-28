@@ -35,9 +35,9 @@ import flint.java.io : IOException;
 /// Thrown to indicate that a malformed URL has occurred.
 class MalformedURLException : IOException
 {
-    /// Constructs a `MalformedURLException` with an optional detail message.
+    /// Java's `MalformedURLException()` and `(String)`: the cause stays open to one `initCause`.
     this(string msg = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        super(msg, null, file, line);
+        super(msg, file, line);
     }
 }
