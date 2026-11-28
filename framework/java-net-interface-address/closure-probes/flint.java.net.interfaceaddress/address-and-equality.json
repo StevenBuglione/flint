@@ -3,8 +3,11 @@
   "leaves": [
     "flint.java.character",
     "flint.java.io",
+    "flint.java.io.closeable",
+    "flint.java.io.flushable",
     "flint.java.lang",
     "flint.java.lang.javaobject",
+    "flint.java.lang.system",
     "flint.java.net.inetaddress",
     "flint.java.net.internal.ipaddressutil",
     "flint.java.net.unknownhostexception"

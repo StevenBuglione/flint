@@ -3,7 +3,10 @@
   "leaves": [
     "flint.java.character",
     "flint.java.io",
+    "flint.java.io.closeable",
+    "flint.java.io.flushable",
     "flint.java.lang",
+    "flint.java.lang.system",
     "flint.java.sql",
     "flint.java.text.simpledateformat",
     "flint.java.time",

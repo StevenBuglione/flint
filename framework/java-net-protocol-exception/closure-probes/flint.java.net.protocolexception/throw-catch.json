@@ -2,7 +2,10 @@
   "source": "closure/protocolexception.d",
   "leaves": [
     "flint.java.io",
-    "flint.java.lang"
+    "flint.java.io.closeable",
+    "flint.java.io.flushable",
+    "flint.java.lang",
+    "flint.java.lang.system"
   ],
   "data": []
 }
