@@ -1,5 +1,7 @@
 {
   "source": "closure/random-seed.d",
-  "leaves": [],
+  "leaves": [
+    "flint.java.lang.runtimeexception"
+  ],
   "data": []
 }
