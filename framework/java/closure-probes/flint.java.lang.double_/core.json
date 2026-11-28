@@ -1,0 +1,11 @@
+{
+  "data": [],
+  "leaves": [
+    "flint.java.internal.math.floatingdecimal",
+    "flint.java.lang",
+    "flint.java.lang.math",
+    "flint.java.lang.nullpointerexception",
+    "flint.java.lang.runtimeexception"
+  ],
+  "source": "closure/double__leaf.d"
+}
