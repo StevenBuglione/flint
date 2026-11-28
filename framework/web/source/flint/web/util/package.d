@@ -2,7 +2,8 @@
 `org.springframework.web.util`: servlet utilities and URI processing.
 
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/web/util/
-(UriComponentsBuilder.java, UriComponents.java, HierarchicalUriComponents.java, UriUtils.java, WebUtils.java).
+(UriComponentsBuilder.java, UriComponents.java, HierarchicalUriComponents.java, UriUtils.java, WebUtils.java,
+JavaScriptUtils.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 Modified by the Flint authors: one `UriComponents` class covers Spring's hierarchical components (opaque URIs are
@@ -971,5 +972,82 @@ final class UriComponentsBuilder
         copy.queryParamsValue = queryParamsValue.dup;
         copy.fragmentValue = fragmentValue;
         return copy;
+    }
+}
+
+/// `JavaScriptUtils`: escaping for JavaScript string literals (JavaScript 1.5 rules).
+abstract class JavaScriptUtils
+{
+    /// `javaScriptEscape`: turns JavaScript special characters into escaped sequences.
+    static string javaScriptEscape(string input)
+    {
+        if (input is null || input.length == 0)
+            return "";
+        char[] filtered;
+        filtered.reserve(input.length + 16);
+        char prevChar = '\0';
+        for (size_t i = 0; i < input.length; i++)
+        {
+            const char c = input[i];
+            if (c == '\xE2' && i + 2 < input.length && input[i + 1] == '\x80'
+                    && (input[i + 2] == '\xA8' || input[i + 2] == '\xA9'))
+            {
+                filtered ~= input[i + 2] == '\xA8' ? "\\u2028" : "\\u2029";
+                prevChar = '\0';
+                i += 2;
+                continue;
+            }
+            switch (c)
+            {
+            case '"':
+                filtered ~= "\\\"";
+                break;
+            case '\'':
+                filtered ~= "\\'";
+                break;
+            case '\\':
+                filtered ~= "\\\\";
+                break;
+            case '/':
+                filtered ~= "\\/";
+                break;
+            case '\t':
+                filtered ~= "\\t";
+                break;
+            case '\n':
+                if (prevChar != '\r')
+                    filtered ~= "\\n";
+                break;
+            case '\r':
+                filtered ~= "\\n";
+                break;
+            case '\f':
+                filtered ~= "\\f";
+                break;
+            case '\b':
+                filtered ~= "\\b";
+                break;
+            case '\013':
+                filtered ~= "\\v";
+                break;
+            case '<':
+                filtered ~= "\\u003C";
+                break;
+            case '>':
+                filtered ~= "\\u003E";
+                break;
+            case '`':
+                filtered ~= "\\u0060";
+                break;
+            case '$':
+                filtered ~= "\\u0024";
+                break;
+            default:
+                filtered ~= c;
+                break;
+            }
+            prevChar = c;
+        }
+        return filtered.idup;
     }
 }
