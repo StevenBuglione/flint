@@ -96,6 +96,12 @@ interface ChatOptions : ModelOptions
 
         /// Builds a chat options snapshot.
         ChatOptions build();
+
+        /// Returns a copy of this builder that later changes to either do not affect.
+        Builder clone();
+
+        /// Merges the values the other builder set into this one, keeping this builder's where it set none.
+        Builder combineWith(Builder other);
     }
 }
 
@@ -186,9 +192,8 @@ class DefaultChatOptions : ChatOptions
     /// Returns a builder initialized with a copy of every captured value.
     override ChatOptions.Builder mutate()
     {
-        return ChatOptions.builder().model(model_).frequencyPenalty(frequencyPenalty_).maxTokens(maxTokens_)
-            .presencePenalty(presencePenalty_).stopSequences(stopSequences_)
-            .temperature(temperature_).topK(topK_).topP(topP_);
+        return builderWith(model_, frequencyPenalty_, maxTokens_, presencePenalty_, stopSequences_,
+                temperature_, topK_, topP_);
     }
 
     /// Compares the captured values of options with the same runtime class.
@@ -313,6 +318,53 @@ class DefaultChatOptionsBuilder : ChatOptions.Builder
         return new DefaultChatOptions(model_, frequencyPenalty_, maxTokens_, presencePenalty_,
                 stopSequences_, temperature_, topK_, topP_);
     }
+
+    /// Returns a builder with a copy of every setting, including the stop sequences.
+    override ChatOptions.Builder clone()
+    {
+        return builderWith(model_, frequencyPenalty_, maxTokens_, presencePenalty_, stopSequences_,
+                temperature_, topK_, topP_);
+    }
+
+    /// Merges the settings the other builder set, appending its stop sequences to this builder's.
+    override ChatOptions.Builder combineWith(ChatOptions.Builder other)
+    {
+        if (other is null)
+            return this;
+
+        ChatOptions that = other.build();
+        if (!that.getModel().isNull)
+            model_ = that.getModel();
+        if (!that.getFrequencyPenalty().isNull)
+            frequencyPenalty_ = that.getFrequencyPenalty();
+        if (!that.getMaxTokens().isNull)
+            maxTokens_ = that.getMaxTokens();
+        if (!that.getPresencePenalty().isNull)
+            presencePenalty_ = that.getPresencePenalty();
+        auto stops = that.getStopSequences();
+        if (stops !is null)
+        {
+            if (stopSequences_ is null)
+                stopSequences_ = StopSequences.copyOf(stops);
+            else
+                stopSequences_ = StopSequences.of(stopSequences_.toArray() ~ stops.toArray());
+        }
+        if (!that.getTemperature().isNull)
+            temperature_ = that.getTemperature();
+        if (!that.getTopK().isNull)
+            topK_ = that.getTopK();
+        if (!that.getTopP().isNull)
+            topP_ = that.getTopP();
+        return this;
+    }
+}
+
+/// Creates a builder holding the given settings; the one copy path shared by `mutate` and `clone`.
+private ChatOptions.Builder builderWith(ModelName model, Ratio frequencyPenalty, Count maxTokens,
+        Ratio presencePenalty, StopSequences stopSequences, Ratio temperature, Count topK, Ratio topP)
+{
+    return ChatOptions.builder().model(model).frequencyPenalty(frequencyPenalty).maxTokens(maxTokens)
+        .presencePenalty(presencePenalty).stopSequences(stopSequences).temperature(temperature).topK(topK).topP(topP);
 }
 
 private bool sameCount(Count left, Count right)
