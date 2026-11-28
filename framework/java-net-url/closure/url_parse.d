@@ -12,6 +12,7 @@ int main(string[] args)
     auto base = new URL(baseSpec);
     auto resolved = new URL(base, relSpec);
     auto normalized = new URL("http://example.test/next?x=1#frag");
+    auto uri = normalized.toURI();
     return resolved.equals(normalized) && resolved.hashCode() == normalized.hashCode()
-        && resolved.toExternalForm().length > 0 ? 0 : 1;
+        && resolved.toExternalForm().length > 0 && uri.getScheme() == "http" ? 0 : 1;
 }

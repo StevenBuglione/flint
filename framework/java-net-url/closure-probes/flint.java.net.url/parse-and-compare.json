@@ -4,8 +4,10 @@
     "flint.java.io",
     "flint.java.lang",
     "flint.java.lang.javaobject",
+    "flint.java.net",
     "flint.java.net.internal.ipv6literal",
-    "flint.java.net.malformedurlexception"
+    "flint.java.net.malformedurlexception",
+    "flint.java.net.urisyntaxexception"
   ],
   "data": []
 }
