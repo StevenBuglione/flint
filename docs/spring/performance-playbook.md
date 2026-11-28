@@ -679,6 +679,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Expand a whole-of-day value into the time once, as Java's `Parsed` does.** `A` (milli-of-day) and `N` (nano-of-day) reuse the existing number element; on parse one value fills the hour, minute, second and nano through `mergeField`, which throws Java's conflict when another source disagrees, naming the target field Java names (milli-of-day goes through second-of-day and milli-of-second). The value is validated against `0 - 86399999` and `0 - 86399999999999`. The fields are derived from the time on print and add no template instantiations. On venus (v4.2 toolchain) against the parent `91eae3bce`, the Java module stays at 129,512 incremental linked bytes (O3 129,512, Oz 122,344) and DMD templates stay at 4,775 against the 7,350 cap (measured at `186ead32f`; the code is identical).
 
+- **Resolve a parsed modified Julian day through epoch-day, sharing the date path.** `g` reuses the existing number element and a `modifiedJulianDay` field; printing derives the value from the date and parsing resolves it with the existing `LocalDate.ofEpochDay`, so a full date plus a differing `g` reports Java's "Fields resolved to two different dates" before any new code. A value without a date reports `EpochDay`, the field Java's `JulianFields` reads. The field adds no new printing or parsing tables. On venus (v4.2 toolchain) against the parent `38a1ce9b0`, the Java module stays at 129,512 incremental linked bytes (O3 129,512, Oz 122,344) and DMD templates rise from 4,775 to 4,781 against the 7,350 cap (measured at `f95204c78`; the code is identical).
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:

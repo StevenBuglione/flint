@@ -492,6 +492,18 @@ public class GoldenFormatterBuilder {
         recipe("p:uuuu-MM-dd A HH:mm:ss", k("dateTime"), "2024-03-05 3661001 01:01:01",
                 "2024-03-05 3661001 00:00:00");
         recipe("p:A N", k("time", "dateTime"), "3661001 3661001000000", "3661001 3661002000000");
+        // Modified Julian day: g is one to many number letters, the count the minimum width up to nineteen and the
+        // sign NORMAL. It resolves the parsed value to an epoch day, and a different date already resolved from the
+        // other date fields is Java's "Fields resolved to two different dates" conflict.
+        recipe("p:g", k("date", "dateTime"), "40587", "0", "-1", "60374", "365241821058",
+                "365241821059", "-365243178575", "-365243178576");
+        recipe("p:gg", k("date"), "0", "7", "07", "60374");
+        recipe("p:ggggggggggggggggggg", k("date"), "0000000000000000000", "0000060374000000000");
+        recipe("p:gggggggggggggggggggg", none);
+        recipe("p:uuuu-MM-dd g", k("date"), "2024-03-05 60374", "2024-03-05 40587",
+                "2024-03-05 0");
+        recipe("p:g HH:mm", k("date", "dateTime"), "40587 10:15", "60374 10:15", "40587 24:00");
+        recipe("p:g E", k("date"), "60374 Tue", "60374 Mon", "40587 Thu", "40587 Wed");
         Files.write(Path.of(a[0]), lines);
     }
 }

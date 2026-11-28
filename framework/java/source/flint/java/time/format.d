@@ -271,6 +271,7 @@ private enum Field : ubyte
     nanoOfDay,
     amPmOfDay,
     instantSeconds,
+    modifiedJulianDay, // Java's JulianFields.MODIFIED_JULIAN_DAY
     weekBasedYear, // Java's IsoFields.WEEK_BASED_YEAR
     weekOfWeekBasedYear, // IsoFields.WEEK_OF_WEEK_BASED_YEAR
 }
@@ -281,7 +282,7 @@ private immutable string[fieldCount] fieldNames = [
     "Year", "YearOfEra", "MonthOfYear", "DayOfMonth", "DayOfYear", "DayOfWeek", "QuarterOfYear",
     "AlignedWeekOfMonth", "HourOfDay", "ClockHourOfAmPm", "HourOfAmPm", "ClockHourOfDay",
     "MinuteOfHour", "SecondOfMinute", "NanoOfSecond", "MilliOfDay", "NanoOfDay", "AmPmOfDay",
-    "InstantSeconds", "WeekBasedYear", "WeekOfWeekBasedYear"
+    "InstantSeconds", "ModifiedJulianDay", "WeekBasedYear", "WeekOfWeekBasedYear"
 ];
 
 /**
@@ -505,7 +506,7 @@ struct Fields
         auto text = "{" ~ (hasOffset_ ? "OffsetSeconds=" ~ decimal(offsetSeconds_) : "") ~ "},ISO";
         if (zoneId_.length)
             text ~= "," ~ zoneId_;
-        const date = hasDate(), time = hasTime();
+        const date = hasDate() || has(Field.modifiedJulianDay), time = hasTime();
         if (date || time)
             text ~= " resolved to ";
         if (date)
@@ -528,8 +529,40 @@ struct Fields
             throw failed(text, e);
     }
 
-    // The date fields, range-checked; SMART resolution moves an invalid day 29-31 to the end of the month.
+    // The date fields, range-checked; SMART resolution moves an invalid day 29-31 to the end of the month. A parsed
+    // modified Julian day resolves to its epoch day, and a different date the other date fields resolve to is Java's
+    // "Fields resolved to two different dates" conflict.
     private LocalDate resolvedDate(scope const(char)[] text, string type) const
+    {
+        if (!has(Field.modifiedJulianDay))
+            return chronoDate(text, type);
+        const date = julianDate(text);
+        if (hasDate())
+        {
+            const chrono = chronoDate(text, type);
+            if (chrono != date)
+                throw failed(text, new DateTimeException(
+                        "Conflict found: Fields resolved to two different dates: " ~ chrono.toString()
+                        ~ " " ~ date.toString()));
+        }
+        return date;
+    }
+
+    // The epoch day of the parsed modified Julian day, ranged as Java's JulianFields does.
+    private LocalDate julianDate(scope const(char)[] text) const
+    {
+        try
+        {
+            const value = values_[Field.modifiedJulianDay];
+            checkRange("ModifiedJulianDay", value, -365_243_178_575L, 365_241_821_058L);
+            return LocalDate.ofEpochDay(value - 40_587L);
+        }
+        catch (DateTimeException e)
+            throw failed(text, e);
+    }
+
+    // The date the year, month, day-of-month and day-of-year fields give: Java's `ChronoField` resolution.
+    private LocalDate chronoDate(scope const(char)[] text, string type) const
     {
         long year;
         if (has(Field.year))
@@ -752,7 +785,7 @@ struct Fields
     // day-of-week cross-check, then the offset of a date-time.
     private void resolveAll(scope const(char)[] text) const
     {
-        const date = hasDate(), time = hasTime();
+        const date = hasDate() || has(Field.modifiedJulianDay), time = hasTime();
         LocalDate resolved;
         if (date)
             resolved = resolvedDate(text, "");
@@ -816,14 +849,31 @@ struct Fields
         addDate(date);
     }
 
-    // The value a printer prints for `f`: the supplied or parsed value, or a week field derived from the date.
+    // The value a printer prints for `f`: the supplied or parsed value, or a week field or the modified Julian day
+    // derived from the date.
     private bool printedValue(Field f, out long value) const
     {
+        if (f == Field.modifiedJulianDay)
+            return julianValue(value);
         if (f >= Field.weekBasedYear)
             return weekValue(f, value);
         if (!has(f))
             return false;
         value = values_[f];
+        return true;
+    }
+
+    // The modified Julian day of the date these fields hold, or of a parsed value; false when they hold no date.
+    private bool julianValue(out long value) const
+    {
+        if (has(Field.modifiedJulianDay))
+        {
+            value = values_[Field.modifiedJulianDay];
+            return true;
+        }
+        if (!hasDate())
+            return false;
+        value = toLocalDate("").toEpochDay() + 40_587L;
         return true;
     }
 
@@ -1901,6 +1951,9 @@ private struct Printer
         case Op.instant:
             return "InstantSeconds";
         default:
+            // Java's modified Julian day reads EPOCH_DAY, so a value without a date reports that field.
+            if (e.op == Op.number && e.field == Field.modifiedJulianDay)
+                return "EpochDay";
             return fieldNames[e.field];
         }
     }
@@ -3077,6 +3130,15 @@ private Element alignedWeekLetter(int count)
     return num(Field.alignedWeekOfMonth, 1, 19, SignStyle.NORMAL);
 }
 
+// The modified Julian day: one to nineteen letters, the count the minimum width, and Java's widths error above that.
+private Element modifiedJulianLetter(int count)
+{
+    if (count > 19)
+        throw new IllegalArgumentException(
+                "The minimum width must be from 1 to 19 inclusive but was " ~ indexText(count));
+    return num(Field.modifiedJulianDay, count, 19, SignStyle.NORMAL);
+}
+
 private Element dateLetter(char c, int count)
 {
     switch (c)
@@ -3097,6 +3159,8 @@ private Element dateLetter(char c, int count)
         return quarterLetter(c == 'q', count);
     case 'F':
         return alignedWeekLetter(count);
+    case 'g':
+        return modifiedJulianLetter(count);
     default:
         return timeLetter(c, count);
     }

@@ -4555,3 +4555,162 @@ parse	p:A N	time	0 1000	00:00:00.000001
 parse	p:A N	dateTime	0 1000	!Text '0 1000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00:00.000001 of type java.time.format.Parsed	0
 parse	p:A N	time	36930500 36930500000000	10:15:30.500
 parse	p:A N	dateTime	36930500 36930500000000	!Text '36930500 36930500000000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 10:15:30.500 of type java.time.format.Parsed	0
+build	p:g	-	-	Value(ModifiedJulianDay)
+format	p:g	date	2024-03-05	60374
+format	p:g	date	0001-12-31	-678211
+format	p:g	date	+12345-06-07	3830135
+format	p:g	time	10:15	!Unsupported field: EpochDay
+format	p:g	time	10:15:30	!Unsupported field: EpochDay
+format	p:g	time	10:15:30.123456789	!Unsupported field: EpochDay
+format	p:g	time	00:00	!Unsupported field: EpochDay
+format	p:g	dateTime	2024-03-05T10:15:30	60374
+format	p:g	dateTime	2024-03-05T00:00:00.000001	60374
+format	p:g	offset	2024-03-05T10:15:30+01:00	60374
+format	p:g	offset	2024-03-05T10:15:30Z	60374
+format	p:g	offset	2024-03-05T10:15:30.500-05:30:15	60374
+format	p:g	offset	2024-03-05T10:15:30+00:00:45	60374
+format	p:g	zoned	2024-03-05T10:15:30+02:00	60374
+format	p:g	zoned	2024-03-05T10:15:30Z[UTC]	60374
+format	p:g	instant	2024-03-05T10:15:30Z	!Unsupported field: EpochDay
+format	p:g	instant	2024-03-05T10:15:30.120Z	!Unsupported field: EpochDay
+parse	p:g	date	40587	1970-01-01
+parse	p:g	dateTime	40587	!Text '40587' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 1970-01-01 of type java.time.format.Parsed	0
+parse	p:g	date	0	1858-11-17
+parse	p:g	dateTime	0	!Text '0' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 1858-11-17 of type java.time.format.Parsed	0
+parse	p:g	date	-1	1858-11-16
+parse	p:g	dateTime	-1	!Text '-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 1858-11-16 of type java.time.format.Parsed	0
+parse	p:g	date	60374	2024-03-05
+parse	p:g	dateTime	60374	!Text '60374' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2024-03-05 of type java.time.format.Parsed	0
+parse	p:g	date	365241821058	+999999999-12-31
+parse	p:g	dateTime	365241821058	!Text '365241821058' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to +999999999-12-31 of type java.time.format.Parsed	0
+parse	p:g	date	365241821059	!Text '365241821059' could not be parsed: Invalid value for ModifiedJulianDay (valid values -365243178575 - 365241821058): 365241821059	0
+parse	p:g	dateTime	365241821059	!Text '365241821059' could not be parsed: Invalid value for ModifiedJulianDay (valid values -365243178575 - 365241821058): 365241821059	0
+parse	p:g	date	-365243178575	-999999999-01-01
+parse	p:g	dateTime	-365243178575	!Text '-365243178575' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-01 of type java.time.format.Parsed	0
+parse	p:g	date	-365243178576	!Text '-365243178576' could not be parsed: Invalid value for ModifiedJulianDay (valid values -365243178575 - 365241821058): -365243178576	0
+parse	p:g	dateTime	-365243178576	!Text '-365243178576' could not be parsed: Invalid value for ModifiedJulianDay (valid values -365243178575 - 365241821058): -365243178576	0
+parse	p:g	date	-678211	0001-12-31
+parse	p:g	dateTime	-678211	!Text '-678211' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 0001-12-31 of type java.time.format.Parsed	0
+parse	p:g	date	3830135	+12345-06-07
+parse	p:g	dateTime	3830135	!Text '3830135' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to +12345-06-07 of type java.time.format.Parsed	0
+build	p:gg	-	-	Value(ModifiedJulianDay,2,19,NORMAL)
+format	p:gg	date	2024-03-05	60374
+format	p:gg	date	0001-12-31	-678211
+format	p:gg	date	+12345-06-07	3830135
+format	p:gg	time	10:15	!Unsupported field: EpochDay
+format	p:gg	time	10:15:30	!Unsupported field: EpochDay
+format	p:gg	time	10:15:30.123456789	!Unsupported field: EpochDay
+format	p:gg	time	00:00	!Unsupported field: EpochDay
+format	p:gg	dateTime	2024-03-05T10:15:30	60374
+format	p:gg	dateTime	2024-03-05T00:00:00.000001	60374
+format	p:gg	offset	2024-03-05T10:15:30+01:00	60374
+format	p:gg	offset	2024-03-05T10:15:30Z	60374
+format	p:gg	offset	2024-03-05T10:15:30.500-05:30:15	60374
+format	p:gg	offset	2024-03-05T10:15:30+00:00:45	60374
+format	p:gg	zoned	2024-03-05T10:15:30+02:00	60374
+format	p:gg	zoned	2024-03-05T10:15:30Z[UTC]	60374
+format	p:gg	instant	2024-03-05T10:15:30Z	!Unsupported field: EpochDay
+format	p:gg	instant	2024-03-05T10:15:30.120Z	!Unsupported field: EpochDay
+parse	p:gg	date	0	!Text '0' could not be parsed at index 0	0
+parse	p:gg	date	7	!Text '7' could not be parsed at index 0	0
+parse	p:gg	date	07	1858-11-24
+parse	p:gg	date	60374	2024-03-05
+parse	p:gg	date	-678211	0001-12-31
+parse	p:gg	date	3830135	+12345-06-07
+build	p:ggggggggggggggggggg	-	-	Value(ModifiedJulianDay,19,19,NORMAL)
+format	p:ggggggggggggggggggg	date	2024-03-05	0000000000000060374
+format	p:ggggggggggggggggggg	date	0001-12-31	-0000000000000678211
+format	p:ggggggggggggggggggg	date	+12345-06-07	0000000000003830135
+format	p:ggggggggggggggggggg	time	10:15	!Unsupported field: EpochDay
+format	p:ggggggggggggggggggg	time	10:15:30	!Unsupported field: EpochDay
+format	p:ggggggggggggggggggg	time	10:15:30.123456789	!Unsupported field: EpochDay
+format	p:ggggggggggggggggggg	time	00:00	!Unsupported field: EpochDay
+format	p:ggggggggggggggggggg	dateTime	2024-03-05T10:15:30	0000000000000060374
+format	p:ggggggggggggggggggg	dateTime	2024-03-05T00:00:00.000001	0000000000000060374
+format	p:ggggggggggggggggggg	offset	2024-03-05T10:15:30+01:00	0000000000000060374
+format	p:ggggggggggggggggggg	offset	2024-03-05T10:15:30Z	0000000000000060374
+format	p:ggggggggggggggggggg	offset	2024-03-05T10:15:30.500-05:30:15	0000000000000060374
+format	p:ggggggggggggggggggg	offset	2024-03-05T10:15:30+00:00:45	0000000000000060374
+format	p:ggggggggggggggggggg	zoned	2024-03-05T10:15:30+02:00	0000000000000060374
+format	p:ggggggggggggggggggg	zoned	2024-03-05T10:15:30Z[UTC]	0000000000000060374
+format	p:ggggggggggggggggggg	instant	2024-03-05T10:15:30Z	!Unsupported field: EpochDay
+format	p:ggggggggggggggggggg	instant	2024-03-05T10:15:30.120Z	!Unsupported field: EpochDay
+parse	p:ggggggggggggggggggg	date	0000000000000000000	1858-11-17
+parse	p:ggggggggggggggggggg	date	0000060374000000000	!Text '0000060374000000000' could not be parsed: Invalid value for ModifiedJulianDay (valid values -365243178575 - 365241821058): 60374000000000	0
+parse	p:ggggggggggggggggggg	date	0000000000000060374	2024-03-05
+parse	p:ggggggggggggggggggg	date	-0000000000000678211	0001-12-31
+parse	p:ggggggggggggggggggg	date	0000000000003830135	+12345-06-07
+build	p:gggggggggggggggggggg	-	-	!The minimum width must be from 1 to 19 inclusive but was 20
+build	p:uuuu-MM-dd g	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)' 'Value(ModifiedJulianDay)
+format	p:uuuu-MM-dd g	date	2024-03-05	2024-03-05 60374
+format	p:uuuu-MM-dd g	date	0001-12-31	0001-12-31 -678211
+format	p:uuuu-MM-dd g	date	+12345-06-07	+12345-06-07 3830135
+format	p:uuuu-MM-dd g	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd g	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd g	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd g	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd g	dateTime	2024-03-05T10:15:30	2024-03-05 60374
+format	p:uuuu-MM-dd g	dateTime	2024-03-05T00:00:00.000001	2024-03-05 60374
+format	p:uuuu-MM-dd g	offset	2024-03-05T10:15:30+01:00	2024-03-05 60374
+format	p:uuuu-MM-dd g	offset	2024-03-05T10:15:30Z	2024-03-05 60374
+format	p:uuuu-MM-dd g	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05 60374
+format	p:uuuu-MM-dd g	offset	2024-03-05T10:15:30+00:00:45	2024-03-05 60374
+format	p:uuuu-MM-dd g	zoned	2024-03-05T10:15:30+02:00	2024-03-05 60374
+format	p:uuuu-MM-dd g	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05 60374
+format	p:uuuu-MM-dd g	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd g	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd g	date	2024-03-05 60374	2024-03-05
+parse	p:uuuu-MM-dd g	date	2024-03-05 40587	!Text '2024-03-05 40587' could not be parsed: Conflict found: Fields resolved to two different dates: 2024-03-05 1970-01-01	0
+parse	p:uuuu-MM-dd g	date	2024-03-05 0	!Text '2024-03-05 0' could not be parsed: Conflict found: Fields resolved to two different dates: 2024-03-05 1858-11-17	0
+parse	p:uuuu-MM-dd g	date	0001-12-31 -678211	0001-12-31
+parse	p:uuuu-MM-dd g	date	+12345-06-07 3830135	+12345-06-07
+build	p:g HH:mm	-	-	Value(ModifiedJulianDay)' 'Value(HourOfDay,2)':'Value(MinuteOfHour,2)
+format	p:g HH:mm	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:g HH:mm	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:g HH:mm	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:g HH:mm	time	10:15	!Unsupported field: EpochDay
+format	p:g HH:mm	time	10:15:30	!Unsupported field: EpochDay
+format	p:g HH:mm	time	10:15:30.123456789	!Unsupported field: EpochDay
+format	p:g HH:mm	time	00:00	!Unsupported field: EpochDay
+format	p:g HH:mm	dateTime	2024-03-05T10:15:30	60374 10:15
+format	p:g HH:mm	dateTime	2024-03-05T00:00:00.000001	60374 00:00
+format	p:g HH:mm	offset	2024-03-05T10:15:30+01:00	60374 10:15
+format	p:g HH:mm	offset	2024-03-05T10:15:30Z	60374 10:15
+format	p:g HH:mm	offset	2024-03-05T10:15:30.500-05:30:15	60374 10:15
+format	p:g HH:mm	offset	2024-03-05T10:15:30+00:00:45	60374 10:15
+format	p:g HH:mm	zoned	2024-03-05T10:15:30+02:00	60374 10:15
+format	p:g HH:mm	zoned	2024-03-05T10:15:30Z[UTC]	60374 10:15
+format	p:g HH:mm	instant	2024-03-05T10:15:30Z	!Unsupported field: EpochDay
+format	p:g HH:mm	instant	2024-03-05T10:15:30.120Z	!Unsupported field: EpochDay
+parse	p:g HH:mm	date	40587 10:15	1970-01-01
+parse	p:g HH:mm	dateTime	40587 10:15	1970-01-01T10:15
+parse	p:g HH:mm	date	60374 10:15	2024-03-05
+parse	p:g HH:mm	dateTime	60374 10:15	2024-03-05T10:15
+parse	p:g HH:mm	date	40587 24:00	1970-01-02
+parse	p:g HH:mm	dateTime	40587 24:00	1970-01-02T00:00
+parse	p:g HH:mm	date	60374 00:00	2024-03-05
+parse	p:g HH:mm	dateTime	60374 00:00	2024-03-05T00:00
+build	p:g E	-	-	Value(ModifiedJulianDay)' 'Text(DayOfWeek,SHORT)
+format	p:g E	date	2024-03-05	60374 Tue
+format	p:g E	date	0001-12-31	-678211 Mon
+format	p:g E	date	+12345-06-07	3830135 Thu
+format	p:g E	time	10:15	!Unsupported field: EpochDay
+format	p:g E	time	10:15:30	!Unsupported field: EpochDay
+format	p:g E	time	10:15:30.123456789	!Unsupported field: EpochDay
+format	p:g E	time	00:00	!Unsupported field: EpochDay
+format	p:g E	dateTime	2024-03-05T10:15:30	60374 Tue
+format	p:g E	dateTime	2024-03-05T00:00:00.000001	60374 Tue
+format	p:g E	offset	2024-03-05T10:15:30+01:00	60374 Tue
+format	p:g E	offset	2024-03-05T10:15:30Z	60374 Tue
+format	p:g E	offset	2024-03-05T10:15:30.500-05:30:15	60374 Tue
+format	p:g E	offset	2024-03-05T10:15:30+00:00:45	60374 Tue
+format	p:g E	zoned	2024-03-05T10:15:30+02:00	60374 Tue
+format	p:g E	zoned	2024-03-05T10:15:30Z[UTC]	60374 Tue
+format	p:g E	instant	2024-03-05T10:15:30Z	!Unsupported field: EpochDay
+format	p:g E	instant	2024-03-05T10:15:30.120Z	!Unsupported field: EpochDay
+parse	p:g E	date	60374 Tue	2024-03-05
+parse	p:g E	date	60374 Mon	!Text '60374 Mon' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 1 derived from 2024-03-05	0
+parse	p:g E	date	40587 Thu	1970-01-01
+parse	p:g E	date	40587 Wed	!Text '40587 Wed' could not be parsed: Conflict found: Field DayOfWeek 4 differs from DayOfWeek 3 derived from 1970-01-01	0
+parse	p:g E	date	-678211 Mon	0001-12-31
+parse	p:g E	date	3830135 Thu	+12345-06-07
