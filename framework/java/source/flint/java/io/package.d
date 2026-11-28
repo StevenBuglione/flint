@@ -2107,6 +2107,13 @@ abstract class Writer : Closeable, Flushable
         return this;
     }
 
+    /// Flint-internal: a wrapping `PrintWriter` asks this writer for its error state. A negative result means the
+    /// writer has none; `PrintWriter` overrides it with zero or one.
+    protected int nestedCheckError()
+    {
+        return -1;
+    }
+
     /// Flush. The default does nothing.
     void flush()
     {
@@ -2387,9 +2394,13 @@ class PrintWriter : Writer
     {
         if (out_ !is null)
             flush();
-        if (auto nested = cast(PrintWriter) out_)
-            return nested.checkError();
-        return trouble_;
+        const nested = out_ is null ? -1 : out_.nestedCheckError();
+        return nested >= 0 ? nested != 0 : trouble_;
+    }
+
+    override protected int nestedCheckError()
+    {
+        return checkError() ? 1 : 0;
     }
 
     /// Java's protected `setError`.
