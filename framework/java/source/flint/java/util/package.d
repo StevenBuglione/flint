@@ -3128,6 +3128,55 @@ class Properties : LinkedHashMap!(string, string)
         writer.flush();
     }
 
+    /// Java's `Properties.list(PrintWriter)`: `-- listing properties --`, then `key=value` for every own entry,
+    /// without the defaults. A value over 40 UTF-16 units is cut to 37 units plus `...` (R14). Java's `Hashtable`
+    /// order is unspecified; this writes insertion order. Values are written raw, not escaped as `store` does.
+    void list(imported!"flint.java.io".PrintWriter output)
+    {
+        if (output is null)
+            throw new NullPointerException();
+        output.println("-- listing properties --");
+        foreach (key; keySet().toArray())
+        {
+            auto value = get(key);
+            string shown = value;
+            if (value is null)
+                shown = "null";
+            else
+            {
+                const units = utf16Units(value);
+                if (units.length > 40)
+                    shown = rawUnits(units, 37) ~ "...";
+            }
+            output.println(key ~ "=" ~ shown);
+        }
+    }
+
+    /// The first `count` UTF-16 units of `units` as UTF-8, with a surviving lone surrogate as U+FFFD (R14).
+    private static string rawUnits(const(ushort)[] units, size_t count)
+    {
+        import flint.engine.aot.text : utf8;
+
+        string result;
+        size_t position;
+        while (position < count)
+        {
+            const unit = units[position];
+            dchar codePoint = unit;
+            if (unit >= 0xd800 && unit <= 0xdbff && position + 1 < count && units[position + 1] >= 0xdc00
+                    && units[position + 1] <= 0xdfff)
+            {
+                codePoint = 0x10000 + ((unit - 0xd800) << 10) + (units[position + 1] - 0xdc00);
+                position += 2;
+            }
+            else
+                position++;
+            const encoded = utf8(codePoint);
+            result ~= encoded is null ? "\uFFFD" : encoded;
+        }
+        return result;
+    }
+
     private string render(string comments, bool escapeUnicode)
     {
         string text;
