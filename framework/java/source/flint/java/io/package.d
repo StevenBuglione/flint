@@ -2087,6 +2087,13 @@ abstract class Writer : Closeable, Flushable
         return this;
     }
 
+    /// Java's `append(char)`: writes one UTF-16 code unit through `write(int)` and returns this writer.
+    Writer append(wchar c)
+    {
+        write(cast(dchar) c);
+        return this;
+    }
+
     /// Flush. The default does nothing.
     void flush()
     {
@@ -2108,6 +2115,13 @@ class StringWriter : Writer
     override void write(scope const(char)[] text)
     {
         buffer ~= text;
+    }
+
+    /// Java's `append(char)` with a `StringWriter` result.
+    override StringWriter append(wchar c)
+    {
+        write(cast(dchar) c);
+        return this;
     }
 
     /// The text written.
