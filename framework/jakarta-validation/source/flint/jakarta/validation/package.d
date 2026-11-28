@@ -257,10 +257,34 @@ interface ConstraintValidatorContext
 /// Base exception of all Jakarta Validation "unexpected" problems.
 class ValidationException : RuntimeException
 {
-    ///
-    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    /// No message and no cause.
+    this() pure nothrow
+    {
+        super();
+    }
+
+    /// `message`, with a cause that can still be initialized (Java's `ValidationException(String)`).
+    this(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message, file, line);
+    }
+
+    /// `message` and an initialized `cause`, including an explicit null.
+    this(string message, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message, cause, file, line);
+    }
+
+    /// Select the cause overload when the caller supplies a null literal.
+    this(string message, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(message, cast(Throwable) null, file, line);
+    }
+
+    /// Java's `ValidationException(Throwable cause)`: the message is `cause.toString()`, or null.
+    this(Throwable cause, string file = __FILE__, size_t line = __LINE__)
+    {
+        super(cause, file, line);
     }
 }
 
