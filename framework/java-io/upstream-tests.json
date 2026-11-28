@@ -4,36 +4,44 @@
   "module": "java-io",
   "classes": {
     "java/io/BufferedInputStream/CloseStream.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers read, reset, available and skip after close, and close being idempotent.",
+      "covered_by": "framework/java-io/tests/buffered_stream_contract_test.d"
     },
     "java/io/BufferedInputStream/CountUpdate.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers the buffered available count and skip against the wrapped stream.",
+      "covered_by": "framework/java-io/tests/buffered_stream_contract_test.d"
     },
     "java/io/BufferedInputStream/Fill.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers refilling, mark/reset and buffer growth across a mark.",
+      "covered_by": "framework/java-io/tests/buffered_stream_contract_test.d"
     },
     "java/io/BufferedInputStream/LargeCopyWithMark.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers a read across the buffer with a mark set, buffer growth and reset.",
+      "covered_by": "framework/java-io/tests/buffered_stream_contract_test.d"
     },
     "java/io/BufferedInputStream/ReadAfterClose.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers IOException from read after close.",
+      "covered_by": "framework/java-io/tests/buffered_stream_contract_test.d"
     },
     "java/io/BufferedInputStream/ReadZeroBytes.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers a zero-length read returning 0 without consuming input.",
+      "covered_by": "framework/java-io/tests/buffered_stream_contract_test.d"
     },
     "java/io/BufferedInputStream/SkipTest.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers skip through the buffer and delegation to the wrapped stream without a mark.",
+      "covered_by": "framework/java-io/tests/buffered_stream_contract_test.d"
     },
     "java/io/BufferedInputStream/TransferTo.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers transferTo after a buffered read copying the buffered and wrapped bytes.",
+      "covered_by": "framework/java-io/tests/buffered_stream_contract_test.d"
     },
     "java/io/BufferedReader/BigMark.java": {
       "status": "deferred",
@@ -174,12 +182,14 @@
       "phase": "2"
     },
     "java/io/DataOutputStream/CounterOverflow.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers the written count saturating at Integer.MAX_VALUE.",
+      "covered_by": "framework/java-io/tests/data_output_stream_contract_test.d"
     },
     "java/io/DataOutputStream/WriteUTF.java": {
-      "status": "deferred",
-      "phase": "2"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. The original Flint test covers modified UTF-8 for ASCII, NUL, two-byte text and a surrogate pair, and the overlong rejection.",
+      "covered_by": "framework/java-io/tests/data_output_stream_contract_test.d"
     },
     "java/io/Externalizable/compatibility/ExternalizableBlockData.java": {
       "status": "deferred",

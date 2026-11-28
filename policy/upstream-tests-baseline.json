@@ -5782,14 +5782,6 @@
       "java/util/concurrent/locks/StampedLock/ReadersUnlockAfterWriteUnlock.java"
     ],
     "java-io": [
-      "java/io/BufferedInputStream/CloseStream.java",
-      "java/io/BufferedInputStream/CountUpdate.java",
-      "java/io/BufferedInputStream/Fill.java",
-      "java/io/BufferedInputStream/LargeCopyWithMark.java",
-      "java/io/BufferedInputStream/ReadAfterClose.java",
-      "java/io/BufferedInputStream/ReadZeroBytes.java",
-      "java/io/BufferedInputStream/SkipTest.java",
-      "java/io/BufferedInputStream/TransferTo.java",
       "java/io/BufferedReader/BigMark.java",
       "java/io/BufferedReader/EOL.java",
       "java/io/BufferedReader/Fill.java",
@@ -5823,8 +5815,6 @@
       "java/io/DataInputStream/ReadLinePushback.java",
       "java/io/DataInputStream/ReadUTF.java",
       "java/io/DataInputStream/SkipBytes.java",
-      "java/io/DataOutputStream/CounterOverflow.java",
-      "java/io/DataOutputStream/WriteUTF.java",
       "java/io/Externalizable/compatibility/ExternalizableBlockData.java",
       "java/io/Externalizable/definesWriteObject/DefinesWriteObject.java",
       "java/io/File/AccessDenied.java",
