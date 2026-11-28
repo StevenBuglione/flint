@@ -40,9 +40,15 @@ else
     private enum inlinePayloadConstructor = false;
 
 // The inlined constructor keeps its checks on the ordinary path and shares the failure code.
-pragma(inline, false) private void invalidPayloadArgument(string message)
+pragma(inline, false) private void invalidArgument(string message)
 {
     throw new IllegalArgumentException(message);
+}
+
+// One allocation site for every null rejection in this module.
+pragma(inline, false) private void nullPointer()
+{
+    throw new NullPointerException();
 }
 
 // Collect the fragments on the stack and allocate only the returned string.
@@ -58,10 +64,10 @@ private string renderRecord(string prefix, string first, string secondLabel, str
 private PartAttributes copyAttributes(PartAttributes attributes)
 {
     if (attributes is null)
-        throw new IllegalArgumentException("attributes must not be null");
+        invalidArgument("attributes must not be null");
     attributes.forEach((string key, string value) {
         if (key is null || value is null)
-            throw new NullPointerException();
+            nullPointer();
     });
     return PartAttributes.copyOf(attributes);
 }
@@ -83,7 +89,7 @@ package(flint.ai) string joinTextParts(ResultParts parts)
     foreach (part; parts)
     {
         if (part is null)
-            throw new NullPointerException();
+            nullPointer();
         if (auto textPart = cast(TextPart) part)
         {
             if (text is null)
@@ -177,9 +183,9 @@ final class StreamingParts
         import flint.java.lang : Integer;
 
         if (part is null)
-            throw new IllegalArgumentException("part must not be null");
+            invalidArgument("part must not be null");
         if (index < 0)
-            throw new IllegalArgumentException("index must not be negative");
+            invalidArgument("index must not be negative");
         auto attributes = new MutablePartAttributes(part.attributes());
         attributes.put(PART_INDEX_ATTRIBUTE, Integer.toString(index));
         if (partial)
@@ -205,11 +211,11 @@ struct OpaquePayload
         import flint.util : StringUtils;
 
         if (!StringUtils.hasText(provider))
-            invalidPayloadArgument("provider must not be empty");
+            invalidArgument("provider must not be empty");
         if (!StringUtils.hasText(kind))
-            invalidPayloadArgument("kind must not be empty");
+            invalidArgument("kind must not be empty");
         if (data is null)
-            invalidPayloadArgument("data must not be null");
+            invalidArgument("data must not be null");
         this.provider_ = provider;
         this.kind_ = kind;
         this.data_ = data;
@@ -256,7 +262,7 @@ final class TextPart : MessagePart
     private this(string text)
     {
         if (text is null)
-            throw new IllegalArgumentException("text must not be null");
+            invalidArgument("text must not be null");
         text_ = text;
     }
 
@@ -347,7 +353,7 @@ final class ReasoningPart : MessagePart
     static ReasoningPart of(string text)
     {
         if (text is null)
-            throw new IllegalArgumentException("text must not be null");
+            invalidArgument("text must not be null");
         auto part = new ReasoningPart(NullableText(text));
         part.attributes_ = emptyPartAttributes();
         return part;
@@ -587,14 +593,14 @@ final class ToolResultPart : MessagePart
             PartAttributes attributes)
     {
         if (content is null)
-            throw new IllegalArgumentException("content must not be null");
+            invalidArgument("content must not be null");
         if (attributes is null)
-            throw new IllegalArgumentException("attributes must not be null");
+            invalidArgument("attributes must not be null");
 
         content_ = ResultParts.copyOf(content);
         foreach (part; content_)
             if (part is null)
-                throw new NullPointerException();
+                nullPointer();
 
         id_ = normalizeText(id);
         name_ = normalizeText(name);
