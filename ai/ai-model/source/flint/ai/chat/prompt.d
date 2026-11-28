@@ -96,6 +96,12 @@ interface ChatOptions : ModelOptions
 
         /// Builds a chat options snapshot.
         ChatOptions build();
+
+        /// Returns a copy of this builder that later changes to either do not affect.
+        Builder clone();
+
+        /// Merges the values the other builder set into this one, keeping this builder's where it set none.
+        Builder combineWith(Builder other);
     }
 }
 
@@ -312,6 +318,59 @@ class DefaultChatOptionsBuilder : ChatOptions.Builder
     {
         return new DefaultChatOptions(model_, frequencyPenalty_, maxTokens_, presencePenalty_,
                 stopSequences_, temperature_, topK_, topP_);
+    }
+
+    /// Returns a builder with a copy of every setting, including the stop sequences.
+    override ChatOptions.Builder clone()
+    {
+        auto copy = new DefaultChatOptionsBuilder();
+        copy.model_ = model_;
+        copy.frequencyPenalty_ = frequencyPenalty_;
+        copy.maxTokens_ = maxTokens_;
+        copy.presencePenalty_ = presencePenalty_;
+        copy.stopSequences_ = stopSequences_ is null ? null : StopSequences.copyOf(stopSequences_);
+        copy.temperature_ = temperature_;
+        copy.topK_ = topK_;
+        copy.topP_ = topP_;
+        return copy;
+    }
+
+    /// Merges the settings the other builder set, appending its stop sequences to this builder's.
+    override ChatOptions.Builder combineWith(ChatOptions.Builder other)
+    {
+        auto that = cast(DefaultChatOptionsBuilder) other;
+        if (that is null)
+            return this;
+
+        if (!that.model_.isNull)
+            model_ = that.model_;
+        if (!that.frequencyPenalty_.isNull)
+            frequencyPenalty_ = that.frequencyPenalty_;
+        if (!that.maxTokens_.isNull)
+            maxTokens_ = that.maxTokens_;
+        if (!that.presencePenalty_.isNull)
+            presencePenalty_ = that.presencePenalty_;
+        if (that.stopSequences_ !is null)
+        {
+            if (stopSequences_ is null)
+                stopSequences_ = StopSequences.copyOf(that.stopSequences_);
+            else
+            {
+                auto left = stopSequences_.toArray();
+                auto right = that.stopSequences_.toArray();
+                auto merged = new string[left.length + right.length];
+                merged[0 .. left.length] = left[];
+                merged[left.length .. $] = right[];
+                stopSequences_ = StopSequences.of(merged);
+            }
+        }
+        if (!that.temperature_.isNull)
+            temperature_ = that.temperature_;
+        if (!that.topK_.isNull)
+            topK_ = that.topK_;
+        if (!that.topP_.isNull)
+            topP_ = that.topP_;
+        return this;
     }
 }
 
