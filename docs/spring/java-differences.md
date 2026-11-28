@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,248 | 862 | 0 | 1,957 | 13,354 |
+| framework | openjdk@21.0.13 | 2,248 | 863 | 0 | 1,957 | 13,353 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2350,6 +2350,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.SequenceInputStream#read(byte[],int,int)` | `flint.java.io.SequenceInputStream.read` | [R26](api-mapping.md#r26-null-arrays) | A D ubyte slice; a null slice counts as empty under R26. A zero length returns zero after the in-stream check, as Java does. |
 | `java.io.SequenceInputStream#transferTo(OutputStream)` | `flint.java.io.SequenceInputStream.transferTo` | [R1](api-mapping.md#r1-packages-and-names) | Copies through the sequence and returns zero when it is already exhausted, before touching the sink. The interrupt check is omitted because flint.java has no Thread.interrupted yet. |
 | `java.io.StringWriter#<init>()` | `flint.java.io.StringWriter.this` | [R1](api-mapping.md#r1-packages-and-names) | Starts empty. The buffer monitor is omitted because a Flint stream is confined to one fiber; getBuffer is a separate deferred element. |
+| `java.io.StringWriter#append(char)` | `flint.java.io.StringWriter.append` | [R14](api-mapping.md#r14-strings-and-text) | Writes one UTF-16 code unit through the single-character write and returns the StringWriter; a lone surrogate appends U+FFFD (R14), where Java stores the unpaired unit. |
 | `java.io.StringWriter#toString()` | `flint.java.io.StringWriter.toString` | [R1](api-mapping.md#r1-packages-and-names) | Returns a snapshot of the text. The buffer monitor is omitted because a Flint stream is confined to one fiber. |
 | `java.io.StringWriter#write(String)` | `flint.java.io.StringWriter.write` | [R26](api-mapping.md#r26-null-arrays) | Appends the text to the buffer; a null string is empty (R26). |
 | `java.io.StringWriter#write(String,int,int)` | `flint.java.io.StringWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's UTF-16 range adapter and appends the result; a split surrogate pair writes U+FFFD for each lone half (R14). A null string is empty (R26). |
@@ -11299,7 +11300,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 548 | 0 |
+| java.io | 547 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -12247,7 +12248,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.StringWriter#<init>(int)` | 2 | Missing constructor that sets the initial buffer capacity, accepts zero and rejects negative capacity. |
 | framework | `java.io.StringWriter#append(CharSequence)` | 2 | Java appends the text null for an absent sequence and returns StringWriter. The inherited D method accepts a plain slice and returns Writer. |
 | framework | `java.io.StringWriter#append(CharSequence,int,int)` | 2 | Missing UTF-16 sequence range append with a StringWriter result. Java applies the range to the text null when the sequence is absent. |
-| framework | `java.io.StringWriter#append(char)` | 2 | Missing single UTF-16 code-unit append with a StringWriter result. |
 | framework | `java.io.StringWriter#getBuffer()` | 2 | Missing access to the same live mutable StringBuffer that the writer uses as its lock. |
 | framework | `java.io.Writer` | 2 | The abstract sink implements Closeable and Flushable and the UTF-16 write hooks; Appendable is still pending. |
 | framework | `java.io.Writer#<init>()` | 2 | Java initializes the protected lock to the writer itself. The existing type has no lock field. |

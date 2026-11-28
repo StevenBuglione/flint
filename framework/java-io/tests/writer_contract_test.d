@@ -40,6 +40,22 @@ unittest
     assert(sink.text == "é😀!");
 }
 
+@("Writer.append(char) writes one UTF-16 code unit through write(int)")
+unittest
+{
+    auto sink = new TextSink;
+    Writer writer = sink;
+
+    assert(writer.append(cast(wchar) 'a') is writer);
+    assert(sink.text == "a");
+
+    writer.append(cast(wchar) 0xD83D); // a lone high surrogate
+    assert(sink.text == "a\uFFFD");
+
+    writer.append(cast(wchar) 0xDE00); // a lone low surrogate
+    assert(sink.text == "a\uFFFD\uFFFD");
+}
+
 @("Writer.write(String,int,int) counts UTF-16 units over UTF-8 text")
 unittest
 {
