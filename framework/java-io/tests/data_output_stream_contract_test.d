@@ -28,6 +28,19 @@ private final class RecordingOutput : OutputStream
     }
 }
 
+private final class OverflowingOutput : DataOutputStream
+{
+    this(OutputStream output)
+    {
+        super(output);
+    }
+
+    void setWritten(int value)
+    {
+        written = value;
+    }
+}
+
 @("DataOutputStream writes each primitive in Java's big-endian form")
 unittest
 {
@@ -148,6 +161,19 @@ unittest
     sink.data = null;
     output.writeUTF("\U0001F600");
     assert(sink.data == [0x00, 0x06, 0xED, 0xA0, 0xBD, 0xED, 0xB8, 0x80]);
+}
+
+@("DataOutputStream saturates the written count at Integer.MAX_VALUE")
+unittest
+{
+    auto sink = new RecordingOutput;
+    auto output = new OverflowingOutput(sink);
+
+    output.setWritten(int.max - 1);
+    output.writeByte(1);
+    assert(output.size() == int.max);
+    output.writeByte(1);
+    assert(output.size() == int.max);
 }
 
 @("DataOutputStream rejects modified UTF-8 longer than 65535 bytes")
