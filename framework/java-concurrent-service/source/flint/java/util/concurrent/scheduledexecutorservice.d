@@ -7,13 +7,14 @@ import core.sync.mutex : Mutex;
 import flint.arena : Status;
 import flint.conc : Background, Deadline, startManagedBackground;
 import flint.conc.park : park, wakeAll;
-import flint.java.lang : NullPointerException, RuntimeException;
+import flint.java.lang : IllegalArgumentException, NullPointerException, RuntimeException;
 import flint.java.lang.runnable : Runnable;
 import flint.java.util : ArrayList, List;
 import flint.java.util.concurrent : TimeUnit, convert, toNanos;
 import flint.java.util.concurrent.callable : Callable;
 import flint.java.util.concurrent.delayed : Delayed;
 import flint.java.util.concurrent.executorservice : ExecutorService;
+import flint.java.util.concurrent.internal.periodictask : PeriodicControl, PeriodicHost, PeriodicTask;
 import flint.java.util.concurrent.future : Future;
 import flint.java.util.concurrent.futuretask : FutureTask;
 import flint.java.util.concurrent.rejectedexecutionexception : RejectedExecutionException;
@@ -26,11 +27,11 @@ import flint.java.util.concurrent.scheduledfuture : RunnableScheduledFuture, Sch
 // the JDK namespace to exercise package access").
 package(flint.java.util.concurrent) alias ScheduledTimeUnit = TimeUnit;
 
-/// Java's `ScheduledExecutorService`, the one-shot members (R1, R3).
+/// Java's `ScheduledExecutorService` (R1, R3).
 ///
-/// Only `schedule(Callable, long, TimeUnit)` and `schedule(Runnable, long, TimeUnit)` are provided. The repeating
-/// forms `scheduleAtFixedRate` and `scheduleWithFixedDelay` need a periodic future and stay deferred; a caller that
-/// needs repetition schedules the next run from the finished task for now.
+/// The one-shot `schedule` forms complete with their task's result. The repeating forms keep their future open for
+/// the service's lifetime: it completes only when the task is cancelled or throws, and `shutdown` cancels a periodic
+/// task as Java's default `continueExistingPeriodicTasksAfterShutdown` does.
 interface ScheduledExecutorService : ExecutorService
 {
     /// Run `callable` after `delay` of `unit` and return its future (R3, R9).
@@ -62,6 +63,46 @@ interface ScheduledExecutorService : ExecutorService
     /// task's cancellation state without exposing its generic type to the queue.
     void enqueueScheduled(Runnable command, long deadlineNanos, bool delegate() @safe nothrow cancel,
             bool delegate() @safe nothrow cancelled);
+
+    /// Run `command` repeatedly at a fixed rate: runs start at `initialDelay + n * period` (R1, R3, R20).
+    ///
+    /// A run that falls behind starts as soon as the worker is free, as Java's fixed-rate trigger does. Java's
+    /// `Future<?>` erases to `Future!Object`, so the default type parameter keeps this form a template.
+    ScheduledFuture!T scheduleAtFixedRate(T = Object)(Runnable command, long initialDelay, long period, TimeUnit unit)
+            if (is(T == Object))
+    {
+        if (command is null)
+            throw new NullPointerException;
+        if (period <= 0)
+            throw new IllegalArgumentException("period must be positive");
+        const initial = deadlineAfter(initialDelay, unit);
+        const periodNanos = toNanos(unit, period);
+        auto task = new PeriodicTask(command);
+        task.setDue(initial);
+        enqueuePeriodic(task, initial, periodNanos, true, &task.cancelNow, &task.isDoneNow);
+        return task;
+    }
+
+    /// Run `command` repeatedly with `delay` between the end of one run and the start of the next (R1, R3, R20).
+    ScheduledFuture!T scheduleWithFixedDelay(T = Object)(Runnable command, long initialDelay, long delay, TimeUnit unit)
+            if (is(T == Object))
+    {
+        if (command is null)
+            throw new NullPointerException;
+        if (delay <= 0)
+            throw new IllegalArgumentException("delay must be positive");
+        const initial = deadlineAfter(initialDelay, unit);
+        const periodNanos = toNanos(unit, delay);
+        auto task = new PeriodicTask(command);
+        task.setDue(initial);
+        enqueuePeriodic(task, initial, periodNanos, false, &task.cancelNow, &task.isDoneNow);
+        return task;
+    }
+
+    /// Admit a periodic future (D-only hook; applications call the `scheduleAtFixedRate`/`scheduleWithFixedDelay`
+    /// forms). The run publishes its next deadline for `getDelay` and `compareTo`.
+    void enqueuePeriodic(PeriodicControl task, long initialNanos, long periodNanos, bool fixedRate,
+            bool delegate() @safe nothrow cancel, bool delegate() @safe nothrow stopped);
 }
 
 /// A future for one run, ordered by its absolute deadline (R1, R3).
@@ -157,12 +198,13 @@ private final class ScheduledTask(V) : RunnableScheduledFuture!V
 /// monitor. The worker parks on a version word outside the monitor, so a reactor fiber that schedules a task yields
 /// rather than spinning [R-10]. `execute` admits a task with a zero delay, and the future-returning `submit` forms
 /// inherited from `ExecutorService` therefore run at once.
-final class OffloadScheduledExecutorService : ScheduledExecutorService
+final class OffloadScheduledExecutorService : ScheduledExecutorService, PeriodicHost
 {
     private Mutex gate;
     private Runnable[] commands;
     private long[] deadlines;
     private ulong[] orders;
+    private long[] periods;
     private bool delegate() @safe nothrow[] cancelHooks;
     private bool delegate() @safe nothrow[] cancellationChecks;
     private Background worker;
@@ -193,6 +235,22 @@ final class OffloadScheduledExecutorService : ScheduledExecutorService
         enqueue(command, deadlineNanos, cancel, cancelled);
     }
 
+    override void enqueuePeriodic(PeriodicControl task, long initialNanos, long periodNanos,
+            bool fixedRate, bool delegate() @safe nothrow cancel, bool delegate() @safe nothrow stopped)
+    {
+        task.attach(this, periodNanos, fixedRate);
+        enqueue(task, initialNanos, cancel, stopped, periodNanos);
+    }
+
+    override void reschedule(PeriodicControl task)
+    {
+        const next = task.fixedRate ? saturatingAdd(task.dueNanos,
+                task.periodNanos) : saturatingAdd(monotonicNow(), task.periodNanos);
+        task.setDue(next);
+        if (!tryEnqueue(task, next, &task.cancelNow, &task.isDoneNow, task.periodNanos))
+            task.cancelNow();
+    }
+
     override void shutdown()
     {
         gate.lock_nothrow();
@@ -201,6 +259,7 @@ final class OffloadScheduledExecutorService : ScheduledExecutorService
         if (atomicLoad(stopping))
             return;
         atomicStore(stopping, true);
+        cancelPeriodic();
         bumpVersion();
         wakeAll(wakeWord);
     }
@@ -235,13 +294,33 @@ final class OffloadScheduledExecutorService : ScheduledExecutorService
     }
 
     private void enqueue(Runnable command, long deadline, bool delegate() @safe nothrow cancel,
-            bool delegate() @safe nothrow cancelled)
+            bool delegate() @safe nothrow cancelled, long periodNanos = 0)
     {
         gate.lock_nothrow();
         scope (exit)
             gate.unlock_nothrow();
         if (atomicLoad(stopping))
             throw new RejectedExecutionException("executor rejected the task");
+        insert(command, deadline, cancel, cancelled, periodNanos);
+    }
+
+    // Insert at a deadline, refusing once stopping. A periodic run calls this after a successful execution; a false
+    // result means the task must be cancelled instead of admitted again.
+    private bool tryEnqueue(Runnable command, long deadline, bool delegate() @safe nothrow cancel,
+            bool delegate() @safe nothrow stopped, long periodNanos)
+    {
+        gate.lock_nothrow();
+        scope (exit)
+            gate.unlock_nothrow();
+        if (atomicLoad(stopping))
+            return false;
+        insert(command, deadline, cancel, stopped, periodNanos);
+        return true;
+    }
+
+    private void insert(Runnable command, long deadline, bool delegate() @safe nothrow cancel,
+            bool delegate() @safe nothrow stopped, long periodNanos)
+    {
         const order = nextOrder++;
         size_t index = commands.length;
         while (index > 0 && (deadlines[index - 1] > deadline || (deadlines[index - 1] == deadline
@@ -250,8 +329,9 @@ final class OffloadScheduledExecutorService : ScheduledExecutorService
         commands ~= command;
         deadlines ~= deadline;
         orders ~= order;
+        periods ~= periodNanos;
         cancelHooks ~= cancel;
-        cancellationChecks ~= cancelled;
+        cancellationChecks ~= stopped;
         size_t position = commands.length;
         while (position > index + 1)
         {
@@ -261,8 +341,9 @@ final class OffloadScheduledExecutorService : ScheduledExecutorService
         commands[index] = command;
         deadlines[index] = deadline;
         orders[index] = order;
+        periods[index] = periodNanos;
         cancelHooks[index] = cancel;
-        cancellationChecks[index] = cancelled;
+        cancellationChecks[index] = stopped;
         bumpVersion();
         wakeAll(wakeWord);
     }
@@ -272,6 +353,7 @@ final class OffloadScheduledExecutorService : ScheduledExecutorService
         commands[to] = commands[from];
         deadlines[to] = deadlines[from];
         orders[to] = orders[from];
+        periods[to] = periods[from];
         cancelHooks[to] = cancelHooks[from];
         cancellationChecks[to] = cancellationChecks[from];
     }
@@ -284,6 +366,7 @@ final class OffloadScheduledExecutorService : ScheduledExecutorService
         commands = commands[1 .. $];
         deadlines = deadlines[1 .. $];
         orders = orders[1 .. $];
+        periods = periods[1 .. $];
         cancelHooks = cancelHooks[1 .. $];
         cancellationChecks = cancellationChecks[1 .. $];
         if (commands.length == 0)
@@ -295,8 +378,44 @@ final class OffloadScheduledExecutorService : ScheduledExecutorService
         commands = null;
         deadlines = null;
         orders = null;
+        periods = null;
         cancelHooks = null;
         cancellationChecks = null;
+    }
+
+    private void shrink(size_t kept) nothrow
+    {
+        commands.length = kept;
+        deadlines.length = kept;
+        orders.length = kept;
+        periods.length = kept;
+        cancelHooks.length = kept;
+        cancellationChecks.length = kept;
+        if (kept == 0)
+            clear();
+    }
+
+    // Java's default `continueExistingPeriodicTasksAfterShutdown` is false: shutdown cancels periodic tasks while
+    // leaving the one-shot deadlines to drain. Caller holds the gate.
+    private void cancelPeriodic() nothrow
+    {
+        if (commands.length == 0)
+            return;
+        size_t kept;
+        foreach (index; 0 .. commands.length)
+        {
+            if (periods[index] != 0)
+            {
+                if (cancelHooks[index]!is null)
+                    cancelHooks[index]();
+                continue;
+            }
+            if (kept != index)
+                move(kept, index);
+            ++kept;
+        }
+        if (kept != commands.length)
+            shrink(kept);
     }
 
     private void bumpVersion() nothrow @nogc
@@ -320,15 +439,7 @@ final class OffloadScheduledExecutorService : ScheduledExecutorService
             ++kept;
         }
         if (kept != commands.length)
-        {
-            commands.length = kept;
-            deadlines.length = kept;
-            orders.length = kept;
-            cancelHooks.length = kept;
-            cancellationChecks.length = kept;
-            if (kept == 0)
-                clear();
-        }
+            shrink(kept);
     }
 
     private void workerMain() nothrow
@@ -368,7 +479,10 @@ final class OffloadScheduledExecutorService : ScheduledExecutorService
                 continue;
             }
             if (done)
+            {
+                wakeAll(wakeWord);
                 return;
+            }
             park(wakeWord, seen, sleepNanos < 0 ? long.max : sleepNanos);
         }
     }
@@ -383,6 +497,16 @@ final class OffloadScheduledExecutorService : ScheduledExecutorService
             // alive; the future-backed scheduled tasks publish their own result or failure.
         }
     }
+}
+
+private long saturatingAdd(long value, long delta) pure nothrow @nogc
+{
+    const sum = value + delta;
+    if (delta > 0 && sum < value)
+        return long.max;
+    if (delta < 0 && sum > value)
+        return long.min;
+    return sum;
 }
 
 private long deadlineAfter(long delay, TimeUnit unit)

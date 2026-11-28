@@ -1,5 +1,6 @@
 module flint.java.util.concurrent.scheduledexecutorservice_probe;
 
+import flint.conc.park : park;
 import flint.java.util.concurrent.scheduledexecutorservice : OffloadScheduledExecutorService,
     ScheduledExecutorService, ScheduledTimeUnit;
 import std.traits : Parameters;
@@ -24,6 +25,13 @@ int main(string[] args)
 {
     ScheduledExecutorService service = new OffloadScheduledExecutorService;
     auto command = new Command;
+    auto periodic = service.scheduleAtFixedRate(command, 0, 1, ScheduledTimeUnit.MILLISECONDS);
+    shared uint idle;
+    park(idle, 0, 20_000_000L);
+    periodic.cancel(false);
+    if (command.result.length != 1)
+        return 1;
+
     auto future = service.schedule(command, args.length == 1 ? 1 : 0, ScheduledTimeUnit.init);
 
     if (args.length > 1)
