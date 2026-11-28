@@ -34,7 +34,8 @@
         "leaves": [
           "flint.java.io.closeable",
           "flint.java.io.flushable",
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.lang.system"
         ],
         "source": "closure/bytearray-input.d"
       }
