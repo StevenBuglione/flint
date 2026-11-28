@@ -23,3 +23,22 @@ unittest
     assert(snapshot == "é");
     assert(output.toString() == "é 😀");
 }
+
+@("StringWriter appends UTF-16 ranges and character arrays through Writer's adapters")
+unittest
+{
+    auto output = new StringWriter;
+    Writer writer = output;
+
+    writer.write("a😀b", 1, 2); // the whole supplementary character
+    assert(output.toString() == "😀");
+
+    writer.write("a😀b", 2, 1); // the low surrogate alone
+    assert(output.toString() == "😀\uFFFD");
+
+    writer.write([cast(wchar) 'x', cast(wchar) 0xD83D, cast(wchar) 0xDE00]);
+    assert(output.toString() == "😀\uFFFDx😀");
+
+    writer.write([cast(wchar) 'a', cast(wchar) 0xDE00], 0, 2); // a and a lone low surrogate
+    assert(output.toString() == "😀\uFFFDx😀a\uFFFD");
+}

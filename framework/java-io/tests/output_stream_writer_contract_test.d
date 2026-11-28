@@ -59,3 +59,21 @@ unittest
     assert(output.bytes == cast(const(ubyte)[]) "é😀!");
     assert(output.closes == 1);
 }
+
+@("OutputStreamWriter encodes UTF-16 ranges and character arrays as UTF-8")
+unittest
+{
+    auto output = new RecordingOutput;
+    Writer writer = new OutputStreamWriter(output);
+
+    writer.write("é😀!", 1, 2); // the emoji by UTF-16 units, not bytes
+    assert(output.bytes == cast(const(ubyte)[]) "😀");
+    output.bytes = null;
+
+    writer.write("é😀!", 2, 1); // the low surrogate alone
+    assert(output.bytes == cast(const(ubyte)[]) "\uFFFD");
+    output.bytes = null;
+
+    writer.write([cast(wchar) 'x', cast(wchar) 0xD83D, cast(wchar) 0xDE00]);
+    assert(output.bytes == cast(const(ubyte)[]) "x😀");
+}
