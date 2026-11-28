@@ -1,29 +1,4 @@
 {
-  "flint.java.lang.error": {
-    "incremental_linked_bytes": 4559,
-    "template_instances": 69,
-    "control": "tools/jdk-closure-controls/d-exception.d"
-  },
-  "flint.java.lang.illegalmonitorstateexception": {
-    "incremental_linked_bytes": 951,
-    "template_instances": 37,
-    "control": "tools/jdk-closure-controls/runtime-exception.d"
-  },
-  "flint.java.lang.interruptedexception": {
-    "incremental_linked_bytes": 3419,
-    "template_instances": 61,
-    "control": "tools/jdk-closure-controls/d-exception.d"
-  },
-  "flint.java.lang.nullpointerexception": {
-    "incremental_linked_bytes": 916,
-    "template_instances": 37,
-    "control": "tools/jdk-closure-controls/runtime-exception.d"
-  },
-  "flint.java.lang.runtimeexception": {
-    "incremental_linked_bytes": 6926,
-    "template_instances": 87,
-    "control": "tools/jdk-closure-controls/d-exception.d"
-  },
   "flint.java.io.closeable": {
     "incremental_linked_bytes": 2152,
     "template_instances": 241
@@ -47,6 +22,10 @@
   "flint.java.lang.system": {
     "incremental_linked_bytes": 80,
     "template_instances": 2
+  },
+  "flint.java.lang.threadlocal": {
+    "incremental_linked_bytes": 18582,
+    "template_instances": 330
   },
   "flint.java.object": {
     "incremental_linked_bytes": 1244,
@@ -92,6 +71,10 @@
     "incremental_linked_bytes": 863,
     "template_instances": 64
   },
+  "flint.java.lang.inheritablethreadlocal": {
+    "incremental_linked_bytes": 19180,
+    "template_instances": 390
+  },
   "flint.java.lang.integer": {
     "incremental_linked_bytes": 1760,
     "template_instances": 70
@@ -100,12 +83,8 @@
     "incremental_linked_bytes": 2711,
     "template_instances": 70
   },
-  "flint.java.lang.double_": {
-    "incremental_linked_bytes": 32714,
-    "template_instances": 259
-  },
-  "flint.java.lang.float_": {
-    "incremental_linked_bytes": 33964,
-    "template_instances": 267
+  "flint.java.lang.thread": {
+    "incremental_linked_bytes": 11022,
+    "template_instances": 346
   }
 }
