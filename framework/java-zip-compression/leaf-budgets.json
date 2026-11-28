@@ -1,0 +1,10 @@
+{
+  "flint.java.util.zip.deflater": {
+    "incremental_linked_bytes": 68782,
+    "template_instances": 46
+  },
+  "flint.java.util.zip.inflater": {
+    "incremental_linked_bytes": 61368,
+    "template_instances": 58
+  }
+}

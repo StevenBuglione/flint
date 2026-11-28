@@ -1747,7 +1747,12 @@
    ],
    "unsafe": [
     "flint.java.util.zip.ffi"
-   ]
+   ],
+   "bench": {
+    "fixture": "framework/java-zip-compression/bench",
+    "baseline": "framework/java-zip-compression/bench/baseline",
+    "edit_source": "framework/java-zip-compression/source/flint/java/util/zip/deflater.d"
+   }
   },
   "jdbc": {
    "directory": "framework/jdbc",
