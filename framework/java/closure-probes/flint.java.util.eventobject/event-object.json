@@ -1,7 +1,9 @@
 {
   "data": [],
   "leaves": [
-    "flint.java.lang"
+    "flint.java.lang",
+    "flint.java.util.enumeration",
+    "flint.java.util.internal.iterator"
   ],
   "source": "closure/event-object.d"
 }

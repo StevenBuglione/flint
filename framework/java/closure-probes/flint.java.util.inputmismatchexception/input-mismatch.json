@@ -2,7 +2,9 @@
   "data": [],
   "leaves": [
     "flint.java.lang",
-    "flint.java.util"
+    "flint.java.util",
+    "flint.java.util.enumeration",
+    "flint.java.util.internal.iterator"
   ],
   "source": "closure/inputmismatch.d"
 }

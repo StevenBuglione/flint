@@ -1,5 +1,9 @@
 {
   "source": "closure/closeable.d",
-  "leaves": ["flint.java.lang"],
+  "leaves": [
+    "flint.java.lang",
+    "flint.java.util.enumeration",
+    "flint.java.util.internal.iterator"
+  ],
   "data": []
 }
