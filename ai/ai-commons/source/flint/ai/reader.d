@@ -324,6 +324,21 @@ interface JsonMetadataGenerator
     JsonFields generate(JsonFields jsonMap);
 }
 
+/// A `JsonMetadataGenerator` that extracts no metadata.
+///
+/// Java caches one immutable empty map. Flint's `Collections.emptyMap` allocates a frozen
+/// map per call, so each call returns a fresh unmodifiable empty map (docs/spring/java-differences.md).
+class EmptyJsonMetadataGenerator : JsonMetadataGenerator
+{
+    /// Ignores the input fields and returns an unmodifiable empty map.
+    override JsonFields generate(JsonFields jsonMap)
+    {
+        import flint.java.util : Collections;
+
+        return Collections.emptyMap!(string, Any)();
+    }
+}
+
 /// Reads text from a `Resource` as a single text document.
 ///
 /// Flint drops Java's `Charset` parameter: the resource is decoded as UTF-8, so the

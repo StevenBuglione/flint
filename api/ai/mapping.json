@@ -797,6 +797,8 @@
 "org.springframework.ai.rag.retrieval.search.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.ai.rag.util.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.ai.reader.**":{"status":"excluded","category":"deferred","phase":"2"},
+"org.springframework.ai.reader.EmptyJsonMetadataGenerator":{"d":"flint.ai.reader.EmptyJsonMetadataGenerator","status":"ported"},
+"org.springframework.ai.reader.EmptyJsonMetadataGenerator#generate(Map)":{"d":"flint.ai.reader.EmptyJsonMetadataGenerator.generate","rules":["R23"],"note":"Returns a fresh unmodifiable empty map on each call; Java caches one immutable empty singleton.","status":"adapted"},
 "org.springframework.ai.reader.ExtractedTextFormatter":{"d":"flint.ai.reader.ExtractedTextFormatter","status":"ported"},
 "org.springframework.ai.reader.ExtractedTextFormatter#alignToLeft(String)":{"d":"flint.ai.reader.ExtractedTextFormatter.alignToLeft","status":"ported"},
 "org.springframework.ai.reader.ExtractedTextFormatter#builder()":{"d":"flint.ai.reader.ExtractedTextFormatter.builder","rules":["R12"],"status":"adapted"},

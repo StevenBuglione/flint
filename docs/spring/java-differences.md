@@ -179,7 +179,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 
 | Repo | Upstream | Ported | Adapted | By porter | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 247 | 393 | 0 | 0 | 15,156 |
+| ai | spring-ai@v2.1.0 | 248 | 394 | 0 | 0 | 15,154 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
 | framework | spring-framework@v7.1.0 | 3,662 | 1,549 | 0 | 4,870 | 29,753 |
@@ -681,6 +681,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.ai.reader.EmptyJsonMetadataGenerator#generate(Map)` | `flint.ai.reader.EmptyJsonMetadataGenerator.generate` | [R23](api-mapping.md#r23-object-typed-values) | Returns a fresh unmodifiable empty map on each call; Java caches one immutable empty singleton. |
 | `org.springframework.ai.reader.ExtractedTextFormatter#builder()` | `flint.ai.reader.ExtractedTextFormatter.builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.reader.ExtractedTextFormatter#deleteBottomTextLines(String,int,String)` | `flint.ai.reader.ExtractedTextFormatter.deleteBottomTextLines` | [R14](api-mapping.md#r14-strings-and-text) | An empty separator counts UTF-16 units and emits U+FFFD for a surviving lone surrogate. |
 | `org.springframework.ai.reader.ExtractedTextFormatter#deleteTopTextLines(String,int,String)` | `flint.ai.reader.ExtractedTextFormatter.deleteTopTextLines` | [R14](api-mapping.md#r14-strings-and-text) | An empty separator counts UTF-16 units and emits U+FFFD for a surviving lone surrogate. |
@@ -10502,7 +10503,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.rag.retrieval.join | 6 | 0 |
 | org.springframework.ai.rag.retrieval.search | 15 | 0 |
 | org.springframework.ai.rag.util | 2 | 0 |
-| org.springframework.ai.reader | 10 | 0 |
+| org.springframework.ai.reader | 8 | 0 |
 | org.springframework.ai.reader.jsoup | 0 | 6 |
 | org.springframework.ai.reader.jsoup.config | 0 | 23 |
 | org.springframework.ai.reader.markdown | 0 | 6 |
