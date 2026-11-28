@@ -2,9 +2,20 @@
 /** Original specification tests for the existing Java print writer. */
 module flint.java.io.print_writer_contract_test;
 
-import flint.java.io : ByteArrayOutputStream, PrintWriter, StringWriter, Writer;
+import flint.java.io : ByteArrayOutputStream, OutputStream, PrintWriter, StringWriter, Writer;
+
+import std.exception : assertThrown;
+
+import flint.java.lang : NullPointerException;
 
 @safe:
+
+@("PrintWriter rejects a null writer or output stream")
+unittest
+{
+    assertThrown!NullPointerException(new PrintWriter(cast(Writer) null));
+    assertThrown!NullPointerException(new PrintWriter(cast(OutputStream) null));
+}
 
 private final class NamedValue
 {
