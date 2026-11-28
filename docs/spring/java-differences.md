@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,185 | 798 | 0 | 1,957 | 13,481 |
+| framework | openjdk@21.0.13 | 2,188 | 799 | 0 | 1,957 | 13,477 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2279,6 +2279,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.lang.Appendable#append(char)` | `flint.java.lang.Appendable.append` | [R14](api-mapping.md#r14-strings-and-text) | A wchar is one UTF-16 code unit, as Java's char is. |
 | `java.lang.ArithmeticException` | `flint.java.lang.ArithmeticException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.ArithmeticException#<init>(String)` | `flint.java.lang.ArithmeticException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.AssertionError` | `flint.java.lang.AssertionError` | [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Flint uses the catchable D Exception base. The inherited Java initCause method is unavailable. A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
@@ -11247,7 +11248,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
 | java.io | 770 | 0 |
-| java.lang | 1,608 | 0 |
+| java.lang | 1,604 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 132 | 0 |
