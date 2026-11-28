@@ -29,7 +29,7 @@
 module flint.java.util.zip.deflater;
 
 import core.exception : onOutOfMemoryError;
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang.runtimeexception : IllegalArgumentException;
 import flint.java.util.zip.ffi.deflate : DeflateParameters, DeflateStream;
 import flint.java.util.zip.ffi.stream : StreamStatus, isolateInput;
 import flint.java.util.zip.internal.exceptions : throwNullPointerException;

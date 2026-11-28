@@ -29,7 +29,7 @@
 module flint.java.util.zip.inflater;
 
 import core.exception : onOutOfMemoryError;
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang.runtimeexception : IllegalArgumentException;
 import flint.java.util.zip.dataformatexception : DataFormatException;
 import flint.java.util.zip.ffi.inflate : InflateStream;
 import flint.java.util.zip.ffi.stream : StreamStatus, isolateInput;
