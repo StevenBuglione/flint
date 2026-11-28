@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,126 | 764 | 0 | 1,957 | 13,574 |
+| framework | openjdk@21.0.13 | 2,129 | 767 | 0 | 1,957 | 13,568 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2260,6 +2260,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.lang.Byte#valueOf(String)` | `flint.java.lang.byte_.Byte.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns a byte: a boxed Byte is a D byte. A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
 | `java.lang.Byte#valueOf(String,int)` | `flint.java.lang.byte_.Byte.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns a byte: a boxed Byte is a D byte. A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
 | `java.lang.Byte#valueOf(byte)` | `flint.java.lang.byte_.Byte.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns the byte itself: a boxed Byte is a D byte. |
+| `java.lang.Character#digit(char,int)` | `flint.java.lang.character.digit` | [R7](api-mapping.md#r7-overloads) |  |
+| `java.lang.Character#isDigit(char)` | `flint.java.lang.character.isDigit` | [R7](api-mapping.md#r7-overloads) |  |
+| `java.lang.Character#isWhitespace(char)` | `flint.java.lang.character.isWhitespace` | [R7](api-mapping.md#r7-overloads) | Java char maps to a D wchar UTF-16 code unit. |
 | `java.lang.ClassCastException` | `flint.java.lang.ClassCastException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.ClassCastException#<init>(String)` | `flint.java.lang.ClassCastException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.IllegalArgumentException` | `flint.java.lang.IllegalArgumentException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
@@ -11167,7 +11170,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
 | java.io | 770 | 0 |
-| java.lang | 1,614 | 0 |
+| java.lang | 1,608 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 132 | 0 |
