@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,124 | 764 | 0 | 1,957 | 13,576 |
+| framework | openjdk@21.0.13 | 2,171 | 764 | 0 | 1,957 | 13,529 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -11194,7 +11194,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.zone | 14 | 0 |
 | java.util | 1,860 | 0 |
 | java.util.concurrent | 1,177 | 0 |
-| java.util.concurrent.atomic | 280 | 0 |
+| java.util.concurrent.atomic | 233 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 89 | 0 |
 | java.util.jar | 42 | 0 |
