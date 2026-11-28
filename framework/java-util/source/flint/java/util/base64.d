@@ -70,7 +70,7 @@ struct Base64
         lineLength &= ~0b11;
         if (lineLength <= 0)
             return getEncoder();
-        return new Encoder(false, lineSeparator.idup, lineLength, true);
+        return new Encoder(false, ownedLineSeparator(lineSeparator), lineLength, true);
     }
 
     /// Return a basic RFC 4648 Base64 decoder.
@@ -474,23 +474,39 @@ pragma(inline, false) noreturn failIllegal(string prefix, byte b) pure
 {
     import flint.java.lang : IllegalArgumentException;
 
+    throw new IllegalArgumentException(failIllegalMessage(prefix, b));
+}
+
+// The message in one exact-sized buffer, with no shared append or idup instantiations in the leaf.
+string failIllegalMessage(string prefix, byte b) pure nothrow
+{
     enum string digits = "0123456789abcdef";
     const uint magnitude = b < 0 ? -cast(int) b : b;
-    char[3] text;
+    char[3] text = void;
     size_t at = text.length;
     text[--at] = digits[magnitude & 0xf];
     if (magnitude > 0xf)
         text[--at] = digits[magnitude >> 4];
     if (b < 0)
         text[--at] = '-';
-    throw new IllegalArgumentException(prefix ~ text[at .. $].idup);
+    auto message = new char[prefix.length + text.length - at];
+    message[0 .. prefix.length] = prefix;
+    message[prefix.length .. $] = text[at .. $];
+    return message;
 }
 
 pragma(inline, false) noreturn failEnding(size_t position) pure
 {
     import flint.java.lang : IllegalArgumentException;
 
-    char[20] text;
+    throw new IllegalArgumentException(failEndingMessage(position));
+}
+
+// The message in one exact-sized buffer, with no shared append or idup instantiations in the leaf.
+string failEndingMessage(size_t position) pure nothrow
+{
+    enum prefix = "Input byte array has incorrect ending byte at ";
+    char[20] text = void;
     size_t at = text.length;
     do
     {
@@ -498,7 +514,18 @@ pragma(inline, false) noreturn failEnding(size_t position) pure
         position /= 10;
     }
     while (position != 0);
-    throw new IllegalArgumentException("Input byte array has incorrect ending byte at " ~ text[at .. $].idup);
+    auto message = new char[prefix.length + text.length - at];
+    message[0 .. prefix.length] = prefix;
+    message[prefix.length .. $] = text[at .. $];
+    return message;
+}
+
+// A `null` separator is Java's empty; otherwise own a copy, one exact-sized allocation (R26).
+immutable(byte)[] ownedLineSeparator(scope const(byte)[] separator) pure nothrow
+{
+    auto copy = new byte[separator.length];
+    copy[] = separator[];
+    return copy;
 }
 
 pragma(inline, false) noreturn tooLarge() pure nothrow @nogc
