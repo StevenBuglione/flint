@@ -297,6 +297,19 @@ class SkeletonTests(unittest.TestCase):
         with self.assertRaisesRegex(Unsupported, 'a generic type'):
             skeletons.derive(item, self.universe)
 
+    def test_a_member_type_the_package_cannot_import_is_pending(self):
+        # A direct import needs a direct DUB dependency, so a member naming a type in a module the destination
+        # package cannot import is left pending (as an unmapped type is) instead of failing the whole type.
+        scope = self.items['Counter']['scope']
+        self.assertEqual(skeletons.accessors.d_type('Marker', False, scope, set()), 'Marker')
+        scope.reachable = {'flint.other'}
+        try:
+            with self.assertRaisesRegex(Unsupported, 'flint.example, which the package does not depend on'):
+                skeletons.accessors.d_type('Marker', False, scope, set())
+        finally:
+            scope.reachable = None
+        self.assertEqual(skeletons.accessors.d_type('Marker', False, scope, set()), 'Marker')
+
     def test_written_bodies_carry_over_and_strip_pending_leaves_the_rest_out(self):
         increment = 'org.springframework.example.Counter#increment()'
         filled = {increment: ['this.count += STEP;', '', 'return this.count;']}

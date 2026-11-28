@@ -561,6 +561,9 @@ def compare(universe, helper, scratch, compilers=None, log=None, only=None):
         if log:
             log(f':{package}: {len(group)} types')
         roots = gate.import_paths(package)
+        reachable = {m for m, places in index.items() if any(r in roots for r, _ in places)}
+        for item in group:
+            item['scope'].reachable = reachable
         overloads, members, d_defaults = base_facts(universe, group, roots, scratch, compilers[0])
         live = []
         for item in group:

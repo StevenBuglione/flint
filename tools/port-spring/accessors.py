@@ -198,6 +198,7 @@ class Scope:
             for inner in decl['types']:
                 self.nested[inner['name']] = f'{type_id}.{inner["name"]}'
         self.used = {}  # D name -> fully qualified D symbol of each mapped type d_type spelled
+        self.reachable = None  # the D modules the destination package may import, or None when unknown
         self.type_variables = set()
         for _, decl in chain:
             for parameter in decl.get('typeParameters') or ():
@@ -308,6 +309,12 @@ def d_type(java, nullable, scope, rules, element=False, throwables=False):
     plan = scope.universe.plans.get(full, {})
     if plan.get('storage') not in (None, 'erased'):
         raise Unsupported(f'type {full} has templated storage')
+    module = row['d'].rsplit('.', 1)[0]
+    if scope.reachable is not None and module not in scope.reachable:
+        # A direct import needs a direct DUB dependency (AGENTS.md). A member that names a type in a module the
+        # destination package cannot import is not declarable there: the skeleton leaves it pending, as it does for
+        # a type with no mapping, instead of failing the whole type on a compile error.
+        raise Unsupported(f'type {full} is in {module}, which the package does not depend on')
     target = row['d'].rsplit('.', 1)[1]
     scope.used[target] = row['d']
     if nullable and not element and plan.get('kind') in STRUCTURED:
