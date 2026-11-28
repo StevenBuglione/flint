@@ -710,8 +710,10 @@ class File
     /// Whether `other` is a `File` with the same pathname.
     bool equals(Object other)
     {
-        auto that = cast(File) other;
-        return that !is null && path_ == that.path_;
+        import flint.engine.aot.objects : objectToString;
+
+        return other is this || (other !is null && File.classinfo.isBaseOf(other.classinfo) &&
+            path_ == objectToString(other));
     }
 
     /// Java's `String.hashCode` of the pathname.
@@ -730,7 +732,33 @@ class File
         return comparePathnames(path_, other.path_);
     }
 
-    mixin JavaObject;
+    /// `==` through an `Object` reference calls `equals`.
+    override bool opEquals(Object other)
+    {
+        return equals(other);
+    }
+
+    /// `==` between two `File` values compares pathnames.
+    bool opEquals(File other)
+    {
+        return this is other || (other !is null && path_ == other.path_);
+    }
+
+    /// Associative arrays hash the pathname.
+    override size_t toHash() @safe nothrow
+    {
+        return cast(size_t) cast(uint) hashCode();
+    }
+
+    /// `<` orders by `compareTo`; an unrelated object is unordered.
+    override int opCmp(Object other)
+    {
+        import flint.engine.aot.objects : objectToString;
+
+        if (other is null || !File.classinfo.isBaseOf(other.classinfo))
+            return 0;
+        return comparePathnames(path_, objectToString(other));
+    }
 
     /// The absolute path.
     string getAbsolutePath() const
