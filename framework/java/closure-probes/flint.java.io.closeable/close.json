@@ -1,5 +1,9 @@
 {
   "source": "closure/closeable.d",
-  "leaves": ["flint.java.lang", "flint.java.lang.runtimeexception"],
+  "leaves": [
+    "flint.java.lang",
+    "flint.java.lang.nullpointerexception",
+    "flint.java.lang.runtimeexception"
+  ],
   "data": []
 }
