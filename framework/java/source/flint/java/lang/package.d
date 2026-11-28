@@ -15,6 +15,7 @@ $(UL
 +/
 module flint.java.lang;
 
+public import flint.java.lang.appendable : Appendable;
 public import flint.java.lang.boolean : Boolean;
 public import flint.java.lang.charsequence : CharSequence;
 public import flint.java.lang.error : AssertionError, Error_;
