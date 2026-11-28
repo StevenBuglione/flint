@@ -4,6 +4,7 @@
   "java.io.InterruptedIOException": "flint.java.io.interruptedioexception",
   "java.io.UnsupportedEncodingException": "flint.java.io.unsupportedencodingexception",
   "java.lang.Byte": "flint.java.lang.byte_",
+  "java.lang.Float": "flint.java.lang.float_",
   "java.lang.Math": "flint.java.lang.math",
   "java.lang.Number": "flint.java.lang.number",
   "java.lang.Short": "flint.java.lang.short_",
