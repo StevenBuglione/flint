@@ -8515,6 +8515,7 @@
 "java.util.Properties#defaults":{"d":"flint.java.util.Properties.defaults","status":"ported"},
 "java.util.Properties#getProperty(String)":{"d":"flint.java.util.Properties.getProperty","status":"adapted","rules":["R26"]},
 "java.util.Properties#getProperty(String,String)":{"d":"flint.java.util.Properties.getProperty","status":"adapted","rules":["R26"]},
+"java.util.Properties#list(PrintWriter)":{"status":"adapted","d":"flint.java.util.Properties.list","rules":["R14"],"note":"Java's Hashtable order is unspecified; entries render in insertion order. A value over 40 UTF-16 units is cut to 37 units plus \"...\", with a surviving lone surrogate as U+FFFD."},
 "java.util.Properties#load(InputStream)":{"status":"adapted","d":"flint.java.util.Properties.load","rules":["R14"],"note":"Decodes ISO-8859-1 and leaves the stream open. An isolated UTF-16 surrogate escape becomes U+FFFD in the D UTF-8 string."},
 "java.util.Properties#setProperty(String,String)":{"d":"flint.java.util.Properties.setProperty","rules":["R23","R26"],"status":"adapted"},
 "java.util.Properties#stringPropertyNames()":{"d":"flint.java.util.Properties.stringPropertyNames","status":"ported"},
