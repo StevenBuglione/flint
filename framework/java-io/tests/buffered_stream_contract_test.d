@@ -27,6 +27,8 @@ private final class RecordingInput : InputStream
     override int read(scope ubyte[] buffer, int offset, int length)
     {
         ++rangedCalls;
+        if (position >= data.length)
+            return -1;
         int wanted = length;
         if (rangedLimit > 0 && wanted > rangedLimit)
             wanted = rangedLimit;
@@ -82,6 +84,7 @@ unittest
     auto input = new BufferedInputStream(source, 4);
 
     assert(input.markSupported());
+    assert(input.read(new ubyte[0]) == 0);
     assert(input.read() == 0);
     assert(input.read() == 1);
     assert(input.read() == 2);
@@ -133,6 +136,20 @@ unittest
     assert(destination[0] == 10);
     assert(input.read(destination[1 .. 3]) == 1);
     assert(destination[1] == 11);
+}
+
+@("BufferedInputStream transferTo copies the buffered and wrapped bytes")
+unittest
+{
+    auto source = new RecordingInput;
+    source.data = [1, 2, 3, 4, 5, 6];
+    auto input = new BufferedInputStream(source, 4);
+    auto sink = new RecordingOutput;
+
+    assert(input.read() == 1);
+    assert(input.transferTo(sink) == 5);
+    assert(sink.data == [2, 3, 4, 5, 6]);
+    assert(input.read() == -1);
 }
 
 @("BufferedInputStream reports a closed stream after close and closes once")
