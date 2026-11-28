@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,914 | 636 | 0 | 1,915 | 13,956 |
+| framework | openjdk@21.0.13 | 1,914 | 639 | 0 | 1,915 | 13,953 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2316,6 +2316,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.lang.Long#valueOf(String,int)` | `flint.java.lang.long_.Long.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns a long: a boxed Long is a D long. A D null string is Java's "" here: Java reports "Cannot parse null string", where Flint reports the empty-string NumberFormatException (R5). |
 | `java.lang.Long#valueOf(long)` | `flint.java.lang.long_.Long.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns the long itself: a boxed Long is a D long. |
 | `java.lang.Math` | `flint.java.lang.math.Math` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.lang.math; flint.java.lang does not re-export it until the JDK aggregate exists. NaN results are the canonical quiet NaN (Double.NaN's bits); HotSpot on x86-64 returns the sign-set default NaN for computed paths, which only doubleToRawLongBits can observe. |
+| `java.lang.NegativeArraySizeException` | `flint.java.lang.negativearraysizeexception.NegativeArraySizeException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions) | Import NegativeArraySizeException from flint.java.lang.negativearraysizeexception; flint.java.lang does not re-export it until the JDK aggregate exists. It extends the canonical Java RuntimeException. One D constructor with a default message covers Java's no-argument and detail-message constructors; an explicitly null message is the same as no message (R8). |
+| `java.lang.NegativeArraySizeException#<init>()` | `flint.java.lang.negativearraysizeexception.NegativeArraySizeException.this` | [R8](api-mapping.md#r8-exceptions) |  |
+| `java.lang.NegativeArraySizeException#<init>(String)` | `flint.java.lang.negativearraysizeexception.NegativeArraySizeException.this` | [R8](api-mapping.md#r8-exceptions) |  |
 | `java.lang.NullPointerException` | `flint.java.lang.NullPointerException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.NullPointerException#<init>(String)` | `flint.java.lang.NullPointerException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.NumberFormatException` | `flint.java.lang.NumberFormatException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
@@ -10953,7 +10956,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
 | java.io | 770 | 0 |
-| java.lang | 1,610 | 0 |
+| java.lang | 1,607 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
