@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,010 | 739 | 0 | 1,957 | 13,715 |
+| framework | openjdk@21.0.13 | 2,029 | 745 | 0 | 1,957 | 13,690 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -3088,6 +3088,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.util.zip.Adler32#update(byte[])` | `flint.java.util.zip.adler32.Adler32.update` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D byte slices, so the whole-array form is one call; a null slice is empty under R26 (Java throws NullPointerException). |
+| `java.util.zip.Adler32#update(byte[],int,int)` | `flint.java.util.zip.adler32.Adler32.update` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D byte slices, so the whole-array form is one call; a null slice is empty under R26 (Java throws NullPointerException). |
+| `java.util.zip.CRC32#update(byte[])` | `flint.java.util.zip.crc32.CRC32.update` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D byte slices, so the whole-array form is one call; a null slice is empty under R26 (Java throws NullPointerException). |
+| `java.util.zip.CRC32#update(byte[],int,int)` | `flint.java.util.zip.crc32.CRC32.update` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D byte slices, so the whole-array form is one call; a null slice is empty under R26 (Java throws NullPointerException). |
+| `java.util.zip.CRC32C#update(byte[])` | `flint.java.util.zip.crc32c.CRC32C.update` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D byte slices, so the whole-array form is one call; a null slice is empty under R26 (Java throws NullPointerException). |
+| `java.util.zip.CRC32C#update(byte[],int,int)` | `flint.java.util.zip.crc32c.CRC32C.update` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D byte slices, so the whole-array form is one call; a null slice is empty under R26 (Java throws NullPointerException). |
+| `java.util.zip.Checksum#update(byte[])` | `flint.java.util.zip.checksum.Checksum.update` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D byte slices, so the whole-array form is one call; a null slice is empty under R26 (Java throws NullPointerException). |
+| `java.util.zip.Checksum#update(byte[],int,int)` | `flint.java.util.zip.checksum.Checksum.update` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D byte slices, so the whole-array form is one call; a null slice is empty under R26 (Java throws NullPointerException). |
+| `java.util.zip.DataFormatException` | `flint.java.util.zip.dataformatexception.DataFormatException` | [R26](api-mapping.md#r26-null-arrays) | An explicitly empty Java detail message is reported as absent. |
 | `java.util.zip.ZipException` | `flint.java.util.zip.zipexception.ZipException` | [R26](api-mapping.md#r26-null-arrays) | An explicitly empty Java detail message is reported as absent. |
 
 #### org.aopalliance.aop
@@ -11174,7 +11183,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.regex | 67 | 0 |
 | java.util.spi | 0 | 43 |
 | java.util.stream | 287 | 0 |
-| java.util.zip | 257 | 0 |
+| java.util.zip | 232 | 0 |
 | javax.crypto | 279 | 0 |
 | javax.crypto.interfaces | 0 | 13 |
 | javax.crypto.spec | 101 | 0 |
@@ -12568,6 +12577,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.stream.Stream#sorted()` | 2 | Flint traverses at stage creation and compares using the declared element type. Java defers traversal and sorts Comparable values even when they are typed as Object. Flint compares text by UTF-8 bytes, where Java uses UTF-16 code units (R14). The comparison inherits D's null class dispatch limitation (R8), which can fault on a null receiver. Java throws NullPointerException when comparing mixed null input. |
 | framework | `java.util.stream.Stream#sorted(Comparator)` | 2 | The existing method traverses and calls the comparator when the intermediate stage is created. Java postpones both until a terminal operation. |
 | framework | `java.util.stream.Stream#toArray(IntFunction)` | 2 | Flint has no typed array-generator overload. Java passes the result size to the generator and rejects elements incompatible with the returned array type. |
+| framework | `java.util.zip.DataFormatException#<init>()` | 2 | Java leaves the cause open to one later initCause call. Flint lacks that API until the shared checked base lands. |
+| framework | `java.util.zip.DataFormatException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. Flint lacks that API until the shared checked base lands. |
 | framework | `java.util.zip.ZipException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.util.zip.ZipException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
 | framework | `org.hibernate.validator.HibernateValidator#buildValidatorFactory(ConfigurationState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |

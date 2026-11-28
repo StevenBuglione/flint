@@ -121,6 +121,7 @@
   "java.util.concurrent.ScheduledFuture": "flint.java.util.concurrent.scheduledfuture",
   "java.util.concurrent.TimeoutException": "flint.java.util.concurrent.timeoutexception",
   "java.util.concurrent.atomic.AtomicReference": "flint.java.util.concurrent.atomic.atomicreference",
+  "java.util.jar.JarException": "flint.java.util.jar.jarexception",
   "java.util.zip.ZipException": "flint.java.util.zip.zipexception"
  }
 }
