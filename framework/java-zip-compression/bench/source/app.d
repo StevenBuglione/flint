@@ -5,9 +5,7 @@ import core.stdc.stdio : printf;
 import flint.java.util.zip.deflater : Deflater;
 import flint.java.util.zip.inflater : Inflater;
 
-@safe:
-
-int main(string[] args)
+int main(string[] args) @system
 {
     const payload = cast(const(byte)[]) (args.length > 1 ? args[1] : "flint zip compression probe");
     auto encoder = new Deflater();
