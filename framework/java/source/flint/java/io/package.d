@@ -133,6 +133,46 @@ abstract class InputStream : Closeable
         return count;
     }
 
+    /// Read up to `length` bytes into a new array; stops at the end of the stream.
+    /// A negative length is rejected before any read.
+    ubyte[] readNBytes(int length)
+    {
+        import flint.java.lang : IllegalArgumentException;
+
+        if (length < 0)
+            throw new IllegalArgumentException("len < 0");
+        enum chunkSize = 8192;
+        ubyte[chunkSize] chunk;
+        ubyte[] result;
+        int remaining = length;
+        while (remaining > 0)
+        {
+            const wanted = remaining < chunkSize ? remaining : chunkSize;
+            const count = read(chunk[0 .. wanted]);
+            if (count <= 0)
+                break;
+            result ~= chunk[0 .. count];
+            remaining -= count;
+        }
+        return result;
+    }
+
+    /// Read until `length` bytes fill `buffer[offset .. offset + length]` or the stream ends.
+    /// The count read is returned; zero means the stream was already at its end.
+    int readNBytes(scope ubyte[] buffer, int offset, int length)
+    {
+        checkReadRange(buffer.length, offset, length);
+        int total;
+        while (total < length)
+        {
+            const count = read(buffer, offset + total, length - total);
+            if (count <= 0)
+                break;
+            total += count;
+        }
+        return total;
+    }
+
     /// Consume at most the requested bytes, returning the actual count.
     /// A ranged reader that makes no progress ends the skip.
     long skip(long count)
@@ -167,6 +207,27 @@ abstract class InputStream : Closeable
                 return result;
             result ~= chunk[0 .. n];
         }
+    }
+
+    /// Copy every remaining byte to `target`, returning the count copied. Both streams stay open.
+    long transferTo(OutputStream target)
+    {
+        import flint.java.lang : NullPointerException;
+
+        if (target is null)
+            throw new NullPointerException("out");
+        enum chunkSize = 8192;
+        ubyte[chunkSize] chunk;
+        long transferred;
+        for (;;)
+        {
+            const count = read(chunk[]);
+            if (count < 0)
+                break;
+            target.write(chunk[0 .. count], 0, count);
+            transferred += count;
+        }
+        return transferred;
     }
 
     /// How many bytes can be read without blocking. The default is zero.
