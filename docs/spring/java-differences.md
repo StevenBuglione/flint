@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,187 | 802 | 0 | 1,957 | 13,475 |
+| framework | openjdk@21.0.13 | 2,187 | 803 | 0 | 1,957 | 13,474 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -3005,6 +3005,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.StringJoiner#toString()` | `flint.java.util.stringjoiner.StringJoiner.toString` | [R11](api-mapping.md#r11-object-identity-and-equality), [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.util.UUID` | `flint.java.util.uuid.UUID` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.uuid; flint.java.util does not re-export it until the JDK aggregate exists. |
 | `java.util.UUID#equals(Object)` | `flint.java.util.uuid.UUID.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.UUID#fromString(String)` | `flint.java.util.uuid.UUID.fromString` | [R26](api-mapping.md#r26-null-arrays) | A D null string is Java's "" here: Java throws NullPointerException, where Flint reports IllegalArgumentException (Invalid UUID string: ) (R26). |
 | `java.util.UUID#hashCode()` | `flint.java.util.uuid.UUID.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.UUID#toString()` | `flint.java.util.uuid.UUID.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.UUID#version()` | `flint.java.util.uuid.UUID.version_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
@@ -11271,7 +11272,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,860 | 0 |
+| java.util | 1,859 | 0 |
 | java.util.concurrent | 1,139 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -12607,7 +12608,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Random` | 2 | The seeded constructor and core generator methods (setSeed, next, nextBytes, nextInt, nextLong, nextBoolean, nextFloat, nextDouble) are available. The default constructor, bounded draws, nextGaussian, RandomGenerator interface and streams are deferred. |
 | framework | `java.util.Scanner#<init>(Readable)` | 2 | The Readable constructor awaits the interface's cross-package placement. Its method takes a java.nio CharBuffer. Revisit after the compile-scope decision on 2026-11-27. |
 | framework | `java.util.SplittableRandom` | 2 | The seeded constructor, split(), split(SplittableGenerator), nextInt(), nextLong() and nextBytes(byte[]) are available at flint.java.util.splittablerandom.SplittableRandom, which implements RandomGenerator.SplittableGenerator with Java's isDeprecated, nextBoolean, nextFloat and nextDouble defaults. The default constructor and the stream methods (splits, ints, longs, doubles) are deferred. |
-| framework | `java.util.UUID#fromString(String)` | 2 | The Java UUID parser, including shortened hexadecimal fields, awaits Character radix conversion. |
 | framework | `java.util.UUID#nameUUIDFromBytes(byte[])` | 2 | Version 3 name-based UUIDs await the canonical Java MessageDigest MD5 provider. |
 | framework | `java.util.concurrent.ExecutionException#<init>(Throwable)` | 2 | The cause is retained, but a custom checked Throwable.toString override is bypassed when deriving the detail. Java invokes that override. |
 | framework | `java.util.concurrent.ExecutorService#awaitTermination(long,TimeUnit)` | 2 | Requires canonical Java Thread interruption and an interruptible termination wait. |
