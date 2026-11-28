@@ -1384,6 +1384,14 @@ private enum describeRfc1123 = `ParseCaseSensitive(false)ParseStrict(false)[Text
 private enum describeBasicIsoDate = `ParseCaseSensitive(false)Value(Year,4)Value(MonthOfYear,2)Value(DayOfMonth,2)`
     ~ `[ParseStrict(false)Offset(+HHMMss,'Z')ParseStrict(true)]`;
 
+// The default format locale is English (en-US); these are its CLDR date patterns for the four FormatStyle values, and
+// the style names Java's `Localized` description writes. The localized time and date-time patterns need pattern
+// letter z and the region zone provider, so their factories are deferred.
+private immutable string[4] localizedDatePatterns = [
+    "EEEE, MMMM d, y", "MMMM d, y", "MMM d, y", "M/d/yy"
+];
+private immutable string[4] formatStyleNames = ["FULL", "LONG", "MEDIUM", "SHORT"];
+
 /++
 Formatter for printing and parsing date-time objects. Java's `DateTimeFormatter` is an immutable final class;
 Flint's is an immutable value (ADR-030, R11), so the ISO constants are `static immutable` values.
@@ -1449,6 +1457,21 @@ struct DateTimeFormatter
     {
         DateTimeFormatterBuilder builder;
         return builder.appendPattern(pattern).toFormatter();
+    }
+
+    /**
+     * Creates a formatter from a localized date style, using the default format locale, English (en-US): FULL
+     * `EEEE, MMMM d, y`, LONG `MMMM d, y`, MEDIUM `MMM d, y` and SHORT `M/d/yy`. Like Java's, it resolves SMART and
+     * describes itself as `Localized(style,)`. The localized time and date-time factories are deferred with pattern
+     * letter z.
+     */
+    static DateTimeFormatter ofLocalizedDate(FormatStyle dateStyle)
+    {
+        const index = cast(size_t) dateStyle;
+        DateTimeFormatterBuilder builder;
+        auto formatter = builder.appendPattern(localizedDatePatterns[index]).toFormatter();
+        formatter.description_ = "Localized(" ~ formatStyleNames[index] ~ ",)";
+        return formatter;
     }
 
     /// How a parse resolves its fields: `SMART` for `ofPattern` and `RFC_1123_DATE_TIME`, `STRICT` for the ISO

@@ -1026,6 +1026,62 @@ unittest
     static assert(!__traits(compiles, isStandalone(null)));
 }
 
+@("DateTimeFormatter.ofLocalizedDate uses the en-US CLDR date patterns and Java's Localized description")
+unittest
+{
+    import flint.java.time.format : DateTimeFormatter, FormatStyle, ResolverStyle;
+    import std.exception : collectException;
+
+    // JDK 21 Temurin 21.0.13+9, default format locale en_US: toString and the text of five dates.
+    static immutable string[4] names = ["FULL", "LONG", "MEDIUM", "SHORT"];
+    static immutable string[5][] expected = [
+        [
+            "Tuesday, March 5, 2024", "Monday, December 31, 1", "Thursday, June 7, 12345",
+            "Saturday, January 1, 1", "Wednesday, February 3, 2"
+        ], ["March 5, 2024", "December 31, 1", "June 7, 12345", "January 1, 1", "February 3, 2"],
+        ["Mar 5, 2024", "Dec 31, 1", "Jun 7, 12345", "Jan 1, 1", "Feb 3, 2"],
+        ["3/5/24", "12/31/01", "6/7/45", "1/1/01", "2/3/02"],
+    ];
+    const LocalDate[] dates = [
+        LocalDate.of(2024, 3, 5), LocalDate.of(1, 12, 31), LocalDate.of(12_345, 6, 7),
+        LocalDate.of(0, 1, 1), LocalDate.of(-1, 2, 3),
+    ];
+    const FormatStyle[] styles = [
+        FormatStyle.FULL, FormatStyle.LONG, FormatStyle.MEDIUM, FormatStyle.SHORT
+    ];
+    foreach (s, style; styles)
+    {
+        const f = DateTimeFormatter.ofLocalizedDate(style);
+        assert(f.toString() == "Localized(" ~ names[s] ~ ",)", f.toString());
+        assert(f.getResolverStyle() == ResolverStyle.SMART);
+        foreach (i, date; dates)
+        {
+            const text = expected[s][i];
+            assert(f.format(date) == text, text);
+            // The patterns name a year of era without an era, and SHORT reduces it, so only 2024 names itself back.
+            if (i == 0)
+                assert(LocalDate.parse(text, f) == date, text);
+        }
+    }
+    // A strict resolver needs an era, as ofPattern's year-of-era letters do; ofLocalizedDate stays SMART.
+    const strict = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withResolverStyle(ResolverStyle.STRICT);
+    assert(collectException!DateTimeParseException(LocalDate.parse("3/5/24", strict)) !is null);
+    // The short style reads a reduced year-of-era from 2000, case-sensitively, and reads the whole text.
+    const shortFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT);
+    assert(LocalDate.parse("1/1/70", shortFormatter) == LocalDate.of(2070, 1, 1));
+    assert(LocalDate.parse("12/31/01", shortFormatter) == LocalDate.of(2001, 12, 31));
+    auto lower = collectException!DateTimeParseException(LocalDate.parse("mar 7, 2024",
+            DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)));
+    assert(lower !is null && lower.getErrorIndex() == 0);
+    auto trailing = collectException!DateTimeParseException(LocalDate.parse("3/7/24x", shortFormatter));
+    assert(trailing !is null && trailing.getErrorIndex() == 6);
+    // FULL parses the day-of-week and cross-checks it against the date.
+    auto conflict = collectException!DateTimeParseException(LocalDate.parse("Wednesday, March 7, 2024",
+            DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)));
+    assert(conflict !is null && conflict.msg == "Text 'Wednesday, March 7, 2024' could not be parsed: Conflict found: "
+            ~ "Field DayOfWeek 4 differs from DayOfWeek 3 derived from 2024-03-07", conflict.msg);
+}
+
 @("DecimalStyle keeps four UTF-16 symbols with Java's hash and text, as in JDK 21")
 unittest
 {
