@@ -74,5 +74,13 @@
   "flint.java.lang.long_": {
     "incremental_linked_bytes": 2711,
     "template_instances": 70
+  },
+  "flint.java.util.queue": {
+    "incremental_linked_bytes": 2048,
+    "template_instances": 248
+  },
+  "flint.java.util.deque": {
+    "incremental_linked_bytes": 2048,
+    "template_instances": 381
   }
 }

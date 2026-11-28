@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,955 | 717 | 0 | 1,921 | 13,828 |
+| framework | openjdk@21.0.13 | 1,976 | 722 | 0 | 1,921 | 13,802 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -221,6 +221,12 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.nio.file.InvalidPathException` | `flint.java.nio.file.InvalidPathException` | Null input and reason strings count as empty under R26. |
 | framework | `java.nio.file.Path` | `flint.java.nio.file.Path` | Lexical contract. Path inheritance from Comparable<Path>, Iterable<Path> and Watchable is deferred to Phase 2 with compareTo, iterator and register. Provider equality and hashing are also deferred to Phase 2. Null strings and an array of additional parts that is null count as empty under R26. |
 | framework | `java.time.zone.ZoneOffsetTransitionRule.TimeDefinition` | `flint.java.time.zone.zoneoffsettransitionrule.ZoneOffsetTransitionRule.TimeDefinition` | A null name counts as empty (R26). Java throws NullPointerException. |
+| framework | `java.util.Deque#peekFirst()` | `flint.java.util.deque.Deque.peekFirst` | An empty deque yields T.init. |
+| framework | `java.util.Deque#peekLast()` | `flint.java.util.deque.Deque.peekLast` | An empty deque yields T.init. |
+| framework | `java.util.Deque#pollFirst()` | `flint.java.util.deque.Deque.pollFirst` | An empty deque yields T.init. |
+| framework | `java.util.Deque#pollLast()` | `flint.java.util.deque.Deque.pollLast` | An empty deque yields T.init. |
+| framework | `java.util.Queue#peek()` | `flint.java.util.queue.Queue.peek` | An empty queue yields T.init, as Map.get does for a missing key. |
+| framework | `java.util.Queue#poll()` | `flint.java.util.queue.Queue.poll` | An empty queue yields T.init, as Map.get does for a missing key. |
 | framework | `java.util.regex.Pattern` | `flint.java.util.regex.Pattern` | Under R26, a null expression or input slice counts as empty text. Java throws NullPointerException. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)` | `flint.core.convert.support.DefaultConversionService.addDefaultConverters` | The package-private CharacterToNumberFactory is represented in the erased numeric converter for char and wchar code units. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()` | `flint.core.convert.support.DefaultConversionService.getSharedInstance` | Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4). |
@@ -2850,6 +2856,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Collection#remove(Object)` | `flint.java.util.Collection.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Collection#toArray()` | `flint.java.util.Collection.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Date#clone()` | `flint.java.util.Date.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Deque` | `flint.java.util.deque.Deque` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) | Import from flint.java.util.deque while the java.util aggregate is being split. Java 21 SequencedCollection is deferred, so Deque extends Queue only and declares reversed(). |
+| `java.util.Deque#removeFirstOccurrence(Object)` | `flint.java.util.deque.Deque.removeFirstOccurrence` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Deque#removeLastOccurrence(Object)` | `flint.java.util.deque.Deque.removeLastOccurrence` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Deque#reversed()` | `flint.java.util.deque.Deque.reversed` | [R10](api-mapping.md#r10-streams-and-collections) | Returns a live Deque view; SequencedCollection is deferred. |
 | `java.util.EnumSet` | `flint.java.util.enumset.EnumSet` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.enumset. Java's Class<E> token becomes the EnumSet!E template parameter (R4). AbstractSet is deferred to sol-jdk-core's collections design, so the class derives from AbstractCollection and Set and is reparented when AbstractSet lands. |
 | `java.util.EnumSet#allOf(Class)` | `flint.java.util.enumset.EnumSet.allOf` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `java.util.EnumSet#noneOf(Class)` | `flint.java.util.enumset.EnumSet.noneOf` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -2924,6 +2934,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Objects#toString(Object,String)` | `flint.java.util.Objects.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Optional` | `flint.java.util.Optional` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.Properties#setProperty(String,String)` | `flint.java.util.Properties.setProperty` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Queue` | `flint.java.util.queue.Queue` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.queue while the java.util aggregate is being split. |
 | `java.util.Random#nextBytes(byte[])` | `flint.java.util.random.random.Random.nextBytes` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Set#of(E...)` | `flint.java.util.Set.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.SimpleTimeZone#clone()` | `flint.java.util.SimpleTimeZone.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -11061,7 +11072,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,878 | 0 |
+| java.util | 1,852 | 0 |
 | java.util.concurrent | 1,198 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
