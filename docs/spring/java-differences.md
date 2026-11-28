@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,945 | 714 | 0 | 1,921 | 13,841 |
+| framework | openjdk@21.0.13 | 1,955 | 717 | 0 | 1,921 | 13,828 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2850,6 +2850,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Collection#remove(Object)` | `flint.java.util.Collection.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Collection#toArray()` | `flint.java.util.Collection.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Date#clone()` | `flint.java.util.Date.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.EnumSet` | `flint.java.util.enumset.EnumSet` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.enumset. Java's Class<E> token becomes the EnumSet!E template parameter (R4). AbstractSet is deferred to sol-jdk-core's collections design, so the class derives from AbstractCollection and Set and is reparented when AbstractSet lands. |
+| `java.util.EnumSet#allOf(Class)` | `flint.java.util.enumset.EnumSet.allOf` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `java.util.EnumSet#noneOf(Class)` | `flint.java.util.enumset.EnumSet.noneOf` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `java.util.EnumSet#of(E...)` | `flint.java.util.enumset.EnumSet.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.HashMap#containsKey(Object)` | `flint.java.util.HashMap.containsKey` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HashMap#containsValue(Object)` | `flint.java.util.HashMap.containsValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HashMap#get(Object)` | `flint.java.util.HashMap.get` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -11057,7 +11061,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,891 | 0 |
+| java.util | 1,878 | 0 |
 | java.util.concurrent | 1,198 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |

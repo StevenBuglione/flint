@@ -688,54 +688,6 @@
       "phase": "2",
       "status": "deferred"
     },
-    "java/util/EnumSet/AllOf.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/EnumSet/BogusEnumSet.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/EnumSet/ComplementOf.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/EnumSet/EnumSetBash.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/EnumSet/EnumSetClassSerialization.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/EnumSet/InsertWrongType.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/EnumSet/JumboRange.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/EnumSet/LargeEnumIteratorRemoveResilience.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/EnumSet/OneUniverse.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/EnumSet/Range.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/EnumSet/RetainAll.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/EnumSet/SmallEnumIteratorRemoveResilience.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
     "java/util/Formattable/StockName.java": {
       "phase": "2",
       "status": "deferred"

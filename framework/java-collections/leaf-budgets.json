@@ -1,7 +1,11 @@
 {
   "flint.java.util.bitset": {
     "incremental_linked_bytes": 17692,
-    "template_instances": 308,
-    "template_compile": "separate"
+    "template_compile": "separate",
+    "template_instances": 308
+  },
+  "flint.java.util.enumset": {
+    "incremental_linked_bytes": 62564,
+    "template_instances": 1058
   }
 }

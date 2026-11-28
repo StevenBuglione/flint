@@ -31,6 +31,66 @@
     "java/util/BitSet/stream/BitSetStreamTest.java": {
       "phase": "2",
       "status": "deferred"
+    },
+    "java/util/EnumSet/AllOf.java": {
+      "phase": "2",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception; the original tests in framework/java-collections/tests/enumset_test.d and the Temurin 21.0.13+9 EnumSetOracle cover allOf for the regular and jumbo representations.",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/BogusEnumSet.java": {
+      "phase": "2",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception; it passes a non-enum class to the Class-based factories, which the EnumSet!E template parameter makes a compile error (R4).",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/ComplementOf.java": {
+      "phase": "2",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception; the original tests and EnumSetOracle cover complementOf for both representations.",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/EnumSetBash.java": {
+      "phase": "2",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception; the original randomized oracle transcript exercises factories, bulk operations, clone, iteration and both representations.",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/EnumSetClassSerialization.java": {
+      "phase": "2",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception; Java serialization is excluded from the port, so the serialization proxy has no D equivalent.",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/InsertWrongType.java": {
+      "phase": "2",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception; inserting another enum type is a D compile error because the element type is the template parameter (R4).",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/JumboRange.java": {
+      "phase": "2",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception; the original tests and EnumSetOracle cover range and iterators over the jumbo representation.",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/LargeEnumIteratorRemoveResilience.java": {
+      "phase": "2",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception; the original tests cover iterator remove on the jumbo representation.",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/OneUniverse.java": {
+      "phase": "2",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception; a set is tied to one enum type by its D template parameter (R4), so the shared-universe case is structural.",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/Range.java": {
+      "phase": "2",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception; the original tests and EnumSetOracle cover range in declaration order and the reversed-range IllegalArgumentException.",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/RetainAll.java": {
+      "phase": "2",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception; the original tests cover retainAll through the enum-set word path and the generic collection path.",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/SmallEnumIteratorRemoveResilience.java": {
+      "phase": "2",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception; the original tests cover iterator remove on the regular representation.",
+      "status": "deferred"
     }
   },
   "module": "java-collections",

@@ -469,7 +469,7 @@
   "java-collections": {
    "directory": "framework/java-collections",
    "module": "flint.java.util.bitset",
-   "java_types": ["java.util.BitSet"],
+   "java_types": ["java.util.BitSet", "java.util.EnumSet"],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
    "upstream": "openjdk@21.0.13",
@@ -486,9 +486,9 @@
     "dmd_incremental_seconds": 0.6,
     "ldc_cold_seconds": 5.4,
     "ldc_incremental_seconds": 2.7,
-    "incremental_linked_bytes": 17660,
+    "incremental_linked_bytes": 80224,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 308
+    "template_instances": 1366
    },
    "provisional": [
     "dmd_cold_seconds",

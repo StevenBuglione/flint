@@ -1,6 +1,4 @@
 {
-  "schema": "flint.upstream-tests-baseline/1",
-  "note": "Upstream test classes each module may record as \"deferred\", a ratchet like policy/quality-baseline.json (coordinator decision, 2026-11-26): the definition of done fails on a deferred class not listed here and on a listed class no longer deferred, until --shrink-upstream-tests removes it. Only the seed (--seed-upstream-tests, the integration owner's) adds entries.",
   "modules": {
     "ai-commons": [
       "org/springframework/ai/document/DocumentBuilderTests.java",
@@ -5645,7 +5643,19 @@
       "java/util/BitSet/MemoryLeak.java",
       "java/util/BitSet/PreviousBits.java",
       "java/util/BitSet/StickySize.java",
-      "java/util/BitSet/stream/BitSetStreamTest.java"
+      "java/util/BitSet/stream/BitSetStreamTest.java",
+      "java/util/EnumSet/AllOf.java",
+      "java/util/EnumSet/BogusEnumSet.java",
+      "java/util/EnumSet/ComplementOf.java",
+      "java/util/EnumSet/EnumSetBash.java",
+      "java/util/EnumSet/EnumSetClassSerialization.java",
+      "java/util/EnumSet/InsertWrongType.java",
+      "java/util/EnumSet/JumboRange.java",
+      "java/util/EnumSet/LargeEnumIteratorRemoveResilience.java",
+      "java/util/EnumSet/OneUniverse.java",
+      "java/util/EnumSet/Range.java",
+      "java/util/EnumSet/RetainAll.java",
+      "java/util/EnumSet/SmallEnumIteratorRemoveResilience.java"
     ],
     "java-concurrent": [
       "java/util/concurrent/CompletableFuture/Basic.java",
@@ -7249,18 +7259,6 @@
       "java/util/EnumMap/SimpleSerialization.java",
       "java/util/EnumMap/ToArray.java",
       "java/util/EnumMap/UniqueNullValue.java",
-      "java/util/EnumSet/AllOf.java",
-      "java/util/EnumSet/BogusEnumSet.java",
-      "java/util/EnumSet/ComplementOf.java",
-      "java/util/EnumSet/EnumSetBash.java",
-      "java/util/EnumSet/EnumSetClassSerialization.java",
-      "java/util/EnumSet/InsertWrongType.java",
-      "java/util/EnumSet/JumboRange.java",
-      "java/util/EnumSet/LargeEnumIteratorRemoveResilience.java",
-      "java/util/EnumSet/OneUniverse.java",
-      "java/util/EnumSet/Range.java",
-      "java/util/EnumSet/RetainAll.java",
-      "java/util/EnumSet/SmallEnumIteratorRemoveResilience.java",
       "java/util/Formattable/StockName.java",
       "java/util/Formatter/BasicTestLauncher.java",
       "java/util/Formatter/BigDecimalRounding.java",
@@ -9472,5 +9470,7 @@
       "org/springframework/web/servlet/view/xslt/XsltViewResolverTests.java",
       "org/springframework/web/servlet/view/xslt/XsltViewTests.java"
     ]
-  }
+  },
+  "note": "Upstream test classes each module may record as \"deferred\", a ratchet like policy/quality-baseline.json (coordinator decision, 2026-11-26): the definition of done fails on a deferred class not listed here and on a listed class no longer deferred, until --shrink-upstream-tests removes it. Only the seed (--seed-upstream-tests, the integration owner's) adds entries.",
+  "schema": "flint.upstream-tests-baseline/1"
 }
