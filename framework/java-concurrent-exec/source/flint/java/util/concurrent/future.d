@@ -42,46 +42,56 @@ interface Future(V)
     /// Wait at most `timeout` of `unit` and return the result.
     V get(long timeout, TimeUnit unit);
 
-    /// Return the result of a completed task, or throw IllegalStateException (Java's default method).
-    final V resultNow()
-    {
-        if (!isDone())
-            throw new IllegalStateException("Task has not completed");
-        if (isCancelled())
-            throw new IllegalStateException("Task was cancelled");
-        try
-            return get();
-        catch (ExecutionException failure)
-            throw new IllegalStateException("Task completed with exception", failure);
-    }
+    /// Return the result of a completed task, or throw IllegalStateException (R3).
+    V resultNow();
 
-    /// Return the exception of an exceptionally completed task, or throw IllegalStateException.
-    final Throwable exceptionNow()
-    {
-        if (!isDone())
-            throw new IllegalStateException("Task has not completed");
-        if (isCancelled())
-            throw new IllegalStateException("Task was cancelled");
-        try
-            get();
-        catch (ExecutionException failure)
-            return failure.getCause();
-        throw new IllegalStateException("Task completed with a result");
-    }
+    /// Return the exception of an exceptionally completed task, or throw IllegalStateException (R3).
+    Throwable exceptionNow();
 
-    /// Report the task's completion state (Java's default method).
-    final State state()
+    /// Report the task's completion state (R3).
+    State state();
+
+    /// Java's default implementations, mixed in by implementors that want them (R3).
+    mixin template Defaults()
     {
-        if (isCancelled())
-            return State.CANCELLED;
-        if (isDone())
+        typeof(this.get()) resultNow()
         {
+            if (!isDone())
+                throw new imported!"flint.java.lang".IllegalStateException("Task has not completed");
+            if (isCancelled())
+                throw new imported!"flint.java.lang".IllegalStateException("Task was cancelled");
             try
-                get();
-            catch (ExecutionException failure)
-                return State.FAILED;
-            return State.SUCCESS;
+                return this.get();
+            catch (imported!"flint.java.util.concurrent.executionexception".ExecutionException failure)
+                throw new imported!"flint.java.lang".IllegalStateException("Task completed with exception", failure);
         }
-        return State.RUNNING;
+
+        Throwable exceptionNow()
+        {
+            if (!isDone())
+                throw new imported!"flint.java.lang".IllegalStateException("Task has not completed");
+            if (isCancelled())
+                throw new imported!"flint.java.lang".IllegalStateException("Task was cancelled");
+            try
+                this.get();
+            catch (imported!"flint.java.util.concurrent.executionexception".ExecutionException failure)
+                return failure.getCause();
+            throw new imported!"flint.java.lang".IllegalStateException("Task completed with a result");
+        }
+
+        typeof(this).State state()
+        {
+            if (isCancelled())
+                return typeof(this).State.CANCELLED;
+            if (isDone())
+            {
+                try
+                    this.get();
+                catch (imported!"flint.java.util.concurrent.executionexception".ExecutionException failure)
+                    return typeof(this).State.FAILED;
+                return typeof(this).State.SUCCESS;
+            }
+            return typeof(this).State.RUNNING;
+        }
     }
 }

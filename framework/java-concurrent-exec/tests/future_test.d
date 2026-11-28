@@ -10,6 +10,8 @@ import flint.java.util.concurrent.future : Future;
 
 private final class FakeFuture : Future!int
 {
+    mixin Future!int.Defaults;
+
     enum Kind
     {
         running,

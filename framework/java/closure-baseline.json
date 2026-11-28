@@ -2217,8 +2217,6 @@
         "link|java-concurrent-exec|flint.java.util.concurrent.executionexception|throw-catch|Oz|undeclared module records flint.java.util.concurrent.cancellationexception",
         "link|java-concurrent-exec|flint.java.util.concurrent.executor|dispatch|O3|undeclared module records flint.java.util.concurrent.cancellationexception",
         "link|java-concurrent-exec|flint.java.util.concurrent.executor|dispatch|Oz|undeclared module records flint.java.util.concurrent.cancellationexception",
-        "link|java-concurrent-exec|flint.java.util.concurrent.future|state-machine|O3|undeclared module records flint.java.util.concurrent.cancellationexception",
-        "link|java-concurrent-exec|flint.java.util.concurrent.future|state-machine|Oz|undeclared module records flint.java.util.concurrent.cancellationexception",
         "link|java-nio-channels|flint.java.nio.channels.alreadyboundexception|throw|O3|undeclared module records flint.java.nio.channels.acceptpendingexception",
         "link|java-nio-channels|flint.java.nio.channels.alreadyboundexception|throw|Oz|undeclared module records flint.java.nio.channels.acceptpendingexception",
         "link|java-nio-channels|flint.java.nio.channels.alreadyconnectedexception|throw|O3|undeclared module records flint.java.nio.channels.acceptpendingexception",

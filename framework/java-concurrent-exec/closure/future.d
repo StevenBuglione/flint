@@ -9,6 +9,8 @@ private alias TimeUnit = Parameters!(__traits(getOverloads, Future!int, "get")[1
 
 private final class Station : Future!int
 {
+    mixin Future!int.Defaults;
+
     private int mode;
 
     this(int mode) pure nothrow @nogc
