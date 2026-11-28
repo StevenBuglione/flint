@@ -2123,6 +2123,20 @@ class StringWriter : Writer
 {
     private string buffer;
 
+    /// Starts empty.
+    this() pure nothrow @nogc
+    {
+    }
+
+    /// Starts empty with a buffer capacity hint. Zero is allowed; a negative size is rejected.
+    this(int initialSize)
+    {
+        import flint.java.lang : IllegalArgumentException;
+
+        if (initialSize < 0)
+            throw new IllegalArgumentException("Negative buffer size");
+    }
+
     alias write = Writer.write;
 
     override void write(scope const(char)[] text)
