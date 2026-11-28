@@ -1,5 +1,5 @@
 {
   "source": "closure/executor.d",
-  "leaves": ["flint.java.lang", "flint.java.lang.runnable"],
+  "leaves": ["flint.java.lang", "flint.java.lang.nullpointerexception", "flint.java.lang.runnable", "flint.java.lang.runtimeexception"],
   "data": []
 }

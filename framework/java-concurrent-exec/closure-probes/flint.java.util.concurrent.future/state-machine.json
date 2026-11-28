@@ -3,6 +3,7 @@
   "leaves": [
     "flint.java.lang",
     "flint.java.lang.runnable",
+    "flint.java.lang.runtimeexception",
     "flint.java.util.concurrent",
     "flint.java.util.concurrent.executionexception"
   ],

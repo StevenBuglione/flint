@@ -6,7 +6,8 @@
     "flint.java.util.concurrent.delayed",
     "flint.java.util.concurrent.executionexception",
     "flint.java.util.concurrent.future",
-    "flint.java.lang.runnable"
+    "flint.java.lang.runnable",
+    "flint.java.lang.runtimeexception"
   ],
   "data": []
 }

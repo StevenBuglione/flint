@@ -10,7 +10,7 @@
     "control": "framework/java-concurrent-exec/closure/completionexception_provider.d"
   },
   "flint.java.util.concurrent.executionexception": {
-    "incremental_linked_bytes": 7480,
+    "incremental_linked_bytes": 8096,
     "template_instances": 494
   },
   "flint.java.util.concurrent.future": {
