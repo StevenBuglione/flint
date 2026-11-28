@@ -21,6 +21,7 @@ import flint.security.web.context : RequestAttributeSecurityContextRepository, S
 import flint.security.web.header : CacheControlHeadersWriter, HeaderWriterFilter,
     XContentTypeOptionsHeaderWriter, XFrameOptionsHeaderWriter, XXssProtectionHeaderWriter;
 import flint.security.web.util.matcher : AnyRequestMatcher;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -89,7 +90,7 @@ private FilterChainProxy securedChain()
     auto provider = new DaoAuthenticationProvider(users);
     provider.setPasswordEncoder(NoOpPasswordEncoder.getInstance());
     auto entryPoint = new BasicAuthenticationEntryPoint;
-    entryPoint.setRealmName("Realm");
+    entryPoint.setRealmName(Nullable!string("Realm"));
     auto basic = new BasicAuthenticationFilter(new ProviderManager(provider), entryPoint);
     auto repository = new RequestAttributeSecurityContextRepository;
     basic.setSecurityContextRepository(repository);

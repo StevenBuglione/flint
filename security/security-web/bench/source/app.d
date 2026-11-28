@@ -19,6 +19,7 @@ import flint.security.web.header : CacheControlHeadersWriter, HeaderWriterFilter
     XContentTypeOptionsHeaderWriter, XFrameOptionsHeaderWriter, XXssProtectionHeaderWriter;
 import flint.security.web.util.matcher : AnyRequestMatcher;
 import core.stdc.stdio : fputc, stdout;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -37,7 +38,7 @@ int main(string[] args)
     auto provider = new DaoAuthenticationProvider(users);
     provider.setPasswordEncoder(NoOpPasswordEncoder.getInstance());
     auto entryPoint = new BasicAuthenticationEntryPoint;
-    entryPoint.setRealmName(args.length > 1 ? "Petclinic" : "Realm");
+    entryPoint.setRealmName(Nullable!string(args.length > 1 ? "Petclinic" : "Realm"));
     auto repository = new RequestAttributeSecurityContextRepository;
     auto basic = new BasicAuthenticationFilter(new ProviderManager(provider), entryPoint);
     basic.setSecurityContextRepository(repository);
@@ -55,6 +56,6 @@ int main(string[] args)
     ];
     auto proxy = new FilterChainProxy(new DefaultSecurityFilterChain(AnyRequestMatcher.INSTANCE(), filters));
     const count = proxy.getFilterChains()[0].getFilters().length;
-    emit(entryPoint.getRealmName() ~ " " ~ cast(char)('0' + count));
+    emit(entryPoint.getRealmName().get ~ " " ~ cast(char)('0' + count));
     return 0;
 }

@@ -23,30 +23,32 @@ import flint.security.core : AuthenticationException;
 import flint.security.core.context : SecurityContextHolder, SecurityContextImpl;
 import flint.security.web : AuthenticationEntryPoint, SecurityFilter;
 import flint.security.web.context : SecurityContextRepository;
+import std.typecons : Nullable;
 
 @safe:
 
 /// Answers `401` with `WWW-Authenticate: Basic realm="..."` (Spring Security's `BasicAuthenticationEntryPoint`).
 class BasicAuthenticationEntryPoint : AuthenticationEntryPoint
 {
-    private string realmName;
+    private Nullable!string realmName;
 
     /// Set the realm.
-    void setRealmName(string realmName) pure nothrow @nogc
+    void setRealmName(Nullable!string realmName) pure nothrow @nogc
     {
         this.realmName = realmName;
     }
 
     /// The realm.
-    string getRealmName() const pure nothrow @nogc
+    Nullable!string getRealmName() const pure nothrow @nogc
     {
         return realmName;
     }
 
     /// `WWW-Authenticate: Basic realm="<realm>"` and `sendError(401, "Unauthorized")`.
-    void commence(HttpServletRequest, HttpServletResponse response, AuthenticationException)
+    void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
     {
-        response.setHeader("WWW-Authenticate", "Basic realm=\"" ~ realmName ~ "\"");
+        const realm = realmName.isNull ? "null" : realmName.get;
+        response.setHeader("WWW-Authenticate", "Basic realm=\"" ~ realm ~ "\"");
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
     }
 }

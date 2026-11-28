@@ -24,6 +24,7 @@ import flint.security.web.access : AccessDeniedHandler, RequestAuthorizationCont
 import flint.security.web.header : CacheControlHeadersWriter, HeaderWriter, HstsHeaderWriter,
     XContentTypeOptionsHeaderWriter, XFrameOptionsHeaderWriter, XXssProtectionHeaderWriter;
 import flint.security.web.util.matcher : AnyRequestMatcher, PathRequestMatcher, RequestMatcher;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -143,7 +144,7 @@ final class HttpBasicConfigurer : AbstractHttpConfigurer
         if (entryPoint !is null)
             return entryPoint;
         auto basic = new BasicAuthenticationEntryPoint;
-        basic.setRealmName(realm);
+        basic.setRealmName(Nullable!string(realm));
         return basic;
     }
 }

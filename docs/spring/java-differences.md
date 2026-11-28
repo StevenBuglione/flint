@@ -198,7 +198,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | openjdk@21.0.13 | 1,939 | 698 | 0 | 1,921 | 13,863 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
-| security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
+| security | spring-security@7.2.0 | 548 | 33 | 0 | 88 | 11,744 |
 
 ## Known gaps
 
@@ -5618,6 +5618,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.security.provisioning.InMemoryUserDetailsManager#changePassword(String,String)` | `flint.security.provisioning.InMemoryUserDetailsManager.changePassword` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.security.provisioning.InMemoryUserDetailsManager#updatePassword(UserDetails,String)` | `flint.security.provisioning.InMemoryUserDetailsManager.updatePassword` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+
+#### org.springframework.security.web.authentication.www
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint#getRealmName()` | `flint.security.web.authentication.www.BasicAuthenticationEntryPoint.getRealmName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint#setRealmName(String)` | `flint.security.web.authentication.www.BasicAuthenticationEntryPoint.setRealmName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 ## Excluded elements
 
