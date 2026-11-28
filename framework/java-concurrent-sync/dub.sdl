@@ -8,6 +8,7 @@ dflags "-preview=dip1000"
 dependency "flint:conc" version="*"
 dependency "flint:engine-aot" version="*"
 dependency "flint:java" version="*"
+dependency "flint:java-concurrent" version="*"
 dependency "flint:serde" version="*"
 
 configuration "library" {
