@@ -2856,6 +2856,48 @@
         "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|Oz|undeclared module records flint.java.util.date",
         "link|java-jar-entry|flint.java.util.jar.jarentry|jarentry|Oz|undeclared module records flint.java.util.timezone"
       ]
+    },
+    "jdk-double-float-core": {
+      "decision": "523bd5bd92ef255ad83efdaa4253b42197271e8a",
+      "reason": "New flint.java.lang.double_ and flint.java.lang.float_ core probes inherit the known flint.java.lang module metadata debt; each declares flint.java.lang in its leaves (decision 523bd5bd).",
+      "violations": [
+        "link|java|flint.java.lang.double_|core|O3|undeclared module records flint.java.character",
+        "link|java|flint.java.lang.double_|core|O3|undeclared module records flint.java.sql",
+        "link|java|flint.java.lang.double_|core|O3|undeclared module records flint.java.text.simpledateformat",
+        "link|java|flint.java.lang.double_|core|O3|undeclared module records flint.java.time",
+        "link|java|flint.java.lang.double_|core|O3|undeclared module records flint.java.time.format",
+        "link|java|flint.java.lang.double_|core|O3|undeclared module records flint.java.util",
+        "link|java|flint.java.lang.double_|core|O3|undeclared module records flint.java.util.calendar",
+        "link|java|flint.java.lang.double_|core|O3|undeclared module records flint.java.util.date",
+        "link|java|flint.java.lang.double_|core|O3|undeclared module records flint.java.util.timezone",
+        "link|java|flint.java.lang.double_|core|Oz|undeclared module records flint.java.character",
+        "link|java|flint.java.lang.double_|core|Oz|undeclared module records flint.java.sql",
+        "link|java|flint.java.lang.double_|core|Oz|undeclared module records flint.java.text.simpledateformat",
+        "link|java|flint.java.lang.double_|core|Oz|undeclared module records flint.java.time",
+        "link|java|flint.java.lang.double_|core|Oz|undeclared module records flint.java.time.format",
+        "link|java|flint.java.lang.double_|core|Oz|undeclared module records flint.java.util",
+        "link|java|flint.java.lang.double_|core|Oz|undeclared module records flint.java.util.calendar",
+        "link|java|flint.java.lang.double_|core|Oz|undeclared module records flint.java.util.date",
+        "link|java|flint.java.lang.double_|core|Oz|undeclared module records flint.java.util.timezone",
+        "link|java|flint.java.lang.float_|core|O3|undeclared module records flint.java.character",
+        "link|java|flint.java.lang.float_|core|O3|undeclared module records flint.java.sql",
+        "link|java|flint.java.lang.float_|core|O3|undeclared module records flint.java.text.simpledateformat",
+        "link|java|flint.java.lang.float_|core|O3|undeclared module records flint.java.time",
+        "link|java|flint.java.lang.float_|core|O3|undeclared module records flint.java.time.format",
+        "link|java|flint.java.lang.float_|core|O3|undeclared module records flint.java.util",
+        "link|java|flint.java.lang.float_|core|O3|undeclared module records flint.java.util.calendar",
+        "link|java|flint.java.lang.float_|core|O3|undeclared module records flint.java.util.date",
+        "link|java|flint.java.lang.float_|core|O3|undeclared module records flint.java.util.timezone",
+        "link|java|flint.java.lang.float_|core|Oz|undeclared module records flint.java.character",
+        "link|java|flint.java.lang.float_|core|Oz|undeclared module records flint.java.sql",
+        "link|java|flint.java.lang.float_|core|Oz|undeclared module records flint.java.text.simpledateformat",
+        "link|java|flint.java.lang.float_|core|Oz|undeclared module records flint.java.time",
+        "link|java|flint.java.lang.float_|core|Oz|undeclared module records flint.java.time.format",
+        "link|java|flint.java.lang.float_|core|Oz|undeclared module records flint.java.util",
+        "link|java|flint.java.lang.float_|core|Oz|undeclared module records flint.java.util.calendar",
+        "link|java|flint.java.lang.float_|core|Oz|undeclared module records flint.java.util.date",
+        "link|java|flint.java.lang.float_|core|Oz|undeclared module records flint.java.util.timezone"
+      ]
     }
   }
 }
