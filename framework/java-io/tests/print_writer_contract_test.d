@@ -46,6 +46,38 @@ unittest
     assert(bytes.toByteArray() == cast(const(ubyte)[]) "é😀");
 }
 
+@("PrintWriter over an output stream buffers encoded text until flush or close")
+unittest
+{
+    auto bytes = new ByteArrayOutputStream;
+    auto printer = new PrintWriter(bytes);
+
+    printer.print("é");
+    assert(bytes.toByteArray().length == 0);
+    printer.flush();
+    assert(bytes.toByteArray() == cast(const(ubyte)[]) "é");
+
+    printer.print("Ω");
+    printer.close();
+    assert(bytes.toByteArray() == cast(const(ubyte)[]) "éΩ");
+}
+
+@("PrintWriter over an output stream auto-flushes after println only when asked")
+unittest
+{
+    auto quiet = new ByteArrayOutputStream;
+    auto printer = new PrintWriter(quiet);
+    printer.println("a");
+    assert(quiet.toByteArray().length == 0);
+    printer.flush();
+    assert(quiet.toByteArray() == cast(const(ubyte)[])("a" ~ System.lineSeparator()));
+
+    auto eager = new ByteArrayOutputStream;
+    auto flushing = new PrintWriter(eager, true);
+    flushing.println("b");
+    assert(eager.toByteArray() == cast(const(ubyte)[])("b" ~ System.lineSeparator()));
+}
+
 @("PrintWriter writes non-null text and returns itself from append")
 unittest
 {

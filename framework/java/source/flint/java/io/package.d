@@ -2393,14 +2393,22 @@ class PrintWriter : Writer
         autoFlush_ = autoFlush;
     }
 
-    /// A print writer over `output`, encoding UTF-8. A null stream is rejected.
+    /// A print writer over `output`, encoding UTF-8, without automatic flushing. A null stream is rejected.
     this(OutputStream output)
+    {
+        this(output, false);
+    }
+
+    /// A print writer over `output`; `autoFlush` flushes after every `println`. As Java's constructor does, the
+    /// encoded text is buffered in a `BufferedWriter` around a UTF-8 `OutputStreamWriter`. A null stream is rejected.
+    this(OutputStream output, bool autoFlush)
     {
         import flint.java.lang : NullPointerException;
 
         if (output is null)
             throw new NullPointerException("out");
-        out_ = new OutputStreamWriter(output);
+        out_ = new BufferedWriter(new OutputStreamWriter(output));
+        autoFlush_ = autoFlush;
     }
 
     alias write = Writer.write;

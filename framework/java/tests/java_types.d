@@ -570,7 +570,9 @@ unittest
     out_.append("b").write('é');
     assert(text.toString() == "a42\nbé");
     auto bytes = new ByteArrayOutputStream;
-    new PrintWriter(bytes).print("hi");
+    auto byteWriter_ = new PrintWriter(bytes);
+    byteWriter_.print("hi");
+    byteWriter_.flush();
     assert(bytes.toString() == "hi" && bytes.size() == 2);
 }
 
