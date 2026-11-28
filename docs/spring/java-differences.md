@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,951 | 705 | 0 | 1,921 | 13,844 |
+| framework | openjdk@21.0.13 | 1,951 | 706 | 0 | 1,921 | 13,843 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -3038,6 +3038,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.regex.Pattern#quote(String)` | `flint.java.util.regex.pattern.Pattern.quote` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | A null slice is quoted as empty text. Java throws NullPointerException. |
 | `java.util.regex.Pattern#split(CharSequence)` | `flint.java.util.regex.pattern.Pattern.split` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | A null slice splits as empty text. Java throws NullPointerException. |
 | `java.util.regex.Pattern#split(CharSequence,int)` | `flint.java.util.regex.pattern.Pattern.split` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | A null slice splits as empty text. Java throws NullPointerException. |
+| `java.util.regex.Pattern#splitWithDelimiters(CharSequence,int)` | `flint.java.util.regex.pattern.Pattern.splitWithDelimiters` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | Java's split with the matched delimiters interleaved; the limit counts pieces, so the result holds at most 2*limit-1 entries. A null slice splits as empty text. |
 | `java.util.regex.Pattern#toString()` | `flint.java.util.regex.pattern.Pattern.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.regex.PatternSyntaxException#<init>(String,String,int)` | `flint.java.util.regex.pattern.PatternSyntaxException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Nullable!string preserves absent fields. The string convenience overload treats slices as present. |
 | `java.util.regex.PatternSyntaxException#getDescription()` | `flint.java.util.regex.pattern.PatternSyntaxException.getDescription` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -11060,7 +11061,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.function | 89 | 0 |
 | java.util.jar | 0 | 101 |
 | java.util.random | 67 | 0 |
-| java.util.regex | 32 | 0 |
+| java.util.regex | 31 | 0 |
 | java.util.spi | 0 | 43 |
 | java.util.stream | 287 | 0 |
 | java.util.zip | 258 | 0 |
@@ -12391,6 +12392,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.function.Predicate#not(Predicate)` | 2 | The existing D method accepts a null predicate at composition time (R8). Its call to the final negate method also prevents dispatch to an implementor's negate override (R3). |
 | framework | `java.util.function.Predicate#or(Predicate)` | 2 | The existing final D method prevents implementor overrides (R3) and accepts a null predicate at composition time. Java throws NullPointerException there (R8). |
 | framework | `java.util.function.UnaryOperator#identity()` | 2 | The inherited Function.identity factory returns Function. Java's UnaryOperator factory returns the nominal UnaryOperator. |
+| framework | `java.util.regex.Matcher#toString()` | 2 | Java's debug form needs the region length and assembled text; a lean implementation adds about 920 linked bytes and the java-regex leaf sits 668 bytes under its whole-input cap. It waits for that headroom rather than a cap raise. |
 | framework | `java.util.regex.Pattern#asMatchPredicate()` | 2 | Requires a Predicate adapter for whole-input matching. |
 | framework | `java.util.regex.Pattern#asPredicate()` | 2 | Requires a Predicate adapter over the Matcher search API. |
 | framework | `java.util.regex.Pattern#compile(String)` | 2 | Java supports extended grapheme clusters (\X) and grapheme boundaries (\b{g}). Flint throws RegexUnsupportedException for both. |
@@ -12398,7 +12400,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.regex.Pattern#matches(String,CharSequence)` | 2 | Java supports extended grapheme clusters (\X) and grapheme boundaries (\b{g}). Flint throws RegexUnsupportedException for both. |
 | framework | `java.util.regex.Pattern#namedGroups()` | 2 | Requires exposing capture names and Java group indices as an unmodifiable Map. The flint.java.util Map facade pulls the whole java.util aggregate into this leaf, over its linked-byte and template budgets; blocked on a leaf Map module or an owner budget decision. |
 | framework | `java.util.regex.Pattern#splitAsStream(CharSequence)` | 2 | Requires lazy split traversal through the Java Stream adapter. |
-| framework | `java.util.regex.Pattern#splitWithDelimiters(CharSequence,int)` | 2 | Requires Matcher search, Java limit behavior and inclusion of the matched delimiters. |
 | framework | `java.util.stream.BaseStream#close()` | 2 | Flint's reference Stream lacks Java's close lifecycle. Java closes the pipeline once and propagates ordered handler failures. |
 | framework | `java.util.stream.BaseStream#onClose(Runnable)` | 2 | Flint's reference Stream lacks close handler registration. Java links the handlers to the shared pipeline. |
 | framework | `java.util.stream.Collectors#groupingBy(Function)` | 2 | The existing collector accepts a null classifier result. Java throws NullPointerException during accumulation (R8). |

@@ -92,31 +92,49 @@ final class Pattern
     /// Split the input with Java's positive, zero and negative limit rules (R5, R26).
     string[] split(string input, int limit)
     {
+        return splitImpl(input, limit, false);
+    }
+
+    /// Split around matches, interleaving each matched delimiter, as Java SE 21 does (R5, R26).
+    string[] splitWithDelimiters(string input, int limit)
+    {
+        return splitImpl(input, limit, true);
+    }
+
+    /// Java's shared split loop. The limit counts pieces, not list entries, so a delimited split
+    /// yields at most `2 * limit - 1` entries exactly as Java's `splitWithDelimiters` does.
+    private string[] splitImpl(string input, int limit, bool withDelimiters)
+    {
         const text = input is null ? "" : input;
         const units = utf16Length(text);
         const limited = limit > 0;
         string[] pieces;
         int index;
+        int chunks;
         auto matcher = matcher(text);
         while (matcher.find())
         {
             const first = matcher.start();
-            if (!limited || pieces.length < limit - 1)
+            if (!limited || chunks < limit - 1)
             {
                 if (index == 0 && first == 0 && matcher.end() == 0)
                     continue; // Java drops the empty piece before a zero-width match at the start
                 pieces ~= sliceUtf16(text, index, first);
                 index = matcher.end();
+                if (withDelimiters)
+                    pieces ~= sliceUtf16(text, first, index);
+                ++chunks;
             }
-            else if (pieces.length == limit - 1)
+            else if (chunks == limit - 1)
             {
                 pieces ~= sliceUtf16(text, index, units);
-                break;
+                index = matcher.end();
+                ++chunks;
             }
         }
         if (index == 0)
             return [text];
-        if (!limited || pieces.length < limit)
+        if (!limited || chunks < limit)
             pieces ~= sliceUtf16(text, index, units);
         if (limit == 0)
         {

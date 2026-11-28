@@ -247,6 +247,8 @@ public class GoldenRegex {
             writeMatcherCases(Path.of(args[1]));
         if (args.length > 2)
             writeReplacementCases(Path.of(args[2]), Path.of(args[3]), Path.of(args[4]));
+        if (args.length > 5)
+            writeSplitDelimiterCases(Path.of(args[5]));
     }
 
     private static String replaceOnce(Pattern pattern, String input, String replacement, boolean first) {
@@ -362,5 +364,52 @@ public class GoldenRegex {
             }
         }
         Files.write(output, cases, StandardCharsets.UTF_8);
+    }
+
+    // One row per (expression, input, limit): the expression, the input, the limit, the result count and each
+    // result entry. splitWithDelimiters interleaves the matched delimiters between the pieces.
+    private static void writeSplitDelimiterCases(Path output) throws Exception {
+        String[][] cases = {
+            {",", "a,b,c", "0"},
+            {",", "a,b,c", "-1"},
+            {",", "a,b,c", "1"},
+            {",", "a,b,c", "2"},
+            {",", "a,b,c", "3"},
+            {",", "a,b,c", "9"},
+            {",", ",a,,b,", "0"},
+            {",", ",a,,b,", "2"},
+            {",", "", "0"},
+            {",", "", "3"},
+            {"(\\d+)", "a12b345c", "0"},
+            {"(\\d+)", "a12b345c", "2"},
+            {"(\\d+)", "a12b345c", "-1"},
+            {"(,)", "a,b,c", "0"},
+            {"x*", "axbxc", "0"},
+            {"x*", "xxaxx", "3"},
+            {"", "abc", "0"},
+            {"", "abc", "2"},
+            {"[😀]", "a😀b😀c", "0"},
+            {"😀", "a😀b😀c", "2"},
+            {"a|ab", "ab", "0"},
+            {"(a|ab)", "ab", "-1"},
+        };
+        var rows = new ArrayList<String>();
+        for (String[] c : cases) {
+            int limit = Integer.parseInt(c[2]);
+            String[] parts;
+            try {
+                parts = Pattern.compile(c[0]).splitWithDelimiters(c[1], limit);
+            } catch (RuntimeException e) {
+                rows.add(esc(c[0]) + "\t" + esc(c[1]) + "\t" + limit + "\terror");
+                continue;
+            }
+            StringBuilder row = new StringBuilder();
+            row.append(esc(c[0])).append('\t').append(esc(c[1])).append('\t').append(limit)
+                .append('\t').append(parts.length);
+            for (String part : parts)
+                row.append('\t').append(esc(part));
+            rows.add(row.toString());
+        }
+        Files.write(output, rows, StandardCharsets.UTF_8);
     }
 }
