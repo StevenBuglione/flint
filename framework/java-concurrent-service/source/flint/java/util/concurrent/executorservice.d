@@ -9,7 +9,10 @@ import flint.engine.reactor : OffloadWork, Reactor, ReactorOptions, TaskContext;
 import flint.java.lang : IllegalArgumentException, NullPointerException, RuntimeException;
 import flint.java.lang.runnable : Runnable;
 import flint.java.util : ArrayList, List;
+import flint.java.util.concurrent.callable : Callable;
 import flint.java.util.concurrent.executor : Executor;
+import flint.java.util.concurrent.future : Future;
+import flint.java.util.concurrent.futuretask : FutureTask;
 import flint.java.util.concurrent.internal.executoradmissions : Admission, ExecutorAdmissions, ExecutorClaim;
 import flint.java.util.concurrent.internal.executorrouting : ExecutorRoutes;
 import flint.java.util.concurrent.internal.managedoffload : ManagedOffloadResult, invokeManaged;
@@ -26,6 +29,33 @@ interface ExecutorService : Executor
     List!Runnable shutdownNow();
     bool isShutdown();
     bool isTerminated();
+
+    /// Submit a value-returning task and return its future (R3, R9). Runs the task once through `execute`.
+    Future!T submit(T)(Callable!T task)
+    {
+        auto future = new FutureTask!T(task);
+        execute(future);
+        return future;
+    }
+
+    /// Submit a task that returns `result` and return its future (R9).
+    Future!T submit(T)(Runnable task, T result)
+    {
+        auto future = new FutureTask!T(task, result);
+        execute(future);
+        return future;
+    }
+
+    /// Submit a task with no value; the future's result is Java's `null` (R23).
+    ///
+    /// Java's `Future<?>` erases to `Future!Object`. The default type parameter makes the method a template so an
+    /// application that never calls it links no completion code.
+    Future!T submit(T = Object)(Runnable task) if (is(T == Object))
+    {
+        auto future = new FutureTask!T(task, T.init);
+        execute(future);
+        return future;
+    }
 }
 
 private shared ProcessSlot!ExecutorRoutes routeTable;
