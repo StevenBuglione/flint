@@ -189,6 +189,51 @@ class CopyOnWriteArrayList(T) : AbstractList!T
         return true;
     }
 
+    /// Append `element` unless an equal element is already present; whether it was added.
+    bool addIfAbsent(T element)
+    {
+        lock.lock_nothrow();
+        scope (exit)
+            lock.unlock_nothrow();
+        auto items = current().items;
+        foreach (e; items)
+            if (javaEquals(e, element))
+                return false;
+        auto copy = new T[items.length + 1];
+        copy[0 .. items.length] = items;
+        copy[items.length] = element;
+        publish(copy);
+        return true;
+    }
+
+    /// Append every element of `c` not already present; the number added.
+    int addAllAbsent(Collection!T c)
+    {
+        lock.lock_nothrow();
+        scope (exit)
+            lock.unlock_nothrow();
+        size_t added;
+        foreach (candidate; c.toArray())
+        {
+            auto items = current().items;
+            bool present;
+            foreach (e; items)
+                if (javaEquals(e, candidate))
+                {
+                    present = true;
+                    break;
+                }
+            if (present)
+                continue;
+            auto copy = new T[items.length + 1];
+            copy[0 .. items.length] = items;
+            copy[items.length] = candidate;
+            publish(copy);
+            added++;
+        }
+        return cast(int) added;
+    }
+
     override T removeAt(int index)
     {
         lock.lock_nothrow();

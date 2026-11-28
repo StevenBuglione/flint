@@ -616,7 +616,8 @@
    "directory": "framework/java-concurrent-copyonwrite",
    "module": "flint.java.util.concurrent.copyonwritearraylist",
    "java_types": [
-    "java.util.concurrent.CopyOnWriteArrayList"
+    "java.util.concurrent.CopyOnWriteArrayList",
+    "java.util.concurrent.CopyOnWriteArraySet"
    ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
@@ -657,7 +658,6 @@
     "java.util.concurrent.ConcurrentHashMap",
     "java.util.concurrent.ConcurrentLinkedQueue",
     "java.util.concurrent.ConcurrentMap",
-    "java.util.concurrent.CopyOnWriteArraySet",
     "java.util.concurrent.CountDownLatch",
     "java.util.concurrent.CyclicBarrier",
     "java.util.concurrent.DelayQueue",

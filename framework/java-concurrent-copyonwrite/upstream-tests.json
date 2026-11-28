@@ -7,6 +7,14 @@
     "java/util/concurrent/CopyOnWriteArrayList/EqualsRace.java": {
       "phase": "2",
       "status": "deferred"
+    },
+    "java/util/concurrent/CopyOnWriteArraySet/RacingCows.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/CopyOnWriteArraySet/SerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
     }
   },
   "module": "java-concurrent-copyonwrite",

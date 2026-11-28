@@ -2,5 +2,9 @@
   "flint.java.util.concurrent.copyonwritearraylist": {
     "incremental_linked_bytes": 78320,
     "template_instances": 775
+  },
+  "flint.java.util.concurrent.copyonwritearrayset": {
+    "incremental_linked_bytes": 86900,
+    "template_instances": 862
   }
 }
