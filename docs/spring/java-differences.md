@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,235 | 850 | 0 | 1,957 | 13,379 |
+| framework | openjdk@21.0.13 | 2,240 | 853 | 0 | 1,957 | 13,371 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -213,6 +213,8 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.io.ByteArrayOutputStream#close()` | `flint.java.io.ByteArrayOutputStream.close` | Inherits the no-op close. Repeated calls preserve the buffered bytes and writes remain valid. |
 | framework | `java.io.DataInput#readChar()` | `flint.java.io.DataInput.readChar` | Java char is D wchar, a 16-bit code unit. |
 | framework | `java.io.DataInputStream#readChar()` | `flint.java.io.DataInputStream.readChar` | Java char is D wchar, a 16-bit code unit. |
+| framework | `java.io.File#getAbsolutePath()` | `flint.java.io.File.getAbsolutePath` | An empty pathname resolves to the startup working directory. |
+| framework | `java.io.File#toString()` | `flint.java.io.File.toString` | Calls the virtual getPath, so a subclass that overrides getPath is honoured. |
 | framework | `java.io.OutputStream` | `flint.java.io.OutputStream` | Implements Closeable and Flushable. |
 | framework | `java.io.OutputStreamWriter#<init>(OutputStream)` | `flint.java.io.OutputStreamWriter.this` | A null output stream is rejected during construction with NullPointerException, as Java's Writer lock constructor does. |
 | framework | `java.io.PrintWriter#<init>(Writer)` | `flint.java.io.PrintWriter.this` | A null writer is rejected during construction with NullPointerException. |
@@ -2302,7 +2304,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.DataOutputStream#writeBytes(String)` | `flint.java.io.DataOutputStream.writeBytes` | [R26](api-mapping.md#r26-null-arrays) | A D UTF-8 string stands in for Java's String; each UTF-16 code unit's low eight bits are written. A null slice counts as empty under R26. |
 | `java.io.DataOutputStream#writeChars(String)` | `flint.java.io.DataOutputStream.writeChars` | [R26](api-mapping.md#r26-null-arrays) | A D UTF-8 string stands in for Java's String; each UTF-16 code unit is written big-endian. A null slice counts as empty under R26. |
 | `java.io.DataOutputStream#writeUTF(String)` | `flint.java.io.DataOutputStream.writeUTF` | [R26](api-mapping.md#r26-null-arrays) | A D UTF-8 string stands in for Java's String; supplementary code points become surrogate pairs in modified UTF-8. A null slice counts as empty under R26. The overlong-text diagnostic names the encoded byte count instead of Java's head-and-tail excerpt. |
-| `java.io.File` | `flint.java.io.File` | [R8](api-mapping.md#r8-exceptions), [R11](api-mapping.md#r11-object-identity-and-equality), [R26](api-mapping.md#r26-null-arrays) | The pathname is a D UTF-8 string (R26). equals, hashCode and compareTo follow Java's UTF-16 code-unit rules. The remaining pathname operations stay deferred. |
+| `java.io.File` | `flint.java.io.File` | [R8](api-mapping.md#r8-exceptions), [R11](api-mapping.md#r11-object-identity-and-equality), [R26](api-mapping.md#r26-null-arrays) | The pathname is a D UTF-8 string (R26), normalized as Unix's UnixFileSystem does: duplicate `/` collapse and a trailing `/` is dropped except for the root, while dot segments are kept. equals, hashCode and compareTo follow Java's UTF-16 code-unit rules. Metadata, permission and canonical-path operations stay deferred. |
+| `java.io.File#<init>(File,String)` | `flint.java.io.File.this` | [R26](api-mapping.md#r26-null-arrays) | The child is normalized and joined into the parent's normalized pathname as UnixFileSystem.resolve does. A null parent leaves the child bare; an empty parent joins it under `/`. A null child is the empty slice (R26). |
+| `java.io.File#<init>(String)` | `flint.java.io.File.this` | [R26](api-mapping.md#r26-null-arrays) | The pathname is normalized as UnixFileSystem.normalize does: duplicate `/` collapse and a trailing `/` is dropped except for the root, while dot segments are kept. A null pathname is the empty slice (R26). |
+| `java.io.File#<init>(String,String)` | `flint.java.io.File.this` | [R26](api-mapping.md#r26-null-arrays) | Both parts are normalized as UnixFileSystem does, then joined as UnixFileSystem.resolve does: a null parent leaves the child bare, an empty parent joins it under `/`, and the separator the join added before a rooted child is trimmed. A null parent or child is the empty slice (R26). |
 | `java.io.File#equals(Object)` | `flint.java.io.File.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) | The other reference is recognised through its dynamic class info and its pathname read through the virtual toString, so no weak class-cast template is emitted in the first module object; a subclass that overrides toString is the one difference. |
 | `java.io.FilterInputStream` | `flint.java.io.FilterInputStream` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Declared in the flint.java.io aggregate; byte arrays are D ubyte slices (R26). The protected wrapped stream is not volatile because a Flint stream is confined to one fiber. |
 | `java.io.FilterInputStream#in` | `flint.java.io.FilterInputStream.in_` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions) | Java's field is named in; D reserves in, so the protected field is in_. Java's volatile qualifier is dropped because a Flint stream is confined to one fiber. |
@@ -11283,7 +11288,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 573 | 0 |
+| java.io | 565 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -12171,21 +12176,13 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `jakarta.validation.spi.ValidationProvider#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `java.io.EOFException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.io.EOFException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
-| framework | `java.io.File#<init>(File,String)` | 2 | The overload taking a File parent is pending. |
-| framework | `java.io.File#<init>(String)` | 2 | Java normalizes the platform pathname. The existing constructor stores the supplied spelling. R26 covers null pathname strings. |
-| framework | `java.io.File#<init>(String,String)` | 2 | Java distinguishes a missing parent from an empty parent, which uses the platform default. Parent and child normalization and resolution are also pending. |
 | framework | `java.io.File#<init>(URI)` | 2 | The URI overload, file URI validation and conversion to a platform pathname are pending. |
 | framework | `java.io.File#canRead()` | 2 | The existing method checks existence. Java checks read access and can reject an existing unreadable file. |
 | framework | `java.io.File#exists()` | 2 | POSIX tests cover existing, absent and invalid paths. On Windows the Java implementation resolves reparse points before testing existence. The current metadata query uses the attributes of the reparse point itself. |
-| framework | `java.io.File#getAbsolutePath()` | 2 | Java resolves the empty pathname to its startup user directory and uses the normalized pathname spelling. The current method returns no path for empty input and preserves separators from the original spelling. |
-| framework | `java.io.File#getName()` | 2 | Java uses the final component of the normalized pathname. A trailing separator in the existing stored pathname gives an empty name. |
-| framework | `java.io.File#getParent()` | 2 | Java reports an absent parent for a root and computes other parents from normalized components. The existing method returns the root as its own parent and splits the raw spelling. |
-| framework | `java.io.File#getPath()` | 2 | Java exposes the normalized platform pathname. The existing method exposes the stored spelling. |
 | framework | `java.io.File#isDirectory()` | 2 | POSIX tests cover directories and followed links. On Windows the Java implementation tests the resolved reparse target and the current metadata query classifies the reparse point itself. |
 | framework | `java.io.File#isFile()` | 2 | POSIX tests cover regular files and followed links. On Windows the Java implementation tests the resolved reparse target and the current metadata query classifies the reparse point itself. |
 | framework | `java.io.File#lastModified()` | 2 | Java reports the modification time in milliseconds. The current method truncates to whole seconds before converting to milliseconds. |
 | framework | `java.io.File#length()` | 2 | The current method returns zero for all non-regular paths. The pinned Linux Java implementation returns the native size for a directory. |
-| framework | `java.io.File#toString()` | 2 | Java calls the virtual getPath method. The existing implementation returns the stored pathname directly. |
 | framework | `java.io.FileInputStream` | 2 | The existing class derives from ByteArrayInputStream and retains a byte snapshot. Java derives directly from InputStream and owns a file descriptor until close. |
 | framework | `java.io.FileInputStream#<init>(File)` | 2 | The existing constructor checks the virtual isFile method and reads a byte snapshot. Java opens the pathname and owns the descriptor. The null File check required by R8 is pending. |
 | framework | `java.io.FileNotFoundException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
