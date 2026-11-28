@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,212 | 834 | 0 | 1,957 | 13,418 |
+| framework | openjdk@21.0.13 | 2,217 | 835 | 0 | 1,957 | 13,412 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2946,6 +2946,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.FormatFlagsConversionMismatchException` | `flint.java.util.formatter.FormatFlagsConversionMismatchException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. A null flag slice counts as empty under R26. The conversion is a UTF-16 code unit; a lone surrogate displays as U+FFFD under R14. |
 | `java.util.FormatFlagsConversionMismatchException#<init>(String,char)` | `flint.java.util.formatter.FormatFlagsConversionMismatchException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.FormatFlagsConversionMismatchException#getConversion()` | `flint.java.util.formatter.FormatFlagsConversionMismatchException.getConversion` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.util.Formatter` | `flint.java.util.formatter.Formatter` | [R1](api-mapping.md#r1-packages-and-names), [R7](api-mapping.md#r7-overloads) | Import from flint.java.util.formatter. The no-argument constructor formats into an internal destination whose text toString returns, as Java's StringBuilder destination does. The erased renderer keeps call sites free of format templates (R7). Java's default-locale formatting is the engine's root locale until java.util.Locale lands. |
 | `java.util.FormatterClosedException` | `flint.java.util.formatter.FormatterClosedException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
 | `java.util.HashMap#containsKey(Object)` | `flint.java.util.HashMap.containsKey` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HashMap#containsValue(Object)` | `flint.java.util.HashMap.containsValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -11320,7 +11321,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,791 | 0 |
+| java.util | 1,785 | 0 |
 | java.util.concurrent | 1,141 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -12603,7 +12604,22 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Collections#singletonList(T)` | 2 | Java’s singleton list returns false when removing an absent element. The current list throws UnsupportedOperationException. |
 | framework | `java.util.Collections#unmodifiableMap(Map)` | 2 | Java returns a live read-only view. The current snapshot misses changes to existing values and new entries in the backing map. |
 | framework | `java.util.Collections#unmodifiableSet(Set)` | 2 | Java returns a live read-only view. The current snapshot misses additions and removals in the backing set. |
-| framework | `java.util.Formatter#format(String,Object...)` | 2 | The Formatter facade remains deferred. Its erased renderer supports %h and %H through the boxed scalar hash and the R11 virtual toHash rule. The internal date renderer handles all date/time suffixes for boxed Long in Locale.ROOT and UTC. Date, Calendar and temporal inputs still need their own projections. |
+| framework | `java.util.Formatter#<init>(Appendable)` | 2 | Requires flint.java.lang.Appendable, which is not on main. |
+| framework | `java.util.Formatter#<init>(Appendable,Locale)` | 2 | Requires flint.java.lang.Appendable and java.util.Locale. |
+| framework | `java.util.Formatter#<init>(File)` | 2 | Requires java.io.File. |
+| framework | `java.util.Formatter#<init>(File,String)` | 2 | Requires java.io.File and a charset name. |
+| framework | `java.util.Formatter#<init>(File,String,Locale)` | 2 | Requires java.io.File, a charset name and java.util.Locale. |
+| framework | `java.util.Formatter#<init>(Locale)` | 2 | Requires java.util.Locale. |
+| framework | `java.util.Formatter#<init>(OutputStream)` | 2 | Requires java.io.OutputStream. |
+| framework | `java.util.Formatter#<init>(OutputStream,String)` | 2 | Requires java.io.OutputStream and a charset name. |
+| framework | `java.util.Formatter#<init>(OutputStream,String,Locale)` | 2 | Requires java.io.OutputStream, a charset name and java.util.Locale. |
+| framework | `java.util.Formatter#<init>(String)` | 2 | Requires java.io file output and a charset name. |
+| framework | `java.util.Formatter#<init>(String,String)` | 2 | Requires java.io file output and a charset name. |
+| framework | `java.util.Formatter#<init>(String,String,Locale)` | 2 | Requires java.io file output, a charset name and java.util.Locale. |
+| framework | `java.util.Formatter#format(Locale,String,Object...)` | 2 | Requires java.util.Locale. |
+| framework | `java.util.Formatter#ioException()` | 2 | Requires java.io.IOException; the internal destination cannot throw it. |
+| framework | `java.util.Formatter#locale()` | 2 | Requires java.util.Locale. |
+| framework | `java.util.Formatter#out()` | 2 | Requires flint.java.lang.Appendable. |
 | framework | `java.util.HexFormat#parseHex(char[],int,int)` | 2 | Requires a UTF-16 code-unit array overload. |
 | framework | `java.util.IllegalFormatConversionException#<init>(char,Class)` | 2 | Flint currently accepts a string name. Java retains the argument Class and exposes it through getArgumentClass(). |
 | framework | `java.util.List#subList(int,int)` | 2 | Java returns a backed range and invalidates it after structural modification of the parent. The current implementation returns a copy and throws IndexOutOfBoundsException for a reversed range. |

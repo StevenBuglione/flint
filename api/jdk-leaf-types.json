@@ -104,6 +104,7 @@
   "java.util.EventListener": "flint.java.util.eventlistener",
   "java.util.EventObject": "flint.java.util.eventobject",
   "java.util.FormatFlagsConversionMismatchException": "flint.java.util.formatter",
+  "java.util.Formatter": "flint.java.util.formatter",
   "java.util.FormatterClosedException": "flint.java.util.formatter",
   "java.util.HexFormat": "flint.java.util.hexformat",
   "java.util.IllegalFormatCodePointException": "flint.java.util.formatter",

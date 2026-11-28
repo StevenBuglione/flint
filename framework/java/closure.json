@@ -78,6 +78,8 @@
           "flint.java.character.upperRuns"
         ],
         "leaves": [
+          "flint.java.io.closeable",
+          "flint.java.io.flushable",
           "flint.java.util.enumeration",
           "flint.java.util.formatter",
           "flint.java.util.internal.formatter_boolean",
@@ -320,6 +322,8 @@
           "flint.java.character.upperRuns"
         ],
         "leaves": [
+          "flint.java.io.closeable",
+          "flint.java.io.flushable",
           "flint.java.lang",
           "flint.java.util.enumeration",
           "flint.java.util.internal.formatter_boolean",

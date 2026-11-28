@@ -1,8 +1,10 @@
 module flint.java.format_test;
 
+import flint.java.io.closeable : Closeable;
+import flint.java.io.flushable : Flushable;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, String;
-import flint.java.util.formatter : DuplicateFormatFlagsException, FormatterClosedException,
-    IllegalFormatConversionException,
+import flint.java.util.formatter : DuplicateFormatFlagsException, Formatter,
+    FormatterClosedException, IllegalFormatConversionException,
     IllegalFormatException,
     MissingFormatArgumentException, UnknownFormatConversionException, UnknownFormatFlagsException;
 
@@ -483,4 +485,24 @@ unittest
     auto closed = new FormatterClosedException();
     assert(cast(IllegalStateException) closed !is null);
     assert(closed.getMessage() is null);
+}
+
+@("Formatter accumulates formatted text and rejects use after close")
+unittest
+{
+    import std.exception : collectException;
+
+    Formatter formatter = new Formatter();
+    assert(cast(Closeable) formatter !is null && cast(Flushable) formatter !is null);
+    assert(formatter.toString() == "");
+    assert(formatter.format("Hello, %s!", "World") is formatter);
+    assert(formatter.format(" %d%%", 42) is formatter);
+    assert(formatter.toString() == "Hello, World! 42%");
+    assert(formatter.toString() == String.format("Hello, %s! %d%%", "World", 42));
+    formatter.flush();
+    formatter.close();
+    formatter.close(); // Java: closing a closed formatter has no effect.
+    assert(collectException!FormatterClosedException(formatter.format("%s", "x")) !is null);
+    assert(collectException!FormatterClosedException(formatter.toString()) !is null);
+    assert(collectException!FormatterClosedException(formatter.flush()) !is null);
 }

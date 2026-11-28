@@ -21,6 +21,8 @@ module flint.java.util.formatter;
 
 import flint.engine.aot.any : Any;
 import flint.engine.aot.text : decimal, decodeUtf8, utf8;
+import flint.java.io.closeable : Closeable;
+import flint.java.io.flushable : Flushable;
 import flint.java.lang : IllegalArgumentException, IllegalStateException;
 import flint.java.util.internal.formatter_support : Flag, FormatOptions, asciiLower, asciiUpper,
     asciiUppercase, pad, truncate;
@@ -276,8 +278,80 @@ class IllegalFormatConversionException : IllegalFormatException
     }
 }
 
+/++
+Java's `Formatter`: a stateful destination that accumulates formatted text.
+
+The no-argument constructor uses an internal destination, as Java's creates a `StringBuilder`; `format` appends to it
+and `toString` returns the accumulated text. The renderer is the same erased engine as `String.format`, so each
+argument costs one `Any.of` box and instantiates no format templates (rule R7). A caller-supplied `Appendable`
+destination, localization and the file and stream constructors arrive with `flint.java.lang.Appendable`,
+`java.util.Locale` and `java.io`; `out()`, `locale()`, `ioException()` and `format(Locale, ...)` are deferred until
+then (see `api/framework/mapping.json`). Java formats in the default locale; the shared engine renders in the root
+locale.
++/
+final class Formatter : Closeable, Flushable
+{
+    private Pieces content;
+    private bool closed;
+
+    /// Java's no-argument constructor: an internal destination whose text `toString` returns.
+    this() pure nothrow @nogc
+    {
+    }
+
+    /// `format(format, args)`: append the formatted text and return this formatter.
+    Formatter format(Args...)(string format, Args args)
+    {
+        Any[Args.length] boxed;
+        static foreach (i; 0 .. Args.length)
+            boxed[i] = Any.of(args[i]);
+        return formatErased(format, boxed[]);
+    }
+
+    /// The accumulated text, `""` when nothing was written.
+    override string toString() const
+    {
+        ensureOpen();
+        const text = content.text();
+        return text is null ? "" : text;
+    }
+
+    /// Flush the destination. The internal destination has nothing buffered to flush.
+    override void flush()
+    {
+        ensureOpen();
+    }
+
+    /// Close this formatter. Closing again has no effect.
+    override void close() pure nothrow @nogc
+    {
+        closed = true;
+    }
+
+    private Formatter formatErased(string format, scope Any[] arguments)
+    {
+        ensureOpen();
+        formatJavaInto(content, format, arguments);
+        return this;
+    }
+
+    private void ensureOpen() const
+    {
+        if (closed)
+            throw new FormatterClosedException();
+    }
+}
+
 /// `format` with `arguments` substituted, as `java.util.Formatter.format(format, args).toString()`.
 string formatJava(string format, scope Any[] arguments)
+{
+    Pieces result;
+    formatJavaInto(result, format, arguments);
+    return result.text();
+}
+
+// Appends the formatted text to `destination`, sharing the validation and rendering with `formatJava`.
+private void formatJavaInto(ref Pieces destination, string format, scope Any[] arguments)
 {
     // Validate every specifier before resolving arguments, as Formatter does.
     Spec[4] specs;
@@ -290,7 +364,6 @@ string formatJava(string format, scope Any[] arguments)
         start = nextSpecifier(format, end);
     }
 
-    Pieces result;
     size_t next; // the next ordinary index
     ptrdiff_t previous = -1;
     size_t end;
@@ -302,12 +375,11 @@ string formatJava(string format, scope Any[] arguments)
             spec = specs[i];
         else
             parseSpec(format, nextSpecifier(format, end), spec);
-        result.put(format[end .. spec.start]);
-        result.put(render(spec, arguments, next, previous));
+        destination.put(format[end .. spec.start]);
+        destination.put(render(spec, arguments, next, previous));
         end = spec.start + spec.text.length;
     }
-    result.put(format[end .. $]);
-    return result.text();
+    destination.put(format[end .. $]);
 }
 
 private size_t nextSpecifier(scope const(char)[] format, size_t start) pure nothrow @nogc
