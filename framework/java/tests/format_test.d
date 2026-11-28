@@ -1,7 +1,8 @@
 module flint.java.format_test;
 
-import flint.java.lang : IllegalArgumentException, String;
-import flint.java.util.formatter : DuplicateFormatFlagsException, IllegalFormatConversionException,
+import flint.java.lang : IllegalArgumentException, IllegalStateException, String;
+import flint.java.util.formatter : DuplicateFormatFlagsException, FormatterClosedException,
+    IllegalFormatConversionException,
     IllegalFormatException,
     MissingFormatArgumentException, UnknownFormatConversionException, UnknownFormatFlagsException;
 
@@ -474,4 +475,12 @@ unittest
 
     const wrong = collectException!IllegalFormatConversionException(String.format("%d", "x"));
     assert(wrong.getConversion() == 'd' && wrong.getMessage() == "d != java.lang.String");
+}
+
+@("FormatterClosedException is an IllegalStateException with no detail message")
+unittest
+{
+    auto closed = new FormatterClosedException();
+    assert(cast(IllegalStateException) closed !is null);
+    assert(closed.getMessage() is null);
 }

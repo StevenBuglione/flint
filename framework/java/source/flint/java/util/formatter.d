@@ -21,7 +21,7 @@ module flint.java.util.formatter;
 
 import flint.engine.aot.any : Any;
 import flint.engine.aot.text : decimal, decodeUtf8, utf8;
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException;
 import flint.java.util.internal.formatter_support : Flag, FormatOptions, asciiLower, asciiUpper,
     asciiUppercase, pad, truncate;
 import flint.java.util.internal.formatter_digits : hex;
@@ -36,6 +36,16 @@ class IllegalFormatException : IllegalArgumentException
     this(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message, null, file, line);
+    }
+}
+
+/// Java's `FormatterClosedException`: an operation on a closed formatter.
+class FormatterClosedException : IllegalStateException
+{
+    /// No detail message, as Java's no-argument constructor.
+    this() pure nothrow
+    {
+        super();
     }
 }
 

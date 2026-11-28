@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,209 | 833 | 0 | 1,957 | 13,422 |
+| framework | openjdk@21.0.13 | 2,212 | 834 | 0 | 1,957 | 13,418 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -228,7 +228,9 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.util.IllegalFormatFlagsException#getMessage()` | `flint.java.util.formatter.IllegalFormatFlagsException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
 | framework | `java.util.IllegalFormatPrecisionException#getMessage()` | `flint.java.util.formatter.IllegalFormatPrecisionException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
 | framework | `java.util.IllegalFormatWidthException#getMessage()` | `flint.java.util.formatter.IllegalFormatWidthException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
+| framework | `java.util.MissingFormatArgumentException#getMessage()` | `flint.java.util.formatter.MissingFormatArgumentException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
 | framework | `java.util.MissingFormatWidthException#getMessage()` | `flint.java.util.formatter.MissingFormatWidthException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
+| framework | `java.util.UnknownFormatConversionException#getMessage()` | `flint.java.util.formatter.UnknownFormatConversionException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
 | framework | `java.util.UnknownFormatFlagsException#getMessage()` | `flint.java.util.formatter.UnknownFormatFlagsException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
 | framework | `java.util.regex.Pattern` | `flint.java.util.regex.Pattern` | Under R26, a null expression or input slice counts as empty text. Java throws NullPointerException. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)` | `flint.core.convert.support.DefaultConversionService.addDefaultConverters` | The package-private CharacterToNumberFactory is represented in the erased numeric converter for char and wchar code units. |
@@ -2944,6 +2946,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.FormatFlagsConversionMismatchException` | `flint.java.util.formatter.FormatFlagsConversionMismatchException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. A null flag slice counts as empty under R26. The conversion is a UTF-16 code unit; a lone surrogate displays as U+FFFD under R14. |
 | `java.util.FormatFlagsConversionMismatchException#<init>(String,char)` | `flint.java.util.formatter.FormatFlagsConversionMismatchException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.FormatFlagsConversionMismatchException#getConversion()` | `flint.java.util.formatter.FormatFlagsConversionMismatchException.getConversion` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.util.FormatterClosedException` | `flint.java.util.formatter.FormatterClosedException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
 | `java.util.HashMap#containsKey(Object)` | `flint.java.util.HashMap.containsKey` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HashMap#containsValue(Object)` | `flint.java.util.HashMap.containsValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HashMap#get(Object)` | `flint.java.util.HashMap.get` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -11317,7 +11320,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,795 | 0 |
+| java.util | 1,791 | 0 |
 | java.util.concurrent | 1,141 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
