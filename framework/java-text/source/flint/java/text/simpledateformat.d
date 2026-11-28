@@ -434,7 +434,10 @@ private void checkPatternLetter(char letter)
 // are literal; an unknown letter, an open quote or 'X' four times or more throws Java's IllegalArgumentException.
 private Element[] compilePattern(string pattern)
 {
-    Element[] elements;
+    // A pattern yields at most one element per byte, so reserve that many and trim to the used length;
+    // this avoids the array-append instantiation for Element without a second parse.
+    Element[] elements = new Element[](pattern.length);
+    size_t length;
     for (size_t i; i < pattern.length;)
     {
         const c = pattern[i];
@@ -443,13 +446,13 @@ private Element[] compilePattern(string pattern)
             const quoted = quotedText(pattern, i);
             if (!quoted.closed)
                 throw new IllegalArgumentException("Unterminated quote");
-            appendLiteral(elements, quoted.text);
+            appendLiteral(elements, length, quoted.text);
             i = quoted.end;
             continue;
         }
         if (!isAlpha(c))
         {
-            appendLiteral(elements, pattern[i .. i + 1]);
+            appendLiteral(elements, length, pattern[i .. i + 1]);
             ++i;
             continue;
         }
@@ -467,10 +470,10 @@ private Element[] compilePattern(string pattern)
                 checkPatternLetter(pattern[j]);
             throw new IllegalArgumentException("invalid ISO 8601 format: length=" ~ decimal(count));
         }
-        elements ~= Element(c, count, null);
+        elements[length++] = Element(c, count, null);
         i = j;
     }
-    return elements;
+    return elements[0 .. length];
 }
 
 private struct Quoted
@@ -504,12 +507,12 @@ private Quoted quotedText(string pattern, size_t start) pure nothrow
     return Quoted(text, pattern.length, false);
 }
 
-private void appendLiteral(ref Element[] elements, string text) pure nothrow
+private void appendLiteral(ref Element[] elements, ref size_t length, string text) pure nothrow
 {
-    if (elements.length && elements[$ - 1].letter == 0)
-        elements[$ - 1].text ~= text;
+    if (length && elements[length - 1].letter == 0)
+        elements[length - 1].text ~= text;
     else
-        elements ~= Element(0, 0, text);
+        elements[length++] = Element(0, 0, text);
 }
 
 // Whether the pattern formats or parses names, which are locale-specific.
