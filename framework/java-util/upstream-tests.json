@@ -2830,6 +2830,7 @@
   },
   "flint_tests": [
     "framework/java-util/tests/hexformat_test.d",
+    "framework/java-util/tests/random_bounds_java21_test.d",
     "framework/java-util/tests/random_seed_test.d",
     "framework/java-util/tests/randomgenerator_test.d",
     "framework/java-util/tests/splittablerandom_test.d",
