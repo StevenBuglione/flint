@@ -34,7 +34,7 @@ Overall: types 284/1269 (22%), members 2606/15189 (17%); 0 of the done elements 
 | `java.time.temporal` | sol-jdk-time-text | 3 / 16 | 69 / 169 | 41% |  |  | 3 |
 | `java.time.zone` | sol-jdk-time-text | 4 / 6 | 51 / 63 | 81% |  |  | 3 |
 | `java.util` | sol-jdk-core, sol-ai, sol-aop, sol-jdk-math-regex, sol-jdk-time-text (Locale) | 39 / 133 | 452 / 2216 | 20% |  | 323 | 12 |
-| `java.util.concurrent` | sol-jdk-concurrent-io, sol-observability | 16 / 79 | 76 / 1190 | 6% |  | 21 | 14 |
+| `java.util.concurrent` | sol-jdk-concurrent-io, sol-observability | 16 / 79 | 76 / 1190 | 6% |  | 21 | 15 |
 | `java.util.concurrent.atomic` | sol-observability | 4 / 16 | 51 / 319 | 16% |  |  | 1 |
 | `java.util.concurrent.locks` | sol-observability | 3 / 14 | 15 / 201 | 7% |  |  |  |
 | `java.util.function` | sol-context | 17 / 43 | 16 / 79 | 20% |  |  |  |
@@ -172,6 +172,7 @@ Each is adapted R1 with a note naming its leaf module until the JDK aggregate re
 - `java.util.concurrent.CancellationException`: declared in `flint.java.util.concurrent.cancellationexception`
 - `java.util.concurrent.CompletionException`: declared in `flint.java.util.concurrent.completionexception`
 - `java.util.concurrent.CopyOnWriteArrayList`: declared in `flint.java.util.concurrent.copyonwritearraylist`
+- `java.util.concurrent.CopyOnWriteArraySet`: declared in `flint.java.util.concurrent.copyonwritearrayset`
 - `java.util.concurrent.Delayed`: declared in `flint.java.util.concurrent.delayed`
 - `java.util.concurrent.ExecutionException`: declared in `flint.java.util.concurrent.executionexception`
 - `java.util.concurrent.Executor`: declared in `flint.java.util.concurrent.executor`
