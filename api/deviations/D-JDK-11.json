@@ -1,0 +1,5 @@
+{
+ "id": "D-JDK-11",
+ "deviation": "`Locale.getDefault()` reads the POSIX locale from `LC_ALL`, then `LANG`, on every call; `C`, `POSIX` or no value gives `en-US`. Java instead derives one process-wide default from startup properties and exposes `Locale.setDefault`, which Flint does not provide.",
+ "reason": "Framework packages keep no mutable module-level state (AGENTS.md; ADR-030 per-fiber state), so a process-wide locale default cannot be stored or replaced. Reading the environment per call makes the JDK's effective default available without that mutable state."
+}
