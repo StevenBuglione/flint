@@ -42,3 +42,16 @@ unittest
     writer.write([cast(wchar) 'a', cast(wchar) 0xDE00], 0, 2); // a and a lone low surrogate
     assert(output.toString() == "😀\uFFFDx😀a\uFFFD");
 }
+
+@("StringWriter.append(char) writes one unit and keeps its own type")
+unittest
+{
+    auto output = new StringWriter;
+    assert(output.append(cast(wchar) 'a') is output);
+    assert(output.toString() == "a");
+
+    Writer writer = output;
+    assert(writer.append(cast(wchar) 0xD83D) is writer); // a lone high surrogate
+    assert(writer.append(cast(wchar) 'b') is writer);
+    assert(output.toString() == "a\uFFFDb");
+}
