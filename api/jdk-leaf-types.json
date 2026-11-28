@@ -110,6 +110,8 @@
   "java.util.concurrent.Future": "flint.java.util.concurrent.future",
   "java.util.concurrent.FutureTask": "flint.java.util.concurrent.futuretask",
   "java.util.concurrent.RunnableFuture": "flint.java.util.concurrent.future",
+  "java.util.concurrent.RunnableScheduledFuture": "flint.java.util.concurrent.scheduledfuture",
+  "java.util.concurrent.ScheduledFuture": "flint.java.util.concurrent.scheduledfuture",
   "java.util.concurrent.TimeoutException": "flint.java.util.concurrent.timeoutexception",
   "java.util.concurrent.atomic.AtomicReference": "flint.java.util.concurrent.atomic.atomicreference"
  }

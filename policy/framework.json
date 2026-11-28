@@ -545,7 +545,8 @@
    "dependencies": [
     "conc",
     "java",
-    "java-concurrent"
+    "java-concurrent",
+    "java-concurrent-sync"
    ],
    "bench": {
     "fixture": "framework/java-concurrent-exec/bench",
@@ -573,7 +574,8 @@
     "flint.java.util.concurrent.completionexception",
     "flint.java.util.concurrent.executor",
     "flint.java.util.concurrent.future",
-    "flint.java.util.concurrent.futuretask"
+    "flint.java.util.concurrent.futuretask",
+    "flint.java.util.concurrent.scheduledfuture"
    ]
   },
   "java-concurrent-sync": {

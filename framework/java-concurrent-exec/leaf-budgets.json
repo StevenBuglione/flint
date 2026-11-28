@@ -26,5 +26,10 @@
   "flint.java.util.concurrent.executor": {
     "incremental_linked_bytes": 4352,
     "template_instances": 286
+  },
+  "flint.java.util.concurrent.scheduledfuture": {
+    "incremental_linked_bytes": 3679,
+    "template_instances": 380,
+    "control": "framework/java-concurrent-exec/closure/scheduledfuture_provider.d"
   }
 }

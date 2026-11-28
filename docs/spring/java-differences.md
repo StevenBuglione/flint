@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,939 | 699 | 0 | 1,921 | 13,862 |
+| framework | openjdk@21.0.13 | 1,940 | 701 | 0 | 1,921 | 13,859 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2970,6 +2970,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.concurrent.FutureTask#state()` | `flint.java.util.concurrent.futuretask.FutureTask.state` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions), [R13](api-mapping.md#r13-nested-and-inner-classes) | Provided by `mixin template Future.Defaults`; returns the hoisted FutureState. |
 | `java.util.concurrent.RunnableFuture` | `flint.java.util.concurrent.future.RunnableFuture` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Declared in the Future leaf; import it from flint.java.util.concurrent.future. |
 | `java.util.concurrent.RunnableFuture#run()` | `flint.java.util.concurrent.future.RunnableFuture.run` | [R1](api-mapping.md#r1-packages-and-names) |  |
+| `java.util.concurrent.RunnableScheduledFuture` | `flint.java.util.concurrent.scheduledfuture.RunnableScheduledFuture` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Declared in the ScheduledFuture leaf; import it from flint.java.util.concurrent.scheduledfuture. |
+| `java.util.concurrent.ScheduledFuture` | `flint.java.util.concurrent.scheduledfuture.ScheduledFuture` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Declared in the ScheduledFuture leaf; import it from flint.java.util.concurrent.scheduledfuture. |
 | `java.util.concurrent.TimeUnit#convert(Duration)` | `flint.java.util.concurrent.convert` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
 | `java.util.concurrent.TimeUnit#convert(long,TimeUnit)` | `flint.java.util.concurrent.convert` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
 | `java.util.concurrent.TimeUnit#toDays(long)` | `flint.java.util.concurrent.toDays` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
@@ -11043,7 +11045,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
 | java.util | 1,899 | 0 |
-| java.util.concurrent | 1,201 | 0 |
+| java.util.concurrent | 1,198 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 89 | 0 |
