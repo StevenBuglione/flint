@@ -335,6 +335,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-collections-arraydeque": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-concurrent": {
       "repo": "framework",
       "version": "monorepo"
@@ -427,11 +431,11 @@
       "repo": "framework",
       "version": "monorepo"
     },
-    "flint:java-net-unknown-service-exception": {
+    "flint:java-net-spi": {
       "repo": "framework",
       "version": "monorepo"
     },
-    "flint:java-net-spi": {
+    "flint:java-net-unknown-service-exception": {
       "repo": "framework",
       "version": "monorepo"
     },

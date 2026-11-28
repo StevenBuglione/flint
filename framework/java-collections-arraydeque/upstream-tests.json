@@ -1,0 +1,18 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "upstream": "openjdk@21.0.13",
+  "module": "java-collections-arraydeque",
+  "test_packages": [
+    ":java-collections-arraydeque"
+  ],
+  "classes": {
+    "java/util/ArrayDeque/WhiteBox.java": {
+      "phase": "2",
+      "status": "excluded",
+      "reason": "plain-gpl: the jtreg file lacks the Classpath Exception; it reflects private fields and uses Java serialization, neither of which the port exposes. The original tests cover the ring buffer's capacity, growth, both iterators, null rejection and the reference-model transcript.",
+      "covered_by": [
+        "framework/java-collections-arraydeque/tests/arraydeque_test.d"
+      ]
+    }
+  }
+}

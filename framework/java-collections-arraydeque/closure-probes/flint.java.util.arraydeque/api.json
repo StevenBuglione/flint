@@ -1,0 +1,10 @@
+{
+  "source": "closure/arraydeque.d",
+  "leaves": [
+    "flint.java.lang",
+    "flint.java.util",
+    "flint.java.util.queue",
+    "flint.java.util.deque"
+  ],
+  "data": []
+}

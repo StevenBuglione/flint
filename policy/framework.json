@@ -499,6 +499,38 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-collections-arraydeque": {
+   "directory": "framework/java-collections-arraydeque",
+   "module": "flint.java.util.arraydeque",
+   "java_types": ["java.util.ArrayDeque"],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-collections-arraydeque/bench",
+    "baseline": "framework/java-collections-arraydeque/bench/baseline",
+    "edit_source": "framework/java-collections-arraydeque/source/flint/java/util/arraydeque.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 42430,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 719
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java-concurrent": {
    "directory": "framework/java-concurrent",
    "module": "flint.java.util.concurrent.callable",
