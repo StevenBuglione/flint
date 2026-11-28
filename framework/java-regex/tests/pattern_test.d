@@ -1,6 +1,6 @@
 module flint.java.util.regex.pattern_test;
 
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException;
 import flint.java.util.function_ : Predicate;
 import flint.java.util.regex.pattern : Matcher, Pattern, PatternSyntaxException;
 
@@ -353,4 +353,55 @@ unittest
     assert(empty.asMatchPredicate().test(""));
     assert(empty.asPredicate().test(null));
     assert(empty.asMatchPredicate().test(null));
+}
+
+@("Matcher.usePattern keeps Java SE 21's input, search position and stale whole match")
+unittest
+{
+    auto matcher = Pattern.compile("(a)(b)").matcher("abab");
+    assert(matcher.find());
+    assert(matcher.start() == 0 && matcher.end() == 2 && matcher.group(1).get == "a");
+
+    auto replacement = Pattern.compile("(x)(y)(z)");
+    assert(matcher.usePattern(replacement) is matcher);
+    assert(matcher.pattern() is replacement);
+    assert(matcher.groupCount() == 3);
+    assert(matcher.hasMatch());
+    assert(matcher.start() == 0 && matcher.end() == 2);
+    assert(matcher.group().isNull && matcher.group(1).isNull);
+    assert(!matcher.find());
+    try
+    {
+        matcher.start();
+        assert(0, "expected the stale match to be gone");
+    }
+    catch (IllegalStateException)
+    {
+    }
+
+    auto snapshot = Pattern.compile("(a)(b)").matcher("ab");
+    assert(snapshot.find());
+    snapshot.usePattern(Pattern.compile("(x)(y)(z)"));
+    auto frozen = snapshot.toMatchResult();
+    assert(frozen.start() == 0 && frozen.end() == 2);
+    assert(frozen.group().isNull && frozen.group(1).isNull);
+    assert(frozen.groupCount() == 3);
+
+    auto fresh = Pattern.compile("(a)").matcher("xab");
+    fresh.usePattern(Pattern.compile("(b)"));
+    assert(fresh.find() && fresh.start() == 2);
+
+    auto failed = Pattern.compile("zzz").matcher("abab");
+    assert(!failed.find());
+    failed.usePattern(Pattern.compile("b"));
+    assert(failed.find() && failed.start() == 1);
+
+    try
+    {
+        Pattern.compile("a").matcher("a").usePattern(null);
+        assert(0, "expected a null pattern to throw");
+    }
+    catch (IllegalArgumentException)
+    {
+    }
 }

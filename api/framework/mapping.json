@@ -8567,6 +8567,7 @@
 "java.util.regex.Matcher#matches()":{"status":"ported","d":"flint.java.util.regex.pattern.Matcher.matches"},
 "java.util.regex.Matcher#lookingAt()":{"d":"flint.java.util.regex.pattern.Matcher.lookingAt","status":"ported"},
 "java.util.regex.Matcher#reset()":{"d":"flint.java.util.regex.pattern.Matcher.reset","status":"ported"},
+"java.util.regex.Matcher#usePattern(Pattern)":{"d":"flint.java.util.regex.pattern.Matcher.usePattern","status":"adapted","rules":["R3"],"note":"Keeps the input and search position and replaces the compiled expression and its group storage, as Java SE 21 does; the stale whole match keeps the old first/last while group access returns absent until the next match."},
 "java.util.regex.Matcher#reset(CharSequence)":{"d":"flint.java.util.regex.pattern.Matcher.reset","status":"adapted","rules":["R5","R26"]},
 "java.util.regex.Matcher#toMatchResult()":{"d":"flint.java.util.regex.pattern.Matcher.toMatchResult","status":"adapted","rules":["R3"],"note":"Returns a detached snapshot of the numbered MatchResult state. Java default methods remain deferred."},
 "java.util.regex.Matcher#toString()":{"status":"excluded","category":"deferred","phase":"2","reason":"Java's debug form needs the region length and assembled text; a lean implementation adds about 920 linked bytes and the java-regex leaf sits 668 bytes under its whole-input cap. It waits for that headroom rather than a cap raise."},

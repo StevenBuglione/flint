@@ -103,7 +103,7 @@ struct Regex
 
     /// The named capturing groups as name -> 1-based group index. The table is never written after compilation, so a
     /// caller may read it without a copy.
-    const(int[string]) nameTable() const
+    const(int[string]) nameTable() const pure nothrow @nogc
     {
         return groupNames;
     }

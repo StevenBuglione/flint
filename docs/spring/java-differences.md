@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,951 | 710 | 0 | 1,921 | 13,839 |
+| framework | openjdk@21.0.13 | 1,951 | 711 | 0 | 1,921 | 13,838 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -3035,6 +3035,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.regex.Matcher#replaceFirst(String)` | `flint.java.util.regex.pattern.Matcher.replaceFirst` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | Java's replacement syntax; a null replacement counts as empty text under R26. |
 | `java.util.regex.Matcher#reset(CharSequence)` | `flint.java.util.regex.pattern.Matcher.reset` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.regex.Matcher#toMatchResult()` | `flint.java.util.regex.pattern.Matcher.toMatchResult` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Returns a detached snapshot of the numbered MatchResult state. Java default methods remain deferred. |
+| `java.util.regex.Matcher#usePattern(Pattern)` | `flint.java.util.regex.pattern.Matcher.usePattern` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Keeps the input and search position and replaces the compiled expression and its group storage, as Java SE 21 does; the stale whole match keeps the old first/last while group access returns absent until the next match. |
 | `java.util.regex.Pattern#asMatchPredicate()` | `flint.java.util.regex.pattern.Pattern.asMatchPredicate` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R26](api-mapping.md#r26-null-arrays) | Returns a Predicate!string whose test is Java's whole-input matches(); a null slice matches as empty text under R26. |
 | `java.util.regex.Pattern#asPredicate()` | `flint.java.util.regex.pattern.Pattern.asPredicate` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R26](api-mapping.md#r26-null-arrays) | Returns a Predicate!string whose test is Java's find(); a null slice searches as empty text under R26. |
 | `java.util.regex.Pattern#matcher(CharSequence)` | `flint.java.util.regex.pattern.Pattern.matcher` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
@@ -11065,7 +11066,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.function | 89 | 0 |
 | java.util.jar | 0 | 101 |
 | java.util.random | 67 | 0 |
-| java.util.regex | 27 | 0 |
+| java.util.regex | 26 | 0 |
 | java.util.spi | 0 | 43 |
 | java.util.stream | 287 | 0 |
 | java.util.zip | 258 | 0 |

@@ -188,6 +188,7 @@ private class NumberedMatch : MatchResult
     private int[2] wholeMatch;
     private int[] capturePoints;
     private bool matched;
+    private bool stale;
     private const(int[string]) groupNames;
 
     private struct Capture
@@ -203,9 +204,15 @@ private class NumberedMatch : MatchResult
     }
 
     /// Count the capturing groups defined by the pattern.
-    final override int groupCount() const pure nothrow @nogc
+    override int groupCount() const pure nothrow @nogc
     {
         return groups;
+    }
+
+    /// The named-group table in effect. A live Matcher reads the current pattern's table.
+    protected const(int[string]) nameView() const pure nothrow @nogc
+    {
+        return groupNames;
     }
 
     final override int start() const
@@ -245,6 +252,8 @@ private class NumberedMatch : MatchResult
 
     final override Nullable!string group(int index) const
     {
+        if (stale && index == 0)
+            return Nullable!string.init;
         const range = capture(index);
         if (range.first < 0)
             return Nullable!string.init;
@@ -265,19 +274,20 @@ private class NumberedMatch : MatchResult
     {
         if (!matched)
             throw new IllegalStateException("No match found");
-        auto found = name in groupNames;
+        auto found = name in nameView();
         if (found is null)
             throw new IllegalArgumentException("No group with name <" ~ name ~ ">");
         return *found;
     }
 
+    /// The capture pair for `start`/`end`. A stale whole-match after `usePattern` keeps Java's old `first`/`last`.
     private Capture capture(int group) const
     {
         if (!matched)
             throw new IllegalStateException("No match found");
         if (cast(uint) group > cast(uint) groupCount())
             throw new IndexOutOfBoundsException("Invalid capture group");
-        if (!capturePoints.length)
+        if (!capturePoints.length || (group == 0 && capturePoints[0] < 0))
             return Capture(wholeMatch[0], wholeMatch[1]);
         const slot = 2 * group;
         const pair = capturePoints[slot .. slot + 2];
@@ -319,6 +329,39 @@ final class Matcher : NumberedMatch
     Pattern pattern() pure nothrow @nogc
     {
         return compiled;
+    }
+
+    /// The capturing groups of the current pattern; `usePattern` can change them.
+    override int groupCount() const pure nothrow @nogc
+    {
+        return compiled.program.groupCount();
+    }
+
+    /// The current pattern's named-group table.
+    protected override const(int[string]) nameView() const pure nothrow @nogc
+    {
+        return compiled.program.nameTable();
+    }
+
+    /// Replace the compiled expression while keeping the input and search position, as Java SE 21 does (R3).
+    Matcher usePattern(Pattern newPattern)
+    {
+        if (newPattern is null)
+            throw new IllegalArgumentException("Pattern cannot be null");
+        if (matched)
+        {
+            if (capturePoints.length)
+            {
+                wholeMatch[0] = capturePoints[0];
+                wholeMatch[1] = capturePoints[1];
+            }
+            stale = true;
+        }
+        compiled = newPattern;
+        const count = newPattern.program.groupCount();
+        capturePoints = new int[2 * (count + 1 > 10 ? count + 1 : 10)];
+        capturePoints[] = -1;
+        return this;
     }
 
     /// Test the entire input and record its captures.
@@ -392,6 +435,7 @@ final class Matcher : NumberedMatch
     Matcher reset() pure nothrow @nogc
     {
         matched = false;
+        stale = false;
         searchFrom = 0;
         return this;
     }
@@ -406,9 +450,10 @@ final class Matcher : NumberedMatch
     private bool match(bool wholeInput)
     {
         matched = false;
+        stale = false;
         if (groupCount() && !capturePoints.length)
             capturePoints = new int[2 * (groupCount() + 1)];
-        scope int[] result = capturePoints.length ? capturePoints : wholeMatch[];
+        scope int[] result = capturePoints.length ? capturePoints[0 .. 2 * (groupCount() + 1)] : wholeMatch[];
         matched = compiled.program.captureMatch(input, result, wholeInput);
         searchFrom = matched ? result[1] : 0;
         return matched;
@@ -417,9 +462,10 @@ final class Matcher : NumberedMatch
     private bool findFrom(int from)
     {
         matched = false;
+        stale = false;
         if (groupCount() && !capturePoints.length)
             capturePoints = new int[2 * (groupCount() + 1)];
-        scope int[] result = capturePoints.length ? capturePoints : wholeMatch[];
+        scope int[] result = capturePoints.length ? capturePoints[0 .. 2 * (groupCount() + 1)] : wholeMatch[];
         matched = compiled.program.searchMatch(input, from, result);
         searchFrom = matched ? (result[1] == result[0] ? result[1] + 1 : result[1]) : 0;
         return matched;
@@ -540,7 +586,7 @@ final class Matcher : NumberedMatch
         const name = replacement[at + 1 .. close];
         if (name.length == 0)
             throw new IllegalArgumentException("named capturing group has 0 length name");
-        auto found = name in groupNames;
+        auto found = name in nameView();
         if (found is null)
             throw new IllegalArgumentException("No group with name {" ~ name ~ "}");
         appendGroup(output, *found);
@@ -585,10 +631,11 @@ final class Matcher : NumberedMatch
     /// Capture a detached view of the current numbered match state.
     MatchResult toMatchResult() const pure nothrow
     {
-        auto result = new NumberedMatch(matched ? input : null, groupCount(), groupNames);
+        auto result = new NumberedMatch(matched ? input : null, groupCount(), nameView());
         if (matched)
         {
             result.matched = true;
+            result.stale = stale;
             result.wholeMatch = wholeMatch;
             if (capturePoints.length)
             {
