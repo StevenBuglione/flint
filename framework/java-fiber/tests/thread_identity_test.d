@@ -12,6 +12,7 @@ import flint.java.lang.thread : Thread;
     auto first = Thread.currentThread();
     auto second = Thread.currentThread();
     assert(first is second);
+    assert(Thread.currentThreadState() is first.state());
     assert(first.threadId() > 0);
     assert(!first.isInterrupted());
     first.interrupt();

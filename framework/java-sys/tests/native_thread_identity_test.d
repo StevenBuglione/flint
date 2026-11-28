@@ -9,8 +9,8 @@ import flint.java.nativethreadidentity : nativeThreadIdentity;
 {
     assert(nativeThreadIdentity(false, null) is null);
     assert(nativeThreadIdentity(true, null) is null);
-    auto first = nativeThreadIdentity(true, () => new Object);
-    assert(first !is null);
-    assert(nativeThreadIdentity(false, null) is first);
-    assert(nativeThreadIdentity(true, () => new Object) is first);
+    auto candidate = new Object;
+    assert(nativeThreadIdentity(true, candidate) is candidate);
+    assert(nativeThreadIdentity(false, null) is candidate);
+    assert(nativeThreadIdentity(true, new Object) is candidate);
 }

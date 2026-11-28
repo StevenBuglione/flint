@@ -30,6 +30,12 @@ private final class WakeCounter
     assert(!Thread.interrupted());
 }
 
+@("currentThreadState reads the calling thread's state without allocating") unittest
+{
+    auto self = Thread.currentThread();
+    assert(Thread.currentThreadState() is self.state());
+}
+
 @("interrupt sets the flag and static interrupted clears it") unittest
 {
     auto self = Thread.currentThread();

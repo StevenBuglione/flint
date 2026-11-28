@@ -7,6 +7,6 @@ import flint.java.nativethreadidentity : nativeThreadIdentity;
 
 int main()
 {
-    auto first = nativeThreadIdentity(true, () => new Object);
+    auto first = nativeThreadIdentity(true, new Object);
     return first !is null && nativeThreadIdentity(false, null) is first ? 0 : 1;
 }

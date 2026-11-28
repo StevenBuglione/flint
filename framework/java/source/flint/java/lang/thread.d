@@ -149,7 +149,23 @@ class Thread
         import flint.java.lang.internal.threadcontrol : selectThreadIdentityProvider;
         import flint.java.lang.sys.threadslot : threadSlot;
 
-        return threadSlot!Thread(selectThreadIdentityProvider(&nativeIdentity)(true, &makeCurrentThread));
+        auto provider = selectThreadIdentityProvider(&nativeIdentity);
+        auto existing = provider(false, null);
+        if (existing !is null)
+            return threadSlot!Thread(existing);
+        return threadSlot!Thread(provider(true, new Thread()));
+    }
+
+    /// The calling logical thread's interrupt state without creating its `Thread`, or null when the logical
+    /// thread has no identity yet. Allocates nothing, so a `java.util.concurrent` wait inside a reactor task
+    /// can read it.
+    package(flint.java) static ThreadState currentThreadState() nothrow @nogc
+    {
+        import flint.java.lang.internal.threadcontrol : selectThreadIdentityProvider;
+        import flint.java.lang.sys.threadslot : threadSlot;
+
+        auto identity = selectThreadIdentityProvider(&nativeIdentity)(false, null);
+        return identity is null ? null : threadSlot!Thread(identity).state_;
     }
 
     /// Set this logical thread's interrupt flag and end its installed wait, if any.
@@ -205,16 +221,11 @@ class Thread
 
 // The native fallback: flint:java-sys keeps one identity per native thread. A fiber provider installed by
 // flint:java-fiber replaces it before any fiber calls currentThread.
-private Object nativeIdentity(bool create, Object function() @safe makeValue)
+private Object nativeIdentity(bool create, Object candidate) @safe nothrow @nogc
 {
     import flint.java.nativethreadidentity : nativeThreadIdentity;
 
-    return nativeThreadIdentity(create, makeValue);
-}
-
-private Object makeCurrentThread()
-{
-    return new Thread();
+    return nativeThreadIdentity(create, candidate);
 }
 
 private shared long nextThreadId;

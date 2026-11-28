@@ -20,16 +20,15 @@ bool installFiberThreadIdentityProvider() nothrow @nogc
     return identity.set(identity.get()).code == 0 && installThreadIdentityProvider(&currentIdentity);
 }
 
-private Object currentIdentity(bool create, Object function() @safe makeValue)
+private Object currentIdentity(bool create, Object candidate) @safe nothrow @nogc
 {
     if (Thread.getThis() is null)
         onInvalidMemoryOperationError();
 
     auto current = identity.get();
-    if (current !is null || !create || makeValue is null)
+    if (current !is null || !create || candidate is null)
         return current;
 
-    current = makeValue();
     // The Thread caller reports an unavailable creating lookup.
-    return identity.set(current).code == 0 ? current : null;
+    return identity.set(candidate).code == 0 ? candidate : null;
 }
