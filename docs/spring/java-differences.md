@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,940 | 705 | 0 | 1,921 | 13,855 |
+| framework | openjdk@21.0.13 | 1,942 | 702 | 0 | 1,921 | 13,856 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2381,8 +2381,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `java.net.BindException` | `flint.java.net.bindexception.BindException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.bindexception : BindException. Checked Java socket exception subclass (through SocketException) mapped to D Exception (D-8) with R26 detail message handling. |
-| `java.net.ConnectException` | `flint.java.net.connectexception.ConnectException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.connectexception : ConnectException. Checked Java socket exception subclass (through SocketException) mapped to D Exception (D-8) with R26 detail message handling. |
 | `java.net.DatagramPacket` | `flint.java.net.datagrampacket.DatagramPacket` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.datagrampacket : DatagramPacket. Equality and hashing stay by identity, as in Java. |
 | `java.net.DatagramPacket#<init>(byte[],int)` | `flint.java.net.datagrampacket.DatagramPacket.this` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
 | `java.net.DatagramPacket#<init>(byte[],int,InetAddress,int)` | `flint.java.net.datagrampacket.DatagramPacket.this` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
@@ -2428,10 +2426,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.net.InterfaceAddress` | `flint.java.net.interfaceaddress.InterfaceAddress` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.interfaceaddress : InterfaceAddress. Final class with package-private constructors (Java has no public or protected constructor) and mixin JavaObject. |
 | `java.net.InterfaceAddress#equals(Object)` | `flint.java.net.interfaceaddress.InterfaceAddress.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.net.MalformedURLException` | `flint.java.net.malformedurlexception.MalformedURLException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.malformedurlexception : MalformedURLException. Checked Java IOException subclass mapped to D Exception (D-8) with R26 detail message handling. |
-| `java.net.NoRouteToHostException` | `flint.java.net.noroutetohostexception.NoRouteToHostException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.noroutetohostexception : NoRouteToHostException. Checked Java socket exception subclass (through SocketException) mapped to D Exception (D-8) with R26 detail message handling. |
 | `java.net.PasswordAuthentication` | `flint.java.net.passwordauthentication.PasswordAuthentication` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.passwordauthentication : PasswordAuthentication. Equality and hashing stay by identity, as in Java. |
 | `java.net.PasswordAuthentication#<init>(String,char[])` | `flint.java.net.passwordauthentication.PasswordAuthentication.this` | [R26](api-mapping.md#r26-null-arrays) | The password is copied, as in Java. A null password counts as empty where Java throws NullPointerException. |
-| `java.net.PortUnreachableException` | `flint.java.net.portunreachableexception.PortUnreachableException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.portunreachableexception : PortUnreachableException. Checked Java socket exception subclass (through SocketException) mapped to D Exception (D-8) with R26 detail message handling. |
 | `java.net.ProtocolException` | `flint.java.net.protocolexception.ProtocolException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.protocolexception : ProtocolException. Checked Java IOException subclass mapped to D Exception (D-8) with R26 detail message handling. |
 | `java.net.ProtocolFamily` | `flint.java.net.protocolfamily.ProtocolFamily` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.protocolfamily : ProtocolFamily. |
 | `java.net.Proxy` | `flint.java.net.proxy.Proxy` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.proxy : Proxy. Implements JavaObject without Serializable. hashCode adds the type's ordinal where Java adds the enum's identity hash, so the number differs from Java's but equal proxies still hash equally. |
@@ -2682,6 +2678,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.sql.ResultSet#getObject(int)` | `flint.java.sql.ResultSet.getObject` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.sql.Wrapper#isWrapperFor(java.lang.Class)` | `flint.java.sql.Wrapper.isWrapperFor` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `java.sql.Wrapper#unwrap(java.lang.Class)` | `flint.java.sql.Wrapper.unwrap` | [R4](api-mapping.md#r4-classt-parameters) |  |
+
+#### java.text
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.text.ParseException` | `flint.java.text.ParseException` | [R26](api-mapping.md#r26-null-arrays) | An empty detail is absent in Flint. Java preserves an explicitly empty String. |
+| `java.text.ParseException#<init>(String,int)` | `flint.java.text.ParseException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.text.SimpleDateFormat#applyPattern(String)` | `flint.java.text.SimpleDateFormat.applyPattern` | [R26](api-mapping.md#r26-null-arrays) |  |
 
 #### java.time
 
@@ -2974,8 +2978,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.concurrent.FutureTask#state()` | `flint.java.util.concurrent.futuretask.FutureTask.state` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions), [R13](api-mapping.md#r13-nested-and-inner-classes) | Provided by `mixin template Future.Defaults`; returns the hoisted FutureState. |
 | `java.util.concurrent.RunnableFuture` | `flint.java.util.concurrent.future.RunnableFuture` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Declared in the Future leaf; import it from flint.java.util.concurrent.future. |
 | `java.util.concurrent.RunnableFuture#run()` | `flint.java.util.concurrent.future.RunnableFuture.run` | [R1](api-mapping.md#r1-packages-and-names) |  |
-| `java.util.concurrent.RunnableScheduledFuture` | `flint.java.util.concurrent.scheduledfuture.RunnableScheduledFuture` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Declared in the ScheduledFuture leaf; import it from flint.java.util.concurrent.scheduledfuture. |
-| `java.util.concurrent.ScheduledFuture` | `flint.java.util.concurrent.scheduledfuture.ScheduledFuture` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Declared in the ScheduledFuture leaf; import it from flint.java.util.concurrent.scheduledfuture. |
 | `java.util.concurrent.TimeUnit#convert(Duration)` | `flint.java.util.concurrent.convert` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
 | `java.util.concurrent.TimeUnit#convert(long,TimeUnit)` | `flint.java.util.concurrent.convert` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
 | `java.util.concurrent.TimeUnit#toDays(long)` | `flint.java.util.concurrent.toDays` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
@@ -11027,7 +11029,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
-| java.net | 593 | 0 |
+| java.net | 597 | 0 |
 | java.net.spi | 0 | 2 |
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |
@@ -11041,7 +11043,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.security.interfaces | 0 | 61 |
 | java.security.spec | 0 | 201 |
 | java.sql | 1,005 | 0 |
-| java.text | 535 | 0 |
+| java.text | 529 | 0 |
 | java.text.spi | 0 | 27 |
 | java.time | 551 | 0 |
 | java.time.chrono | 405 | 0 |
@@ -11049,7 +11051,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
 | java.util | 1,899 | 0 |
-| java.util.concurrent | 1,198 | 0 |
+| java.util.concurrent | 1,201 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 89 | 0 |
@@ -12102,10 +12104,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.lang.annotation.IncompleteAnnotationException#<init>(Class,String)` | 2 | Waits on IncompleteAnnotationException. |
 | framework | `java.lang.annotation.IncompleteAnnotationException#annotationType()` | 2 | Waits on IncompleteAnnotationException. |
 | framework | `java.lang.annotation.IncompleteAnnotationException#elementName()` | 2 | Waits on IncompleteAnnotationException. |
-| framework | `java.net.BindException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
-| framework | `java.net.BindException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
-| framework | `java.net.ConnectException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
-| framework | `java.net.ConnectException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
 | framework | `java.net.Inet6Address#getByAddress(String,byte[],NetworkInterface)` | 2 | Requires NetworkInterface and its address enumeration to derive the numeric scope. |
 | framework | `java.net.Inet6Address#getScopedInterface()` | 2 | Requires NetworkInterface. Addresses built by this leaf never carry a scoped interface. |
 | framework | `java.net.InetAddress#getCanonicalHostName()` | 2 | Always performs a reverse lookup. Name resolution through the Flint engines (java.net.spi InetAddressResolver) is pending; this leaf builds addresses from raw bytes only. |
@@ -12117,10 +12115,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.net.InetSocketAddress#getHostName()` | 2 | Performs a reverse lookup when the address has no host name. Name resolution through the Flint engines (java.net.spi InetAddressResolver) is pending; this leaf builds socket addresses from an InetAddress or an unresolved host name only. getHostString returns the host name without a lookup. |
 | framework | `java.net.MalformedURLException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.MalformedURLException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
-| framework | `java.net.NoRouteToHostException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
-| framework | `java.net.NoRouteToHostException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
-| framework | `java.net.PortUnreachableException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
-| framework | `java.net.PortUnreachableException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
 | framework | `java.net.ProtocolException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.ProtocolException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.Proxy#NO_PROXY` | 2 | Java hands out one shared DIRECT Proxy. engine-aot's constantInstance builds a shared object only for classes whose fields are all immutable, and a Proxy keeps the caller's SocketAddress. A fresh object per access would break identity comparisons such as proxy == Proxy.NO_PROXY. |
@@ -12192,11 +12186,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.DateFormat#format(Date)` | 2 | Flint uses an abstract string overload. Java supplies a final convenience overload that dispatches through the three-argument Format contract. |
 | framework | `java.text.DateFormat#format(Date,StringBuffer,FieldPosition)` | 2 | The date append overload needs canonical java.lang.StringBuffer and a FieldPosition for UTF-16 offsets. |
 | framework | `java.text.DateFormat#format(Object,StringBuffer,FieldPosition)` | 2 | Generic date formatting needs canonical java.lang.StringBuffer and Format dispatch to the date append overload. |
-| framework | `java.text.DateFormat#getTimeZone()` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
-| framework | `java.text.DateFormat#isLenient()` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
-| framework | `java.text.DateFormat#parse(String)` | 2 | SimpleDateFormat failures propagate a UTF-8 byte offset to ParseException. Java reports a UTF-16 code-unit offset (R14). The convenience overload accepts a returned date even when the parser consumes no input. Java rejects a parse that leaves the start position unchanged. |
-| framework | `java.text.DateFormat#setLenient(boolean)` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
-| framework | `java.text.DateFormat#setTimeZone(TimeZone)` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
+| framework | `java.text.DateFormat#parse(String)` | 2 | Checks whether a result exists rather than whether it consumed input. Java throws ParseException when the position has not advanced. |
 | framework | `java.text.DecimalFormat` | 2 | The Java public formatter class and mutable pattern configuration are pending. |
 | framework | `java.text.DecimalFormat#<init>(String,DecimalFormatSymbols)` | 2 | Requires the public formatter and symbols classes. Java copies the supplied symbol settings on construction. |
 | framework | `java.text.DecimalFormat#applyPattern(String)` | 2 | Applying a pattern requires the public DecimalFormat. Java changes fractional precision and the multiplier on the same formatter instance. |
@@ -12236,13 +12226,11 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.NumberFormat#getInstance(Locale)` | 2 | The pinned US factory returns a mutable DecimalFormat subclass with fraction digit setters. Flint returns a NumberFormat value without those setters or the DecimalFormat subtype. |
 | framework | `java.text.NumberFormat#getIntegerInstance()` | 2 | Uses the general environment-derived locale. Java uses the independent Locale.Category.FORMAT default for integer formatting. |
 | framework | `java.text.NumberFormat#getIntegerInstance(Locale)` | 2 | The pinned US factory returns a mutable DecimalFormat subclass with fraction digit setters. Flint returns a NumberFormat value without those setters or the DecimalFormat subtype. |
-| framework | `java.text.SimpleDateFormat` | 2 | The Java class inherits the Format hierarchy and generic formatting contract through DateFormat. Flint has no Format supertype. |
+| framework | `java.text.SimpleDateFormat` | 2 | applyPattern treats a null text slice as an empty pattern (R26). The Java class inherits the Format hierarchy and generic formatting contract through DateFormat. Flint has no Format supertype. |
 | framework | `java.text.SimpleDateFormat#<init>(String)` | 2 | Uses Locale.US for named fields instead of Java's default Locale.Category.FORMAT. |
 | framework | `java.text.SimpleDateFormat#<init>(String,Locale)` | 2 | Rejects named fields with a non-English locale. Java uses that locale's date and time names. |
-| framework | `java.text.SimpleDateFormat#applyPattern(String)` | 2 | For an invalid X repeat followed immediately by an unsupported pattern letter, Flint reports the ISO repeat failure first. Java reports the unsupported letter first. |
 | framework | `java.text.SimpleDateFormat#format(Date,StringBuffer,FieldPosition)` | 2 | Appending the date to the caller buffer and updating UTF-16 field offsets needs canonical java.lang.StringBuffer and FieldPosition. |
-| framework | `java.text.SimpleDateFormat#parse(String,ParsePosition)` | 2 | Interprets the initial ParsePosition index and reports consumed and error indices in UTF-8 bytes. Java uses UTF-16 code units (R14). Passing a null ParsePosition terminates the process. Java throws NullPointerException (R8). |
-| framework | `java.text.SimpleDateFormat#set2DigitYearStart(Date)` | 2 | Computes the year window in a separate calendar. Java sets the time of the formatter's caller-visible calendar when applying the requested start. |
+| framework | `java.text.SimpleDateFormat#parse(String,ParsePosition)` | 2 | Negative input indices throw the broader IndexOutOfBoundsException. Java throws StringIndexOutOfBoundsException (R8). |
 | framework | `java.time.MonthDay#adjustInto(Temporal)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.MonthDay#format(DateTimeFormatter)` | 2 | Requires the formatter contract. |
 | framework | `java.time.MonthDay#from(TemporalAccessor)` | 2 | Requires temporal interfaces and dispatch. |
