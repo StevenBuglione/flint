@@ -464,7 +464,7 @@ pragma(inline, false) string widenLatin1(scope const(char)[] text) pure nothrow
 
 pragma(inline, false) noreturn failArgument(string message) pure
 {
-    import flint.java.lang : IllegalArgumentException;
+    import flint.java.lang.runtimeexception : IllegalArgumentException;
 
     throw new IllegalArgumentException(message);
 }
@@ -472,7 +472,7 @@ pragma(inline, false) noreturn failArgument(string message) pure
 /// Throw with Java's `Integer.toString(b, 16)` of the signed byte appended.
 pragma(inline, false) noreturn failIllegal(string prefix, byte b) pure
 {
-    import flint.java.lang : IllegalArgumentException;
+    import flint.java.lang.runtimeexception : IllegalArgumentException;
 
     throw new IllegalArgumentException(failIllegalMessage(prefix, b));
 }
@@ -497,7 +497,7 @@ string failIllegalMessage(string prefix, byte b) pure nothrow
 
 pragma(inline, false) noreturn failEnding(size_t position) pure
 {
-    import flint.java.lang : IllegalArgumentException;
+    import flint.java.lang.runtimeexception : IllegalArgumentException;
 
     throw new IllegalArgumentException(failEndingMessage(position));
 }
