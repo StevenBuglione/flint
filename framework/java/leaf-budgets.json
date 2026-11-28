@@ -98,5 +98,97 @@
   "flint.java.util.stream.collector": {
     "incremental_linked_bytes": 41404,
     "template_instances": 746
+  },
+  "flint.java.util.function_.doublefunction": {
+    "incremental_linked_bytes": 898,
+    "template_instances": 39
+  },
+  "flint.java.util.function_.longfunction": {
+    "incremental_linked_bytes": 898,
+    "template_instances": 39
+  },
+  "flint.java.util.function_.todoublefunction": {
+    "incremental_linked_bytes": 942,
+    "template_instances": 39
+  },
+  "flint.java.util.function_.tointbifunction": {
+    "incremental_linked_bytes": 1039,
+    "template_instances": 39
+  },
+  "flint.java.util.function_.tolongbifunction": {
+    "incremental_linked_bytes": 1021,
+    "template_instances": 39
+  },
+  "flint.java.util.function_.todoublebifunction": {
+    "incremental_linked_bytes": 960,
+    "template_instances": 39
+  },
+  "flint.java.util.function_.intpredicate": {
+    "incremental_linked_bytes": 1048,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.longpredicate": {
+    "incremental_linked_bytes": 1048,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.doublepredicate": {
+    "incremental_linked_bytes": 1188,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.intunaryoperator": {
+    "incremental_linked_bytes": 1048,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.longunaryoperator": {
+    "incremental_linked_bytes": 1065,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.doubleunaryoperator": {
+    "incremental_linked_bytes": 1197,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.inttodoublefunction": {
+    "incremental_linked_bytes": 1127,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.inttolongfunction": {
+    "incremental_linked_bytes": 1065,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.longtointfunction": {
+    "incremental_linked_bytes": 977,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.longtodoublefunction": {
+    "incremental_linked_bytes": 1021,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.doubletointfunction": {
+    "incremental_linked_bytes": 977,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.doubletolongfunction": {
+    "incremental_linked_bytes": 1083,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.objdoubleconsumer": {
+    "incremental_linked_bytes": 1215,
+    "template_instances": 40
+  },
+  "flint.java.util.function_.objintconsumer": {
+    "incremental_linked_bytes": 1056,
+    "template_instances": 40
+  },
+  "flint.java.util.function_.objlongconsumer": {
+    "incremental_linked_bytes": 1074,
+    "template_instances": 40
+  },
+  "flint.java.util.function_.longbinaryoperator": {
+    "incremental_linked_bytes": 1083,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.doublebinaryoperator": {
+    "incremental_linked_bytes": 1197,
+    "template_instances": 37
   }
 }

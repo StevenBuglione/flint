@@ -8,14 +8,37 @@ delegate to the interface; `asDelegate` goes the other way.
 module flint.java.util.function_;
 
 public import flint.java.util.function_.consumer : Consumer;
+public import flint.java.util.function_.doublebinaryoperator : DoubleBinaryOperator;
 public import flint.java.util.function_.doubleconsumer : DoubleConsumer;
+public import flint.java.util.function_.doublefunction : DoubleFunction;
+public import flint.java.util.function_.doublepredicate : DoublePredicate;
+public import flint.java.util.function_.doubletointfunction : DoubleToIntFunction;
+public import flint.java.util.function_.doubletolongfunction : DoubleToLongFunction;
+public import flint.java.util.function_.doubleunaryoperator : DoubleUnaryOperator;
 public import flint.java.util.function_.function_ : Function;
 public import flint.java.util.function_.intbinaryoperator : IntBinaryOperator;
 public import flint.java.util.function_.intconsumer : IntConsumer;
+public import flint.java.util.function_.intpredicate : IntPredicate;
 public import flint.java.util.function_.intsupplier : IntSupplier;
+public import flint.java.util.function_.inttodoublefunction : IntToDoubleFunction;
+public import flint.java.util.function_.inttolongfunction : IntToLongFunction;
+public import flint.java.util.function_.intunaryoperator : IntUnaryOperator;
+public import flint.java.util.function_.longbinaryoperator : LongBinaryOperator;
 public import flint.java.util.function_.longconsumer : LongConsumer;
+public import flint.java.util.function_.longfunction : LongFunction;
+public import flint.java.util.function_.longpredicate : LongPredicate;
 public import flint.java.util.function_.longsupplier : LongSupplier;
+public import flint.java.util.function_.longtodoublefunction : LongToDoubleFunction;
+public import flint.java.util.function_.longtointfunction : LongToIntFunction;
+public import flint.java.util.function_.longunaryoperator : LongUnaryOperator;
+public import flint.java.util.function_.objdoubleconsumer : ObjDoubleConsumer;
+public import flint.java.util.function_.objintconsumer : ObjIntConsumer;
+public import flint.java.util.function_.objlongconsumer : ObjLongConsumer;
 public import flint.java.util.function_.supplier : Supplier;
+public import flint.java.util.function_.todoublebifunction : ToDoubleBiFunction;
+public import flint.java.util.function_.todoublefunction : ToDoubleFunction;
+public import flint.java.util.function_.tointbifunction : ToIntBiFunction;
+public import flint.java.util.function_.tolongbifunction : ToLongBiFunction;
 public import flint.java.util.function_.unaryoperator : UnaryOperator;
 
 @safe:
