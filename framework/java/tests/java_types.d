@@ -536,7 +536,8 @@ unittest
     import flint.java.io : ByteArrayOutputStream, PrintWriter, StringWriter;
     import flint.java.lang : AssertionError;
     import flint.java.net : URI;
-    import flint.java.nio.charset : Charset, StandardCharsets, UnsupportedCharsetException;
+    import flint.java.nio.charset : Charset, IllegalCharsetNameException, StandardCharsets,
+        UnsupportedCharsetException;
     import flint.java.util.concurrent.atomic : AtomicBoolean, AtomicInteger, AtomicLong;
 
     auto uri = URI.create("http://localhost:8080/owners/é");
@@ -556,6 +557,14 @@ unittest
     catch (UnsupportedCharsetException e)
         threw = e.getCharsetName() == "EBCDIC-x";
     assert(threw);
+    threw = false;
+    try
+        Charset.forName("");
+    catch (IllegalCharsetNameException e)
+        threw = e.getCharsetName() == "" && e.getMessage() == "";
+    assert(threw);
+    auto illegal = new IllegalCharsetNameException("a b");
+    assert(illegal.getCharsetName() == "a b" && illegal.getMessage() == "a b");
     auto counter = new AtomicLong;
     assert(counter.incrementAndGet() == 1 && counter.getAndIncrement() == 1 && counter.get() == 2);
     assert(counter.compareAndSet(2, 10) && counter.addAndGet(5) == 15 && counter.toString() == "15");

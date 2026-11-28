@@ -211,10 +211,19 @@ class UnsupportedCharsetException : IllegalArgumentException
 /// `java.nio.charset.IllegalCharsetNameException`.
 class IllegalCharsetNameException : IllegalArgumentException
 {
+    private string charsetName;
+
     /// The exception for `charsetName`.
     this(string charsetName, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(charsetName, null, file, line);
+        this.charsetName = charsetName;
+    }
+
+    /// The name that was illegal.
+    string getCharsetName() const pure nothrow @nogc
+    {
+        return charsetName;
     }
 }
 
