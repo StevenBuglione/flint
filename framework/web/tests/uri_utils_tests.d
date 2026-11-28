@@ -88,52 +88,47 @@ unittest
     }
 }
 
-// encodeScheme, encodeUserInfo, encodeHost, encodePort and extractFileExtension are not ported to flint.web's
-// UriUtils yet. Their upstream cases compile once they are (version FlintUriUtilsComplete).
-version (FlintUriUtilsComplete)
+@("UriUtilsTests.encodeScheme")
+unittest
 {
-    @("UriUtilsTests.encodeScheme")
-    unittest
-    {
-        assert(UriUtils.encodeScheme("foobar+-.") == "foobar+-.");
-        assert(UriUtils.encodeScheme("foo bar") == "foo%20bar");
-    }
+    assert(UriUtils.encodeScheme("foobar+-.") == "foobar+-.");
+    assert(UriUtils.encodeScheme("foo bar") == "foo%20bar");
+}
 
-    @("UriUtilsTests.encodeUserInfo")
-    unittest
-    {
-        assert(UriUtils.encodeUserInfo("foobar:") == "foobar:");
-        assert(UriUtils.encodeUserInfo("foo bar") == "foo%20bar");
-    }
+@("UriUtilsTests.encodeUserInfo")
+unittest
+{
+    assert(UriUtils.encodeUserInfo("foobar:") == "foobar:");
+    assert(UriUtils.encodeUserInfo("foo bar") == "foo%20bar");
+}
 
-    @("UriUtilsTests.encodeHost")
-    unittest
-    {
-        assert(UriUtils.encodeHost("foobar") == "foobar");
-        assert(UriUtils.encodeHost("foo bar") == "foo%20bar");
-    }
+@("UriUtilsTests.encodeHost")
+unittest
+{
+    assert(UriUtils.encodeHost("foobar") == "foobar");
+    assert(UriUtils.encodeHost("foo bar") == "foo%20bar");
+}
 
-    @("UriUtilsTests.encodePort")
-    unittest
-    {
-        assert(UriUtils.encodePort("80") == "80");
-    }
+@("UriUtilsTests.encodePort")
+unittest
+{
+    assert(UriUtils.encodePort("80") == "80");
+}
 
-    @("UriUtilsTests.extractFileExtension")
-    unittest
-    {
-        static immutable paths = [
-            "index.html", "/index.html", "/products/view.html", "/products/view.html#/a",
-            "/products/view.html#/path/a", "/products/view.html#/path/a.do",
-            "/products/view.html#aaa?bbb", "/products/view.html#aaa.xml?bbb",
-            "/products/view.html?param=a", "/products/view.html?param=/path/a",
-            "/products/view.html?param=/path/a.do", "/products/view.html?param=/path/a#/path/a",
-            "/products/view.html?param=/path/a.do#/path/a.do",
-            "/products;q=11/view.html?param=/path/a.do",
-            "/products;q=11/view.html;r=22?param=/path/a.do",
-            "/products;q=11/view.html;r=22;s=33?param=/path/a.do", "/products/.html"
-        ];
-        foreach (path; paths)
-            assert(UriUtils.extractFileExtension(path) == "html", path);
-    }
+@("UriUtilsTests.extractFileExtension")
+unittest
+{
+    static immutable paths = [
+        "index.html", "/index.html", "/products/view.html", "/products/view.html#/a",
+        "/products/view.html#/path/a", "/products/view.html#/path/a.do",
+        "/products/view.html#aaa?bbb", "/products/view.html#aaa.xml?bbb",
+        "/products/view.html?param=a", "/products/view.html?param=/path/a",
+        "/products/view.html?param=/path/a.do", "/products/view.html?param=/path/a#/path/a",
+        "/products/view.html?param=/path/a.do#/path/a.do",
+        "/products;q=11/view.html?param=/path/a.do",
+        "/products;q=11/view.html;r=22?param=/path/a.do",
+        "/products;q=11/view.html;r=22;s=33?param=/path/a.do", "/products/.html"
+    ];
+    foreach (path; paths)
+        assert(UriUtils.extractFileExtension(path) == "html", path);
 }

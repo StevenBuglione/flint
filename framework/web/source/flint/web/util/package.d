@@ -254,6 +254,30 @@ struct UriUtils
         return encodeUriComponent(fragment, UriComponentType.FRAGMENT);
     }
 
+    /// `encodeScheme`.
+    static string encodeScheme(string scheme) pure nothrow
+    {
+        return encodeUriComponent(scheme, UriComponentType.SCHEME);
+    }
+
+    /// `encodeUserInfo`.
+    static string encodeUserInfo(string userInfo) pure nothrow
+    {
+        return encodeUriComponent(userInfo, UriComponentType.USER_INFO);
+    }
+
+    /// `encodeHost`.
+    static string encodeHost(string host) pure nothrow
+    {
+        return encodeUriComponent(host, UriComponentType.HOST_IPV4);
+    }
+
+    /// `encodePort`.
+    static string encodePort(string port) pure nothrow
+    {
+        return encodeUriComponent(port, UriComponentType.PORT);
+    }
+
     /// `decode(source, UTF_8)`: `%XX` to bytes. Throws `IllegalArgumentException` for an invalid sequence.
     static string decode(string source) pure
     {
@@ -286,6 +310,44 @@ struct UriUtils
     private static int hexValue(char c) pure nothrow @nogc
     {
         return c <= '9' ? c - '0' : (c | 0x20) - 'a' + 10;
+    }
+
+    /// `extractFileExtension`: the extension of the path's last segment, or `null`.
+    static string extractFileExtension(string path) pure nothrow @nogc
+    {
+        ptrdiff_t end = indexFrom(path, '?', 0);
+        ptrdiff_t fragmentIndex = indexFrom(path, '#', 0);
+        if (fragmentIndex != -1 && (end == -1 || fragmentIndex < end))
+            end = fragmentIndex;
+        if (end == -1)
+            end = cast(ptrdiff_t) path.length;
+        ptrdiff_t begin = lastIndexAt(path, '/', end) + 1;
+        ptrdiff_t paramIndex = indexFrom(path, ';', cast(size_t) begin);
+        end = (paramIndex != -1 && paramIndex < end) ? paramIndex : end;
+        ptrdiff_t extIndex = lastIndexAt(path, '.', end);
+        if (extIndex != -1 && extIndex >= begin)
+            return path[cast(size_t)(extIndex + 1) .. cast(size_t) end];
+        return null;
+    }
+
+    private static ptrdiff_t indexFrom(string s, char c, size_t from) pure nothrow @nogc
+    {
+        for (size_t i = from; i < s.length; i++)
+            if (s[i] == c)
+                return cast(ptrdiff_t) i;
+        return -1;
+    }
+
+    private static ptrdiff_t lastIndexAt(string s, char c, ptrdiff_t from) pure nothrow @nogc
+    {
+        if (from < 0)
+            return -1;
+        if (from >= cast(ptrdiff_t) s.length)
+            from = cast(ptrdiff_t) s.length - 1;
+        for (ptrdiff_t i = from; i >= 0; i--)
+            if (s[cast(size_t) i] == c)
+                return i;
+        return -1;
     }
 }
 
