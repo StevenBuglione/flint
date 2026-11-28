@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,955 | 733 | 0 | 1,921 | 13,812 |
+| framework | openjdk@21.0.13 | 1,956 | 733 | 0 | 1,921 | 13,811 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -11055,7 +11055,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
-| java.net | 558 | 0 |
+| java.net | 557 | 0 |
 | java.net.spi | 0 | 2 |
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |
@@ -12163,7 +12163,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.net.URL#<init>(String,String,int,String,URLStreamHandler)` | 2 | Custom URLStreamHandler is deferred; parsing-only URL uses built-in protocol rules. |
 | framework | `java.net.URL#<init>(URL,String,URLStreamHandler)` | 2 | Custom URLStreamHandler is deferred; parsing-only URL uses built-in protocol rules. |
 | framework | `java.net.URL#of(URI,URLStreamHandler)` | 2 | Custom URLStreamHandler is deferred; parsing-only URL uses built-in protocol rules. |
-| framework | `java.net.URL#toURI()` | 2 | URL.toURI is not ported yet; it can use the flint.java.net URI constructor that is now available. |
 | framework | `java.net.UnknownHostException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.UnknownHostException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.UnknownServiceException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |

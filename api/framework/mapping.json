@@ -48721,7 +48721,7 @@
 "java.net.URL#sameFile(URL)":{"status":"adapted","rules":["D-NET-1"],"d":"flint.java.net.url.URL.sameFile"},
 "java.net.URL#equals(Object)":{"status":"adapted","rules":["R11","D-NET-1"],"d":"flint.java.net.url.URL.equals"},
 "java.net.URL#hashCode()":{"status":"adapted","rules":["R11","D-NET-1"],"d":"flint.java.net.url.URL.hashCode"},
-"java.net.URL#toURI()":{"status":"excluded","category":"deferred","phase":"2","reason":"URL.toURI is not ported yet; it can use the flint.java.net URI constructor that is now available."},
+"java.net.URL#toURI()":{"status":"ported","d":"flint.java.net.url.URL.toURI"},
 "java.net.URL#openConnection()":{"status":"excluded","category":"jvm-platform","reason":"Parsing-only URL per docs/spring/phase2/jdk-port.md; network I/O uses Flint engines."},
 "java.net.URL#openConnection(Proxy)":{"status":"excluded","category":"jvm-platform","reason":"Parsing-only URL per docs/spring/phase2/jdk-port.md; network I/O uses Flint engines."},
 "java.net.URL#openStream()":{"status":"excluded","category":"jvm-platform","reason":"Parsing-only URL per docs/spring/phase2/jdk-port.md; network I/O uses Flint engines."},

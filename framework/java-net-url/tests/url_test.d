@@ -296,3 +296,39 @@ unittest
     assert(!u1.equals(null));
     assert(!u1.sameFile(null));
 }
+
+@("URL.toURI returns a URI and applies OpenJDK 21 syntax validation")
+unittest
+{
+    import flint.java.net : URI;
+    import flint.java.net.urisyntaxexception : URISyntaxException;
+
+    auto u = new URL("http://Example.test:80/a%2f?x=%2B#Frag");
+    URI uri = u.toURI();
+    assert(uri.toString() == "http://Example.test:80/a%2f?x=%2B#Frag");
+    assert(uri.getScheme() == "http");
+    assert(uri.getAuthority() == "Example.test:80");
+    assert(uri.getRawPath() == "/a%2f");
+    assert(uri.getPath() == "/a/");
+
+    // file: an empty or null authority collapses to file:/... (OpenJDK file.Handler).
+    assert((new URL("file:///tmp/x")).toURI().toString() == "file:/tmp/x");
+    assert((new URL("file", absent(), -1, "/tmp/x")).toURI().toString() == "file:/tmp/x");
+
+    // IPv6 with a scope id, and non-ASCII authority/path, are legal URI characters.
+    assert((new URL("http://[fe80::1%25eth0]/x")).toURI().toString() == "http://[fe80::1%25eth0]/x");
+    assert((new URL("http://\u00fcnicode.com/x")).toURI().toString() == "http://\u00fcnicode.com/x");
+
+    // An illegal path character raises URISyntaxException with Java's reason and index.
+    auto badPath = collectException!URISyntaxException((new URL("http://h/a b")).toURI());
+    assert(badPath !is null);
+    assert(badPath.getInput() == "http://h/a b");
+    assert(badPath.getReason() == "Illegal character in path");
+    assert(badPath.getIndex() == 10);
+
+    // A malformed percent escape is rejected by the URI parser, not the authority scan.
+    auto badEscape = collectException!URISyntaxException((new URL("http://h/%zz")).toURI());
+    assert(badEscape !is null);
+    assert(badEscape.getReason() == "Malformed escape pair");
+    assert(badEscape.getIndex() == 9);
+}
