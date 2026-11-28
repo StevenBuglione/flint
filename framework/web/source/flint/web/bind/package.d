@@ -19,6 +19,7 @@ import flint.http : HttpStatus, HttpStatusCode, ProblemDetail;
 import flint.jakarta.servlet : ServletException;
 import flint.validation : BindException, BindingResult, FieldError, ObjectError;
 import flint.web : ErrorResponse, skipBacktrace;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -75,19 +76,26 @@ class MissingRequestValueException : ServletRequestBindingException
 {
     private bool missingAfterConversion;
 
-    ///
-    this(string message, bool missingAfterConversion = false)
+    /// With a message only.
+    this(string msg)
     {
-        super(message);
+        this(msg, false);
+    }
+
+    /// With a message and the post-conversion flag.
+    this(string msg, bool missingAfterConversion)
+    {
+        super(msg);
         this.missingAfterConversion = missingAfterConversion;
         // The base built the body before the flag was set; a subclass's status may depend on it.
         getBody().setStatus(getStatusCode().value());
     }
 
     /// ditto, with a message code.
-    protected this(string message, bool missingAfterConversion, string messageDetailCode, Any[] arguments)
+    protected this(string msg, bool missingAfterConversion, Nullable!string messageDetailCode,
+            Any[] messageDetailArguments)
     {
-        super(message, null, messageDetailCode, arguments);
+        super(msg, null, messageDetailCode.isNull ? null : messageDetailCode.get, messageDetailArguments);
         this.missingAfterConversion = missingAfterConversion;
         getBody().setStatus(getStatusCode().value());
     }
@@ -115,7 +123,7 @@ class MissingServletRequestParameterException : MissingRequestValueException
     /// ditto, for a method parameter.
     this(string parameterName, string parameterType, MethodParameter parameter, bool missingAfterConversion)
     {
-        super("", missingAfterConversion, null, [Any.of(parameterName)]);
+        super("", missingAfterConversion, Nullable!string.init, [Any.of(parameterName)]);
         this.parameterName = parameterName;
         this.parameterType = parameterType;
         this.parameter = parameter;
@@ -163,7 +171,7 @@ class MissingPathVariableException : MissingRequestValueException
     ///
     this(string variableName, MethodParameter parameter, bool missingAfterConversion = false)
     {
-        super("", missingAfterConversion, null, [Any.of(variableName)]);
+        super("", missingAfterConversion, Nullable!string.init, [Any.of(variableName)]);
         this.variableName = variableName;
         this.parameter = parameter;
         msg = "Required URI template variable '" ~ variableName ~ "' for method parameter type " ~ parameterTypeName(
@@ -198,7 +206,7 @@ class MissingRequestHeaderException : MissingRequestValueException
     ///
     this(string headerName, MethodParameter parameter, bool missingAfterConversion = false)
     {
-        super("", missingAfterConversion, null, [Any.of(headerName)]);
+        super("", missingAfterConversion, Nullable!string.init, [Any.of(headerName)]);
         this.headerName = headerName;
         this.parameter = parameter;
         msg = "Required request header '" ~ headerName ~ "' for method parameter type " ~ parameterTypeName(
@@ -228,7 +236,7 @@ class MissingRequestCookieException : MissingRequestValueException
     ///
     this(string cookieName, MethodParameter parameter, bool missingAfterConversion = false)
     {
-        super("", missingAfterConversion, null, [Any.of(cookieName)]);
+        super("", missingAfterConversion, Nullable!string.init, [Any.of(cookieName)]);
         this.cookieName = cookieName;
         this.parameter = parameter;
         msg = "Required cookie '" ~ cookieName ~ "' for method parameter type " ~ parameterTypeName(
@@ -274,7 +282,7 @@ class MissingMatrixVariableException : MissingRequestValueException
     /// For the missing `variableName` of `parameter`.
     this(string variableName, MethodParameter parameter, bool missingAfterConversion = false)
     {
-        super("", missingAfterConversion, null, [Any.of(variableName)]);
+        super("", missingAfterConversion, Nullable!string.init, [Any.of(variableName)]);
         this.variableName = variableName;
         this.parameter = parameter;
         msg = "Required matrix variable '" ~ variableName ~ "' for method parameter type " ~ parameterTypeName(

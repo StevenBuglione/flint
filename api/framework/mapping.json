@@ -35563,7 +35563,7 @@
 "org.springframework.web.bind.MissingRequestValueException":{"status":"ported","d":"flint.web.bind.MissingRequestValueException"},
 "org.springframework.web.bind.MissingRequestValueException#<init>(String)":{"status":"ported","d":"flint.web.bind.MissingRequestValueException"},
 "org.springframework.web.bind.MissingRequestValueException#<init>(String,boolean)":{"status":"ported","d":"flint.web.bind.MissingRequestValueException"},
-"org.springframework.web.bind.MissingRequestValueException#<init>(String,boolean,String,Object[])":{"status":"ported","d":"flint.web.bind.MissingRequestValueException"},
+"org.springframework.web.bind.MissingRequestValueException#<init>(String,boolean,String,Object[])":{"status":"adapted","rules":["R5","R23","R26"],"d":"flint.web.bind.MissingRequestValueException","note":"The exception detail message stays a plain string under R26; the @Nullable detail code is a Nullable!string (R5); the @Nullable Object[] arguments become an Any[] slice (R23, R26)."},
 "org.springframework.web.bind.MissingRequestValueException#isMissingAfterConversion()":{"status":"ported","d":"flint.web.bind.MissingRequestValueException.isMissingAfterConversion"},
 "org.springframework.web.bind.MissingServletRequestParameterException":{"status":"ported","d":"flint.web.bind.MissingServletRequestParameterException"},
 "org.springframework.web.bind.MissingServletRequestParameterException#<init>(String,MethodParameter,boolean)":{"status":"ported","d":"flint.web.bind.MissingServletRequestParameterException"},
