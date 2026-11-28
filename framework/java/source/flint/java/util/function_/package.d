@@ -112,31 +112,19 @@ interface Predicate(T)
     /// Whether `t` matches.
     bool test(T t);
 
+    /// Both this and `other`, short-circuiting. Implementors mix in `Defaults` or declare this method.
+    Predicate!T and(Predicate!T other);
+
+    /// This or `other`, short-circuiting. Implementors mix in `Defaults` or declare this method.
+    Predicate!T or(Predicate!T other);
+
+    /// The logical negation of this predicate. Implementors mix in `Defaults` or declare this method.
+    Predicate!T negate();
+
     /// The `test` method as a delegate.
     final bool delegate(T) @safe asDelegate()
     {
         return &test;
-    }
-
-    /// Both this and `other`, short-circuiting.
-    final Predicate!T and(Predicate!T other)
-    {
-        auto self = this;
-        return of((T t) => self.test(t) && other.test(t));
-    }
-
-    /// This or `other`, short-circuiting.
-    final Predicate!T or(Predicate!T other)
-    {
-        auto self = this;
-        return of((T t) => self.test(t) || other.test(t));
-    }
-
-    /// The logical negation of this predicate.
-    final Predicate!T negate()
-    {
-        auto self = this;
-        return of((T t) => !self.test(t));
     }
 
     /// A `Predicate` calling `dg`.
@@ -148,7 +136,42 @@ interface Predicate(T)
     /// Java's `Predicate.not(target)`.
     static Predicate!T not(Predicate!T target)
     {
+        import flint.java.lang : NullPointerException;
+
+        if (target is null)
+            throw new NullPointerException("target");
         return target.negate();
+    }
+
+    /// The default `and`, `or` and `negate` implementations (R3): implementors mix this in.
+    mixin template Defaults(Element = T)
+    {
+        import flint.java.lang : NullPointerException;
+
+        /// Both this and `other`, short-circuiting.
+        override Predicate!Element and(Predicate!Element other) @safe
+        {
+            if (other is null)
+                throw new NullPointerException("other");
+            Predicate!Element self = this;
+            return Predicate!Element.of((Element t) => self.test(t) && other.test(t));
+        }
+
+        /// This or `other`, short-circuiting.
+        override Predicate!Element or(Predicate!Element other) @safe
+        {
+            if (other is null)
+                throw new NullPointerException("other");
+            Predicate!Element self = this;
+            return Predicate!Element.of((Element t) => self.test(t) || other.test(t));
+        }
+
+        /// The logical negation of this predicate.
+        override Predicate!Element negate() @safe
+        {
+            Predicate!Element self = this;
+            return Predicate!Element.of((Element t) => !self.test(t));
+        }
     }
 }
 
@@ -276,6 +299,8 @@ private final class DelegateBiConsumer(T, U) : BiConsumer!(T, U)
 
 private final class DelegatePredicate(T) : Predicate!(T)
 {
+    mixin Predicate!T.Defaults;
+
     private bool delegate(T) @safe dg;
 
     this(bool delegate(T) @safe dg) pure nothrow @nogc
