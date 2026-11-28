@@ -42,6 +42,12 @@
     "control": "tools/jdk-closure-controls/index-out-of-bounds-exception.d",
     "template_compile": "separate"
   },
+  "flint.java.lang.negativearraysizeexception": {
+    "incremental_linked_bytes": 652,
+    "template_instances": 498,
+    "control": "tools/jdk-closure-controls/runtime-exception.d",
+    "template_compile": "separate"
+  },
   "flint.java.lang.number": {
     "incremental_linked_bytes": 1232,
     "template_instances": 35
