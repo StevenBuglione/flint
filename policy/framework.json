@@ -615,6 +615,9 @@
   "java-concurrent-copyonwrite": {
    "directory": "framework/java-concurrent-copyonwrite",
    "module": "flint.java.util.concurrent.copyonwritearraylist",
+   "also": [
+    "flint.java.util.concurrent.copyonwritearrayset"
+   ],
    "java_types": [
     "java.util.concurrent.CopyOnWriteArrayList",
     "java.util.concurrent.CopyOnWriteArraySet"

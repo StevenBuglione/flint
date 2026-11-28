@@ -103,9 +103,9 @@ unittest
 @("equals and hashCode follow the set contract")
 unittest
 {
-    auto a = intSet([1, 2, 3]);
-    auto b = intSet([3, 2, 1]);
-    auto c = intSet([1, 2, 4]);
+    auto a = new CopyOnWriteArraySet!int(new CopyOnWriteArrayList!int([1, 2, 3]));
+    auto b = new CopyOnWriteArraySet!int(new CopyOnWriteArrayList!int([3, 2, 1]));
+    auto c = new CopyOnWriteArraySet!int(new CopyOnWriteArrayList!int([1, 2, 4]));
     assert(a == b);
     assert(a.toHash == b.toHash);
     assert(a != c);

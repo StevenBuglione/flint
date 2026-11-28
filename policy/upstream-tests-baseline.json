@@ -1,4 +1,6 @@
 {
+  "schema": "flint.upstream-tests-baseline/1",
+  "note": "Upstream test classes each module may record as \"deferred\", a ratchet like policy/quality-baseline.json (coordinator decision, 2026-11-26): the definition of done fails on a deferred class not listed here and on a listed class no longer deferred, until --shrink-upstream-tests removes it. Only the seed (--seed-upstream-tests, the integration owner's) adds entries.",
   "modules": {
     "ai-commons": [
       "org/springframework/ai/document/DocumentBuilderTests.java",
@@ -5635,6 +5637,12 @@
       "javax/sql/testng/test/rowset/spi/SyncProviderExceptionTests.java",
       "javax/sql/testng/test/rowset/webrowset/CommonWebRowSetTests.java"
     ],
+    "java-base64": [
+      "java/util/Base64/Base64GetEncoderTest.java",
+      "java/util/Base64/TestBase64.java",
+      "java/util/Base64/TestBase64Golden.java",
+      "java/util/Base64/TestEncodingDecodingLength.java"
+    ],
     "java-collections": [
       "java/util/BitSet/And.java",
       "java/util/BitSet/BSMethods.java",
@@ -5745,8 +5753,6 @@
       "java/util/concurrent/ConcurrentQueues/IteratorWeakConsistency.java",
       "java/util/concurrent/ConcurrentQueues/OfferRemoveLoops.java",
       "java/util/concurrent/ConcurrentQueues/RemovePollRace.java",
-      "java/util/concurrent/CopyOnWriteArraySet/RacingCows.java",
-      "java/util/concurrent/CopyOnWriteArraySet/SerializationTest.java",
       "java/util/concurrent/CountDownLatch/Basic.java",
       "java/util/concurrent/CyclicBarrier/Basic.java",
       "java/util/concurrent/DelayQueue/Iterate.java",
@@ -7088,12 +7094,6 @@
       "java/time/test/java/time/zone/TestZoneRulesProvider.java",
       "java/time/test/java/util/TestFormatter.java"
     ],
-    "java-base64": [
-      "java/util/Base64/Base64GetEncoderTest.java",
-      "java/util/Base64/TestBase64.java",
-      "java/util/Base64/TestBase64Golden.java",
-      "java/util/Base64/TestEncodingDecodingLength.java"
-    ],
     "java-util": [
       "java/util/AbstractCollection/ToArrayTest.java",
       "java/util/AbstractCollection/ToString.java",
@@ -7723,6 +7723,18 @@
       "java/util/spi/ToolProviderDescriptionTest.java",
       "java/util/spi/ToolProviderTest.java"
     ],
+    "java-util-jar": [
+      "java/util/jar/Attributes/IterationOrder.java",
+      "java/util/jar/Attributes/Name.java",
+      "java/util/jar/Attributes/NullAndEmptyKeysAndValues.java",
+      "java/util/jar/Attributes/PutAndPutAll.java",
+      "java/util/jar/Attributes/TestAttrsNL.java",
+      "java/util/jar/Manifest/CreateManifest.java",
+      "java/util/jar/Manifest/IncludeInExceptionsTest.java",
+      "java/util/jar/Manifest/LineBreakLineWidth.java",
+      "java/util/jar/Manifest/ValueUtf8Coding.java",
+      "java/util/jar/Manifest/WriteBinaryStructure.java"
+    ],
     "java-zip": [
       "java/util/zip/Available.java",
       "java/util/zip/Bounds.java",
@@ -7803,18 +7815,6 @@
       "java/util/zip/ZipInputStream/Constructor.java",
       "java/util/zip/ZipInputStream/Skip.java",
       "java/util/zip/ZipOutputStream/EmptyComment.java"
-    ],
-    "java-util-jar": [
-      "java/util/jar/Attributes/IterationOrder.java",
-      "java/util/jar/Attributes/Name.java",
-      "java/util/jar/Attributes/NullAndEmptyKeysAndValues.java",
-      "java/util/jar/Attributes/PutAndPutAll.java",
-      "java/util/jar/Attributes/TestAttrsNL.java",
-      "java/util/jar/Manifest/CreateManifest.java",
-      "java/util/jar/Manifest/IncludeInExceptionsTest.java",
-      "java/util/jar/Manifest/LineBreakLineWidth.java",
-      "java/util/jar/Manifest/ValueUtf8Coding.java",
-      "java/util/jar/Manifest/WriteBinaryStructure.java"
     ],
     "jdbc": [
       "org/springframework/jdbc/config/InitializeDatabaseIntegrationTests.java",
@@ -9488,7 +9488,5 @@
       "org/springframework/web/servlet/view/xslt/XsltViewResolverTests.java",
       "org/springframework/web/servlet/view/xslt/XsltViewTests.java"
     ]
-  },
-  "note": "Upstream test classes each module may record as \"deferred\", a ratchet like policy/quality-baseline.json (coordinator decision, 2026-11-26): the definition of done fails on a deferred class not listed here and on a listed class no longer deferred, until --shrink-upstream-tests removes it. Only the seed (--seed-upstream-tests, the integration owner's) adds entries.",
-  "schema": "flint.upstream-tests-baseline/1"
+  }
 }

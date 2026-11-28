@@ -9,12 +9,12 @@
       "status": "deferred"
     },
     "java/util/concurrent/CopyOnWriteArraySet/RacingCows.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "The snapshot-iterator race is covered by the iterator test in tests/copyonwritearrayset_test.d; the JTReg harness needs the Executor stack that is still deferred."
     },
     "java/util/concurrent/CopyOnWriteArraySet/SerializationTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "Java object serialization is out of scope for the Flint port (ADR-030); the set's contents and equals/hashCode are covered by tests/copyonwritearrayset_test.d."
     }
   },
   "module": "java-concurrent-copyonwrite",
