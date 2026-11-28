@@ -42,10 +42,9 @@ module flint.java.util.concurrent.copyonwritearraylist;
 
 import core.sync.mutex : Mutex;
 import flint.conc.slot : ProcessSlot;
-import flint.java.lang : IndexOutOfBoundsException, UnsupportedOperationException, javaEquals, javaHashCode,
-    valueOf;
-import flint.java.util : AbstractList, Collection, Comparator, Iterator, List, NoSuchElementException, compareNatural,
-    stableSort;
+import flint.java.lang : IndexOutOfBoundsException, UnsupportedOperationException, javaEquals, javaHashCode, valueOf;
+import flint.java.util : AbstractList, Collection, Comparator, Iterator, List,
+    NoSuchElementException, compareNatural, stableSort;
 
 @safe:
 
@@ -198,7 +197,8 @@ class CopyOnWriteArrayList(T) : AbstractList!T
         auto items = current().items;
         checkIndex(index, items.length);
         auto removed = items[index];
-        auto copy = new T[items.length - 1];
+        const remaining = cast(size_t) cast(ptrdiff_t) items.length - 1;
+        auto copy = new T[remaining];
         copy[0 .. index] = items[0 .. index];
         copy[index .. $] = items[index + 1 .. $];
         publish(copy);
@@ -214,7 +214,8 @@ class CopyOnWriteArrayList(T) : AbstractList!T
         foreach (i, e; items)
             if (javaEquals(e, element))
             {
-                auto copy = new T[items.length - 1];
+                const remaining = cast(size_t) cast(ptrdiff_t) items.length - 1;
+                auto copy = new T[remaining];
                 copy[0 .. i] = items[0 .. i];
                 copy[i .. $] = items[i + 1 .. $];
                 publish(copy);
@@ -322,6 +323,11 @@ class CopyOnWriteArrayList(T) : AbstractList!T
         }
         catch (Exception)
             return 0;
+    }
+
+    override bool opEquals(Object other)
+    {
+        return equals(other);
     }
 }
 

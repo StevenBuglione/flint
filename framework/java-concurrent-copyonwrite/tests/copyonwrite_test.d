@@ -68,7 +68,7 @@ unittest
 unittest
 {
     auto list = new CopyOnWriteArrayList!int([1, 2, 3]);
-    Iterator!int iterator = list.iterator;
+    auto iterator = list.iterator();
     list.add(4);
     assert(iterator.hasNext);
     assert(iterator.next == 1);
@@ -167,8 +167,7 @@ private final class Appender
 }
 
 @("concurrent appends from several threads")
-@system
-unittest
+@system unittest
 {
     import core.thread : Thread;
 
