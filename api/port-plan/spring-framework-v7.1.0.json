@@ -3541,6 +3541,23 @@
 "applyRelativePath(String,String)": [
 "pure",
 "nothrow"
+],
+"cleanPath(String)": [
+"pure",
+"nothrow"
+],
+"pathEquals(String,String)": [
+"pure",
+"nothrow"
+],
+"stripFilenameExtension(String)": [
+"pure",
+"nothrow",
+"@nogc"
+],
+"trimAllWhitespace(String)": [
+"pure",
+"nothrow"
 ]
 }
 },
