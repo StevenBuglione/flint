@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,018 | 704 | 0 | 1,915 | 13,784 |
+| framework | openjdk@21.0.13 | 2,018 | 716 | 0 | 1,915 | 13,772 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2301,6 +2301,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.InterruptedIOException` | `flint.java.io.interruptedioexception.InterruptedIOException` | [R1](api-mapping.md#r1-packages-and-names) | Import InterruptedIOException from flint.java.io.interruptedioexception until the java.io aggregate re-exports it. |
 | `java.io.OutputStream#write(byte[])` | `flint.java.io.OutputStream.write` | [R26](api-mapping.md#r26-null-arrays) | Unsigned D slices preserve the byte payload. A null slice counts as an empty array. |
 | `java.io.OutputStream#write(byte[],int,int)` | `flint.java.io.OutputStream.write` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.io.OutputStreamWriter#write(String,int,int)` | `flint.java.io.OutputStreamWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's UTF-16 range adapter and encodes the result as UTF-8; a split surrogate pair encodes U+FFFD for each lone half (R14). A null string is empty (R26). |
+| `java.io.OutputStreamWriter#write(char[],int,int)` | `flint.java.io.OutputStreamWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's concrete UTF-16 adapter and encodes the range as UTF-8; a lone half encodes U+FFFD (R14) and a null array is empty (R26). |
+| `java.io.OutputStreamWriter#write(int)` | `flint.java.io.OutputStreamWriter.write` | [R14](api-mapping.md#r14-strings-and-text) | Inherits Writer's single-character write; a lone surrogate encodes U+FFFD (R14). |
 | `java.io.PushbackInputStream` | `flint.java.io.PushbackInputStream` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Declared in the flint.java.io aggregate; byte arrays are D ubyte slices (R26). Synchronization on the stream monitor is omitted because a Flint stream is confined to one fiber. |
 | `java.io.PushbackInputStream#buf` | `flint.java.io.PushbackInputStream.buf` | [R1](api-mapping.md#r1-packages-and-names) | Null marks the closed stream, as in Java. |
 | `java.io.PushbackInputStream#close()` | `flint.java.io.PushbackInputStream.close` | [R1](api-mapping.md#r1-packages-and-names) | Java takes an internal lock for the exact class; a Flint stream is confined to one fiber, so close is direct. |
@@ -2312,7 +2315,16 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.SequenceInputStream#close()` | `flint.java.io.SequenceInputStream.close` | [R1](api-mapping.md#r1-packages-and-names) | Closes the current stream and every stream that follows. The first failure is rethrown; later failures are dropped because Flint's Throwable has no suppressed-exception API. |
 | `java.io.SequenceInputStream#read(byte[],int,int)` | `flint.java.io.SequenceInputStream.read` | [R26](api-mapping.md#r26-null-arrays) | A D ubyte slice; a null slice counts as empty under R26. A zero length returns zero after the in-stream check, as Java does. |
 | `java.io.SequenceInputStream#transferTo(OutputStream)` | `flint.java.io.SequenceInputStream.transferTo` | [R1](api-mapping.md#r1-packages-and-names) | Copies through the sequence and returns zero when it is already exhausted, before touching the sink. The interrupt check is omitted because flint.java has no Thread.interrupted yet. |
+| `java.io.StringWriter#write(String)` | `flint.java.io.StringWriter.write` | [R26](api-mapping.md#r26-null-arrays) | Appends the text to the buffer; a null string is empty (R26). |
+| `java.io.StringWriter#write(String,int,int)` | `flint.java.io.StringWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's UTF-16 range adapter and appends the result; a split surrogate pair writes U+FFFD for each lone half (R14). A null string is empty (R26). |
+| `java.io.StringWriter#write(char[],int,int)` | `flint.java.io.StringWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's concrete UTF-16 adapter; a lone half writes U+FFFD (R14) and a null array is empty (R26). |
+| `java.io.StringWriter#write(int)` | `flint.java.io.StringWriter.write` | [R14](api-mapping.md#r14-strings-and-text) | Inherits Writer's single-character write; a lone surrogate appends U+FFFD (R14). |
 | `java.io.UnsupportedEncodingException` | `flint.java.io.unsupportedencodingexception.UnsupportedEncodingException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions) |  |
+| `java.io.Writer#write(String)` | `flint.java.io.Writer.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | The whole UTF-8 text overload is Flint's abstract sink; Java's concrete write(String) forwards to the UTF-16 ranged overload with the string's length. A null string is empty (R26). |
+| `java.io.Writer#write(String,int,int)` | `flint.java.io.Writer.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | `off` and `len` count UTF-16 code units over Flint's UTF-8 text; a range that splits a supplementary character writes U+FFFD for the lone half (R14). A null string is empty (R26), and a range outside the text throws IndexOutOfBoundsException. |
+| `java.io.Writer#write(char[])` | `flint.java.io.Writer.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Java's char[] is a D const(wchar)[]; adjacent surrogates form one code point and a lone half writes U+FFFD (R14). A null array is empty (R26). |
+| `java.io.Writer#write(char[],int,int)` | `flint.java.io.Writer.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Java's abstract UTF-16 array hook is a concrete adapter in Flint: it transcodes the wchar range to the UTF-8 sink. `off` and `len` count wchar units; a split surrogate pair writes U+FFFD for each lone half (R14). A null array is empty (R26), and an out-of-range throws IndexOutOfBoundsException. |
+| `java.io.Writer#write(int)` | `flint.java.io.Writer.write` | [R14](api-mapping.md#r14-strings-and-text) | Flint's write(dchar) writes one Unicode code point; Java's write(int) writes the low 16 bits as one UTF-16 code unit. A lone surrogate or out-of-range value writes U+FFFD (R14). |
 
 #### java.lang
 
@@ -11029,7 +11041,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 587 | 0 |
+| java.io | 575 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -12000,23 +12012,17 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.StringWriter#append(char)` | 2 | Missing single UTF-16 code-unit append with a StringWriter result. |
 | framework | `java.io.StringWriter#getBuffer()` | 2 | Missing access to the same live mutable StringBuffer that the writer uses as its lock. |
 | framework | `java.io.StringWriter#toString()` | 2 | Sequential snapshots preserve the text, but the method does not synchronize on the underlying buffer monitor as Java does. |
-| framework | `java.io.StringWriter#write(String)` | 2 | Java appends the text null for a null string. The existing plain D slice treats null as empty. The distinct nullable string contract requires R5. |
-| framework | `java.io.StringWriter#write(String,int,int)` | 2 | Missing ranged string write with Java UTF-16 offsets and length. |
-| framework | `java.io.StringWriter#write(char[],int,int)` | 2 | Missing ranged write of Java UTF-16 code units with checked array bounds. |
-| framework | `java.io.StringWriter#write(int)` | 2 | Java writes the low 16 bits as one UTF-16 code unit, including a lone surrogate. The inherited D overload encodes a Unicode code point or substitutes a replacement character. |
 | framework | `java.io.UTFDataFormatException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.io.UTFDataFormatException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
 | framework | `java.io.UncheckedIOException#<init>(IOException)` | 2 | The constructor checks null causes. Java derives the message from the virtual IOException.toString method. The current formatter uses the cause's type and raw detail. |
 | framework | `java.io.UncheckedIOException#<init>(String,IOException)` | 2 | The constructor checks null causes. The inherited Java detail accessor still needs R26 empty-string normalization. |
 | framework | `java.io.UnsupportedEncodingException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.io.UnsupportedEncodingException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
-| framework | `java.io.Writer` | 2 | The abstract sink implements Closeable and Flushable. Appendable and the UTF-16 string-range write hooks are pending. |
+| framework | `java.io.Writer` | 2 | The abstract sink implements Closeable and Flushable and the UTF-16 write hooks; Appendable is still pending. |
 | framework | `java.io.Writer#<init>()` | 2 | Java initializes the protected lock to the writer itself. The existing type has no lock field. |
 | framework | `java.io.Writer#append(CharSequence)` | 2 | Java appends the four characters null for an absent character sequence. The existing method treats a null slice as empty. |
 | framework | `java.io.Writer#close()` | 2 | Java requires subclasses to implement close. The existing method is a concrete no-op. |
 | framework | `java.io.Writer#flush()` | 2 | Java requires subclasses to implement flush. The existing method is a concrete no-op. |
-| framework | `java.io.Writer#write(String)` | 2 | Java forwards a whole string to the virtual string-range overload with UTF-16 length. The existing method is abstract and has no string-range overload. |
-| framework | `java.io.Writer#write(char[],int,int)` | 2 | Missing abstract UTF-16 array-range hook used by Reader.transferTo. The current abstract text overload accepts a whole UTF-8 slice. |
 | framework | `java.lang.AssertionError#<init>(Object)` | 2 | Requires converting an Object detail to its Java string and retaining a Throwable detail as the cause. |
 | framework | `java.lang.AssertionError#<init>(boolean)` | 2 | Missing primitive overload. Java makes the detail true or false and leaves the cause absent. |
 | framework | `java.lang.AssertionError#<init>(char)` | 2 | Missing primitive overload. Java preserves one UTF-16 code unit in the detail, including NUL or an unpaired surrogate. |

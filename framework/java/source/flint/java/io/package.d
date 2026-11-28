@@ -1882,13 +1882,171 @@ class DataInputStream : FilterInputStream, DataInput
     }
 }
 
+// The UTF-8 byte range of `text` for the UTF-16 unit range `[off, off + len)`, as Java's `String.getChars` selects
+// it. A range that starts on the low half of a supplementary character begins after it and reports a leading U+FFFD;
+// one that ends on that low half ends before it and reports a trailing U+FFFD (R14). `inBounds` is false for a
+// negative range or one past the text's UTF-16 length.
+private struct Utf16Range
+{
+    size_t start;
+    size_t end;
+    bool leadReplacement;
+    bool trailReplacement;
+    bool inBounds;
+}
+
+private Utf16Range utf16Range(scope const(char)[] text, long off, long len) pure nothrow @nogc
+{
+    import flint.engine.aot.text : decodeUtf8;
+
+    Utf16Range result;
+    if (off < 0 || len < 0)
+        return result;
+    const long end = off + len;
+    if (end < off) // overflow
+        return result;
+
+    size_t units;
+    size_t i;
+    bool started;
+    size_t bodyStart;
+    size_t bodyEnd;
+    while (i < text.length)
+    {
+        const size_t codePointStart = i;
+        const dchar c = decodeUtf8(text, i);
+        const size_t width = c >= 0x10000 ? 2 : 1; // a supplementary character is a surrogate pair
+        const size_t codePointEnd = units + width;
+        if (codePointEnd <= off)
+        {
+            units = codePointEnd;
+            continue;
+        }
+        if (units >= end)
+            break;
+        if (!started)
+        {
+            started = true;
+            if (units < off)
+            {
+                result.leadReplacement = true;
+                bodyStart = i; // the selected low surrogate begins after its pair
+            }
+            else
+                bodyStart = codePointStart;
+        }
+        if (codePointEnd > end)
+        {
+            result.trailReplacement = true;
+            bodyEnd = codePointStart; // the selected high surrogate ends before its pair
+        }
+        else
+            bodyEnd = i;
+        units = codePointEnd;
+    }
+    if (units < end)
+        return result; // the range runs past the text's UTF-16 length
+    result.inBounds = true;
+    if (started && bodyStart < bodyEnd)
+    {
+        result.start = bodyStart;
+        result.end = bodyEnd;
+    }
+    return result;
+}
+
+// The UTF-8 encoding of the UTF-16 `units`. Adjacent high and low surrogates form one supplementary code point; a
+// lone half is U+FFFD (R14).
+private string utf16ToUtf8(scope const(wchar)[] units) pure nothrow
+{
+    if (units.length == 0)
+        return null;
+    char[] encoded = new char[units.length * 3]; // three bytes per BMP unit is the worst case
+    size_t n;
+    size_t i;
+    while (i < units.length)
+    {
+        const uint unit = units[i++];
+        dchar c;
+        if (unit >= 0xD800 && unit <= 0xDBFF && i < units.length && units[i] >= 0xDC00 && units[i] <= 0xDFFF)
+            c = cast(dchar)(0x10000 + ((unit - 0xD800) << 10) + (units[i++] - 0xDC00));
+        else if (unit >= 0xD800 && unit <= 0xDFFF)
+            c = 0xFFFD;
+        else
+            c = cast(dchar) unit;
+        if (c < 0x80)
+            encoded[n++] = cast(char) c;
+        else if (c < 0x800)
+        {
+            encoded[n++] = cast(char)(0xC0 | (c >> 6));
+            encoded[n++] = cast(char)(0x80 | (c & 0x3F));
+        }
+        else if (c < 0x10000)
+        {
+            encoded[n++] = cast(char)(0xE0 | (c >> 12));
+            encoded[n++] = cast(char)(0x80 | ((c >> 6) & 0x3F));
+            encoded[n++] = cast(char)(0x80 | (c & 0x3F));
+        }
+        else
+        {
+            encoded[n++] = cast(char)(0xF0 | (c >> 18));
+            encoded[n++] = cast(char)(0x80 | ((c >> 12) & 0x3F));
+            encoded[n++] = cast(char)(0x80 | ((c >> 6) & 0x3F));
+            encoded[n++] = cast(char)(0x80 | (c & 0x3F));
+        }
+    }
+    return encoded[0 .. n].idup;
+}
+
 /// Java's `Writer`: a sink of characters (UTF-8 text in Flint).
 abstract class Writer : Closeable, Flushable
 {
-    /// Write `text`.
+    /// Write `text`. Java's `write(String)`, the abstract sink in Flint.
     abstract void write(scope const(char)[] text);
 
-    /// Write one character.
+    /// Java's `write(String,int,int)`: `off` and `len` count UTF-16 code units. A range that splits a supplementary
+    /// character writes U+FFFD for the lone half (R14); a range outside the text is rejected.
+    void write(scope const(char)[] text, int off, int len)
+    {
+        import flint.java.lang : IndexOutOfBoundsException;
+
+        const Utf16Range range = utf16Range(text, off, len);
+        if (!range.inBounds)
+            throw new IndexOutOfBoundsException("Write range exceeds the text");
+        if (!range.leadReplacement && !range.trailReplacement)
+        {
+            write(text[range.start .. range.end]);
+            return;
+        }
+        string replaced;
+        if (range.leadReplacement)
+            replaced ~= "\uFFFD";
+        if (range.start < range.end)
+            replaced ~= text[range.start .. range.end];
+        if (range.trailReplacement)
+            replaced ~= "\uFFFD";
+        write(replaced);
+    }
+
+    /// Java's `write(char[])`: the whole UTF-16 array. Java's `char` is a D `wchar`; a null array is empty (R26).
+    void write(scope const(wchar)[] text)
+    {
+        write(text, 0, cast(int) text.length);
+    }
+
+    /// Java's `write(char[],int,int)`: a UTF-16 array range, transcoded to the UTF-8 sink. Adjacent surrogates form
+    /// one code point and each lone half writes U+FFFD (R14); a null array is empty (R26).
+    void write(scope const(wchar)[] text, int off, int len)
+    {
+        import flint.java.lang : IndexOutOfBoundsException;
+
+        if (off < 0 || len < 0 || cast(long) off + len > text.length)
+            throw new IndexOutOfBoundsException("Write range exceeds the character array");
+        write(utf16ToUtf8(text[off .. off + len]));
+    }
+
+    /// Write one character. Java's `write(int)` writes the low 16 bits as one UTF-16 code unit; Flint's `write(dchar)`
+    /// writes one code point, and a lone surrogate or out-of-range value is U+FFFD (R14).
     void write(dchar c)
     {
         import flint.engine.aot.text : utf8;
