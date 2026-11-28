@@ -389,9 +389,9 @@ private size_t byteOffset(scope const(char)[] text, int unit) pure nothrow @nogc
 }
 
 /// A UTF-8 slice between two UTF-16 offsets drawn from match boundaries.
-private string sliceUtf16(string text, int first, int last) pure nothrow @nogc
+private string sliceUtf16(string text, int fromUnit, int toUnit) pure nothrow @nogc
 {
-    return text[byteOffset(text, first) .. byteOffset(text, last)];
+    return text[byteOffset(text, fromUnit) .. byteOffset(text, toUnit)];
 }
 
 /// A malformed regular expression and the approximate position of the error.
