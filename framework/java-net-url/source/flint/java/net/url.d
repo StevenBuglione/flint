@@ -38,8 +38,10 @@ module flint.java.net.url;
 
 import flint.engine.aot.text : decimal, decodeUtf8, utf8;
 import flint.java.lang.javaobject : JavaObject;
+import flint.java.net : URI;
 import flint.java.net.internal.ipv6literal : validIpv6;
 import flint.java.net.malformedurlexception : MalformedURLException;
+import flint.java.net.urisyntaxexception : URISyntaxException;
 import std.typecons : Nullable;
 
 @safe:
@@ -258,6 +260,19 @@ final class URL
     override string toString() const pure nothrow
     {
         return toExternalForm();
+    }
+
+    /// Java's `URL.toURI()`: this URL as a `URI`, validating the syntax it carries (OpenJDK 21).
+    URI toURI() pure
+    {
+        const uri = URI(toExternalForm());
+        if (authority_.present)
+        {
+            const err = checkAuthority(this);
+            if (err !is null)
+                throw new URISyntaxException(authority_.value, err);
+        }
+        return uri;
     }
 
     /// Compares two URLs excluding the fragment component without DNS resolution (D-NET-1).
@@ -1333,5 +1348,21 @@ private string checkExternalForm(const OptString userInfo, const OptString host)
     }
     if (host.present)
         return checkHost(host.value);
+    return null;
+}
+
+// OpenJDK sun.net.util.IPAddressUtil.checkAuthority(URL).
+private string checkAuthority(const URL url) pure nothrow
+{
+    const userInfo = url.userInfo_;
+    const host = url.host_;
+    string err = checkUserInfo(userInfo.present ? userInfo.value : null);
+    if (err !is null)
+        return err;
+    err = checkHost(host.present ? host.value : null);
+    if (err !is null)
+        return err;
+    if (!host.present && !userInfo.present)
+        return checkAuth(url.authority_.value);
     return null;
 }
