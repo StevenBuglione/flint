@@ -691,7 +691,20 @@
 "kind": "class",
 "module": "flint.security.web.authentication.www",
 "d": "BasicAuthenticationEntryPoint",
-"status": "ported"
+"status": "ported",
+"accessors": {
+"getter": [
+"const",
+"pure",
+"nothrow",
+"@nogc"
+],
+"setter": [
+"pure",
+"nothrow",
+"@nogc"
+]
+}
 },
 "org.springframework.security.web.authentication.www.BasicAuthenticationFilter": {
 "kind": "class",
