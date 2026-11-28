@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,182 | 797 | 0 | 1,957 | 13,485 |
+| framework | openjdk@21.0.13 | 2,199 | 817 | 0 | 1,957 | 13,448 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2492,8 +2492,28 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.net.StandardProtocolFamily#INET` | `flint.java.net.standardprotocolfamily.StandardProtocolFamily.INET` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.net.StandardProtocolFamily#INET6` | `flint.java.net.standardprotocolfamily.StandardProtocolFamily.INET6` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.net.StandardProtocolFamily#UNIX` | `flint.java.net.standardprotocolfamily.StandardProtocolFamily.UNIX` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
-| `java.net.URI` | `flint.java.net.URI` | [R11](api-mapping.md#r11-object-identity-and-equality) | An immutable D struct holds the original URI text and is copied by value. |
+| `java.net.URI` | `flint.java.net.URI` | [R11](api-mapping.md#r11-object-identity-and-equality) | An immutable D struct holds the parsed RFC 2396 components and the original text, and is copied by value. Component equality, hashing and ordering keep Java's semantics (D-NET-1). |
+| `java.net.URI#<init>(String)` | `flint.java.net.URI.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) | Parses the string with Java's RFC 2396 grammar and throws URISyntaxException; a null input raises NullPointerException. |
+| `java.net.URI#<init>(String,String,String)` | `flint.java.net.URI.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) | Null components are undefined, matching Java; the components are quoted and re-parsed. |
+| `java.net.URI#<init>(String,String,String,String)` | `flint.java.net.URI.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) | Convenience constructor over the seven-argument form. |
+| `java.net.URI#<init>(String,String,String,String,String)` | `flint.java.net.URI.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) | Null components are undefined, matching Java; the components are quoted and re-parsed. |
+| `java.net.URI#<init>(String,String,String,int,String,String,String)` | `flint.java.net.URI.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) | Null components are undefined, matching Java; the components are quoted and re-parsed. |
+| `java.net.URI#compareTo(URI)` | `flint.java.net.URI.opCmp` | [R11](api-mapping.md#r11-object-identity-and-equality), [D-NET-1](api-mapping.md#deviations) | Java's component ordering: opaque after hierarchical, scheme and host without case. |
+| `java.net.URI#equals(Object)` | `flint.java.net.URI.opEquals` | [R11](api-mapping.md#r11-object-identity-and-equality), [D-NET-1](api-mapping.md#deviations) | Compares components: scheme and host without case, escapes by hex-digit case. |
+| `java.net.URI#getAuthority()` | `flint.java.net.URI.getAuthority` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Null denotes an undefined authority. |
+| `java.net.URI#getFragment()` | `flint.java.net.URI.getFragment` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Null denotes an undefined fragment. |
+| `java.net.URI#getHost()` | `flint.java.net.URI.getHost` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Null denotes a registry-based or undefined authority. |
+| `java.net.URI#getPath()` | `flint.java.net.URI.getPath` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Null denotes an opaque URI. |
+| `java.net.URI#getQuery()` | `flint.java.net.URI.getQuery` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Null denotes an undefined query. |
+| `java.net.URI#getRawAuthority()` | `flint.java.net.URI.getRawAuthority` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Null denotes an undefined authority. |
+| `java.net.URI#getRawFragment()` | `flint.java.net.URI.getRawFragment` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Null denotes an undefined fragment. |
+| `java.net.URI#getRawPath()` | `flint.java.net.URI.getRawPath` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Null denotes an opaque URI. |
+| `java.net.URI#getRawQuery()` | `flint.java.net.URI.getRawQuery` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Null denotes an undefined query. |
+| `java.net.URI#getRawUserInfo()` | `flint.java.net.URI.getRawUserInfo` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Null denotes undefined user-information. |
 | `java.net.URI#getScheme()` | `flint.java.net.URI.getScheme` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A null string denotes an absent scheme. Every present scheme is nonempty. |
+| `java.net.URI#getUserInfo()` | `flint.java.net.URI.getUserInfo` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Null denotes undefined user-information. |
+| `java.net.URI#hashCode()` | `flint.java.net.URI.toHash` | [R11](api-mapping.md#r11-object-identity-and-equality), [D-NET-1](api-mapping.md#deviations) | Java's component hash, including UTF-16 code units and case-normalized escapes. |
+| `java.net.URISyntaxException` | `flint.java.net.urisyntaxexception.URISyntaxException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Import from flint.java.net.urisyntaxexception; flint.java.net does not re-export it until the JDK aggregate exists. Checked Java Exception mapped to D Exception (D-8) with R26 detail message handling; null input or reason raises NullPointerException as Java does. |
 | `java.net.URL` | `flint.java.net.url.URL` | [R1](api-mapping.md#r1-packages-and-names), [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality), [R26](api-mapping.md#r26-null-arrays), [D-NET-1](api-mapping.md#deviations) | Leaf import: flint.java.net.url : URL. Parsing-only subset (no I/O or global URLStreamHandlerFactory). Optional components (authority, userInfo, host, query, ref) use R5 Nullable!string; null string slices count as empty under R26; equals, sameFile, and hashCode compare normalized components without DNS resolution (D-NET-1). Implements JavaObject without Serializable. |
 | `java.net.URL#<init>(String)` | `flint.java.net.url.URL.this` | [R26](api-mapping.md#r26-null-arrays) | Null spec slice counts as empty under R26 and throws MalformedURLException. |
 | `java.net.URL#<init>(String,String,String)` | `flint.java.net.url.URL.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | Accepts string or Nullable!string host; null protocol or file counts as empty under R26. |
@@ -11250,7 +11270,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 132 | 0 |
-| java.net | 552 | 0 |
+| java.net | 515 | 0 |
 | java.net.spi | 0 | 1 |
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |
@@ -12353,16 +12373,11 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.net.SocketException#<init>(Throwable)` | 2 | Requires canonical virtual Throwable.toString() dispatch for cause-derived detail. |
 | framework | `java.net.SocketTimeoutException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.SocketTimeoutException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
-| framework | `java.net.URI#<init>(String)` | 2 | Requires a public string constructor with Java URI syntax validation and URISyntaxException diagnostics. |
-| framework | `java.net.URI#compareTo(URI)` | 2 | Requires ordering by URI component, including percent escape hex normalization and case-insensitive scheme and host comparison. |
-| framework | `java.net.URI#create(String)` | 2 | Requires Java URI syntax validation. The current parser accepts invalid scheme starts, unclosed IPv6 literals, and repeated unescaped fragment delimiters. |
-| framework | `java.net.URI#equals(Object)` | 2 | Java compares scheme, host and percent escape hex digits case-insensitively. Flint compares the original URI text. |
-| framework | `java.net.URI#hashCode()` | 2 | Requires Java component equality and hashing. Flint hashes the original URI text. |
-| framework | `java.net.URI#toASCIIString()` | 2 | Java applies NFC normalization before percent-encoding non-ASCII text. The current implementation encodes the original UTF-8 bytes. |
+| framework | `java.net.URI#toASCIIString()` | 2 | Java applies java.text.Normalizer NFC before percent-encoding non-ASCII text; Normalizer is not ported yet. |
+| framework | `java.net.URI#toURL()` | 2 | URL is a leaf package above flint:java, so a URI member cannot construct it without an upward dependency. URL.of(URI) is the supported direction. |
 | framework | `java.net.URL#<init>(String,String,int,String,URLStreamHandler)` | 2 | Custom URLStreamHandler is deferred; parsing-only URL uses built-in protocol rules. |
 | framework | `java.net.URL#<init>(URL,String,URLStreamHandler)` | 2 | Custom URLStreamHandler is deferred; parsing-only URL uses built-in protocol rules. |
 | framework | `java.net.URL#of(URI,URLStreamHandler)` | 2 | Custom URLStreamHandler is deferred; parsing-only URL uses built-in protocol rules. |
-| framework | `java.net.URL#toURI()` | 2 | URISyntaxException and full URI(String) constructor are pending. |
 | framework | `java.net.UnknownHostException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.UnknownHostException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.UnknownServiceException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
