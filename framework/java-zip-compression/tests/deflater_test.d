@@ -2,7 +2,8 @@
 module deflater_test;
 
 import flint.java.lang : IllegalArgumentException, NullPointerException;
-import flint.java.util.zip : Deflater, Inflater;
+import flint.java.util.zip.deflater : Deflater;
+import flint.java.util.zip.inflater : Inflater;
 
 @safe:
 

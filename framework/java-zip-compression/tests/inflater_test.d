@@ -2,7 +2,8 @@
 module inflater_test;
 
 import flint.java.lang : IllegalArgumentException, NullPointerException;
-import flint.java.util.zip : DataFormatException, Inflater;
+import flint.java.util.zip.dataformatexception : DataFormatException;
+import flint.java.util.zip.inflater : Inflater;
 
 @safe:
 

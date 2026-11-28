@@ -2143,6 +2143,52 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-zip-compression": {
+   "directory": "framework/java-zip-compression",
+   "module": "flint.java.util.zip.deflater",
+   "also": [
+    "flint.java.util.zip.inflater",
+    "flint.java.util.zip.ffi.deflate",
+    "flint.java.util.zip.ffi.inflate",
+    "flint.java.util.zip.ffi.stream",
+    "flint.java.util.zip.internal.exceptions"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.util.zip.Deflater",
+    "java.util.zip.Inflater"
+   ],
+   "dependencies": [
+    "java",
+    "java-zip"
+   ],
+   "unsafe": [
+    "flint.java.util.zip.ffi"
+   ],
+   "bench": {
+    "fixture": "framework/java-zip-compression/bench",
+    "baseline": "framework/java-zip-compression/bench/baseline",
+    "edit_source": "framework/java-zip-compression/source/flint/java/util/zip/deflater.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 104986,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 153
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java-zip-exception": {
    "directory": "framework/java-zip-exception",
    "module": "flint.java.util.zip.zipexception",
