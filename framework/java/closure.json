@@ -87,7 +87,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
-          "flint.java.net.internal.ipv6literal"
+          "flint.java.net.urisyntaxexception"
         ],
         "source": "closure/uri.d"
       }
