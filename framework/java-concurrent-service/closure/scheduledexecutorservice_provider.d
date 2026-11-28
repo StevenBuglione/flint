@@ -6,13 +6,15 @@ import flint.arena : Status;
 import flint.conc : Background, Deadline, startManagedBackground;
 import flint.conc.park : park, wakeAll;
 import flint.java.lang : NullPointerException;
+import flint.java.lang.interruptedexception : InterruptedException;
 import flint.java.lang.runnable : Runnable;
+import flint.java.lang.thread : InterruptSink, Thread, ThreadState;
 import flint.java.util : ArrayList, List;
 import flint.java.util.concurrent : TimeUnit, convert, toNanos;
 import flint.java.util.concurrent.cancellationexception : CancellationException;
 import flint.java.util.concurrent.delayed : Delayed;
 import flint.java.util.concurrent.executionexception : ExecutionException;
-import flint.java.util.concurrent.executorservice : ExecutorService;
+import flint.java.util.concurrent.executorservice : ExecutorService, closeService;
 import flint.java.util.concurrent.future : Future;
 import flint.java.util.concurrent.futuretask : FutureTask;
 import flint.java.util.concurrent.scheduledfuture : RunnableScheduledFuture;
@@ -68,8 +70,7 @@ private final class Scheduler : ExecutorService
         if (atomicLoad(stopping))
             return;
         atomicStore(stopping, true);
-        bumpVersion();
-        wakeAll(wakeWord);
+        signal();
     }
 
     override List!Runnable shutdownNow()
@@ -82,8 +83,7 @@ private final class Scheduler : ExecutorService
         foreach (ref entry; pending)
             commands.add(entry.command);
         pending = null;
-        bumpVersion();
-        wakeAll(wakeWord);
+        signal();
         return commands;
     }
 
@@ -95,6 +95,38 @@ private final class Scheduler : ExecutorService
     override bool isTerminated()
     {
         return atomicLoad(finished);
+    }
+
+    override bool awaitTermination(long timeout, TimeUnit unit)
+    {
+        const deadline = saturatingAdd(monotonicNow(), toNanos(unit, timeout));
+        auto state = Thread.currentThread().state();
+        const token = state.install(InterruptSink(&this.signal));
+        scope (exit)
+        {
+            if (token != 0)
+                state.retire(token);
+        }
+        for (;;)
+        {
+            const observed = atomicLoad(wakeWord);
+            if (isTerminated())
+                return true;
+            if (state.clearInterrupted())
+                throw new InterruptedException;
+            bool expired;
+            long sleep = parkNanos(deadline, expired);
+            if (expired)
+                return isTerminated();
+            if (token == 0 && sleep > interruptPollNanos)
+                sleep = interruptPollNanos;
+            park(wakeWord, observed, sleep);
+        }
+    }
+
+    override void close()
+    {
+        closeService(this);
     }
 
     void schedule(Runnable command, long delayNanos)
@@ -133,13 +165,19 @@ private final class Scheduler : ExecutorService
             pending[position] = pending[position - 1];
         }
         pending[index] = entry;
-        bumpVersion();
-        wakeAll(wakeWord);
+        signal();
     }
 
     private void bumpVersion() nothrow @nogc
     {
         atomicStore(wakeWord, atomicLoad(wakeWord) + 1);
+    }
+
+    // Advance the wake word and end every parked waiter, as the leaf's termination signal does.
+    private void signal() nothrow @nogc
+    {
+        bumpVersion();
+        wakeAll(wakeWord);
     }
 
     private void workerMain() nothrow
@@ -181,7 +219,10 @@ private final class Scheduler : ExecutorService
                 continue;
             }
             if (done)
+            {
+                signal();
                 return;
+            }
             park(wakeWord, seen, sleepNanos < 0 ? long.max : sleepNanos);
         }
     }
@@ -370,6 +411,28 @@ private final class Periodic : RunnableScheduledFuture!Object
             park(wake, seen, sleep);
         }
     }
+}
+
+// Bound a single park so a platform timeout that takes a 32-bit millisecond count cannot overflow.
+private enum long maxParkNanos = 86_400_000_000_000L;
+
+// A waiter that cannot install its interrupt sink because another wait is active still polls the flag.
+private enum long interruptPollNanos = 10_000_000L;
+
+// The next bounded park, or `expired` once a timed wait has reached its deadline.
+private long parkNanos(long deadline, out bool expired) nothrow @nogc
+{
+    expired = false;
+    if (deadline == long.max)
+        return maxParkNanos;
+    const now = monotonicNow();
+    if (now >= deadline)
+    {
+        expired = true;
+        return 0;
+    }
+    const remaining = deadline - now;
+    return remaining < maxParkNanos ? remaining : maxParkNanos;
 }
 
 private long saturatingAdd(long value, long delta) pure nothrow @nogc

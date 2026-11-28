@@ -8,12 +8,14 @@ import flint.arena : Status;
 import flint.conc : Background, Deadline, startManagedBackground;
 import flint.conc.park : park, wakeAll;
 import flint.java.lang : IllegalArgumentException, NullPointerException, RuntimeException;
+import flint.java.lang.interruptedexception : InterruptedException;
 import flint.java.lang.runnable : Runnable;
+import flint.java.lang.thread : InterruptSink, Thread, ThreadState;
 import flint.java.util : ArrayList, List;
 import flint.java.util.concurrent : TimeUnit, convert, toNanos;
 import flint.java.util.concurrent.callable : Callable;
 import flint.java.util.concurrent.delayed : Delayed;
-import flint.java.util.concurrent.executorservice : ExecutorService;
+import flint.java.util.concurrent.executorservice : ExecutorService, closeService;
 import flint.java.util.concurrent.internal.periodictask : PeriodicControl, PeriodicHost, PeriodicTask;
 import flint.java.util.concurrent.future : Future;
 import flint.java.util.concurrent.futuretask : FutureTask;
@@ -293,6 +295,38 @@ final class OffloadScheduledExecutorService : ScheduledExecutorService, Periodic
         return atomicLoad(finished);
     }
 
+    override bool awaitTermination(long timeout, TimeUnit unit)
+    {
+        const deadline = saturatingAdd(monotonicNow(), toNanos(unit, timeout));
+        auto state = Thread.currentThread().state();
+        const token = state.install(InterruptSink(&this.signal));
+        scope (exit)
+        {
+            if (token != 0)
+                state.retire(token);
+        }
+        for (;;)
+        {
+            const observed = atomicLoad(wakeWord);
+            if (isTerminated())
+                return true;
+            if (state.clearInterrupted())
+                throw new InterruptedException;
+            bool expired;
+            long sleep = parkNanos(deadline, expired);
+            if (expired)
+                return isTerminated();
+            if (token == 0 && sleep > interruptPollNanos)
+                sleep = interruptPollNanos;
+            park(wakeWord, observed, sleep);
+        }
+    }
+
+    override void close()
+    {
+        closeService(this);
+    }
+
     private void enqueue(Runnable command, long deadline, bool delegate() @safe nothrow cancel,
             bool delegate() @safe nothrow cancelled, long periodNanos = 0)
     {
@@ -423,6 +457,13 @@ final class OffloadScheduledExecutorService : ScheduledExecutorService, Periodic
         atomicStore(wakeWord, atomicLoad(wakeWord) + 1);
     }
 
+    // Advance the wake word and end every parked waiter. Called on every termination-state change.
+    private void signal() nothrow @nogc
+    {
+        bumpVersion();
+        wakeAll(wakeWord);
+    }
+
     // Drop cancelled tasks so a stopped service never waits for a deadline that no longer runs anything. The worker
     // owns the compaction; the queue is small, so a full pass is cheaper than an index and a tombstone.
     private void dropCancelled() nothrow
@@ -480,7 +521,7 @@ final class OffloadScheduledExecutorService : ScheduledExecutorService, Periodic
             }
             if (done)
             {
-                wakeAll(wakeWord);
+                signal();
                 return;
             }
             park(wakeWord, seen, sleepNanos < 0 ? long.max : sleepNanos);
@@ -524,6 +565,28 @@ private long deadlineAfter(long delay, TimeUnit unit)
 private long monotonicNow() nothrow @nogc
 {
     return Deadline.afterMillis(0).monotonicNanoseconds;
+}
+
+// Bound a single park so a platform timeout that takes a 32-bit millisecond count cannot overflow.
+private enum long maxParkNanos = 86_400_000_000_000L;
+
+// A waiter that cannot install its interrupt sink because another wait is active still polls the flag.
+private enum long interruptPollNanos = 10_000_000L;
+
+// The next bounded park, or `expired` once a timed wait has reached its deadline.
+private long parkNanos(long deadline, out bool expired) nothrow @nogc
+{
+    expired = false;
+    if (deadline == long.max)
+        return maxParkNanos;
+    const now = monotonicNow();
+    if (now >= deadline)
+    {
+        expired = true;
+        return 0;
+    }
+    const remaining = deadline - now;
+    return remaining < maxParkNanos ? remaining : maxParkNanos;
 }
 
 unittest

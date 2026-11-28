@@ -8,8 +8,10 @@ import flint.conc : Deadline;
 import flint.conc.park : park, wakeAll;
 import flint.conc.slot : ProcessSlot;
 import flint.engine.reactor : OffloadWork, Reactor, ReactorOptions, TaskContext;
-import flint.java.lang : IllegalArgumentException, NullPointerException, RuntimeException;
+import flint.java.lang : AutoCloseable, IllegalArgumentException, NullPointerException, RuntimeException;
+import flint.java.lang.interruptedexception : InterruptedException;
 import flint.java.lang.runnable : Runnable;
+import flint.java.lang.thread : InterruptSink, Thread, ThreadState;
 import flint.java.util : ArrayList, Collection, List;
 import flint.java.util.concurrent : TimeUnit, toNanos;
 import flint.java.util.concurrent.callable : Callable;
@@ -29,12 +31,21 @@ public import flint.java.util.concurrent.internal.managedoffload : TaskFailureOb
 @safe:
 
 /// The execution and shutdown operations of a Java service.
-interface ExecutorService : Executor
+interface ExecutorService : Executor, AutoCloseable
 {
     void shutdown();
     List!Runnable shutdownNow();
     bool isShutdown();
     bool isTerminated();
+
+    /// Wait at most `timeout` of `unit` for the service to terminate (R3, R9).
+    ///
+    /// Returns whether termination has happened. A task that interrupts the waiting thread ends the wait with
+    /// `InterruptedException` and clears the flag, as Java's `Thread.interrupt` contract requires.
+    bool awaitTermination(long timeout, TimeUnit unit);
+
+    // Java 21's default `close` is implemented by `closeService` and forwarded by each concrete service, because
+    // a D interface cannot give a default body to a method it inherits from another interface.
 
     /// Submit a value-returning task and return its future (R3, R9). Runs the task once through `execute`.
     Future!T submit(T)(Callable!T task)
@@ -339,7 +350,32 @@ package(flint.java.util.concurrent) T invokeAnyImpl(T)(ExecutorService service,
     throw lastFailure;
 }
 
-private long monotonicNow()
+// Java 21's default `close`: shut down, wait for termination, and restore an interrupt that ended the wait.
+package(flint.java.util.concurrent) void closeService(ExecutorService service)
+{
+    bool terminated = service.isTerminated();
+    if (terminated)
+        return;
+    service.shutdown();
+    bool interrupted = false;
+    while (!terminated)
+    {
+        try
+            terminated = service.awaitTermination(1, TimeUnit.DAYS);
+        catch (InterruptedException)
+        {
+            if (!interrupted)
+            {
+                service.shutdownNow();
+                interrupted = true;
+            }
+        }
+    }
+    if (interrupted)
+        Thread.currentThread().interrupt();
+}
+
+private long monotonicNow() nothrow @nogc
 {
     return Deadline.afterMillis(0).monotonicNanoseconds;
 }
@@ -361,6 +397,28 @@ private long remainingNanos(long deadline)
     return deadline - monotonicNow();
 }
 
+// Bound a single park so a platform timeout that takes a 32-bit millisecond count cannot overflow.
+private enum long maxParkNanos = 86_400_000_000_000L;
+
+// A waiter that cannot install its interrupt sink because another wait is active still polls the flag.
+private enum long interruptPollNanos = 10_000_000L;
+
+// The next bounded park, or `expired` once a timed wait has reached its deadline.
+private long parkNanos(long deadline, out bool expired) nothrow @nogc
+{
+    expired = false;
+    if (deadline == long.max)
+        return maxParkNanos;
+    const now = monotonicNow();
+    if (now >= deadline)
+    {
+        expired = true;
+        return 0;
+    }
+    const remaining = deadline - now;
+    return remaining < maxParkNanos ? remaining : maxParkNanos;
+}
+
 private shared ProcessSlot!ExecutorRoutes routeTable;
 
 private ExecutorRoutes serviceRoutes()
@@ -380,6 +438,8 @@ final class OffloadExecutorService : ExecutorService
     private Runnable[] undelivered;
     private shared bool driverStarted;
     private shared bool driverFinished;
+    // Advanced whenever the service can have changed termination state; the word an `awaitTermination` parks on.
+    private shared uint wake = 0;
 
     /// Bind the service to reactor owner zero. By default it uses one owner
     /// and one offload thread. Call run once on a registered D thread.
@@ -414,6 +474,7 @@ final class OffloadExecutorService : ExecutorService
         queue.shutdown();
         if (queue.isTerminated())
             reactor.stop();
+        signal();
     }
 
     override List!Runnable shutdownNow()
@@ -429,6 +490,7 @@ final class OffloadExecutorService : ExecutorService
                 undelivered = null;
             }
             reactor.stop();
+            signal();
             return new ArrayList!Runnable(pending);
         }
     }
@@ -443,6 +505,48 @@ final class OffloadExecutorService : ExecutorService
         return atomicLoad(driverFinished) || (!atomicLoad(driverStarted) && queue.isTerminated());
     }
 
+    override bool awaitTermination(long timeout, TimeUnit unit)
+    {
+        const deadline = saturatingAdd(monotonicNow(), toNanos(unit, timeout));
+        auto state = Thread.currentThread().state();
+        const token = state.install(InterruptSink(&this.signal));
+        scope (exit)
+        {
+            if (token != 0)
+                state.retire(token);
+        }
+        for (;;)
+        {
+            // Read the wake word before the state: a termination or interrupt between the two observations then
+            // advances the word and ends the park below, instead of leaving the waiter asleep.
+            const observed = atomicLoad(wake);
+            if (isTerminated())
+                return true;
+            if (state.clearInterrupted())
+                throw new InterruptedException;
+            bool expired;
+            long sleep = parkNanos(deadline, expired);
+            if (expired)
+                return isTerminated();
+            // A waiter that could not install its sink (another wait is active) still sees the flag.
+            if (token == 0 && sleep > interruptPollNanos)
+                sleep = interruptPollNanos;
+            park(wake, observed, sleep);
+        }
+    }
+
+    override void close()
+    {
+        closeService(this);
+    }
+
+    // Advance the wake word and end every parked waiter. Called on every termination-state change.
+    private void signal() nothrow @nogc
+    {
+        atomicOp!"+="(wake, 1u);
+        wakeAll(wake);
+    }
+
     /// Drive the owned reactor to completion. Withdraw routes that could not
     /// reach a stopped reactor and keep their tasks available to shutdownNow.
     ReactorError run()
@@ -455,6 +559,7 @@ final class OffloadExecutorService : ExecutorService
             {
                 undelivered = routes.shutdownNow(queue);
                 atomicStore(driverFinished, true);
+                signal();
             }
         }
         return queue.isTerminated() ? ReactorError.init : reactor.run();

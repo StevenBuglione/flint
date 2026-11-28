@@ -2,6 +2,7 @@ module app;
 
 import core.stdc.stdio : printf;
 import flint.arena : Status;
+import flint.java.util.concurrent : TimeUnit;
 import flint.java.util.concurrent.executor : Executor;
 import flint.java.util.concurrent.executorservice : ExecutorService, OffloadExecutorService;
 import workload : Command, fixtureOptions;
@@ -23,7 +24,7 @@ import workload : Command, fixtureOptions;
     {
         service.shutdown();
         valid = service.isShutdown() && host.run().code == Status.ok && service.isTerminated()
-            && first.completed() && second.completed();
+            && service.awaitTermination(0, TimeUnit.NANOSECONDS) && first.completed() && second.completed();
     }
     else
     {

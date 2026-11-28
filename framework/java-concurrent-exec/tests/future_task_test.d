@@ -241,3 +241,59 @@ unittest
 
     assert(task.get() == 1234);
 }
+
+@("FutureTask get throws InterruptedException when the calling thread is already interrupted")
+unittest
+{
+    import flint.java.lang.interruptedexception : InterruptedException;
+    import flint.java.lang.thread : JavaThread = Thread;
+
+    auto task = new FutureTask!int(new Value(1));
+    JavaThread.currentThread().interrupt();
+    try
+    {
+        task.get();
+        assert(false, "get must throw InterruptedException");
+    }
+    catch (InterruptedException)
+    {
+    }
+    // Java clears the flag when it throws.
+    assert(!JavaThread.currentThread().isInterrupted());
+    assert(!task.isDone);
+}
+
+@("FutureTask get wakes and throws when another thread interrupts the waiter")
+@system unittest
+{
+    import core.atomic : atomicLoad, atomicStore;
+    import flint.java.lang.interruptedexception : InterruptedException;
+    import flint.java.lang.thread : JavaThread = Thread;
+
+    auto task = new FutureTask!int(new Value(1));
+    __gshared JavaThread waiter;
+    __gshared bool started;
+    __gshared bool interrupted;
+    __gshared bool flagCleared;
+    auto worker = new Thread({
+        auto self = JavaThread.currentThread();
+        waiter = self;
+        atomicStore(started, true);
+        try
+            task.get(10, TimeUnit.SECONDS);
+        catch (InterruptedException)
+        {
+            interrupted = true;
+            flagCleared = !self.isInterrupted();
+        }
+    });
+    worker.start();
+    while (!atomicLoad(started))
+        Thread.yield();
+    waiter.interrupt();
+    worker.join();
+
+    assert(interrupted, "the waiter must observe the interrupt instead of the timeout");
+    assert(flagCleared, "Java clears the flag when get throws");
+    assert(!task.isDone);
+}

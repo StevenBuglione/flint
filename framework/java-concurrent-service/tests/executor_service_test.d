@@ -555,3 +555,141 @@ unittest
     assertThrown!NullPointerException(service.invokeAny(cast(Collection!(Callable!int)) null, 1, TimeUnit.SECONDS));
     assertThrown!NullPointerException(service.invokeAny(callables(cast(Callable!int) null)));
 }
+
+@("awaitTermination reports termination after the driven reactor exits")
+@system unittest
+{
+    auto host = new OffloadExecutorService(1, options());
+    ExecutorService service = host;
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    service.shutdown();
+    assert(service.awaitTermination(5, TimeUnit.SECONDS));
+    assert(service.isTerminated());
+    driver.join();
+}
+
+@("awaitTermination times out while the service is still running")
+@system unittest
+{
+    auto host = new OffloadExecutorService(1, options());
+    ExecutorService service = host;
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        service.shutdownNow();
+        driver.join();
+    }
+
+    const started = Deadline.afterMillis(0).monotonicNanoseconds;
+    assert(!service.awaitTermination(50, TimeUnit.MILLISECONDS));
+    const elapsed = Deadline.afterMillis(0).monotonicNanoseconds - started;
+    assert(elapsed >= 50_000_000L);
+    assert(!service.isShutdown());
+}
+
+@("awaitTermination returns at once for a terminated service")
+unittest
+{
+    auto service = new OffloadExecutorService(1, options());
+    service.shutdownNow();
+    assert(service.isTerminated());
+    assert(service.awaitTermination(0, TimeUnit.NANOSECONDS));
+    assert(service.awaitTermination(-1, TimeUnit.SECONDS));
+}
+
+@("awaitTermination throws InterruptedException when the calling thread is already interrupted")
+unittest
+{
+    import flint.java.lang.interruptedexception : InterruptedException;
+    import flint.java.lang.thread : JavaThread = Thread;
+
+    auto service = new OffloadExecutorService(1, options());
+    JavaThread.currentThread().interrupt();
+    try
+    {
+        service.awaitTermination(1, TimeUnit.SECONDS);
+        assert(false, "awaitTermination must throw InterruptedException");
+    }
+    catch (InterruptedException)
+    {
+    }
+    assert(!JavaThread.currentThread().isInterrupted());
+    service.shutdownNow();
+}
+
+@("awaitTermination wakes and throws when another thread interrupts the waiter")
+@system unittest
+{
+    import flint.java.lang.interruptedexception : InterruptedException;
+    import flint.java.lang.thread : JavaThread = Thread;
+
+    auto host = new OffloadExecutorService(1, options());
+    ExecutorService service = host;
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    scope (exit)
+    {
+        service.shutdownNow();
+        driver.join();
+    }
+
+    __gshared JavaThread waiter;
+    __gshared bool started;
+    __gshared bool interrupted;
+    __gshared bool flagCleared;
+    auto worker = new Thread({
+        auto self = JavaThread.currentThread();
+        waiter = self;
+        atomicStore(started, true);
+        try
+            service.awaitTermination(10, TimeUnit.SECONDS);
+        catch (InterruptedException)
+        {
+            interrupted = true;
+            flagCleared = !self.isInterrupted();
+        }
+    });
+    worker.start();
+    while (!atomicLoad(started))
+        Thread.yield();
+    waiter.interrupt();
+    worker.join();
+
+    assert(interrupted, "the waiter must observe the interrupt instead of the timeout");
+    assert(flagCleared, "Java clears the flag when awaitTermination throws");
+    assert(!service.isTerminated());
+}
+
+@("close returns for an already terminated service")
+unittest
+{
+    auto service = new OffloadExecutorService(1, options());
+    service.shutdownNow();
+    assert(service.isTerminated());
+    service.close();
+}
+
+@("close shuts down a running service and returns after termination")
+@system unittest
+{
+    auto host = new OffloadExecutorService(1, options());
+    auto driver = new Thread({ assert(host.run().code == Status.ok); }).start();
+    host.close();
+    assert(host.isShutdown() && host.isTerminated());
+    driver.join();
+}
+
+@("close escalates an interrupt to shutdownNow once and restores the flag")
+unittest
+{
+    import flint.java.lang.thread : JavaThread = Thread;
+
+    auto service = new OffloadExecutorService(1, options());
+    auto task = new Work;
+    service.execute(task);
+    JavaThread.currentThread().interrupt();
+    service.close();
+    assert(service.isShutdown() && service.isTerminated());
+    assert(JavaThread.currentThread().isInterrupted());
+    assert(JavaThread.interrupted());
+    assert(task.data is null);
+}
