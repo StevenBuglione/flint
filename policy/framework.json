@@ -1186,6 +1186,40 @@
     "template_instances": 692
    }
   },
+  "java-filetime": {
+   "directory": "framework/java-filetime",
+   "module": "flint.java.nio.file.attribute.filetime",
+   "java_types": [
+    "java.nio.file.attribute.FileTime"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-filetime/bench",
+    "baseline": "framework/java-filetime/bench/baseline",
+    "edit_source": "framework/java-filetime/source/flint/java/nio/file/attribute/filetime.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 13786,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 491
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java-nio-file": {
    "directory": "framework/java-nio-file",
    "module": "flint.java.nio.file",

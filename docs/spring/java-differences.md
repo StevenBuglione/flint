@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,141 | 768 | 0 | 1,957 | 13,555 |
+| framework | openjdk@21.0.13 | 2,150 | 770 | 0 | 1,957 | 13,544 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2709,6 +2709,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.nio.file.InvalidPathException#<init>(String,String,int)` | `flint.java.nio.file.InvalidPathException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.file.InvalidPathException#getMessage()` | `flint.java.nio.file.InvalidPathException.getMessage` | [D-JDK-3](api-mapping.md#deviations) |  |
 | `java.nio.file.Path#of(String,String...)` | `flint.java.nio.file.Path.of` | [R7](api-mapping.md#r7-overloads), [R26](api-mapping.md#r26-null-arrays) |  |
+
+#### java.nio.file.attribute
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.nio.file.attribute.FileTime` | `flint.java.nio.file.attribute.filetime.FileTime` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct ported into the leaf module flint.java.nio.file.attribute.filetime; the canonical flint.java.nio.file.attribute path does not exist yet. Null checks on the unit, an Instant or a compared object follow R26/R8: D value types and enums cannot be null. |
+| `java.nio.file.attribute.FileTime#equals(Object)` | `flint.java.nio.file.attribute.filetime.FileTime.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 
 #### java.sql
 
@@ -11215,7 +11222,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 32 | 0 |
 | java.nio.file | 268 | 0 |
-| java.nio.file.attribute | 137 | 0 |
+| java.nio.file.attribute | 126 | 0 |
 | java.nio.file.spi | 0 | 35 |
 | java.security | 663 | 0 |
 | java.security.cert | 0 | 466 |

@@ -1,0 +1,17 @@
+{
+  "classes": {
+    "java/nio/file/attribute/FileTime/Basic.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: the reference case is not copied; this module's own tests cover the same behaviour.",
+      "covered_by": [
+        "framework/java-filetime/tests/filetime_test.d"
+      ]
+    }
+  },
+  "module": "java-filetime",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":java-filetime"
+  ],
+  "upstream": "openjdk@21.0.13"
+}
