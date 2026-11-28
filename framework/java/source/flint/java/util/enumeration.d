@@ -28,7 +28,7 @@
 
 module flint.java.util.enumeration;
 
-import flint.java.util : Iterator;
+import flint.java.util.internal.iterator : Iterator;
 
 @safe:
 

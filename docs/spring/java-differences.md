@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,982 | 752 | 0 | 1,921 | 13,766 |
+| framework | openjdk@21.0.13 | 1,982 | 755 | 0 | 1,921 | 13,763 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2953,10 +2953,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Objects#toString(Object,String)` | `flint.java.util.Objects.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Optional` | `flint.java.util.Optional` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.Properties` | `flint.java.util.Properties` | [R26](api-mapping.md#r26-null-arrays) | A null string slice passed as a property key or as a value to setProperty counts as empty. |
+| `java.util.Properties#elements()` | `flint.java.util.Properties.elements` | [R23](api-mapping.md#r23-object-typed-values) | This set's own values, without the defaults, in insertion order; Java's Hashtable order is unspecified. The result is a snapshot. |
 | `java.util.Properties#getProperty(String)` | `flint.java.util.Properties.getProperty` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Properties#getProperty(String,String)` | `flint.java.util.Properties.getProperty` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Properties#keys()` | `flint.java.util.Properties.keys` | [R23](api-mapping.md#r23-object-typed-values) | This set's own keys, without the defaults, in insertion order; Java's Hashtable order is unspecified. The result is a snapshot. |
 | `java.util.Properties#list(PrintWriter)` | `flint.java.util.Properties.list` | [R14](api-mapping.md#r14-strings-and-text) | Java's Hashtable order is unspecified; entries render in insertion order. A value over 40 UTF-16 units is cut to 37 units plus "...", with a surviving lone surrogate as U+FFFD. |
 | `java.util.Properties#load(InputStream)` | `flint.java.util.Properties.load` | [R14](api-mapping.md#r14-strings-and-text) | Decodes ISO-8859-1 and leaves the stream open. An isolated UTF-16 surrogate escape becomes U+FFFD in the D UTF-8 string. |
+| `java.util.Properties#propertyNames()` | `flint.java.util.Properties.propertyNames` | [R23](api-mapping.md#r23-object-typed-values) | Every key, including unoverridden defaults, in insertion order with the defaults first; Java's Hashtable order is unspecified. The result is a snapshot. |
 | `java.util.Properties#setProperty(String,String)` | `flint.java.util.Properties.setProperty` | [R23](api-mapping.md#r23-object-typed-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Properties#store(OutputStream,String)` | `flint.java.util.Properties.store` | [R8](api-mapping.md#r8-exceptions), [R14](api-mapping.md#r14-strings-and-text) | Writes ISO-8859-1 bytes and leaves the stream open. D has no checked IOException (D-8). |
 | `java.util.Properties#store(Writer,String)` | `flint.java.util.Properties.store` | [R8](api-mapping.md#r8-exceptions), [R14](api-mapping.md#r14-strings-and-text) | D has no checked IOException (D-8). The date comment uses the default time-zone (UTC). |
@@ -11105,7 +11108,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,816 | 0 |
+| java.util | 1,813 | 0 |
 | java.util.concurrent | 1,198 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
