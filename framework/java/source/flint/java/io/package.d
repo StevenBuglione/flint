@@ -19,14 +19,12 @@ import flint.java.lang : RuntimeException;
 class IOException : Exception
 {
     private Throwable cause_;
-    private bool causeSet_;
 
     /// `message`, and optionally a `cause`. An empty message means no detail (R26).
     this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message.length == 0 ? null : message, file, line);
-        cause_ = cause;
-        causeSet_ = cause !is null;
+        cause_ = cause is null ? this : cause;
     }
 
     /// The detail message; null when there is none.
@@ -35,21 +33,20 @@ class IOException : Exception
         return msg;
     }
 
-    /// The cause; null when unknown.
+    /// The cause; null when unknown or not set yet.
     inout(Throwable) getCause() inout pure nothrow @nogc
     {
-        return cause_;
+        return cause_ is this ? null : cause_;
     }
 
     /// Sets the cause once, as Java's `Throwable.initCause`.
     final Throwable initCause(Throwable cause)
     {
-        if (causeSet_)
+        if (cause_ !is this)
             rejectCauseSet();
         if (cause is this)
             rejectSelfCause();
         cause_ = cause;
-        causeSet_ = true;
         return this;
     }
 }
