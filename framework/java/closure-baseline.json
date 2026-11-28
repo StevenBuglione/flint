@@ -2650,6 +2650,28 @@
         "link|java-nio-numeric-buffers|flint.java.nio.shortbuffer|heap-short-cursor|Oz|undeclared module records flint.java.nio.intbuffer",
         "link|java-nio-numeric-buffers|flint.java.nio.shortbuffer|heap-short-cursor|Oz|undeclared module records flint.java.nio.longbuffer"
       ]
+    },
+    "java-filetime-module-records": {
+      "decision": "523bd5bd92ef255ad83efdaa4253b42197271e8a",
+      "reason": "Decision 523bd5bd (2026-11-28): a brand-new JDK leaf inherits the RTInfo/first-object module metadata records of the batch it lands in. FileTime is a new separate package whose probe declares its real imports flint.java.lang, flint.java.time and flint.java.util.concurrent; the listed modules are not real imports. Drop this whole group when the first-object/compile-scope model stops carrying module records.",
+      "violations": [
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|O3|undeclared module records flint.java.character",
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|O3|undeclared module records flint.java.sql",
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|O3|undeclared module records flint.java.text.simpledateformat",
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|O3|undeclared module records flint.java.time.format",
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|O3|undeclared module records flint.java.util",
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|O3|undeclared module records flint.java.util.calendar",
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|O3|undeclared module records flint.java.util.date",
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|O3|undeclared module records flint.java.util.timezone",
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|Oz|undeclared module records flint.java.character",
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|Oz|undeclared module records flint.java.sql",
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|Oz|undeclared module records flint.java.text.simpledateformat",
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|Oz|undeclared module records flint.java.time.format",
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|Oz|undeclared module records flint.java.util",
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|Oz|undeclared module records flint.java.util.calendar",
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|Oz|undeclared module records flint.java.util.date",
+        "link|java-filetime|flint.java.nio.file.attribute.filetime|filetime|Oz|undeclared module records flint.java.util.timezone"
+      ]
     }
   }
 }
