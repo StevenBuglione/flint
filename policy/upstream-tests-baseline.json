@@ -6353,7 +6353,6 @@
       "java/net/InetAddress/getOriginalHostName.java",
       "java/net/InetAddress/ptr/Lookup.java",
       "java/net/InetSocketAddress/ToString.java",
-      "java/net/InterfaceAddress/Equals.java",
       "java/net/InterfaceAddress/NetworkPrefixLength.java",
       "java/net/JarURLConnection/TestDefaultBehavior.java",
       "java/net/MulticastSocket/B6425815.java",

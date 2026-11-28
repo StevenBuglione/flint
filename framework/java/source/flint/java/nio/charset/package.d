@@ -112,7 +112,7 @@ class UnsupportedCharsetException : IllegalArgumentException
     /// The exception for `charsetName`.
     this(string charsetName, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        super(charsetName, null, file, line);
+        super(charsetName, file, line);
         this.charsetName = charsetName;
     }
 
@@ -129,7 +129,7 @@ class IllegalCharsetNameException : IllegalArgumentException
     /// The exception for `charsetName`.
     this(string charsetName, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        super(charsetName, null, file, line);
+        super(charsetName, file, line);
     }
 }
 

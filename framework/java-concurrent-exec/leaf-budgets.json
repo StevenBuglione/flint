@@ -1,4 +1,14 @@
 {
+  "flint.java.util.concurrent.cancellationexception": {
+    "incremental_linked_bytes": 828,
+    "template_instances": 244,
+    "control": "framework/java-concurrent-exec/closure/cancellationexception_provider.d"
+  },
+  "flint.java.util.concurrent.completionexception": {
+    "incremental_linked_bytes": 1078,
+    "template_instances": 249,
+    "control": "framework/java-concurrent-exec/closure/completionexception_provider.d"
+  },
   "flint.java.util.concurrent.executionexception": {
     "incremental_linked_bytes": 7480,
     "template_instances": 494

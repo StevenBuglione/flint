@@ -1,0 +1,55 @@
+def-addr-null	true
+def-bcast-null	true
+def-mask	0
+v4-addr	192.168.1.5
+v4-bcast	192.168.1.255
+v4-mask	24
+v4-same-ref	true
+v6-addr	2001:db8:0:0:0:0:0:1
+v6-bcast-null	true
+v6-mask	64
+v6lo-mask	128
+neg-mask	-1
+min-mask	-32768
+max-mask	32767
+str-def	null/0 [null]
+str-v4	/192.168.1.5/24 [/192.168.1.255]
+str-v4-named	host.example/192.168.1.5/24 [bcast.example/192.168.1.255]
+str-v4-nobcast	/192.168.1.5/24 [null]
+str-lo	localhost/127.0.0.1/8 [null]
+str-v6	/2001:db8:0:0:0:0:0:1/64 [null]
+str-v6lo	/0:0:0:0:0:0:0:1/128 [null]
+str-null-addr-bcast	null/24 [/192.168.1.255]
+str-neg-mask	/192.168.1.5/-1 [/192.168.1.255]
+str-min-mask	/192.168.1.5/-32768 [null]
+str-max-mask	/192.168.1.5/32767 [/192.168.1.255]
+hash-def	NullPointerException
+hash-null-addr-bcast	NullPointerException
+hash-v4	-2125462756
+hash-v4-same	-2125462756
+hash-v4-diff-bcast	-2125397732
+hash-v4-nobcast	-1062731491
+hash-v4-diff-mask	-2125462764
+hash-lo	2130706441
+hash-v6	536939769
+hash-v6lo	129
+hash-neg-mask	-2125462781
+hash-min-mask	-1062764283
+hash-max-mask	-2125430013
+eq-self-v4	true
+eq-self-def	true
+eq-null	false
+eq-other-type	false
+eq-v4-named	true
+eq-v4-diff-bcast	false
+eq-v4-nobcast	false
+eq-v4-diff-mask	false
+eq-v4-diff-addr	false
+eq-lo-nobcast	true
+eq-lo-vs-bcast	false
+eq-v4-vs-null-addr	false
+eq-null-addr-both	true
+eq-def-vs-null-addr-bcast	false
+eq-def-vs-def	true
+eq-v6-vs-v4	false
+eq-v6-self-copy	true

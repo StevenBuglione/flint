@@ -48,7 +48,20 @@ unittest
         "１", "1_000"
     ])
         assert(rejected(text), text);
-    assert(parseDouble("0x1p3").status == FloatingDecimalStatus.hexUnsupported);
+
+    // parseHexString, from Double.doubleToRawLongBits on pinned Temurin 21.0.13.
+    assert(parsedBits("0x1p3") == 0x4020000000000000);
+    assert(parsedBits("-0X.8P1d") == 0xbff0000000000000);
+    assert(parsedBits("0x0.0p0") == 0);
+    assert(parsedBits("0x1.fffffffffffff8p1023") == 0x7ff0000000000000);
+    assert(parsedBits("0x1p-1075") == 0);
+    assert(parsedBits("0x1.0000000000001p-1075") == 1);
+    assert(parsedBits("0x1p99999999999") == 0x7ff0000000000000);
+    assert(parsedBits("-0x1p-99999999999") == 0x8000000000000000);
+    foreach (text; [
+        "0x", "0x1", "0x.p1", "0xp1", "0x1p", "0x1p+", "0x1g1", "0x1p1x", "0x1p1ff", "0x1P1.0"
+    ])
+        assert(rejected(text), text);
 }
 
 @("FloatingDecimal rounds halfway, subnormal and overflow boundaries like Java")

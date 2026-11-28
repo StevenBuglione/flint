@@ -545,8 +545,9 @@
       "reason": "Its getLocalHost row needs the local host name (no engine resolver yet, D-JDK-8). Its (String, int) and InetAddress rows are tostring-* oracle rows in framework/java-net-socket-address/tests/literalresolution_test.d."
     },
     "java/net/InterfaceAddress/Equals.java": {
-      "phase": "2",
-      "status": "deferred"
+      "covered_by": "framework/java-net-interface-address/tests/interfaceaddress_test.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Null-broadcast, null-address, symmetry and equals behavior are covered by the Temurin oracle and original Flint tests.",
+      "status": "excluded"
     },
     "java/net/InterfaceAddress/NetworkPrefixLength.java": {
       "phase": "2",

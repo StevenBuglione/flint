@@ -16,8 +16,16 @@ $(UL
 module flint.java.lang;
 
 public import flint.java.lang.boolean : Boolean;
+public import flint.java.lang.error : AssertionError, Error_;
+public import flint.java.lang.illegalmonitorstateexception : IllegalMonitorStateException;
+public import flint.java.lang.integer : Integer;
+public import flint.java.lang.interruptedexception : InterruptedException;
+public import flint.java.lang.long_ : Long;
+public import flint.java.lang.nullpointerexception : NullPointerException;
 public import flint.java.lang.javaobject : JavaObject;
 public import flint.java.lang.runnable : Runnable;
+public import flint.java.lang.runtimeexception : IllegalArgumentException, IllegalStateException,
+    JavaExceptionConstructors, RuntimeException, javaToString;
 public import flint.java.lang.system : System;
 public import flint.java.lang.thread : Thread;
 public import flint.java.lang.inheritablethreadlocal : InheritableThreadLocal;
@@ -35,168 +43,8 @@ package(flint) import flint.java.lang.character.decimaldigits : javaDecimalDigit
 // ---------------------------------------------------------------------------------------------------------------
 // Exceptions (R8)
 
-/// A trace that records nothing: set before throwing, druntime captures no stack trace.
-private final class NoTrace : Throwable.TraceInfo
-{
-    override int opApply(scope int delegate(ref const(char[])) dg) const
-    {
-        return 0;
-    }
-
-    override int opApply(scope int delegate(ref size_t, ref const(char[])) dg) const
-    {
-        return 0;
-    }
-
-    override string toString() const
-    {
-        return "";
-    }
-}
-
-/++
-Java's `RuntimeException`: the root of the unchecked exceptions Spring throws.
-
-D's `Throwable.next` chains collateral exceptions; Java's cause is kept separately and read with `getCause`.
-+/
-class RuntimeException : Exception
-{
-    private Throwable cause_;
-    private bool causeSet;
-
-    /// No message and no cause.
-    this() pure nothrow
-    {
-        super(null);
-    }
-
-    /// `message`, and optionally a `cause`.
-    this(string message, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
-    {
-        super(message, file, line);
-        cause_ = cause;
-        causeSet = cause !is null;
-    }
-
-    /// Java's `RuntimeException(Throwable cause)`: the message is `cause.toString()`, or null.
-    this(Throwable cause, string file = __FILE__, size_t line = __LINE__)
-    {
-        super(cause is null ? null : javaToString(cause), file, line);
-        cause_ = cause;
-        causeSet = true;
-    }
-
-    /++
-    Java's protected four-argument constructor. With `writableStackTrace` false, throwing captures no stack
-    trace: the framework's control-flow exceptions use it. Suppression is always enabled in D.
-    +/
-    protected this(string message, Throwable cause, bool enableSuppression, bool writableStackTrace,
-            string file = __FILE__, size_t line = __LINE__) pure nothrow
-    {
-        this(message, cause, file, line);
-        // druntime captures a trace only while `info` is null (rt.deh._d_createTrace).
-        if (!writableStackTrace)
-            info = new NoTrace;
-    }
-
-    /// The detail message; null when there is none.
-    string getMessage() const pure nothrow @nogc
-    {
-        return msg;
-    }
-
-    /// `getMessage()`; subclasses may localize.
-    string getLocalizedMessage() const pure nothrow @nogc
-    {
-        return getMessage();
-    }
-
-    /// The cause; null when unknown.
-    inout(Throwable) getCause() inout pure nothrow @nogc
-    {
-        return cause_;
-    }
-
-    /// Set the cause once, as Java allows. Throws `IllegalStateException` when it was already set and
-    /// `IllegalArgumentException` for a self-cause.
-    RuntimeException initCause(Throwable cause)
-    {
-        if (causeSet)
-            throw new IllegalStateException("Can't overwrite cause with " ~ (cause is null ? "a null" : javaToString(
-                    cause)));
-        if (cause is this)
-            throw new IllegalArgumentException("Self-causation not permitted");
-        cause_ = cause;
-        causeSet = true;
-        return this;
-    }
-
-    /// Java's `Throwable.toString()`: the class name, then `: message` when there is one.
-    override string toString() const
-    {
-        return javaToString(this);
-    }
-}
-
-/// Java's `Throwable.toString()` for any throwable: its class name, then `: message` when there is one.
-string javaToString(const Throwable t) pure nothrow
-{
-    string message = t.msg;
-    if (auto runtime = cast(const RuntimeException) t)
-        message = runtime.getLocalizedMessage();
-    const name = typeid(t).name;
-    return message is null ? name : name ~ ": " ~ message;
-}
-
-/// Declares the five Java constructors of an exception class that forwards to its superclass.
-private mixin template JavaExceptionConstructors()
-{
-    /// No message and no cause.
-    this() pure nothrow
-    {
-        super();
-    }
-
-    /// `message`, and optionally a `cause`.
-    this(string message, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
-    {
-        super(message, cause, file, line);
-    }
-
-    /// The message is `cause.toString()`.
-    this(Throwable cause, string file = __FILE__, size_t line = __LINE__)
-    {
-        super(cause, file, line);
-    }
-
-    /// See `RuntimeException`'s four-argument constructor.
-    protected this(string message, Throwable cause, bool enableSuppression, bool writableStackTrace,
-            string file = __FILE__, size_t line = __LINE__) pure nothrow
-    {
-        super(message, cause, enableSuppression, writableStackTrace, file, line);
-    }
-}
-
-/// Thrown when a method receives an illegal or inappropriate argument.
-class IllegalArgumentException : RuntimeException
-{
-    mixin JavaExceptionConstructors;
-}
-
-/// Thrown when a method is invoked at an illegal or inappropriate time.
-class IllegalStateException : RuntimeException
-{
-    mixin JavaExceptionConstructors;
-}
-
 /// Thrown when an operation is not supported, such as a write to an unmodifiable collection.
 class UnsupportedOperationException : RuntimeException
-{
-    mixin JavaExceptionConstructors;
-}
-
-/// Thrown when `null` is used where an object is required.
-class NullPointerException : RuntimeException
 {
     mixin JavaExceptionConstructors;
 }
@@ -222,16 +70,28 @@ class IndexOutOfBoundsException : RuntimeException
         super();
     }
 
-    /// `message`, and optionally a `cause`.
-    this(string message, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    /// `message`, with a cause that can still be initialized.
+    this(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message, file, line);
+    }
+
+    /// `message` and an initialized `cause`.
+    this(string message, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message, cause, file, line);
+    }
+
+    /// Select the cause overload when the caller supplies a null literal.
+    this(string message, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(message, cast(Throwable) null, file, line);
     }
 
     /// Java's `IndexOutOfBoundsException(int index)`: "Index out of range: " and the index.
     this(long index, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        super("Index out of range: " ~ decimal(index), null, file, line);
+        super("Index out of range: " ~ decimal(index), file, line);
     }
 }
 
@@ -243,7 +103,7 @@ class NumberFormatException : IllegalArgumentException
     /// Java's message for unparsable input: `For input string: "s"`.
     static NumberFormatException forInputString(string s, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        return new NumberFormatException("For input string: \"" ~ s ~ "\"", null, file, line);
+        return new NumberFormatException("For input string: \"" ~ s ~ "\"", file, line);
     }
 }
 
@@ -251,34 +111,6 @@ class NumberFormatException : IllegalArgumentException
 class InstantiationException : RuntimeException
 {
     mixin JavaExceptionConstructors;
-}
-
-/++
-Java's `AssertionError`. Java's `Error`s that application code catches map to D `Exception`s (rule R8), because
-D's `Error` skips cleanup.
-+/
-class AssertionError : Exception
-{
-    private Throwable cause_;
-
-    /// `message`, and optionally a `cause`.
-    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
-    {
-        super(message, file, line);
-        cause_ = cause;
-    }
-
-    /// The detail message; null when there is none.
-    string getMessage() const pure nothrow @nogc
-    {
-        return msg;
-    }
-
-    /// The cause; null when unknown.
-    inout(Throwable) getCause() inout pure nothrow @nogc
-    {
-        return cause_;
-    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -446,115 +278,6 @@ private string decimal(long value) pure nothrow
         magnitude /= 10;
     }
     return (negative ? "-" : "") ~ buffer[position .. $].idup;
-}
-
-/// Parse a decimal or radix integer with Java's rules: an optional sign, digits only, no whitespace.
-private long parseIntegral(string s, int radix, long min, long max)
-{
-    if (s.length == 0 || radix < 2 || radix > 36)
-        throw NumberFormatException.forInputString(s);
-    size_t i;
-    const negative = s[0] == '-';
-    if (s[0] == '-' || s[0] == '+')
-        i = 1;
-    if (i == s.length)
-        throw NumberFormatException.forInputString(s);
-    // Accumulate negatively so long.min parses, as Java does.
-    long result;
-    const limit = negative ? min : -max;
-    for (; i < s.length; i++)
-    {
-        const digit = digitValue(s[i]);
-        if (digit < 0 || digit >= radix)
-            throw NumberFormatException.forInputString(s);
-        if (result < limit / radix || result * radix < limit + digit)
-            throw NumberFormatException.forInputString(s);
-        result = result * radix - digit;
-    }
-    return negative ? result : -result;
-}
-
-private int digitValue(char c) pure nothrow @nogc
-{
-    if (c >= '0' && c <= '9')
-        return c - '0';
-    if (c >= 'a' && c <= 'z')
-        return c - 'a' + 10;
-    if (c >= 'A' && c <= 'Z')
-        return c - 'A' + 10;
-    return -1;
-}
-
-/// Java's `Integer` statics.
-struct Integer
-{
-    /// The largest `int`.
-    enum int MAX_VALUE = int.max;
-    /// The smallest `int`.
-    enum int MIN_VALUE = int.min;
-
-    /// Parse a signed decimal `int`. Throws `NumberFormatException`.
-    static int parseInt(string s, int radix = 10)
-    {
-        return cast(int) parseIntegral(s, radix, int.min, int.max);
-    }
-
-    /// `parseInt`, as Java's boxing factory.
-    static int valueOf(string s)
-    {
-        return parseInt(s);
-    }
-
-    /// The decimal text of `i`.
-    static string toString(int i) pure nothrow
-    {
-        return decimal(i);
-    }
-
-    /// Java's `Integer.compare`.
-    static int compare(int x, int y) pure nothrow @nogc
-    {
-        return x < y ? -1 : (x == y ? 0 : 1);
-    }
-}
-
-/// Java's `Long` statics.
-struct Long
-{
-    /// The largest `long`.
-    enum long MAX_VALUE = long.max;
-    /// The smallest `long`.
-    enum long MIN_VALUE = long.min;
-
-    /// Parse a signed decimal `long`. Throws `NumberFormatException`.
-    static long parseLong(string s, int radix = 10)
-    {
-        return parseIntegral(s, radix, long.min, long.max);
-    }
-
-    /// `parseLong`, as Java's boxing factory.
-    static long valueOf(string s)
-    {
-        return parseLong(s);
-    }
-
-    /// The decimal text of `l`.
-    static string toString(long l) pure nothrow
-    {
-        return decimal(l);
-    }
-
-    /// Java's `Long.compare`.
-    static int compare(long x, long y) pure nothrow @nogc
-    {
-        return x < y ? -1 : (x == y ? 0 : 1);
-    }
-
-    /// Java's `Long.hashCode(long)`.
-    static int hashCode(long value) pure nothrow @nogc
-    {
-        return cast(int)(value ^ (cast(ulong) value >>> 32));
-    }
 }
 
 /// Java's `Double` statics.

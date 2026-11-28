@@ -383,6 +383,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-net-interface-address": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-net-proxy": {
       "repo": "framework",
       "version": "monorepo"

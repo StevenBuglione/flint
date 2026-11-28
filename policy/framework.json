@@ -609,6 +609,8 @@
    "directory": "framework/java-concurrent-exec",
    "module": "flint.java.util.concurrent.executionexception",
    "java_types": [
+    "java.util.concurrent.CancellationException",
+    "java.util.concurrent.CompletionException",
     "java.util.concurrent.ExecutionException",
     "java.util.concurrent.Executor"
    ],
@@ -640,6 +642,8 @@
     "compiler_peak_rss_bytes"
    ],
    "also": [
+    "flint.java.util.concurrent.cancellationexception",
+    "flint.java.util.concurrent.completionexception",
     "flint.java.util.concurrent.executor"
    ]
   },
@@ -1263,6 +1267,42 @@
     "incremental_linked_bytes": 3507,
     "compiler_peak_rss_bytes": 536870912,
     "template_instances": 480
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
+  "java-net-interface-address": {
+   "directory": "framework/java-net-interface-address",
+   "module": "flint.java.net.interfaceaddress",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.net.InterfaceAddress"
+   ],
+   "dependencies": [
+    "engine-aot",
+    "java",
+    "java-net-address"
+   ],
+   "bench": {
+    "fixture": "framework/java-net-interface-address/bench",
+    "baseline": "framework/java-net-interface-address/bench/baseline",
+    "edit_source": "framework/java-net-interface-address/source/flint/java/net/interfaceaddress.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 10296,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 558
    },
    "provisional": [
     "dmd_cold_seconds",

@@ -11,6 +11,58 @@
     "incremental_linked_bytes": 150,
     "template_instances": 2
   },
+  "flint.java.lang.byte_": {
+    "incremental_linked_bytes": 792,
+    "template_instances": 64
+  },
+  "flint.java.lang.double_": {
+    "incremental_linked_bytes": 32714,
+    "template_instances": 259
+  },
+  "flint.java.lang.error": {
+    "control": "tools/jdk-closure-controls/d-exception.d",
+    "incremental_linked_bytes": 4559,
+    "template_instances": 69
+  },
+  "flint.java.lang.float_": {
+    "incremental_linked_bytes": 33964,
+    "template_instances": 267
+  },
+  "flint.java.lang.illegalmonitorstateexception": {
+    "control": "tools/jdk-closure-controls/runtime-exception.d",
+    "incremental_linked_bytes": 951,
+    "template_instances": 37
+  },
+  "flint.java.lang.inheritablethreadlocal": {
+    "incremental_linked_bytes": 19180,
+    "template_instances": 390
+  },
+  "flint.java.lang.integer": {
+    "incremental_linked_bytes": 1760,
+    "template_instances": 70
+  },
+  "flint.java.lang.interruptedexception": {
+    "control": "tools/jdk-closure-controls/d-exception.d",
+    "incremental_linked_bytes": 3419,
+    "template_instances": 61
+  },
+  "flint.java.lang.javaobject": {
+    "incremental_linked_bytes": 1168,
+    "template_instances": 42
+  },
+  "flint.java.lang.long_": {
+    "incremental_linked_bytes": 2711,
+    "template_instances": 70
+  },
+  "flint.java.lang.math": {
+    "incremental_linked_bytes": 2227,
+    "template_instances": 4
+  },
+  "flint.java.lang.nullpointerexception": {
+    "control": "tools/jdk-closure-controls/runtime-exception.d",
+    "incremental_linked_bytes": 916,
+    "template_instances": 37
+  },
   "flint.java.lang.number": {
     "incremental_linked_bytes": 1232,
     "template_instances": 35
@@ -19,9 +71,26 @@
     "incremental_linked_bytes": 757,
     "template_instances": 33
   },
+  "flint.java.lang.runtimeexception": {
+    "control": "tools/jdk-closure-controls/d-exception.d",
+    "incremental_linked_bytes": 6926,
+    "template_instances": 87
+  },
+  "flint.java.lang.short_": {
+    "incremental_linked_bytes": 863,
+    "template_instances": 64
+  },
+  "flint.java.lang.strictmath": {
+    "incremental_linked_bytes": 2271,
+    "template_instances": 2
+  },
   "flint.java.lang.system": {
     "incremental_linked_bytes": 80,
     "template_instances": 2
+  },
+  "flint.java.lang.thread": {
+    "incremental_linked_bytes": 11022,
+    "template_instances": 346
   },
   "flint.java.lang.threadlocal": {
     "incremental_linked_bytes": 18582,
@@ -30,6 +99,10 @@
   "flint.java.object": {
     "incremental_linked_bytes": 1244,
     "template_instances": 35
+  },
+  "flint.java.util.function_.consumer": {
+    "incremental_linked_bytes": 1329,
+    "template_instances": 42
   },
   "flint.java.util.function_.intbinaryoperator": {
     "incremental_linked_bytes": 1083,
@@ -46,45 +119,5 @@
   "flint.java.util.function_.supplier": {
     "incremental_linked_bytes": 968,
     "template_instances": 39
-  },
-  "flint.java.util.function_.consumer": {
-    "incremental_linked_bytes": 1329,
-    "template_instances": 42
-  },
-  "flint.java.lang.javaobject": {
-    "incremental_linked_bytes": 1168,
-    "template_instances": 42
-  },
-  "flint.java.lang.math": {
-    "incremental_linked_bytes": 2227,
-    "template_instances": 4
-  },
-  "flint.java.lang.strictmath": {
-    "incremental_linked_bytes": 2271,
-    "template_instances": 2
-  },
-  "flint.java.lang.byte_": {
-    "incremental_linked_bytes": 792,
-    "template_instances": 64
-  },
-  "flint.java.lang.short_": {
-    "incremental_linked_bytes": 863,
-    "template_instances": 64
-  },
-  "flint.java.lang.inheritablethreadlocal": {
-    "incremental_linked_bytes": 19180,
-    "template_instances": 390
-  },
-  "flint.java.lang.integer": {
-    "incremental_linked_bytes": 1760,
-    "template_instances": 70
-  },
-  "flint.java.lang.long_": {
-    "incremental_linked_bytes": 2711,
-    "template_instances": 70
-  },
-  "flint.java.lang.thread": {
-    "incremental_linked_bytes": 11022,
-    "template_instances": 346
   }
 }

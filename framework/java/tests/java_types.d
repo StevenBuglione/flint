@@ -109,13 +109,45 @@ unittest
     assert(new IndexOutOfBoundsException(5).getMessage() == "Index out of range: 5");
 }
 
+@("Distinguish an omitted exception cause from an explicitly initialized null cause")
+unittest
+{
+    auto cause = new RuntimeException("later cause");
+    RuntimeException[] openCauses = [
+        new RuntimeException, new RuntimeException("message"), new IllegalArgumentException("message"),
+        new IndexOutOfBoundsException(5), NumberFormatException.forInputString("x"),
+    ];
+    foreach (failure; openCauses)
+        assert(failure.initCause(cause) is failure && failure.getCause() is cause);
+
+    Throwable missing;
+    RuntimeException[] fixedCauses = [
+        new RuntimeException("explicit literal", null), new RuntimeException("explicit typed", missing),
+        new RuntimeException(cast(Throwable) null),
+        new IllegalArgumentException("explicit subclass", null), new ControlFlow("protected"),
+    ];
+    foreach (failure; fixedCauses)
+    {
+        assert(failure.getCause() is null);
+        try
+        {
+            failure.initCause(cause);
+            assert(0, "an explicit null cause must stay initialized");
+        }
+        catch (IllegalStateException rejected)
+        {
+            assert(rejected.getCause() is null && failure.getCause() is null);
+        }
+    }
+}
+
 unittest
 {
     // writableStackTrace = false: the throw captures no trace (control-flow exceptions, ADR-030 section 4).
     try
         throw new ControlFlow("skip");
     catch (ControlFlow e)
-        assert(typeid(cast(Object) e.info).name == "flint.java.lang.NoTrace");
+        assert(typeid(cast(Object) e.info).name == "flint.java.lang.runtimeexception.NoTrace");
     try
         throw new IllegalStateException("traced");
     catch (IllegalStateException e)
