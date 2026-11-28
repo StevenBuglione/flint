@@ -2,7 +2,8 @@ module flint.java.format_test;
 
 import flint.java.lang : IllegalArgumentException, String;
 import flint.java.util.formatter : DuplicateFormatFlagsException, IllegalFormatConversionException,
-    IllegalFormatException, MissingFormatArgumentException, UnknownFormatConversionException;
+    IllegalFormatException,
+    MissingFormatArgumentException, UnknownFormatConversionException, UnknownFormatFlagsException;
 
 @safe:
 
@@ -458,4 +459,19 @@ unittest
     assert(String.format("%1$tF %1$tT", long.min) == "292269055-12-02 16:47:04");
     assert(String.format("%1$tF %1$tT", long.max) == "292278994-08-17 07:12:55");
     assert(String.format("[%11tc][%-9TA]", cast(Object) null, cast(Object) null) == "[       null][NULL     ]");
+}
+
+@("Format exception accessors match Java")
+unittest
+{
+    import std.exception : collectException;
+
+    auto flags = new UnknownFormatFlagsException("_");
+    assert(flags.getFlags() == "_" && flags.getMessage() == "Flags = _");
+    assert(cast(IllegalFormatException) flags !is null);
+    // R26: a null flag slice counts as empty.
+    assert((new UnknownFormatFlagsException(null)).getMessage() == "Flags = ");
+
+    const wrong = collectException!IllegalFormatConversionException(String.format("%d", "x"));
+    assert(wrong.getConversion() == 'd' && wrong.getMessage() == "d != java.lang.String");
 }
