@@ -5708,7 +5708,7 @@
 "java.io.IOException#<init>()":{"d":"flint.java.io.IOException.this","status":"ported"},
 "java.io.IOException#<init>(String)":{"d":"flint.java.io.IOException.this","rules":["R26"],"status":"adapted","note":"An empty message means no detail (R26). The cause stays open for one initCause call."},
 "java.io.IOException#<init>(String,Throwable)":{"d":"flint.java.io.IOException.this","rules":["R8","R26"],"status":"adapted","note":"A non-null cause is retained and closes initCause. Under R8 the merged constructor cannot distinguish an omitted cause from an explicit null, so an explicit null still leaves initCause open; an empty message means no detail (R26)."},
-"java.io.IOException#<init>(Throwable)":{"status":"excluded","category":"deferred","phase":"2","reason":"Missing cause-only constructor. Java initializes the cause even if it is null and derives the detail from a non-null cause's virtual toString."},
+"java.io.IOException#<init>(Throwable)":{"d":"flint.java.io.IOException.this","rules":["R8"],"status":"adapted","note":"The detail is cause.toString(), or null when absent. An absent cause stays open for one initCause call, where Java pre-closes it (R8)."},
 "java.io.EOFException":{"d":"flint.java.io.EOFException","status":"ported"},
 "java.io.EOFException#<init>()":{"d":"flint.java.io.EOFException.this","status":"ported"},
 "java.io.EOFException#<init>(String)":{"d":"flint.java.io.EOFException.this","rules":["R26"],"status":"adapted","note":"An empty message means no detail (R26). The cause stays open for one initCause call."},

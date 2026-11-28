@@ -11,7 +11,7 @@ module flint.java.io;
 public import flint.java.io.closeable : Closeable;
 public import flint.java.io.flushable : Flushable;
 
-import flint.java.lang : RuntimeException;
+import flint.java.lang : RuntimeException, javaToString;
 
 @safe:
 
@@ -24,6 +24,14 @@ class IOException : Exception
     this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message.length == 0 ? null : message, file, line);
+        cause_ = cause is null ? this : cause;
+    }
+
+    /// `cause`: the detail is `cause.toString()`, or null when absent. An absent cause stays open for `initCause`,
+    /// where Java pre-closes it (R8).
+    this(Throwable cause, string file = __FILE__, size_t line = __LINE__)
+    {
+        super(cause is null ? null : javaToString(cause), file, line);
         cause_ = cause is null ? this : cause;
     }
 

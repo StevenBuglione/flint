@@ -90,3 +90,30 @@ unittest
     assert(missing.getCause() is cause);
     assertThrown!IllegalStateException(missing.initCause(cause));
 }
+
+@("IOException's cause constructor derives the detail from cause.toString")
+unittest
+{
+    auto cause = new IOException("inner");
+    auto wrapped = new IOException(cause);
+    assert(wrapped.getMessage() == "flint.java.io.IOException: inner");
+    assert(wrapped.getCause() is cause);
+    assertThrown!IllegalStateException(wrapped.initCause(new IOException("again")));
+
+    auto plain = new FileNotFoundException("missing");
+    const wrappedPlain = new IOException(plain);
+    assert(wrappedPlain.getMessage() == "flint.java.io.FileNotFoundException: missing");
+    assert(wrappedPlain.getCause() is plain);
+}
+
+@("IOException's cause constructor with an absent cause leaves initCause open (R8)")
+unittest
+{
+    auto wrapped = new IOException(cast(Throwable) null);
+    assert(wrapped.getMessage() is null);
+    assert(wrapped.getCause() is null);
+
+    auto cause = new IOException("later");
+    assert(wrapped.initCause(cause) is wrapped);
+    assert(wrapped.getCause() is cause);
+}

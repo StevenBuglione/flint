@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,250 | 864 | 0 | 1,957 | 13,350 |
+| framework | openjdk@21.0.13 | 2,250 | 865 | 0 | 1,957 | 13,349 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2303,6 +2303,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.IOException` | `flint.java.io.IOException` | [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Uses the D checked-exception hierarchy. initCause follows Java's once-only lifecycle. The merged constructor treats an omitted cause and an explicit null cause identically under R8, so an explicit null still leaves initCause open; an empty detail message means no detail (R26). |
 | `java.io.IOException#<init>(String)` | `flint.java.io.IOException.this` | [R26](api-mapping.md#r26-null-arrays) | An empty message means no detail (R26). The cause stays open for one initCause call. |
 | `java.io.IOException#<init>(String,Throwable)` | `flint.java.io.IOException.this` | [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | A non-null cause is retained and closes initCause. Under R8 the merged constructor cannot distinguish an omitted cause from an explicit null, so an explicit null still leaves initCause open; an empty message means no detail (R26). |
+| `java.io.IOException#<init>(Throwable)` | `flint.java.io.IOException.this` | [R8](api-mapping.md#r8-exceptions) | The detail is cause.toString(), or null when absent. An absent cause stays open for one initCause call, where Java pre-closes it (R8). |
 | `java.io.InputStream` | `flint.java.io.InputStream` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Declared in the flint.java.io aggregate and implements Closeable; byte arrays are D slices (R26). readNBytes and transferTo are ported. |
 | `java.io.InputStream#read(byte[],int,int)` | `flint.java.io.InputStream.read` | [R26](api-mapping.md#r26-null-arrays), [R8](api-mapping.md#r8-exceptions) | Java byte arrays use D ubyte slices. A null slice counts as an empty array under R26. |
 | `java.io.InputStream#readNBytes(byte[],int,int)` | `flint.java.io.InputStream.readNBytes` | [R26](api-mapping.md#r26-null-arrays) | The destination range is a D ubyte slice and a null slice counts as empty under R26. The count read is returned, and zero means the stream was already at its end. |
@@ -11279,7 +11280,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 546 | 0 |
+| java.io | 545 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -12174,7 +12175,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.File#length()` | 2 | The current method returns zero for all non-regular paths. The pinned Linux Java implementation returns the native size for a directory. |
 | framework | `java.io.FileInputStream` | 2 | The existing class derives from ByteArrayInputStream and retains a byte snapshot. Java derives directly from InputStream and owns a file descriptor until close. |
 | framework | `java.io.FileInputStream#<init>(File)` | 2 | The existing constructor checks the virtual isFile method and reads a byte snapshot. Java opens the pathname and owns the descriptor. The null File check required by R8 is pending. |
-| framework | `java.io.IOException#<init>(Throwable)` | 2 | Missing cause-only constructor. Java initializes the cause even if it is null and derives the detail from a non-null cause's virtual toString. |
 | framework | `java.io.PrintWriter#<init>(File)` | 2 | The existing type has no File constructor. |
 | framework | `java.io.PrintWriter#<init>(OutputStream)` | 2 | A null output is now rejected, but Java buffers writes and uses the charset of a PrintStream sink or the default charset. The existing constructor wraps an eager UTF-8 writer. |
 | framework | `java.io.PrintWriter#<init>(OutputStream,boolean)` | 2 | Missing buffered output-stream constructor with selectable auto-flush and charset inherited from a PrintStream sink or the default charset. |
