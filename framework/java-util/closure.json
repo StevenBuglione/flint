@@ -18,6 +18,16 @@
         ],
         "data": []
       }
+    },
+    "flint.java.util.scanner": {
+      "tokens": {
+        "source": "closure/scanner-tokens.d",
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.util"
+        ],
+        "data": []
+      }
     }
   }
 }
