@@ -1,0 +1,5 @@
+name "probe-java-util-jar"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"
+dependency "flint:java-util-jar" path="../../.."

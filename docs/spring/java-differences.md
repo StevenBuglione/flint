@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,955 | 717 | 0 | 1,921 | 13,828 |
+| framework | openjdk@21.0.13 | 2,001 | 729 | 0 | 1,921 | 13,770 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -3033,6 +3033,23 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.function.IntSupplier` | `flint.java.util.function_.intsupplier.IntSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.LongSupplier` | `flint.java.util.function_.longsupplier.LongSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.Supplier` | `flint.java.util.function_.supplier.Supplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
+
+#### java.util.jar
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.util.jar.Attributes` | `flint.java.util.jar.Attributes` | [R10](api-mapping.md#r10-streams-and-collections) | The class keeps its Java methods but does not implement the generic Map interface; key and value views are D slices. |
+| `java.util.jar.Attributes#containsKey(Object)` | `flint.java.util.jar.Attributes.containsKey` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.jar.Attributes#containsValue(Object)` | `flint.java.util.jar.Attributes.containsValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.jar.Attributes#entrySet()` | `flint.java.util.jar.Attributes.entrySet` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `java.util.jar.Attributes#get(Object)` | `flint.java.util.jar.Attributes.get` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.jar.Attributes#keySet()` | `flint.java.util.jar.Attributes.keySet` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `java.util.jar.Attributes#put(Object,Object)` | `flint.java.util.jar.Attributes.put` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.jar.Attributes#putAll(Map)` | `flint.java.util.jar.Attributes.putAll` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `java.util.jar.Attributes#remove(Object)` | `flint.java.util.jar.Attributes.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.jar.Attributes#values()` | `flint.java.util.jar.Attributes.values` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `java.util.jar.Attributes.Name` | `flint.java.util.jar.Name` | [R13](api-mapping.md#r13-nested-and-inner-classes) | Java's static nested class is the top-level flint.java.util.jar.Name and is aliased as Attributes.Name. |
+| `java.util.jar.Manifest#getEntries()` | `flint.java.util.jar.Manifest.getEntries` | [R10](api-mapping.md#r10-streams-and-collections) | Returns the insertion-ordered Entries facade instead of java.util.Map. |
 
 #### java.util.random
 
@@ -11066,7 +11083,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 89 | 0 |
-| java.util.jar | 0 | 101 |
+| java.util.jar | 43 | 0 |
 | java.util.random | 67 | 0 |
 | java.util.regex | 67 | 0 |
 | java.util.spi | 0 | 43 |
@@ -12412,6 +12429,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.function.Predicate#not(Predicate)` | 2 | The existing D method accepts a null predicate at composition time (R8). Its call to the final negate method also prevents dispatch to an implementor's negate override (R3). |
 | framework | `java.util.function.Predicate#or(Predicate)` | 2 | The existing final D method prevents implementor overrides (R3) and accepts a null predicate at composition time. Java throws NullPointerException there (R8). |
 | framework | `java.util.function.UnaryOperator#identity()` | 2 | The inherited Function.identity factory returns Function. Java's UnaryOperator factory returns the nominal UnaryOperator. |
+| framework | `java.util.jar.Attributes#map` | 2 | The protected java.util.Map field is not exposed; putValue and the Map-shaped methods reach the insertion-ordered storage. |
 | framework | `java.util.regex.Matcher` | 2 | Assignment to Java MatchResult and access to recorded match positions and groups await the Matcher state port. |
 | framework | `java.util.regex.Pattern#asMatchPredicate()` | 2 | Requires a Predicate adapter for whole-input matching. |
 | framework | `java.util.regex.Pattern#asPredicate()` | 2 | Requires the Matcher search API and a Predicate adapter. |

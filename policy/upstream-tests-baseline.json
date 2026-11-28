@@ -7798,6 +7798,18 @@
       "java/util/zip/ZipInputStream/Skip.java",
       "java/util/zip/ZipOutputStream/EmptyComment.java"
     ],
+    "java-util-jar": [
+      "java/util/jar/Attributes/IterationOrder.java",
+      "java/util/jar/Attributes/Name.java",
+      "java/util/jar/Attributes/NullAndEmptyKeysAndValues.java",
+      "java/util/jar/Attributes/PutAndPutAll.java",
+      "java/util/jar/Attributes/TestAttrsNL.java",
+      "java/util/jar/Manifest/CreateManifest.java",
+      "java/util/jar/Manifest/IncludeInExceptionsTest.java",
+      "java/util/jar/Manifest/LineBreakLineWidth.java",
+      "java/util/jar/Manifest/ValueUtf8Coding.java",
+      "java/util/jar/Manifest/WriteBinaryStructure.java"
+    ],
     "jdbc": [
       "org/springframework/jdbc/config/InitializeDatabaseIntegrationTests.java",
       "org/springframework/jdbc/config/JdbcNamespaceIntegrationTests.java",

@@ -1,0 +1,60 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "upstream": "openjdk@21.0.13",
+  "module": "java-util-jar",
+  "test_packages": [
+    ":java-util-jar"
+  ],
+  "classes": {
+    "java/util/jar/Attributes/IterationOrder.java": {
+      "phase": "2",
+      "status": "deferred",
+      "reason": "GPL-2.0-only jtreg source has no Classpath exception. The original Flint manifest tests cover this behaviour against the pinned Temurin oracle."
+    },
+    "java/util/jar/Attributes/Name.java": {
+      "phase": "2",
+      "status": "deferred",
+      "reason": "GPL-2.0-only jtreg source has no Classpath exception. The original Flint manifest tests cover this behaviour against the pinned Temurin oracle."
+    },
+    "java/util/jar/Attributes/NullAndEmptyKeysAndValues.java": {
+      "phase": "2",
+      "status": "deferred",
+      "reason": "GPL-2.0-only jtreg source has no Classpath exception. The original Flint manifest tests cover this behaviour against the pinned Temurin oracle."
+    },
+    "java/util/jar/Attributes/PutAndPutAll.java": {
+      "phase": "2",
+      "status": "deferred",
+      "reason": "GPL-2.0-only jtreg source has no Classpath exception. The original Flint manifest tests cover this behaviour against the pinned Temurin oracle."
+    },
+    "java/util/jar/Attributes/TestAttrsNL.java": {
+      "phase": "2",
+      "status": "deferred",
+      "reason": "GPL-2.0-only jtreg source has no Classpath exception. The original Flint manifest tests cover this behaviour against the pinned Temurin oracle."
+    },
+    "java/util/jar/Manifest/CreateManifest.java": {
+      "phase": "2",
+      "status": "deferred",
+      "reason": "GPL-2.0-only jtreg source has no Classpath exception. The original Flint manifest tests cover this behaviour against the pinned Temurin oracle."
+    },
+    "java/util/jar/Manifest/IncludeInExceptionsTest.java": {
+      "phase": "2",
+      "status": "deferred",
+      "reason": "GPL-2.0-only jtreg source has no Classpath exception. The original Flint manifest tests cover this behaviour against the pinned Temurin oracle."
+    },
+    "java/util/jar/Manifest/LineBreakLineWidth.java": {
+      "phase": "2",
+      "status": "deferred",
+      "reason": "GPL-2.0-only jtreg source has no Classpath exception. The original Flint manifest tests cover this behaviour against the pinned Temurin oracle."
+    },
+    "java/util/jar/Manifest/ValueUtf8Coding.java": {
+      "phase": "2",
+      "status": "deferred",
+      "reason": "GPL-2.0-only jtreg source has no Classpath exception. The original Flint manifest tests cover this behaviour against the pinned Temurin oracle."
+    },
+    "java/util/jar/Manifest/WriteBinaryStructure.java": {
+      "phase": "2",
+      "status": "deferred",
+      "reason": "GPL-2.0-only jtreg source has no Classpath exception. The original Flint manifest tests cover this behaviour against the pinned Temurin oracle."
+    }
+  }
+}
