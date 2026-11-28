@@ -35,6 +35,17 @@ unittest
     static assert(Float.NEGATIVE_INFINITY == -float.infinity);
 }
 
+@("flint.java.lang re-exports the Double and Float leaves")
+unittest
+{
+    import lang = flint.java.lang;
+
+    static assert(is(lang.Double == Double) && is(lang.Float == Float));
+    static assert(is(typeof(() pure nothrow => lang.Double.toString(1.0) ~ lang.Float.toString(1.0f))));
+    static assert(is(typeof(lang.Double.parseDouble("1.0")) == double));
+    static assert(is(typeof(lang.Float.parseFloat("1.0")) == float));
+}
+
 @("Double.toString and Float.toString match Java's shortest round-trip text")
 unittest
 {

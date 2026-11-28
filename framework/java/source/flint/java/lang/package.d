@@ -16,7 +16,9 @@ $(UL
 module flint.java.lang;
 
 public import flint.java.lang.boolean : Boolean;
+public import flint.java.lang.double_ : Double;
 public import flint.java.lang.error : AssertionError, Error_;
+public import flint.java.lang.float_ : Float;
 public import flint.java.lang.illegalmonitorstateexception : IllegalMonitorStateException;
 public import flint.java.lang.integer : Integer;
 public import flint.java.lang.interruptedexception : InterruptedException;
@@ -276,39 +278,6 @@ private string decimal(long value) pure nothrow
     }
     return (negative ? "-" : "") ~ buffer[position .. $].idup;
 }
-
-/// Java's `Double` statics.
-struct Double
-{
-    /// Parse a decimal floating-point number, trimming ASCII whitespace as Java does.
-    /// Throws `NumberFormatException`.
-    static double parseDouble(string s)
-    {
-        import flint.engine.aot.text : tryParseDouble;
-
-        size_t start, end = s.length;
-        while (start < end && s[start] <= ' ')
-            start++;
-        while (end > start && s[end - 1] <= ' ')
-            end--;
-        auto text = s[start .. end];
-        if (text.length && (text[$ - 1] == 'd' || text[$ - 1] == 'D' || text[$ - 1] == 'f' || text[$ - 1] == 'F'))
-            text = text[0 .. $ - 1];
-        if (text.length == 0)
-            throw new NumberFormatException(s.length ? "For input string: \"" ~ s ~ "\"" : "empty String");
-        const parsed = tryParseDouble(text);
-        if (!parsed.ok)
-            throw NumberFormatException.forInputString(s);
-        return parsed.value;
-    }
-
-    /// Java's `Double.toString`.
-    static string toString(double d)
-    {
-        return doubleToString(d);
-    }
-}
-
 /// Java's `String.hashCode`: `s[0]*31^(n-1) + ... + s[n-1]` over UTF-16 code units.
 int stringHashCode(scope const(char)[] s) pure nothrow @nogc
 {

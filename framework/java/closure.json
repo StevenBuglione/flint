@@ -48,6 +48,7 @@
       "double": {
         "data": [],
         "leaves": [
+          "flint.java.lang.double_",
           "flint.java.lang.runtimeexception"
         ],
         "source": "closure/double.d"

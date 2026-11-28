@@ -208,8 +208,8 @@ unittest
 
 unittest
 {
-    // String.valueOf's scalars and Double.parseDouble go through flint.engine.aot.text; they print and parse as
-    // std.conv did.
+    // String.valueOf's scalars go through flint.engine.aot.text; Double.parseDouble uses the JDK's
+    // hexadecimal-capable FloatingDecimal, which rejects D-style underscores as Java does.
     import std.conv : to;
 
     enum Colour
@@ -224,9 +224,9 @@ unittest
     assert(valueOf(Colour.green) == "green" && valueOf(cast(Colour) 5) == "cast(Colour)5");
     assert(valueOf('x') == "x" && valueOf(cast(char) 0xFF) == [cast(char) 0xFF] && valueOf('\u00E9') == "\u00E9");
     assert(valueOf(cast(wchar) 0x436) == "\u0436" && valueOf(cast(dchar) 0xD800) == "\uFFFD");
-    assert(Double.parseDouble("-0x1p3") == -8 && Double.parseDouble("1_000.5") == 1000.5);
+    assert(Double.parseDouble("-0x1p3") == -8);
     assert(Double.parseDouble("2f") == 2);
-    foreach (bad; ["1e", "+inf", "0x", "1..2", "_1"])
+    foreach (bad; ["1e", "+inf", "0x", "1..2", "_1", "1_000.5"])
     {
         bool threw;
         try
