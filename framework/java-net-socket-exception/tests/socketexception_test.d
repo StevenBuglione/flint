@@ -2,7 +2,7 @@
 module flint.java.net.socketexception_test;
 
 import flint.java.io : IOException;
-import flint.java.lang : RuntimeException;
+import flint.java.lang : IllegalStateException, RuntimeException;
 import flint.java.net.socketexception : SocketException;
 
 @safe:
@@ -46,4 +46,30 @@ unittest
         assert(caught.getMessage() == "connection reset");
     }
     assert(caughtAsIo);
+}
+
+@("Java's cause lifecycle: the message-only constructors keep the cause open to one initCause")
+unittest
+{
+    auto root = new IOException("root cause");
+    auto unnamed = new SocketException();
+    unnamed.initCause(root);
+    assert(unnamed.getCause() is root);
+
+    auto named = new SocketException("connection reset");
+    named.initCause(root);
+    assert(named.getCause() is root);
+
+    auto fromCause = new SocketException(cast(Throwable) root);
+    assert(fromCause.getCause() is root);
+
+    bool refused;
+    try
+    {
+        auto initialized = new SocketException("detail", root);
+        initialized.initCause(new IOException("second"));
+    }
+    catch (IllegalStateException)
+        refused = true;
+    assert(refused);
 }

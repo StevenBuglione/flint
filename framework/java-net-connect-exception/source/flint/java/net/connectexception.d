@@ -39,6 +39,6 @@ class ConnectException : SocketException
     /// Constructs a `ConnectException` with an optional detail message.
     this(string message = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        super(message.length == 0 ? null : message, null, file, line);
+        super(message, file, line);
     }
 }
