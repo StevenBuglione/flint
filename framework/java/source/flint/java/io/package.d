@@ -43,7 +43,7 @@ class IOException : Exception
     final Throwable initCause(Throwable cause)
     {
         if (cause_ !is this)
-            rejectCauseSet();
+            rejectCauseSet(cause);
         if (cause is this)
             rejectSelfCause();
         cause_ = cause;
@@ -66,11 +66,11 @@ class UncheckedIOException : RuntimeException
 {
     private IOException ioCause_;
 
-    /// `message` and the wrapped `cause`.
+    /// `message` and the wrapped `cause`. An empty message means no detail (R26).
     this(string message, IOException cause, string file = __FILE__, size_t line = __LINE__) pure
     {
         ioCause_ = requireIoCause(cause);
-        super(message, ioCause_, file, line);
+        super(message.length == 0 ? null : message, ioCause_, file, line);
     }
 
     /// The message is `cause.toString()`.
@@ -101,11 +101,11 @@ pragma(inline, false) private noreturn rejectNullIoArgument() pure
     throw new NullPointerException;
 }
 
-pragma(inline, false) private noreturn rejectCauseSet()
+pragma(inline, false) private noreturn rejectCauseSet(Throwable cause)
 {
-    import flint.java.lang : IllegalStateException;
+    import flint.java.lang : IllegalStateException, javaToString;
 
-    throw new IllegalStateException("Can't overwrite cause");
+    throw new IllegalStateException("Can't overwrite cause with " ~ (cause is null ? "a null" : javaToString(cause)));
 }
 
 pragma(inline, false) private noreturn rejectSelfCause()

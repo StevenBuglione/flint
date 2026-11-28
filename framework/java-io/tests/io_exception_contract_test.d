@@ -43,7 +43,17 @@ unittest
     assert(failure.getCause() is null);
     assert(failure.initCause(cause) is failure);
     assert(failure.getCause() is cause);
-    assertThrown!IllegalStateException(failure.initCause(new IOException("again")));
+    try
+    {
+        failure.initCause(new IOException("again"));
+        assert(false);
+    }
+    catch (IllegalStateException failureMessage)
+    {
+        const message = failureMessage.getMessage();
+        enum prefix = "Can't overwrite cause with ";
+        assert(message.length > prefix.length && message[0 .. prefix.length] == prefix);
+    }
 
     auto self = new IOException("self");
     assertThrown!IllegalArgumentException(self.initCause(self));

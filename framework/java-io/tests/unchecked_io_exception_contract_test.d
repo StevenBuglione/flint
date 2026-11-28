@@ -20,6 +20,10 @@ unittest
     assert(withoutMessage.getMessage() is null);
     assert(withoutMessage.getCause() is cause);
 
+    const emptyMessage = new UncheckedIOException("", cause);
+    assert(emptyMessage.getMessage() is null);
+    assert(emptyMessage.getCause() is cause);
+
     const withoutExplicitMessage = new UncheckedIOException(cause);
     assert(withoutExplicitMessage.getMessage() == "flint.java.io.IOException: inner");
     assert(withoutExplicitMessage.getCause() is cause);
