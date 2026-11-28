@@ -2417,9 +2417,9 @@
     "dmd_incremental_seconds": 0.6,
     "ldc_cold_seconds": 5.4,
     "ldc_incremental_seconds": 2.7,
-    "incremental_linked_bytes": 8000,
+    "incremental_linked_bytes": 5566,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 120
+    "template_instances": 35
    },
    "provisional": [
     "dmd_cold_seconds",
