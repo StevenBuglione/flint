@@ -1382,6 +1382,16 @@ private void builderStep(ref DateTimeFormatterBuilder b, char step, string arg,
     case 'i':
         b.appendInstant(arg.to!int);
         break;
+    case 'P':
+        auto padParts = arg.findSplit(",");
+        if (padParts[1].length)
+        {
+            size_t offset;
+            b.padNext(padParts[0].to!int, cast(wchar) decodeUtf8(padParts[2], offset));
+        }
+        else
+            b.padNext(padParts[0].to!int);
+        break;
     case 'a':
         b.append(named(arg));
         break;
@@ -1462,7 +1472,7 @@ unittest
         ++count;
     }
     assert(failures == 0, report);
-    assert(count == 2513);
+    assert(count == 2975);
 }
 
 @("appendInstant(int) parses exactly its fractional digits, or up to nine for -1")
@@ -1485,6 +1495,36 @@ unittest
     assert(parsed(-1, "2024-03-05T10:15:30.12345Z") == "2024-03-05T10:15:30.123450Z");
     auto e = collectException!DateTimeParseException(parsed(3, "2024-03-05T10:15:30.12Z"));
     assert(e !is null && e.getErrorIndex() == 20);
+}
+
+@("padNext pads the next appended element and parses within the pad width")
+unittest
+{
+    import std.exception : collectException;
+
+    auto padded = DateTimeFormatterBuilder().padNext(5).appendPattern("HH:mm").toFormatter();
+    assert(padded.toString() == "Pad(Value(HourOfDay,2),5)':'Value(MinuteOfHour,2)");
+    assert(padded.format(LocalTime.of(10, 15)) == "   10:15");
+    assert(LocalTime.parse("   10:15", padded) == LocalTime.of(10, 15));
+    // A strict parse needs the whole pad width, and a wrapped element that fails inside it still fails at the pad
+    // start plus the start again, as Java's decorator reports.
+    auto tooShort = collectException!DateTimeParseException(padded.parse("10"));
+    assert(tooShort !is null && tooShort.getErrorIndex() == 0);
+    auto shortText = collectException!DateTimeParseException(padded.parse(" 10:15"));
+    assert(shortText !is null && shortText.getErrorIndex() == 1);
+    // The pad character, and a lenient parse treating the width as a maximum.
+    auto starred = DateTimeFormatterBuilder().padNext(5, '*').appendPattern("HH").toFormatter();
+    assert(starred.toString() == "Pad(Value(HourOfDay,2),5,'*')");
+    assert(starred.format(LocalTime.of(10, 15)) == "***10");
+    assert(LocalTime.parse("***10", starred) == LocalTime.of(10, 0));
+    auto lenient = DateTimeFormatterBuilder().parseLenient().padNext(5).appendPattern("HH").toFormatter();
+    assert(LocalTime.parse("10", lenient) == LocalTime.of(10, 0));
+    // Printing past the pad width fails, and a width below one is rejected.
+    assert(collectException!DateTimeException(DateTimeFormatterBuilder().padNext(1)
+            .appendPattern("HH").toFormatter().format(LocalTime.of(10, 0))).msg
+            == "Cannot print as output of 2 characters exceeds pad width of 1");
+    assert(collectException!IllegalArgumentException(DateTimeFormatterBuilder().padNext(0))
+            .msg == "The pad width must be at least one but was 0");
 }
 
 @("DateTimeFormatterBuilder rejects the single-digit hour offset patterns Flint does not support yet")

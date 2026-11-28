@@ -9,6 +9,7 @@
 //   o:PATTERN,TEXT         appendOffset
 //   l:STYLE                appendLocalizedOffset(TextStyle.valueOf(STYLE))
 //   i:N                    appendInstant(N)
+//   P:W or P:W,CHAR        padNext(W) or padNext(W, CHAR)
 //   a:NAME q:NAME          append, appendOptional of an ISO constant, or of ofPattern(P) for NAME `=P`
 // Ops: `build` (the formatter's toString, or the builder's exception), `format` (a value of the kind, from its
 // toString) and `parse` (into the kind). A result is the toString() or `!` and the exception message (and a parse
@@ -76,6 +77,15 @@ public class GoldenFormatterBuilder {
         return name.startsWith("=") ? DateTimeFormatter.ofPattern(name.substring(1)) : constants.get(name);
     }
 
+    static void padNext(DateTimeFormatterBuilder b, String arg) {
+        int comma = arg.indexOf(',');
+        if (comma < 0) {
+            b.padNext(Integer.parseInt(arg));
+        } else {
+            b.padNext(Integer.parseInt(arg.substring(0, comma)), arg.charAt(comma + 1));
+        }
+    }
+
     static DateTimeFormatter build(String recipe) {
         DateTimeFormatterBuilder b = new DateTimeFormatterBuilder();
         for (String step : recipe.isEmpty() ? new String[0] : recipe.split("\\|", -1)) {
@@ -99,6 +109,7 @@ public class GoldenFormatterBuilder {
                 case "o" -> b.appendOffset(arg.substring(0, arg.indexOf(',')), arg.substring(arg.indexOf(',') + 1));
                 case "l" -> b.appendLocalizedOffset(TextStyle.valueOf(arg));
                 case "i" -> b.appendInstant(Integer.parseInt(arg));
+                case "P" -> padNext(b, arg);
                 case "a" -> b.append(named(arg));
                 case "q" -> b.appendOptional(named(arg));
                 default -> throw new AssertionError(step);
@@ -386,6 +397,39 @@ public class GoldenFormatterBuilder {
                     "\u00e92024-03-05T10:15GMT+\ud83d\ude00", "\u00e92024-03-05T10:15GMT+0\ud83d\ude00",
                     "\u00e92024-03-05T10:15GMT+01:\ud83d\ude00", "\u00e92024-03-05T10:15GMT+1:\u00e9\u00e9",
                     "\u00e92024-03-05T10:15GMT+01:00:\u00e9\u00e9", "\u00e92024-03-05T10:15GMT\u00e9");
+        // padNext: the pad wraps the next appended element (a value, literal, offset, zone, settings element,
+        // optional section, or appended formatter), its Pad(...) description and pad character, and Java's pad parse
+        // rules: a strict parse needs the whole width and a lenient one treats it as a maximum.
+        for (String width : new String[] {"0", "-2"})
+            recipe("P:" + width + "|p:HH", none);
+        recipe("P:2|p:HH", k("time"), "10", " 1");
+        recipe("P:5|p:HH:mm", k("time"), "   10:15", "10:15", " 1:30", " 10:15", " 1:3", "  1:2",
+                "   10", "   10:15x");
+        recipe("P:5,*|p:HH", k("time"), "***10");
+        recipe("P:5,0|p:HH", k("time"), "00010", " 0010", "000010");
+        recipe("P:1|p:HH", k("time"), "10", "  10");
+        recipe("P:3|p:HH", k("time"), " 10", "  10", "  100", "  1");
+        recipe("P:3,\u00e9|s:x", k("date"), "\u00e9\u00e9x");
+        recipe("P:5|s:ab", k("date"), "   ab");
+        recipe("P:3|p:'x'", k("date"), "  x");
+        recipe("P:5|cs|p:HH", k("time"), "     10"); // the pad wraps the settings element
+        recipe("P:8|[|p:HH:mm|]", k("time"), "   10:15"); // the pad wraps the whole optional section
+        recipe("P:5|[|]|p:HH", k("time"), "   10"); // an empty section leaves the pad pending
+        recipe("P:6|p:uuuu-MM|p:-dd", k("date"), "  2024-03-05", "  2024-03"); // only the next atom
+        recipe("P:12|a:ISO_LOCAL_TIME", k("time"), "    10:15:30");
+        recipe("P:12|q:ISO_LOCAL_TIME", k("time"), "    10:15:30");
+        recipe("p:uuuu-MM-dd'T'|P:5|p:HH", k("dateTime"), "2024-03-05T   10", "2024-03-05T10",
+                "2024-03-05T   1", "2024-03-05T    1");
+        recipe("p:uuuu-MM-dd'T'HH:mm|P:10|offid", k("offset"), "2024-03-05T10:15  +01:00",
+                "2024-03-05T10:15       Z", "2024-03-05T10:15+01:00");
+        recipe("p:uuuu-MM-dd'T'HH:mm|P:10|zid", k("zoned"), "2024-03-05T10:15  +01:00",
+                "2024-03-05T10:15     UTC");
+        recipe("lenient|P:4|p:HH", k("time"), "10", "  1", "1", "  10", "   10", "    10");
+        recipe("ci|P:4,x|p:HH", k("time"), "xxxx10", "XXXX10", "XxXx10", "xxxx1");
+        // Java's pad error index counts the start twice, so a long prefix reports an index past the end of the text;
+        // the non-ASCII prefix checks that the index is in UTF-16 units.
+        recipe("s:\u00e9\u00e9|P:4|s:1", k("date"), "\u00e9\u00e9  1x", "\u00e9\u00e9  1",
+                "\u00e9\u00e9  12");
         Files.write(Path.of(a[0]), lines);
     }
 }

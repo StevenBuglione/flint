@@ -669,6 +669,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Share the zone element with a zone-or-offset fallback.** `appendZoneOrOffsetId` reuses the zone printer and parser as `Op.zoneOrOffset` and prints the offset with the existing offset ID formatter when the value has no zone ID; a parsed fixed offset also supplies the offset field so date-time resolution reads it as Java's `ZoneOffset` would. On venus (v4.2 toolchain) against the parent `e0bfc9063`, the Java module stays at 129,496 incremental linked bytes, and DMD templates rise from 4,668 to 4,672 against the 7,350 cap.
 
+- **Pad the next appended element with `padNext`.** `DateTimeFormatterBuilder.padNext(int)` and `padNext(int, char)` wrap the next appended element or section in a pad decorator, as Java's `PadPrinterParserDecorator`: printing pads on the left to the width with the pad character, and parsing skips up to the width of pad characters before the wrapped element, needing the whole width in a strict parse and treating it as a maximum in a lenient one. On venus (v4.2 toolchain) against the parent `f2e9d0841`, the Java module grows from 129,496 to 129,512 incremental linked bytes and DMD templates from 4,672 to 4,716 against the 7,350 cap.
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:

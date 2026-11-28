@@ -731,6 +731,8 @@ private enum Op : ubyte
     groupStart, // an appended formatter, which `text` describes
     groupEnd,
     adjacentEnd, // where an empty optional section was: no element, but values before it are not adjacent
+    padStart, // `padWidth` and `padChar`: the element or section up to the matching padEnd is padded
+    padEnd,
 }
 
 private struct Element
@@ -743,6 +745,8 @@ private struct Element
     string text; // literal text, offset pattern, or "full"/"short" for text
     string noOffsetText;
     bool lenient;
+    wchar padChar; // padStart only; these two fill the struct's tail padding
+    int padWidth;
 }
 
 private Element num(Field f, int min, int max = 0, SignStyle sign = SignStyle.NOT_NEGATIVE) pure nothrow @nogc
@@ -1054,7 +1058,7 @@ struct DateTimeFormatter
         const end = parser.run(elements_, 0);
         if (end < 0)
         {
-            const index = utf16ErrorIndex(text[0 .. ~end]);
+            const index = isExplicitError(end) ? explicitErrorUnits(end) : utf16ErrorIndex(text[0 .. ~end]);
             const copy = text.idup;
             throw new DateTimeParseException("Text '" ~ copy ~ "' could not be parsed at index " ~ indexText(index),
                     copy, index);
@@ -1092,39 +1096,115 @@ struct DateTimeFormatterBuilder
 {
     private Element[] elements_;
     private size_t[] open_; // the index of each optional section not yet ended
+    private int[] openPadWidths_; // the pad each open section still owes its next element
+    private wchar[] openPadChars_;
+    private int padWidth_; // the pad the outermost section still owes its next element
+    private wchar padChar_ = ' ';
 
     /// Changes the parse of the rest of the formatter to be case sensitive, the default.
     ref DateTimeFormatterBuilder parseCaseSensitive() return
     {
-        elements_ ~= op(Op.caseSensitive);
+        appendElement(op(Op.caseSensitive));
         return this;
     }
 
     /// Changes the parse of the rest of the formatter to be case insensitive.
     ref DateTimeFormatterBuilder parseCaseInsensitive() return
     {
-        elements_ ~= op(Op.caseInsensitive);
+        appendElement(op(Op.caseInsensitive));
         return this;
     }
 
     /// Changes the parse of the rest of the formatter to be strict, the default.
     ref DateTimeFormatterBuilder parseStrict() return
     {
-        elements_ ~= op(Op.strict);
+        appendElement(op(Op.strict));
         return this;
     }
 
     /// Changes the parse of the rest of the formatter to be lenient.
     ref DateTimeFormatterBuilder parseLenient() return
     {
-        elements_ ~= op(Op.lenient);
+        appendElement(op(Op.lenient));
         return this;
+    }
+
+    /// Pads the next appended element to `padWidth` with spaces while printing. Throws `IllegalArgumentException`
+    /// when the width is less than one.
+    ref DateTimeFormatterBuilder padNext(int padWidth) return
+    {
+        return padNext(padWidth, ' ');
+    }
+
+    /// ditto, with `padChar`.
+    ref DateTimeFormatterBuilder padNext(int padWidth, wchar padChar) return
+    {
+        if (padWidth < 1)
+            throw new IllegalArgumentException("The pad width must be at least one but was " ~ indexText(padWidth));
+        setPad(padWidth, padChar);
+        return this;
+    }
+
+    // Appends `e` as the next element of the active section, padded when `padNext` set a pad there.
+    private void appendElement(Element e)
+    {
+        if (pendingPad())
+        {
+            int width;
+            wchar padChar;
+            takePad(width, padChar);
+            Element start = op(Op.padStart);
+            start.padWidth = width;
+            start.padChar = padChar;
+            elements_ ~= start;
+            elements_ ~= e;
+            elements_ ~= op(Op.padEnd);
+            return;
+        }
+        elements_ ~= e;
+    }
+
+    private bool pendingPad() const pure nothrow @nogc
+    {
+        return open_.length ? openPadWidths_[$ - 1] > 0 : padWidth_ > 0;
+    }
+
+    private void setPad(int width, wchar padChar) pure nothrow @nogc
+    {
+        if (open_.length)
+        {
+            openPadWidths_[$ - 1] = width;
+            openPadChars_[$ - 1] = padChar;
+        }
+        else
+        {
+            padWidth_ = width;
+            padChar_ = padChar;
+        }
+    }
+
+    private void takePad(out int width, out wchar padChar) pure nothrow @nogc
+    {
+        if (open_.length)
+        {
+            width = openPadWidths_[$ - 1];
+            padChar = openPadChars_[$ - 1];
+            openPadWidths_[$ - 1] = 0;
+            openPadChars_[$ - 1] = ' ';
+        }
+        else
+        {
+            width = padWidth_;
+            padChar = padChar_;
+            padWidth_ = 0;
+            padChar_ = ' ';
+        }
     }
 
     /// Appends an instant in ISO-8601 form, in UTC, with the fraction in groups of three digits as needed.
     ref DateTimeFormatterBuilder appendInstant() return
     {
-        elements_ ~= op(Op.instant);
+        appendElement(op(Op.instant));
         return this;
     }
 
@@ -1140,14 +1220,14 @@ struct DateTimeFormatterBuilder
                     "The fractional digits must be from -1 to 9 inclusive but was " ~ indexText(fractionalDigits));
         auto e = op(Op.instant);
         e.minWidth = cast(ubyte)(fractionalDigits + 2);
-        elements_ ~= e;
+        appendElement(e);
         return this;
     }
 
     /// Appends the zone offset, such as '+01:00', or 'Z' for zero: `appendOffset("+HH:MM:ss", "Z")`.
     ref DateTimeFormatterBuilder appendOffsetId() return
     {
-        elements_ ~= isoStrictOffset;
+        appendElement(isoStrictOffset);
         return this;
     }
 
@@ -1169,7 +1249,7 @@ struct DateTimeFormatterBuilder
         foreach (candidate; supported)
             if (candidate == pattern)
             {
-                elements_ ~= offsetElement(candidate, noOffsetText, false);
+                appendElement(offsetElement(candidate, noOffsetText, false));
                 return this;
             }
         foreach (candidate; singleDigitHour)
@@ -1186,21 +1266,21 @@ struct DateTimeFormatterBuilder
     {
         if (style != TextStyle.FULL && style != TextStyle.SHORT)
             throw new IllegalArgumentException("Style must be either full or short");
-        elements_ ~= localizedOffsetElement(style == TextStyle.FULL);
+        appendElement(localizedOffsetElement(style == TextStyle.FULL));
         return this;
     }
 
     /// Appends the zone ID, such as 'Europe/Paris' or '+02:00'.
     ref DateTimeFormatterBuilder appendZoneId() return
     {
-        elements_ ~= op(Op.zoneId);
+        appendElement(op(Op.zoneId));
         return this;
     }
 
     /// Appends a region zone ID, such as 'Europe/Paris'; a value with only an offset does not print one.
     ref DateTimeFormatterBuilder appendZoneRegionId() return
     {
-        elements_ ~= op(Op.zoneRegion);
+        appendElement(op(Op.zoneRegion));
         return this;
     }
 
@@ -1216,7 +1296,7 @@ struct DateTimeFormatterBuilder
     {
         char[3] buffer;
         const length = encodeUnit(literal, buffer);
-        elements_ ~= lit(length ? buffer[0 .. length].idup : "\uFFFD");
+        appendElement(lit(length ? buffer[0 .. length].idup : "\uFFFD"));
         return this;
     }
 
@@ -1224,7 +1304,7 @@ struct DateTimeFormatterBuilder
     ref DateTimeFormatterBuilder appendLiteral(string literal) return
     {
         if (literal.length)
-            elements_ ~= lit(literal);
+            appendElement(lit(literal));
         return this;
     }
 
@@ -1233,9 +1313,7 @@ struct DateTimeFormatterBuilder
     {
         Element start = op(Op.groupStart);
         start.text = formatter.description_;
-        elements_ ~= start;
-        elements_ ~= formatter.elements_;
-        elements_ ~= op(Op.groupEnd);
+        appendGroup(start, formatter.elements_, op(Op.groupEnd));
         return this;
     }
 
@@ -1245,10 +1323,29 @@ struct DateTimeFormatterBuilder
         Element start = op(Op.optionalStart);
         start.lenient = true;
         start.text = formatter.description_;
-        elements_ ~= start;
-        elements_ ~= formatter.elements_;
-        elements_ ~= op(Op.optionalEnd);
+        appendGroup(start, formatter.elements_, op(Op.optionalEnd));
         return this;
+    }
+
+    // Appends `start`, `elements` and `end` as one element of the active section, which `padNext` pads as a whole.
+    private void appendGroup(Element start, scope const(Element)[] elements, Element end)
+    {
+        const padded = pendingPad();
+        int width;
+        wchar padChar;
+        if (padded)
+        {
+            takePad(width, padChar);
+            Element padStart = op(Op.padStart);
+            padStart.padWidth = width;
+            padStart.padChar = padChar;
+            elements_ ~= padStart;
+        }
+        elements_ ~= start;
+        elements_ ~= elements;
+        elements_ ~= end;
+        if (padded)
+            elements_ ~= op(Op.padEnd);
     }
 
     /**
@@ -1267,11 +1364,16 @@ struct DateTimeFormatterBuilder
                 size_t count = 1;
                 while (i + count < pattern.length && pattern[i + count] == c)
                     ++count;
-                elements_ ~= letterElement(c, cast(int) count);
+                appendElement(letterElement(c, cast(int) count));
                 i += count;
             }
             else if (c == '\'')
-                i = quoted(pattern, i, elements_);
+            {
+                string literal;
+                i = quoted(pattern, i, literal);
+                if (literal.length)
+                    appendElement(lit(literal));
+            }
             else if (c == '[')
             {
                 optionalStart();
@@ -1290,7 +1392,7 @@ struct DateTimeFormatterBuilder
             {
                 size_t next = i;
                 decodeUtf8(pattern, next);
-                elements_ ~= lit(pattern[i .. next]);
+                appendElement(lit(pattern[i .. next]));
                 i = next;
             }
         }
@@ -1301,6 +1403,8 @@ struct DateTimeFormatterBuilder
     ref DateTimeFormatterBuilder optionalStart() return
     {
         open_ ~= elements_.length;
+        openPadWidths_ ~= 0;
+        openPadChars_ ~= ' ';
         elements_ ~= op(Op.optionalStart);
         return this;
     }
@@ -1317,14 +1421,29 @@ struct DateTimeFormatterBuilder
     }
 
     // Ends the open section; appendPattern and toFormatter call it only with one open, so ofPattern does not link
-    // IllegalStateException.
+    // IllegalStateException. A section with elements is one element of the enclosing section, which `padNext` pads
+    // as a whole; a section's own pending pad is dropped, as Java drops it.
     private void endSection() pure nothrow
     {
         const start = open_[$ - 1];
         open_ = open_[0 .. $ - 1];
+        openPadWidths_ = openPadWidths_[0 .. $ - 1];
+        openPadChars_ = openPadChars_[0 .. $ - 1];
         foreach (e; elements_[start + 1 .. $])
             if (e.op != Op.adjacentEnd)
             {
+                if (pendingPad())
+                {
+                    int width;
+                    wchar padChar;
+                    takePad(width, padChar);
+                    Element padStart = op(Op.padStart);
+                    padStart.padWidth = width;
+                    padStart.padChar = padChar;
+                    elements_ = elements_[0 .. start] ~ padStart ~ elements_[start .. $] ~ op(
+                            Op.optionalEnd) ~ op(Op.padEnd);
+                    return;
+                }
                 elements_ ~= op(Op.optionalEnd);
                 return;
             }
@@ -1352,7 +1471,16 @@ private string describeElements(scope const(Element)[] elements) pure
     for (size_t i = 0; i < elements.length; ++i)
     {
         const e = elements[i];
-        if (e.op == Op.groupStart || (e.op == Op.optionalStart && e.lenient))
+        if (e.op == Op.padStart)
+        {
+            const end = sectionEnd(elements, i);
+            text ~= "Pad(" ~ describeElements(elements[i + 1 .. end]) ~ "," ~ indexText(e.padWidth);
+            if (e.padChar != ' ')
+                text ~= ",'" ~ padCharText(e.padChar) ~ "'";
+            text ~= ")";
+            i = end;
+        }
+        else if (e.op == Op.groupStart || (e.op == Op.optionalStart && e.lenient))
         {
             text ~= e.op == Op.groupStart ? "(" ~ e.text ~ ")" : "[" ~ e.text ~ "]";
             i = sectionEnd(elements, i);
@@ -1363,9 +1491,17 @@ private string describeElements(scope const(Element)[] elements) pure
     return text;
 }
 
+// The UTF-8 form of a pad character, as `DateTimeFormatterBuilder`'s `Pad` description writes it.
+private string padCharText(wchar unit) pure nothrow
+{
+    char[3] buffer;
+    const length = encodeUnit(unit, buffer);
+    return length ? buffer[0 .. length].idup : "\uFFFD";
+}
+
 private immutable string[Op.max - Op.optionalStart + 1] controlNames = [
     "[", "]", "ParseCaseSensitive(false)", "ParseCaseSensitive(true)", "ParseStrict(false)",
-    "ParseStrict(true)", "(", ")", ""
+    "ParseStrict(true)", "(", ")", "", "", ""
 ];
 
 // Op.zoneId, Op.zoneRegion, Op.zoneOrOffset and Op.instant.
@@ -1439,6 +1575,42 @@ private int utf16ErrorIndex(scope const(char)[] prefix) pure nothrow @nogc
     return units;
 }
 
+// A parse result is `~position` for a failure at a byte position. Java's pad decorator can report an error index
+// past the end of the text, so it is carried as the UTF-16 index Java reports instead.
+private enum explicitErrorBase = 0x4000_0000;
+private int explicitError(int units) pure nothrow @nogc
+{
+    return -(explicitErrorBase + units);
+}
+
+private bool isExplicitError(int encoded) pure nothrow @nogc
+{
+    return encoded <= -explicitErrorBase;
+}
+
+private int explicitErrorUnits(int encoded) pure nothrow @nogc
+{
+    return -encoded - explicitErrorBase;
+}
+
+// The byte offset of the UTF-16 unit `units` into `text`, rounded up to the next code point boundary when `units`
+// falls inside a surrogate pair.
+private int byteAtUnit(scope const(char)[] text, int units) pure nothrow @nogc
+{
+    size_t position;
+    int count;
+    while (position < text.length)
+    {
+        size_t next = position;
+        const units_ = decodeUtf8(text, next) > 0xFFFF ? 2 : 1;
+        count += units_;
+        if (count >= units)
+            return cast(int) next;
+        position = next;
+    }
+    return cast(int) text.length;
+}
+
 private string indexText(int index) pure nothrow
 {
     import flint.engine.aot.text : decimal;
@@ -1500,6 +1672,19 @@ private struct Printer
                 i = end;
                 continue;
             }
+            if (e.op == Op.padStart)
+            {
+                const end = sectionEnd(elements, i);
+                const mark = output.length;
+                if (!run(elements[i + 1 .. end], optional))
+                {
+                    output = output[0 .. mark];
+                    return false;
+                }
+                padOutput(mark, e.padWidth, e.padChar);
+                i = end;
+                continue;
+            }
             if (!print(e))
             {
                 if (optional)
@@ -1512,6 +1697,17 @@ private struct Printer
             }
         }
         return true;
+    }
+
+    // Pads what was printed from `mark` to `width` with `padChar`, as Java's `PadPrinterParserDecorator`.
+    void padOutput(size_t mark, int width, wchar padChar)
+    {
+        const units = utf16ErrorIndex(output[mark .. $]);
+        if (units > width)
+            throw new DateTimeException("Cannot print as output of " ~ indexText(
+                    units) ~ " characters exceeds pad width of " ~ indexText(width));
+        if (units < width)
+            output = output[0 .. mark] ~ padText(padChar, width - units) ~ output[mark .. $];
     }
 
     string missingField(const Element e) const pure nothrow @nogc
@@ -1764,6 +1960,17 @@ private long tenPow(int n) pure nothrow @nogc
     return p;
 }
 
+// `count` copies of `padChar` in UTF-8; a lone surrogate prints as U+FFFD (R14).
+private string padText(wchar padChar, int count) pure nothrow
+{
+    string text;
+    char[3] buffer;
+    const length = encodeUnit(padChar, buffer);
+    foreach (_; 0 .. count)
+        text ~= length ? buffer[0 .. length] : "\uFFFD";
+    return text;
+}
+
 private immutable string[12] monthFull = [
     "January", "February", "March", "April", "May", "June", "July", "August", "September",
     "October", "November", "December"
@@ -1772,10 +1979,11 @@ private immutable string[7] dayFull = [
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
 ];
 
-// The index of the end matching the optionalStart or groupStart at `start`, or the end of the list.
+// The index of the end matching the optionalStart, groupStart or padStart at `start`, or the end of the list.
 private size_t sectionEnd(scope const(Element)[] elements, size_t start) pure nothrow @nogc
 {
-    const open = elements[start].op, close = open == Op.optionalStart ? Op.optionalEnd : Op.groupEnd;
+    const open = elements[start].op;
+    const close = open == Op.optionalStart ? Op.optionalEnd : open == Op.groupStart ? Op.groupEnd : Op.padEnd;
     int depth;
     foreach (i; start .. elements.length)
     {
@@ -1865,11 +2073,71 @@ private struct Parser
                 i = end;
                 continue;
             }
+            if (e.op == Op.padStart)
+            {
+                const end = sectionEnd(elements, i);
+                const next = parsePad(elements[i + 1 .. end], e, position);
+                if (next < 0)
+                    return next;
+                position = next;
+                i = end;
+                continue;
+            }
             position = parseOne(e, elements[i + 1 .. $], position);
             if (position < 0)
                 return position;
         }
         return position;
+    }
+
+    // Java's pad decorator: skip up to `padWidth` pad characters, then parse the wrapped element within those
+    // characters. A strict parse needs the whole width; a lenient one treats the width as a maximum.
+    int parsePad(scope const(Element)[] elements, const Element pad, int position) scope
+    {
+        const strict = !lenient;
+        if (position >= text.length)
+            return ~position;
+        const startUnits = utf16ErrorIndex(text[0 .. position]);
+        const totalUnits = startUnits + utf16ErrorIndex(text[position .. $]);
+        const target = startUnits + pad.padWidth;
+        if (strict && target > totalUnits)
+            return ~position;
+        const end = byteAtUnit(text, target > totalUnits ? totalUnits : target);
+        int pos = position;
+        while (pos < end)
+        {
+            const length = padLength(pos, pad.padChar);
+            if (length == 0)
+                break;
+            pos += length;
+        }
+        const saved = text;
+        Parser bounded = Parser(text[0 .. end], fields);
+        bounded.caseInsensitive = caseInsensitive;
+        bounded.lenient = lenient;
+        bounded.style = style;
+        const next = bounded.run(elements, pos);
+        // Settings the wrapped elements changed stay changed, as they do in Java's parse context.
+        caseInsensitive = bounded.caseInsensitive;
+        lenient = bounded.lenient;
+        // As Java, a strict parse that does not end exactly at the pad width fails at the start of the wrapped
+        // element plus the start again, whether the wrapped element parsed short or failed. A lenient parse returns
+        // the wrapped parse's own result, even a failure.
+        if (strict && next != end)
+            return explicitError(2 * startUnits + utf16ErrorIndex(saved[position .. pos]));
+        return next;
+    }
+
+    // The UTF-8 length of the pad character at `at`, or 0 when the text there is not it. As Java, the match folds
+    // case when the parse is case insensitive; only ASCII folds here.
+    int padLength(size_t at, wchar padChar) scope const pure nothrow @nogc
+    {
+        size_t next = at;
+        const c = decodeUtf8(text, next);
+        if (c == padChar || (caseInsensitive && c <= 0x7F && padChar <= 0x7F
+                && asciiUpper(cast(char) c) == asciiUpper(cast(char) padChar)))
+            return cast(int)(next - at);
+        return 0;
     }
 
     int control(const Element e, int position) scope pure nothrow @nogc
@@ -2354,12 +2622,14 @@ private struct Parser
     }
 }
 
-// A quoted literal starting at `start`; `''` is a single quote. Returns the index after the closing quote.
-private size_t quoted(string pattern, size_t start, ref Element[] elements)
+// A quoted literal starting at `start`; `''` is a single quote. Returns the index after the closing quote, and the
+// literal to append in `literal` (empty when there is none).
+private size_t quoted(string pattern, size_t start, out string literal)
 {
+    literal = null;
     if (start + 1 < pattern.length && pattern[start + 1] == '\'')
     {
-        elements ~= lit("'");
+        literal = "'";
         return start + 2;
     }
     string text;
@@ -2380,8 +2650,7 @@ private size_t quoted(string pattern, size_t start, ref Element[] elements)
         }
         text ~= pattern[i++];
     }
-    if (text.length)
-        elements ~= lit(text);
+    literal = text;
     return i + 1;
 }
 
