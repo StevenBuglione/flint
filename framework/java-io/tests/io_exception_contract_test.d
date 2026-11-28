@@ -18,7 +18,7 @@ unittest
     assert(failure.getCause() is null);
 
     const emptyMessage = new IOException("");
-    assert(emptyMessage.getMessage() is null);
+    assert(emptyMessage.getMessage() !is null && emptyMessage.getMessage().length == 0);
     assert(emptyMessage.getCause() is null);
 
     const explicitMessage = new IOException("outer");

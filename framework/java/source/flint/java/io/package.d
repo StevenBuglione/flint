@@ -94,11 +94,11 @@ class UncheckedIOException : RuntimeException
 {
     private IOException ioCause_;
 
-    /// `message` and the wrapped `cause`.
+    /// `message` and the wrapped `cause`. An empty message means no detail (R26).
     this(string message, IOException cause, string file = __FILE__, size_t line = __LINE__) pure
     {
         ioCause_ = requireIoCause(cause);
-        super(message, ioCause_, file, line);
+        super(message.length == 0 ? null : message, ioCause_, file, line);
     }
 
     /// The message is `cause.toString()`.
