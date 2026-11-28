@@ -106,21 +106,21 @@ final class FutureTask(V) : RunnableFuture!V
     }
 
     /// Cancel before the result is published. Java's thread interruption is deferred until the `Thread` façade lands.
+    ///
+    /// Java's `FutureTask` stays in its start state while the callable runs, so a cancel succeeds then too and the
+    /// eventual result is discarded; once completion begins, or after any terminal state, it returns false.
     override bool cancel(bool mayInterruptIfRunning)
     {
         for (;;)
         {
             const current = atomicLoad(status);
-            if (current == NEW || (current == RUNNING && mayInterruptIfRunning))
+            if (current >= COMPLETING)
+                return false;
+            if (cas(&status, current, CANCELLED))
             {
-                if (cas(&status, current, CANCELLED))
-                {
-                    wakeAll(status);
-                    return true;
-                }
-                continue;
+                wakeAll(status);
+                return true;
             }
-            return current == CANCELLED;
         }
     }
 
@@ -157,12 +157,7 @@ final class FutureTask(V) : RunnableFuture!V
         if (current == CANCELLED)
             throw new CancellationException;
         if (current == EXCEPTIONAL)
-        {
-            // Java rethrows a stored CancellationException unchanged and wraps everything else.
-            if (auto cancelled = cast(CancellationException) failure)
-                throw cancelled;
             throw new ExecutionException(failure);
-        }
         return value;
     }
 

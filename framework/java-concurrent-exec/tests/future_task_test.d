@@ -53,6 +53,20 @@ private final class Counter : Runnable
     }
 }
 
+// Java's `FutureTask` keeps `NEW` while its callable runs, so a cancel from inside the task succeeds and the result
+// is discarded. This fixture exercises that state without a second OS thread.
+private final class SelfCancelling : Callable!int
+{
+    FutureTask!int task;
+    bool cancelled;
+
+    override int call()
+    {
+        cancelled = task.cancel(false);
+        return 7;
+    }
+}
+
 @("FutureTask runs its Callable once and exposes the result")
 unittest
 {
@@ -109,7 +123,8 @@ unittest
     assert(task.cancel(false));
     assert(task.isCancelled && task.isDone);
     assert(task.state == FutureState.CANCELLED);
-    assert(task.cancel(false));
+    assert(!task.cancel(false));
+    assert(!task.cancel(true));
     try
     {
         task.get();
@@ -126,6 +141,61 @@ unittest
     catch (Exception failure)
     {
         assert(cast(CancellationException) failure is null);
+    }
+}
+
+@("FutureTask cancel(false) from a running task succeeds and discards the result")
+unittest
+{
+    auto callable = new SelfCancelling;
+    auto task = new FutureTask!int(callable);
+    callable.task = task;
+
+    task.run();
+
+    assert(callable.cancelled, "Java's FutureTask cancels while its callable is running");
+    assert(task.isCancelled && task.isDone);
+    assert(task.state == FutureState.CANCELLED);
+    assert(!task.cancel(false));
+    try
+    {
+        task.get();
+        assert(false, "get must throw");
+    }
+    catch (CancellationException)
+    {
+    }
+}
+
+@("FutureTask cancel after normal completion returns false")
+unittest
+{
+    auto task = new FutureTask!int(new Value(3));
+    task.run();
+
+    assert(!task.cancel(false));
+    assert(!task.cancel(true));
+    assert(task.get == 3);
+}
+
+@("FutureTask wraps a CancellationException thrown by its Callable")
+unittest
+{
+    auto error = new CancellationException("from the task");
+    auto task = new FutureTask!int(new Failing(error));
+    task.run();
+
+    assert(task.isDone && !task.isCancelled);
+    assert(task.state == FutureState.FAILED);
+    assert(task.exceptionNow is error);
+    try
+    {
+        task.get();
+        assert(false, "get must throw ExecutionException");
+    }
+    catch (ExecutionException failure)
+    {
+        assert(failure.getCause is error);
     }
 }
 
