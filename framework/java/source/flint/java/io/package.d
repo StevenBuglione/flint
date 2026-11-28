@@ -2160,6 +2160,123 @@ class StringWriter : Writer
     }
 }
 
+/++
+Java's `CharArrayWriter`: a `Writer` collecting UTF-16 code units in a growable buffer.
+
+The buffer is a D `wchar` slice (Java's `char[]`), so `size` and `toCharArray` count code units. A lone surrogate is
+stored as U+FFFD (R14), as the `Writer` adapters do, and a null text or array is empty (R26).
++/
+class CharArrayWriter : Writer
+{
+    /// Java's protected `buf`: the code-unit storage.
+    protected wchar[] buf;
+
+    /// Java's protected `count`: how many code units are written.
+    protected int count;
+
+    /// Starts with Java's initial capacity of 32 code units.
+    this()
+    {
+        this(32);
+    }
+
+    /// Starts with an `initialSize`-unit buffer. Zero is allowed; a negative size is rejected.
+    this(int initialSize)
+    {
+        import flint.java.lang : IllegalArgumentException;
+
+        if (initialSize < 0)
+            throw new IllegalArgumentException("Negative initial size");
+        buf = new wchar[initialSize];
+    }
+
+    alias write = Writer.write;
+
+    override void write(scope const(char)[] text)
+    {
+        import flint.engine.aot.text : decodeUtf8;
+
+        ensureCapacity(count + cast(int) text.length);
+        size_t i;
+        while (i < text.length)
+            putCodePoint(decodeUtf8(text, i));
+    }
+
+    private void ensureCapacity(int newcount)
+    {
+        if (newcount <= buf.length)
+            return;
+        int grown = cast(int)(buf.length << 1);
+        if (grown < newcount)
+            grown = newcount;
+        wchar[] next = new wchar[grown];
+        next[0 .. count] = buf[0 .. count];
+        buf = next;
+    }
+
+    private void putCodePoint(dchar c)
+    {
+        if (c <= 0xFFFF)
+            buf[count++] = cast(wchar) c;
+        else
+        {
+            buf[count++] = cast(wchar)(0xD800 + ((c - 0x10000) >> 10));
+            buf[count++] = cast(wchar)(0xDC00 + ((c - 0x10000) & 0x3FF));
+        }
+    }
+
+    /// Java's `writeTo`: write the buffered text to `sink` without clearing it. A null writer is rejected.
+    void writeTo(Writer sink)
+    {
+        import flint.java.lang : NullPointerException;
+
+        if (sink is null)
+            throw new NullPointerException("out");
+        sink.write(buf[0 .. count]);
+    }
+
+    /// Java's `append(char)` with a `CharArrayWriter` result (R14).
+    override CharArrayWriter append(wchar c)
+    {
+        write(cast(dchar) c);
+        return this;
+    }
+
+    /// Java's `reset`: discard the text but keep the buffer.
+    void reset()
+    {
+        count = 0;
+    }
+
+    /// Java's `toCharArray`: a copy of the buffered code units.
+    wchar[] toCharArray()
+    {
+        return buf[0 .. count].dup;
+    }
+
+    /// The number of buffered UTF-16 code units.
+    int size() const nothrow @nogc
+    {
+        return count;
+    }
+
+    /// The buffered text.
+    override string toString() const
+    {
+        return utf16ToUtf8(buf[0 .. count]);
+    }
+
+    /// Java's no-op `flush`, preserving the stored text.
+    override void flush()
+    {
+    }
+
+    /// Java's no-op `close`; existing text and the ability to write survive.
+    override void close()
+    {
+    }
+}
+
 /// A `Writer` encoding UTF-8 text onto an `OutputStream`.
 class OutputStreamWriter : Writer
 {
