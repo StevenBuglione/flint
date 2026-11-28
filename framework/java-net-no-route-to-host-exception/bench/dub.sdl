@@ -1,0 +1,5 @@
+name "probe-java-net-no-route-to-host-exception"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"
+dependency "flint:java-net-no-route-to-host-exception" path="../../.."

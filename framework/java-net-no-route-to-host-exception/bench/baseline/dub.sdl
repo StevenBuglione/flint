@@ -1,0 +1,4 @@
+name "probe-java-net-no-route-to-host-exception-baseline"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"

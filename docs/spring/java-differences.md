@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,940 | 702 | 0 | 1,921 | 13,858 |
+| framework | openjdk@21.0.13 | 1,940 | 705 | 0 | 1,921 | 13,855 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2382,6 +2382,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `java.net.BindException` | `flint.java.net.bindexception.BindException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.bindexception : BindException. Checked Java socket exception subclass (through SocketException) mapped to D Exception (D-8) with R26 detail message handling. |
+| `java.net.ConnectException` | `flint.java.net.connectexception.ConnectException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.connectexception : ConnectException. Checked Java socket exception subclass (through SocketException) mapped to D Exception (D-8) with R26 detail message handling. |
 | `java.net.DatagramPacket` | `flint.java.net.datagrampacket.DatagramPacket` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.datagrampacket : DatagramPacket. Equality and hashing stay by identity, as in Java. |
 | `java.net.DatagramPacket#<init>(byte[],int)` | `flint.java.net.datagrampacket.DatagramPacket.this` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
 | `java.net.DatagramPacket#<init>(byte[],int,InetAddress,int)` | `flint.java.net.datagrampacket.DatagramPacket.this` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
@@ -2427,8 +2428,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.net.InterfaceAddress` | `flint.java.net.interfaceaddress.InterfaceAddress` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.interfaceaddress : InterfaceAddress. Final class with package-private constructors (Java has no public or protected constructor) and mixin JavaObject. |
 | `java.net.InterfaceAddress#equals(Object)` | `flint.java.net.interfaceaddress.InterfaceAddress.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.net.MalformedURLException` | `flint.java.net.malformedurlexception.MalformedURLException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.malformedurlexception : MalformedURLException. Checked Java IOException subclass mapped to D Exception (D-8) with R26 detail message handling. |
+| `java.net.NoRouteToHostException` | `flint.java.net.noroutetohostexception.NoRouteToHostException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.noroutetohostexception : NoRouteToHostException. Checked Java socket exception subclass (through SocketException) mapped to D Exception (D-8) with R26 detail message handling. |
 | `java.net.PasswordAuthentication` | `flint.java.net.passwordauthentication.PasswordAuthentication` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.passwordauthentication : PasswordAuthentication. Equality and hashing stay by identity, as in Java. |
 | `java.net.PasswordAuthentication#<init>(String,char[])` | `flint.java.net.passwordauthentication.PasswordAuthentication.this` | [R26](api-mapping.md#r26-null-arrays) | The password is copied, as in Java. A null password counts as empty where Java throws NullPointerException. |
+| `java.net.PortUnreachableException` | `flint.java.net.portunreachableexception.PortUnreachableException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.portunreachableexception : PortUnreachableException. Checked Java socket exception subclass (through SocketException) mapped to D Exception (D-8) with R26 detail message handling. |
 | `java.net.ProtocolException` | `flint.java.net.protocolexception.ProtocolException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.protocolexception : ProtocolException. Checked Java IOException subclass mapped to D Exception (D-8) with R26 detail message handling. |
 | `java.net.ProtocolFamily` | `flint.java.net.protocolfamily.ProtocolFamily` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.protocolfamily : ProtocolFamily. |
 | `java.net.Proxy` | `flint.java.net.proxy.Proxy` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.proxy : Proxy. Implements JavaObject without Serializable. hashCode adds the type's ordinal where Java adds the enum's identity hash, so the number differs from Java's but equal proxies still hash equally. |
@@ -11024,7 +11027,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
-| java.net | 596 | 0 |
+| java.net | 593 | 0 |
 | java.net.spi | 0 | 2 |
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |
@@ -12101,6 +12104,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.lang.annotation.IncompleteAnnotationException#elementName()` | 2 | Waits on IncompleteAnnotationException. |
 | framework | `java.net.BindException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
 | framework | `java.net.BindException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
+| framework | `java.net.ConnectException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
+| framework | `java.net.ConnectException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
 | framework | `java.net.Inet6Address#getByAddress(String,byte[],NetworkInterface)` | 2 | Requires NetworkInterface and its address enumeration to derive the numeric scope. |
 | framework | `java.net.Inet6Address#getScopedInterface()` | 2 | Requires NetworkInterface. Addresses built by this leaf never carry a scoped interface. |
 | framework | `java.net.InetAddress#getCanonicalHostName()` | 2 | Always performs a reverse lookup. Name resolution through the Flint engines (java.net.spi InetAddressResolver) is pending; this leaf builds addresses from raw bytes only. |
@@ -12112,6 +12117,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.net.InetSocketAddress#getHostName()` | 2 | Performs a reverse lookup when the address has no host name. Name resolution through the Flint engines (java.net.spi InetAddressResolver) is pending; this leaf builds socket addresses from an InetAddress or an unresolved host name only. getHostString returns the host name without a lookup. |
 | framework | `java.net.MalformedURLException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.MalformedURLException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
+| framework | `java.net.NoRouteToHostException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
+| framework | `java.net.NoRouteToHostException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
+| framework | `java.net.PortUnreachableException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
+| framework | `java.net.PortUnreachableException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked socket exception base lacks that API. |
 | framework | `java.net.ProtocolException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.ProtocolException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.Proxy#NO_PROXY` | 2 | Java hands out one shared DIRECT Proxy. engine-aot's constantInstance builds a shared object only for classes whose fields are all immutable, and a Proxy keeps the caller's SocketAddress. A fresh object per access would break identity comparisons such as proxy == Proxy.NO_PROXY. |

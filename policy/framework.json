@@ -1384,6 +1384,39 @@
     "ldc_incremental_seconds",
     "compiler_peak_rss_bytes"
    ]
+  },  "java-net-connect-exception": {
+   "directory": "framework/java-net-connect-exception",
+   "module": "flint.java.net.connectexception",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.net.ConnectException"
+   ],
+   "dependencies": [
+    "java-net-socket-exception"
+   ],
+   "bench": {
+    "fixture": "framework/java-net-connect-exception/bench",
+    "baseline": "framework/java-net-connect-exception/bench/baseline",
+    "edit_source": "framework/java-net-connect-exception/source/flint/java/net/connectexception.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 3947,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 480
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
   },  "java-net-datagram": {
    "directory": "framework/java-net-datagram",
    "module": "flint.java.net.datagrampacket",
@@ -1413,6 +1446,72 @@
     "incremental_linked_bytes": 9980,
     "compiler_peak_rss_bytes": 536870912,
     "template_instances": 591
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },  "java-net-no-route-to-host-exception": {
+   "directory": "framework/java-net-no-route-to-host-exception",
+   "module": "flint.java.net.noroutetohostexception",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.net.NoRouteToHostException"
+   ],
+   "dependencies": [
+    "java-net-socket-exception"
+   ],
+   "bench": {
+    "fixture": "framework/java-net-no-route-to-host-exception/bench",
+    "baseline": "framework/java-net-no-route-to-host-exception/bench/baseline",
+    "edit_source": "framework/java-net-no-route-to-host-exception/source/flint/java/net/noroutetohostexception.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 3947,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 480
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },  "java-net-port-unreachable-exception": {
+   "directory": "framework/java-net-port-unreachable-exception",
+   "module": "flint.java.net.portunreachableexception",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.net.PortUnreachableException"
+   ],
+   "dependencies": [
+    "java-net-socket-exception"
+   ],
+   "bench": {
+    "fixture": "framework/java-net-port-unreachable-exception/bench",
+    "baseline": "framework/java-net-port-unreachable-exception/bench/baseline",
+    "edit_source": "framework/java-net-port-unreachable-exception/source/flint/java/net/portunreachableexception.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 3965,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 480
    },
    "provisional": [
     "dmd_cold_seconds",

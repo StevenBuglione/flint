@@ -375,6 +375,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-net-connect-exception": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-net-datagram": {
       "repo": "framework",
       "version": "monorepo"
@@ -388,6 +392,14 @@
       "version": "monorepo"
     },
     "flint:java-net-interface-address": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
+    "flint:java-net-no-route-to-host-exception": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
+    "flint:java-net-port-unreachable-exception": {
       "repo": "framework",
       "version": "monorepo"
     },
