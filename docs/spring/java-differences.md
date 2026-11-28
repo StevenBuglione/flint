@@ -182,7 +182,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | ai | spring-ai@v2.1.0 | 254 | 397 | 0 | 0 | 15,145 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 298 | 301 | 0 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,662 | 1,549 | 0 | 4,870 | 29,753 |
+| framework | spring-framework@v7.1.0 | 3,816 | 1,697 | 0 | 4,870 | 29,451 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
@@ -225,6 +225,8 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)` | `flint.core.convert.support.DefaultConversionService.addDefaultConverters` | The package-private CharacterToNumberFactory is represented in the erased numeric converter for char and wchar code units. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()` | `flint.core.convert.support.DefaultConversionService.getSharedInstance` | Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4). |
 | framework | `org.springframework.expression.spel.support.StandardTypeConverter#<init>()` | `flint.expression.spel.support.StandardTypeConverter` | Creates and retains one default conversion service per converter. Flint's core getSharedInstance factory creates a fresh service. |
+| framework | `org.springframework.web.context.support.ServletContextAwareProcessor#postProcessAfterInitialization(Object,String)` | `flint.web.context.support.ServletContextAwareProcessor.postProcessAfterInitialization` | Retains the existing BeanPostProcessor virtual Object signature. |
+| framework | `org.springframework.web.context.support.ServletContextAwareProcessor#postProcessBeforeInitialization(Object,String)` | `flint.web.context.support.ServletContextAwareProcessor.postProcessBeforeInitialization` | Retains the existing BeanPostProcessor virtual Object signature. |
 | framework | `tools.jackson.core.JsonPointer#length()` | `flint.jackson.core.JsonPointer.length` | Returns UTF-16 code units. |
 | framework | `tools.jackson.databind.json.JsonMapper#tokenStreamFactory()` | `flint.jackson.databind.JsonMapper.tokenStreamFactory` | The D JsonMapper inherits the JsonFactory-returning getter. |
 | framework | `tools.jackson.databind.json.JsonMapper.Builder` | `flint.jackson.databind.JsonMapper.Builder` | Flint's JSON builder defines its methods directly while the Java MapperBuilder superclass is deferred. |
@@ -4017,6 +4019,18 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.http.CacheControl#getHeaderValue()` | `flint.http.CacheControl.getHeaderValue` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.http.CacheControl#immutable()` | `flint.http.CacheControl.immutable_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.http.ETag` | `flint.http.ETag` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.ETag#<init>(String,boolean)` | `flint.http.ETag` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.ETag#compare(ETag,boolean)` | `flint.http.ETag.compare` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.ETag#create(String)` | `flint.http.ETag.create` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.ETag#equals(Object)` | `flint.http.ETag.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.ETag#hashCode()` | `flint.http.ETag.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.ETag#parse(String)` | `flint.http.ETag.parse` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.ETag#tag` | `flint.http.ETag.tag` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.ETag#toString()` | `flint.http.ETag.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.ETag#weak` | `flint.http.ETag.weak` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpEntity` | `flint.http.HttpEntity` | [R4](api-mapping.md#r4-classt-parameters), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.http.HttpEntity#<init>()` | `flint.http.HttpEntity` | [R4](api-mapping.md#r4-classt-parameters), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.http.HttpEntity#<init>(HttpHeaders)` | `flint.http.HttpEntity` | [R4](api-mapping.md#r4-classt-parameters), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
@@ -4110,6 +4124,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.http.HttpHeaders#formatHeaders(MultiValueMap)` | `flint.http.HttpHeaders.formatHeaders` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#get(String)` | `flint.http.HttpHeaders.get` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#getAccept()` | `flint.http.HttpHeaders.getAccept` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.HttpHeaders#getAcceptCharset()` | `flint.http.HttpHeaders.getAcceptCharset` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.http.HttpHeaders#getAcceptPatch()` | `flint.http.HttpHeaders.getAcceptPatch` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.http.HttpHeaders#getAcceptQuery()` | `flint.http.HttpHeaders.getAcceptQuery` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.http.HttpHeaders#getAccessControlAllowCredentials()` | `flint.http.HttpHeaders.getAccessControlAllowCredentials` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#getAccessControlAllowHeaders()` | `flint.http.HttpHeaders.getAccessControlAllowHeaders` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#getAccessControlAllowMethods()` | `flint.http.HttpHeaders.getAccessControlAllowMethods` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -4125,16 +4142,22 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.http.HttpHeaders#getContentType()` | `flint.http.HttpHeaders.getContentType` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#getDate()` | `flint.http.HttpHeaders.getDate` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#getETag()` | `flint.http.HttpHeaders.getETag` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.HttpHeaders#getETagValuesAsList(String)` | `flint.http.HttpHeaders.getETagValuesAsList` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#getExpires()` | `flint.http.HttpHeaders.getExpires` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#getFieldValues(String)` | `flint.http.HttpHeaders.getFieldValues` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#getFirst(String)` | `flint.http.HttpHeaders.getFirst` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#getFirstDate(String)` | `flint.http.HttpHeaders.getFirstDate` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.HttpHeaders#getIfMatch()` | `flint.http.HttpHeaders.getIfMatch` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.http.HttpHeaders#getIfModifiedSince()` | `flint.http.HttpHeaders.getIfModifiedSince` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.HttpHeaders#getIfNoneMatch()` | `flint.http.HttpHeaders.getIfNoneMatch` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.http.HttpHeaders#getLastModified()` | `flint.http.HttpHeaders.getLastModified` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#getLocation()` | `flint.http.HttpHeaders.getLocation` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#getOrDefault(String,List)` | `flint.http.HttpHeaders.getOrDefault` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#getOrEmpty(String)` | `flint.http.HttpHeaders.getOrEmpty` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#getOrigin()` | `flint.http.HttpHeaders.getOrigin` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.HttpHeaders#getPragma()` | `flint.http.HttpHeaders.getPragma` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.http.HttpHeaders#getRange()` | `flint.http.HttpHeaders.getRange` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.http.HttpHeaders#getUpgrade()` | `flint.http.HttpHeaders.getUpgrade` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.http.HttpHeaders#getValuesAsList(String)` | `flint.http.HttpHeaders.getValuesAsList` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#getVary()` | `flint.http.HttpHeaders.getVary` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#hasHeaderValues(String,List)` | `flint.http.HttpHeaders.hasHeaderValues` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -4149,6 +4172,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.http.HttpHeaders#remove(String)` | `flint.http.HttpHeaders.remove` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#set(String,String)` | `flint.http.HttpHeaders.set` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setAccept(List)` | `flint.http.HttpHeaders.setAccept` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.HttpHeaders#setAcceptCharset(List)` | `flint.http.HttpHeaders.setAcceptCharset` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.http.HttpHeaders#setAcceptPatch(List)` | `flint.http.HttpHeaders.setAcceptPatch` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.http.HttpHeaders#setAcceptQuery(List)` | `flint.http.HttpHeaders.setAcceptQuery` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.http.HttpHeaders#setAccessControlAllowCredentials(boolean)` | `flint.http.HttpHeaders.setAccessControlAllowCredentials` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setAccessControlAllowHeaders(List)` | `flint.http.HttpHeaders.setAccessControlAllowHeaders` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setAccessControlAllowMethods(List)` | `flint.http.HttpHeaders.setAccessControlAllowMethods` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -4164,7 +4190,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.http.HttpHeaders#setBasicAuth(String,String)` | `flint.http.HttpHeaders.setBasicAuth` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setBasicAuth(String,String,Charset)` | `flint.http.HttpHeaders.setBasicAuth` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setBearerAuth(String)` | `flint.http.HttpHeaders.setBearerAuth` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `org.springframework.http.HttpHeaders#setCacheControl(CacheControl)` | `flint.http.HttpHeaders.setCacheControl` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.HttpHeaders#setCacheControl(CacheControl)` | `flint.http.HttpHeaders.setCacheControl` | [R7](api-mapping.md#r7-overloads) | D-7 |
 | `org.springframework.http.HttpHeaders#setCacheControl(String)` | `flint.http.HttpHeaders.setCacheControl` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setConnection(List)` | `flint.http.HttpHeaders.setConnection` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setConnection(String)` | `flint.http.HttpHeaders.setConnection` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -4178,14 +4204,23 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.http.HttpHeaders#setExpires(Instant)` | `flint.http.HttpHeaders.setExpires` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setExpires(ZonedDateTime)` | `flint.http.HttpHeaders.setExpires` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setExpires(long)` | `flint.http.HttpHeaders.setExpires` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.HttpHeaders#setIfMatch(List)` | `flint.http.HttpHeaders.setIfMatch` | [R7](api-mapping.md#r7-overloads), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.http.HttpHeaders#setIfMatch(String)` | `flint.http.HttpHeaders.setIfMatch` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.http.HttpHeaders#setIfModifiedSince(Instant)` | `flint.http.HttpHeaders.setIfModifiedSince` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setIfModifiedSince(ZonedDateTime)` | `flint.http.HttpHeaders.setIfModifiedSince` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setIfModifiedSince(long)` | `flint.http.HttpHeaders.setIfModifiedSince` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.HttpHeaders#setIfNoneMatch(List)` | `flint.http.HttpHeaders.setIfNoneMatch` | [R7](api-mapping.md#r7-overloads), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.http.HttpHeaders#setIfNoneMatch(String)` | `flint.http.HttpHeaders.setIfNoneMatch` | [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.http.HttpHeaders#setIfUnmodifiedSince(Instant)` | `flint.http.HttpHeaders.setIfUnmodifiedSince` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.HttpHeaders#setIfUnmodifiedSince(ZonedDateTime)` | `flint.http.HttpHeaders.setIfUnmodifiedSince` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setLastModified(Instant)` | `flint.http.HttpHeaders.setLastModified` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setLastModified(ZonedDateTime)` | `flint.http.HttpHeaders.setLastModified` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setLastModified(long)` | `flint.http.HttpHeaders.setLastModified` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setLocation(URI)` | `flint.http.HttpHeaders.setLocation` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#setOrigin(String)` | `flint.http.HttpHeaders.setOrigin` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.HttpHeaders#setPragma(String)` | `flint.http.HttpHeaders.setPragma` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.http.HttpHeaders#setRange(List)` | `flint.http.HttpHeaders.setRange` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.http.HttpHeaders#setUpgrade(String)` | `flint.http.HttpHeaders.setUpgrade` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.http.HttpHeaders#setVary(List)` | `flint.http.HttpHeaders.setVary` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#size()` | `flint.http.HttpHeaders.size` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpHeaders#toCommaDelimitedString(List)` | `flint.http.HttpHeaders.toCommaDelimitedString` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -4213,6 +4248,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.http.HttpMethod#values()` | `flint.http.HttpMethod.values` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpOutputMessage` | `flint.http.HttpOutputMessage` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.http.HttpOutputMessage#getBody()` | `flint.http.HttpOutputMessage.writeBody` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.http.HttpRange#parseRanges(String)` | `flint.http.HttpRange.parseRanges` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.http.HttpRange#resolveRanges(HttpHeaders,HttpHeaders)` | `flint.http.HttpRange.resolveRanges` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.HttpRange#toResourceRegions(List,Resource)` | `flint.http.HttpRange.toResourceRegions` | [R10](api-mapping.md#r10-streams-and-collections) | D-WEB-2 |
+| `org.springframework.http.HttpRange#toString(Collection)` | `flint.http.HttpRange.toString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.http.HttpStatus` | `flint.http.HttpStatus` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpStatus#ACCEPTED` | `flint.http.HttpStatus.ACCEPTED` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpStatus#ALREADY_REPORTED` | `flint.http.HttpStatus.ALREADY_REPORTED` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -4388,6 +4427,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.http.MediaType#removeQualityValue()` | `flint.http.MediaType.removeQualityValue` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.MediaType#toString(Collection)` | `flint.http.MediaType.toString` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.http.MediaType#valueOf(String)` | `flint.http.MediaType.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.http.MediaTypeFactory#getMediaType(Resource)` | `flint.http.MediaTypeFactory.getMediaType` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.http.MediaTypeFactory#getMediaType(String)` | `flint.http.MediaTypeFactory.getMediaType` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text) |  |
+| `org.springframework.http.MediaTypeFactory#getMediaTypes(String)` | `flint.http.MediaTypeFactory.getMediaTypes` | [R10](api-mapping.md#r10-streams-and-collections), [R14](api-mapping.md#r14-strings-and-text) | D-WEB-1 |
 | `org.springframework.http.ProblemDetail` | `flint.http.ProblemDetail` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.http.ProblemDetail#<init>()` | `flint.http.ProblemDetail` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.http.ProblemDetail#<init>(ProblemDetail)` | `flint.http.ProblemDetail` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
@@ -4472,11 +4514,27 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.http.ResponseEntity.BodyBuilder#contentLength(long)` | `flint.http.ResponseEntity.BodyBuilder.contentLength` | [R12](api-mapping.md#r12-builders-and-fluent-apis), [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `org.springframework.http.ResponseEntity.BodyBuilder#contentType(MediaType)` | `flint.http.ResponseEntity.BodyBuilder.contentType` | [R12](api-mapping.md#r12-builders-and-fluent-apis), [R13](api-mapping.md#r13-nested-and-inner-classes), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.ResponseEntity.HeadersBuilder` | `flint.http.ResponseEntity.HeadersBuilder` | [R12](api-mapping.md#r12-builders-and-fluent-apis), [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
+| `org.springframework.http.ResponseEntity.HeadersBuilder#cacheControl(CacheControl)` | `flint.http.ResponseEntity.HeadersBuilder.cacheControl` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) | D-7 |
+| `org.springframework.http.StreamingHttpOutputMessage#setBody(Body)` | `flint.http.StreamingHttpOutputMessage.setBody` | [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `org.springframework.http.StreamingHttpOutputMessage#setBody(byte[])` | `flint.http.StreamingHttpOutputMessage.setBody` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) | D-WEB-3 |
+| `org.springframework.http.StreamingHttpOutputMessage.Body` | `flint.http.StreamingHttpOutputMessage.Body` | [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `org.springframework.http.StreamingHttpOutputMessage.Body#repeatable()` | `flint.http.StreamingHttpOutputMessage.Body.repeatable` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 
 #### org.springframework.http.converter
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.http.converter.AbstractGenericHttpMessageConverter` | `flint.http.converter.AbstractGenericHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.AbstractGenericHttpMessageConverter#<init>()` | `flint.http.converter.AbstractGenericHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.AbstractGenericHttpMessageConverter#<init>(Charset,MediaType...)` | `flint.http.converter.AbstractGenericHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.AbstractGenericHttpMessageConverter#<init>(MediaType)` | `flint.http.converter.AbstractGenericHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.AbstractGenericHttpMessageConverter#<init>(MediaType...)` | `flint.http.converter.AbstractGenericHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.AbstractGenericHttpMessageConverter#canRead(Type,Class,MediaType)` | `flint.http.converter.AbstractGenericHttpMessageConverter.canRead` | [R4](api-mapping.md#r4-classt-parameters) | D-WEB-3 |
+| `org.springframework.http.converter.AbstractGenericHttpMessageConverter#canWrite(Type,Class,MediaType)` | `flint.http.converter.AbstractGenericHttpMessageConverter.canWrite` | [R4](api-mapping.md#r4-classt-parameters) | D-WEB-3 |
+| `org.springframework.http.converter.AbstractGenericHttpMessageConverter#supports(Class)` | `flint.http.converter.AbstractGenericHttpMessageConverter.supports` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.AbstractGenericHttpMessageConverter#write(T,Type,MediaType,HttpOutputMessage)` | `flint.http.converter.AbstractGenericHttpMessageConverter.write` | [R4](api-mapping.md#r4-classt-parameters) | D-WEB-3 |
+| `org.springframework.http.converter.AbstractGenericHttpMessageConverter#writeInternal(T,HttpOutputMessage)` | `flint.http.converter.AbstractGenericHttpMessageConverter.writeInternal` | [R4](api-mapping.md#r4-classt-parameters) | D-WEB-3 |
+| `org.springframework.http.converter.AbstractGenericHttpMessageConverter#writeInternal(T,Type,HttpOutputMessage)` | `flint.http.converter.AbstractGenericHttpMessageConverter.writeInternal` | [R4](api-mapping.md#r4-classt-parameters) | D-WEB-3 |
 | `org.springframework.http.converter.AbstractHttpMessageConverter` | `flint.http.converter.AbstractHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.AbstractHttpMessageConverter#<init>()` | `flint.http.converter.AbstractHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.AbstractHttpMessageConverter#<init>(Charset,MediaType...)` | `flint.http.converter.AbstractHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -4496,6 +4554,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.http.converter.AbstractHttpMessageConverter#setDefaultCharset(Charset)` | `flint.http.converter.AbstractHttpMessageConverter.setDefaultCharset` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.AbstractHttpMessageConverter#setSupportedMediaTypes(List)` | `flint.http.converter.AbstractHttpMessageConverter.setSupportedMediaTypes` | [R10](api-mapping.md#r10-streams-and-collections), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.AbstractHttpMessageConverter#supports(Class)` | `flint.http.converter.AbstractHttpMessageConverter.supports` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.AbstractHttpMessageConverter#supportsRepeatableWrites(T)` | `flint.http.converter.AbstractHttpMessageConverter.supportsRepeatableWrites` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.AbstractHttpMessageConverter#write(T,MediaType,HttpOutputMessage)` | `flint.http.converter.AbstractHttpMessageConverter.write` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.AbstractHttpMessageConverter#writeInternal(T,HttpOutputMessage)` | `flint.http.converter.AbstractHttpMessageConverter.writeInternal` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.ByteArrayHttpMessageConverter` | `flint.http.converter.ByteArrayHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -4504,6 +4563,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.http.converter.ByteArrayHttpMessageConverter#readInternal(Class,HttpInputMessage)` | `flint.http.converter.ByteArrayHttpMessageConverter.readInternal` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.ByteArrayHttpMessageConverter#supports(Class)` | `flint.http.converter.ByteArrayHttpMessageConverter.supports` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.ByteArrayHttpMessageConverter#writeInternal(byte[],HttpOutputMessage)` | `flint.http.converter.ByteArrayHttpMessageConverter.writeInternal` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.GenericHttpMessageConverter` | `flint.http.converter.GenericHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.GenericHttpMessageConverter#canRead(Type,Class,MediaType)` | `flint.http.converter.GenericHttpMessageConverter.canRead` | [R4](api-mapping.md#r4-classt-parameters) | D-WEB-3 |
+| `org.springframework.http.converter.GenericHttpMessageConverter#canWrite(Type,Class,MediaType)` | `flint.http.converter.GenericHttpMessageConverter.canWrite` | [R4](api-mapping.md#r4-classt-parameters) | D-WEB-3 |
+| `org.springframework.http.converter.GenericHttpMessageConverter#read(Type,Class,HttpInputMessage)` | `flint.http.converter.GenericHttpMessageConverter.read` | [R4](api-mapping.md#r4-classt-parameters) | D-WEB-3 |
+| `org.springframework.http.converter.GenericHttpMessageConverter#write(T,Type,MediaType,HttpOutputMessage)` | `flint.http.converter.GenericHttpMessageConverter.write` | [R4](api-mapping.md#r4-classt-parameters) | D-WEB-3 |
 | `org.springframework.http.converter.HttpMessageConverter` | `flint.http.converter.HttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.HttpMessageConverter#canRead(Class,MediaType)` | `flint.http.converter.HttpMessageConverter.canRead` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.HttpMessageConverter#canWrite(Class,MediaType)` | `flint.http.converter.HttpMessageConverter.canWrite` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -4511,6 +4575,29 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.http.converter.HttpMessageConverter#getSupportedMediaTypes(Class)` | `flint.http.converter.HttpMessageConverter.getSupportedMediaTypes` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.HttpMessageConverter#read(Class,HttpInputMessage)` | `flint.http.converter.HttpMessageConverter.read` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.HttpMessageConverter#write(T,MediaType,HttpOutputMessage)` | `flint.http.converter.HttpMessageConverter.write` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.ResourceHttpMessageConverter` | `flint.http.converter.ResourceHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters), [D-WEB-4](api-mapping.md#deviations) |  |
+| `org.springframework.http.converter.ResourceHttpMessageConverter#<init>()` | `flint.http.converter.ResourceHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.ResourceHttpMessageConverter#<init>(boolean)` | `flint.http.converter.ResourceHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.ResourceHttpMessageConverter#addDefaultHeaders(HttpOutputMessage,Resource,MediaType)` | `flint.http.converter.ResourceHttpMessageConverter.addDefaultHeaders` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.ResourceHttpMessageConverter#canWriteRepeatedly(Resource,MediaType)` | `flint.http.converter.ResourceHttpMessageConverter.canWriteRepeatedly` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.ResourceHttpMessageConverter#getContentLength(Resource,MediaType)` | `flint.http.converter.ResourceHttpMessageConverter.getContentLength` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.ResourceHttpMessageConverter#getDefaultContentType(Resource)` | `flint.http.converter.ResourceHttpMessageConverter.getDefaultContentType` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.ResourceHttpMessageConverter#readInternal(Class,HttpInputMessage)` | `flint.http.converter.ResourceHttpMessageConverter.readInternal` | [R4](api-mapping.md#r4-classt-parameters), [D-WEB-4](api-mapping.md#deviations) |  |
+| `org.springframework.http.converter.ResourceHttpMessageConverter#supports(Class)` | `flint.http.converter.ResourceHttpMessageConverter.supports` | [R4](api-mapping.md#r4-classt-parameters), [D-WEB-4](api-mapping.md#deviations) |  |
+| `org.springframework.http.converter.ResourceHttpMessageConverter#supportsRepeatableWrites(Resource)` | `flint.http.converter.ResourceHttpMessageConverter.supportsRepeatableWrites` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.ResourceHttpMessageConverter#writeContent(Resource,HttpOutputMessage)` | `flint.http.converter.ResourceHttpMessageConverter.writeContent` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.ResourceHttpMessageConverter#writeInternal(Resource,HttpOutputMessage)` | `flint.http.converter.ResourceHttpMessageConverter.writeInternal` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.ResourceRegionHttpMessageConverter#canRead(Class,MediaType)` | `flint.http.converter.ResourceRegionHttpMessageConverter.canRead` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.ResourceRegionHttpMessageConverter#canRead(Type,Class,MediaType)` | `flint.http.converter.ResourceRegionHttpMessageConverter.canRead` | [R4](api-mapping.md#r4-classt-parameters) | D-WEB-3 |
+| `org.springframework.http.converter.ResourceRegionHttpMessageConverter#canWrite(Class,MediaType)` | `flint.http.converter.ResourceRegionHttpMessageConverter.canWrite` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.ResourceRegionHttpMessageConverter#canWrite(Type,Class,MediaType)` | `flint.http.converter.ResourceRegionHttpMessageConverter.canWrite` | [R4](api-mapping.md#r4-classt-parameters) | D-WEB-3 |
+| `org.springframework.http.converter.ResourceRegionHttpMessageConverter#canWriteRepeatedly(Object,MediaType)` | `flint.http.converter.ResourceRegionHttpMessageConverter.canWriteRepeatedly` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.ResourceRegionHttpMessageConverter#getDefaultContentType(Object)` | `flint.http.converter.ResourceRegionHttpMessageConverter.getDefaultContentType` | [R4](api-mapping.md#r4-classt-parameters) | D-WEB-3 |
+| `org.springframework.http.converter.ResourceRegionHttpMessageConverter#read(Type,Class,HttpInputMessage)` | `flint.http.converter.ResourceRegionHttpMessageConverter.read` | [R4](api-mapping.md#r4-classt-parameters) | D-WEB-3 |
+| `org.springframework.http.converter.ResourceRegionHttpMessageConverter#readInternal(Class,HttpInputMessage)` | `flint.http.converter.ResourceRegionHttpMessageConverter.readInternal` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.ResourceRegionHttpMessageConverter#supportsRepeatableWrites(Object)` | `flint.http.converter.ResourceRegionHttpMessageConverter.supportsRepeatableWrites` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.http.converter.ResourceRegionHttpMessageConverter#writeInternal(Object,Type,HttpOutputMessage)` | `flint.http.converter.ResourceRegionHttpMessageConverter.writeInternal` | [R4](api-mapping.md#r4-classt-parameters) | D-WEB-3 |
+| `org.springframework.http.converter.ResourceRegionHttpMessageConverter#writeResourceRegion(ResourceRegion,HttpOutputMessage)` | `flint.http.converter.ResourceRegionHttpMessageConverter.writeResourceRegion` | [R4](api-mapping.md#r4-classt-parameters) | D-WEB-3 |
 | `org.springframework.http.converter.StringHttpMessageConverter` | `flint.http.converter.StringHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.StringHttpMessageConverter#<init>()` | `flint.http.converter.StringHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.StringHttpMessageConverter#<init>(Charset)` | `flint.http.converter.StringHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -4532,6 +4619,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.http.server.PathContainer` | `flint.web.util.pattern.PathContainer` | [R14](api-mapping.md#r14-strings-and-text) | Decoded UTF-8 segments are held in a package-scoped value used by matching. Public PathPattern entry points take path strings. PathContainer members and matrix variables remain deferred. |
+| `org.springframework.http.server.ServletServerHttpRequest#getBody()` | `flint.http.server.ServletServerHttpRequest.getBody` | [R10](api-mapping.md#r10-streams-and-collections) | The byte-array adapter reconstructs UTF-8 forms. Other form encodings use the servlet input stream. |
 | `org.springframework.http.server.ServletServerHttpResponse#getBody()` | `flint.http.server.ServletServerHttpResponse.writeBody` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### org.springframework.jdbc.core
@@ -5100,12 +5188,39 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.web.HttpMediaTypeNotSupportedException#getHeaders()` | `flint.web.HttpMediaTypeNotSupportedException.getHeaders` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.web.HttpMediaTypeNotSupportedException#getStatusCode()` | `flint.web.HttpMediaTypeNotSupportedException.getStatusCode` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.web.HttpRequestMethodNotSupportedException#<init>(String,Collection)` | `flint.web.HttpRequestMethodNotSupportedException` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.HttpSessionRequiredException#getExpectedAttribute()` | `flint.web.HttpSessionRequiredException.getExpectedAttribute` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### org.springframework.web.accept
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.web.accept.ApiVersionResolver#resolveVersion(HttpServletRequest)` | `flint.web.accept.ApiVersionResolver.resolveVersion` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.web.accept.ContentNegotiationManager#<init>(Collection)` | `flint.web.accept.ContentNegotiationManager` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.accept.ContentNegotiationManager#addFileExtensionResolvers(MediaTypeFileExtensionResolver...)` | `flint.web.accept.ContentNegotiationManager.addFileExtensionResolvers` | [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.web.accept.ContentNegotiationManager#getAllFileExtensions()` | `flint.web.accept.ContentNegotiationManager.getAllFileExtensions` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.accept.ContentNegotiationManager#resolveFileExtensions(MediaType)` | `flint.web.accept.ContentNegotiationManager.resolveFileExtensions` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.accept.FixedContentNegotiationStrategy#<init>(List)` | `flint.web.accept.FixedContentNegotiationStrategy` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.accept.FixedContentNegotiationStrategy#getContentTypes()` | `flint.web.accept.FixedContentNegotiationStrategy.getContentTypes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.accept.FixedContentNegotiationStrategy#resolveMediaTypes(NativeWebRequest)` | `flint.web.accept.FixedContentNegotiationStrategy.resolveMediaTypes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.accept.HeaderApiVersionResolver#resolveVersion(HttpServletRequest)` | `flint.web.accept.HeaderApiVersionResolver.resolveVersion` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.web.accept.InvalidApiVersionException#<init>(String,String,Exception)` | `flint.web.accept.InvalidApiVersionException` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) |  |
+| `org.springframework.web.accept.MediaTypeFileExtensionResolver#getAllFileExtensions()` | `flint.web.accept.MediaTypeFileExtensionResolver.getAllFileExtensions` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.accept.MediaTypeFileExtensionResolver#resolveFileExtensions(MediaType)` | `flint.web.accept.MediaTypeFileExtensionResolver.resolveFileExtensions` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.accept.QueryApiVersionResolver#resolveVersion(HttpServletRequest)` | `flint.web.accept.QueryApiVersionResolver.resolveVersion` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.web.accept.SemanticApiVersionParser#parseVersion(String)` | `flint.web.accept.SemanticApiVersionParser.parseVersion` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `org.springframework.web.accept.SemanticApiVersionParser.Version` | `flint.web.accept.SemanticApiVersionParser.Version` | [D-WEB-7](api-mapping.md#deviations) |  |
+| `org.springframework.web.accept.SemanticApiVersionParser.Version#compareTo(SemanticApiVersionParser.Version)` | `flint.web.accept.SemanticApiVersionParser.Version.compareTo` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.web.accept.SemanticApiVersionParser.Version#equals(Object)` | `flint.web.accept.SemanticApiVersionParser.Version.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.web.accept.SemanticApiVersionParser.Version#hashCode()` | `flint.web.accept.SemanticApiVersionParser.Version.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+
+#### org.springframework.web.bind
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.web.bind.ServletRequestUtils#getBooleanParameter(ServletRequest,String)` | `flint.web.bind.ServletRequestUtils.getBooleanParameter` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.web.bind.ServletRequestUtils#getIntParameter(ServletRequest,String)` | `flint.web.bind.ServletRequestUtils.getIntParameter` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.web.bind.ServletRequestUtils#getLongParameter(ServletRequest,String)` | `flint.web.bind.ServletRequestUtils.getLongParameter` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.web.bind.ServletRequestUtils#getStringParameter(ServletRequest,String)` | `flint.web.bind.ServletRequestUtils.getStringParameter` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### org.springframework.web.bind.annotation
 
@@ -5191,8 +5306,23 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.web.context.request.NativeWebRequest#getNativeRequest(Class)` | `flint.web.context.request.NativeWebRequest.getNativeRequest` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.web.context.request.NativeWebRequest#getNativeResponse()` | `flint.web.context.request.NativeWebRequest.getNativeResponse` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.web.context.request.NativeWebRequest#getNativeResponse(Class)` | `flint.web.context.request.NativeWebRequest.getNativeResponse` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.web.context.request.ServletWebRequest#checkNotModified(String,long)` | `flint.web.context.request.ServletWebRequest.checkNotModified` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.web.context.request.ServletWebRequest#getNativeRequest(Class)` | `flint.web.context.request.ServletWebRequest.getNativeRequest` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.web.context.request.ServletWebRequest#getNativeResponse(Class)` | `flint.web.context.request.ServletWebRequest.getNativeResponse` | [R4](api-mapping.md#r4-classt-parameters) |  |
+
+#### org.springframework.web.context.support
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.web.context.support.RequestHandledEvent#<init>(Object,String,String,long)` | `flint.web.context.support.RequestHandledEvent.this` | [D-CONTEXT-1](api-mapping.md#deviations), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.web.context.support.RequestHandledEvent#<init>(Object,String,String,long,Throwable)` | `flint.web.context.support.RequestHandledEvent.this` | [D-CONTEXT-1](api-mapping.md#deviations), [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) |  |
+| `org.springframework.web.context.support.RequestHandledEvent#getFailureCause()` | `flint.web.context.support.RequestHandledEvent.getFailureCause` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.springframework.web.context.support.RequestHandledEvent#getSessionId()` | `flint.web.context.support.RequestHandledEvent.getSessionId` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.web.context.support.RequestHandledEvent#getUserName()` | `flint.web.context.support.RequestHandledEvent.getUserName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.web.context.support.ServletContextAwareProcessor` | `flint.web.context.support.ServletContextAwareProcessor` | [D-3](api-mapping.md#deviations) |  |
+| `org.springframework.web.context.support.ServletRequestHandledEvent#<init>(Object,String,String,String,String,String,String,long)` | `flint.web.context.support.ServletRequestHandledEvent.this` | [D-CONTEXT-1](api-mapping.md#deviations), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.web.context.support.ServletRequestHandledEvent#<init>(Object,String,String,String,String,String,String,long,Throwable)` | `flint.web.context.support.ServletRequestHandledEvent.this` | [D-CONTEXT-1](api-mapping.md#deviations), [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) |  |
+| `org.springframework.web.context.support.ServletRequestHandledEvent#<init>(Object,String,String,String,String,String,String,long,Throwable,int)` | `flint.web.context.support.ServletRequestHandledEvent.this` | [D-CONTEXT-1](api-mapping.md#deviations), [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) |  |
 
 #### org.springframework.web.method
 
@@ -5241,6 +5371,21 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.web.method.support.HandlerMethodArgumentResolverComposite#addResolvers(List)` | `flint.web.method.support.HandlerMethodArgumentResolverComposite.addResolvers` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.method.support.HandlerMethodReturnValueHandlerComposite#addHandlers(List)` | `flint.web.method.support.HandlerMethodReturnValueHandlerComposite.addHandlers` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.method.support.ModelAndViewContainer#getModel()` | `flint.web.method.support.ModelAndViewContainer.getModel` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) | The lazy default model uses an ordered Java collection facade with Any values. Redirect models are deferred. |
+
+#### org.springframework.web.multipart
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.web.multipart.MaxUploadSizeExceededException` | `flint.web.multipart.MaxUploadSizeExceededException` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.web.multipart.MaxUploadSizeExceededException#<init>(long,Throwable)` | `flint.web.multipart.MaxUploadSizeExceededException.this` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.springframework.web.multipart.MultipartException#<init>(String,Throwable)` | `flint.web.multipart.MultipartException.this` | [R8](api-mapping.md#r8-exceptions) |  |
+
+#### org.springframework.web.multipart.support
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.web.multipart.support.MissingServletRequestPartException` | `flint.web.multipart.support.MissingServletRequestPartException` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.web.multipart.support.MissingServletRequestPartException#getDetailMessageArguments()` | `flint.web.multipart.support.MissingServletRequestPartException.getDetailMessageArguments` | [R23](api-mapping.md#r23-object-typed-values) |  |
 
 #### org.springframework.web.servlet
 
@@ -5345,6 +5490,41 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor#<init>(List,ContentNegotiationManager,List,List)` | `flint.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor#<init>(List,List)` | `flint.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor#readWithMessageConverters(NativeWebRequest,MethodParameter,Type)` | `flint.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.readWithMessageConverters` | [R4](api-mapping.md#r4-classt-parameters) |  |
+
+#### org.springframework.web.servlet.resource
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.web.servlet.resource.AbstractResourceResolver#resolveResource(HttpServletRequest,String,List,ResourceResolverChain)` | `flint.web.servlet.resource.AbstractResourceResolver.resolveResource` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.servlet.resource.AbstractResourceResolver#resolveResourceInternal(HttpServletRequest,String,List,ResourceResolverChain)` | `flint.web.servlet.resource.AbstractResourceResolver.resolveResourceInternal` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.servlet.resource.AbstractResourceResolver#resolveUrlPath(String,List,ResourceResolverChain)` | `flint.web.servlet.resource.AbstractResourceResolver.resolveUrlPath` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.servlet.resource.AbstractResourceResolver#resolveUrlPathInternal(String,List,ResourceResolverChain)` | `flint.web.servlet.resource.AbstractResourceResolver.resolveUrlPathInternal` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.servlet.resource.PathResourceResolver#checkResource(Resource,Resource)` | `flint.web.servlet.resource.PathResourceResolver.checkResource` | [D-WEB-5](api-mapping.md#deviations) |  |
+| `org.springframework.web.servlet.resource.PathResourceResolver#getResource(String,Resource)` | `flint.web.servlet.resource.PathResourceResolver.getResource` | [D-WEB-5](api-mapping.md#deviations) |  |
+| `org.springframework.web.servlet.resource.PathResourceResolver#resolveResourceInternal(HttpServletRequest,String,List,ResourceResolverChain)` | `flint.web.servlet.resource.PathResourceResolver.resolveResourceInternal` | [R10](api-mapping.md#r10-streams-and-collections), [D-WEB-5](api-mapping.md#deviations) |  |
+| `org.springframework.web.servlet.resource.PathResourceResolver#resolveUrlPathInternal(String,List,ResourceResolverChain)` | `flint.web.servlet.resource.PathResourceResolver.resolveUrlPathInternal` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [D-WEB-5](api-mapping.md#deviations) |  |
+| `org.springframework.web.servlet.resource.PathResourceResolver#setAllowedLocations(Resource...)` | `flint.web.servlet.resource.PathResourceResolver.setAllowedLocations` | [R7](api-mapping.md#r7-overloads), [D-WEB-5](api-mapping.md#deviations) |  |
+| `org.springframework.web.servlet.resource.ResourceHandlerUtils#assertResourceLocation(Resource)` | `flint.web.servlet.resource.ResourceHandlerUtils.assertResourceLocation` | [D-WEB-5](api-mapping.md#deviations) |  |
+| `org.springframework.web.servlet.resource.ResourceHandlerUtils#initLocationPath(String)` | `flint.web.servlet.resource.ResourceHandlerUtils.initLocationPath` | [D-WEB-5](api-mapping.md#deviations) |  |
+| `org.springframework.web.servlet.resource.ResourceHandlerUtils#isInvalidPath(String)` | `flint.web.servlet.resource.ResourceHandlerUtils.isInvalidPath` | [D-WEB-5](api-mapping.md#deviations) |  |
+| `org.springframework.web.servlet.resource.ResourceHandlerUtils#isResourceUnderLocation(Resource,Resource)` | `flint.web.servlet.resource.ResourceHandlerUtils.isResourceUnderLocation` | [D-WEB-5](api-mapping.md#deviations) |  |
+| `org.springframework.web.servlet.resource.ResourceHandlerUtils#shouldIgnoreInputPath(String)` | `flint.web.servlet.resource.ResourceHandlerUtils.shouldIgnoreInputPath` | [D-WEB-5](api-mapping.md#deviations) |  |
+| `org.springframework.web.servlet.resource.ResourceHttpRequestHandler#afterPropertiesSet()` | `flint.web.servlet.resource.ResourceHttpRequestHandler.afterPropertiesSet` | [D-WEB-6](api-mapping.md#deviations) |  |
+| `org.springframework.web.servlet.resource.ResourceHttpRequestHandler#getMediaType(HttpServletRequest,Resource)` | `flint.web.servlet.resource.ResourceHttpRequestHandler.getMediaType` | [R5](api-mapping.md#r5-optional-and-nullable-values), [D-WEB-6](api-mapping.md#deviations) |  |
+| `org.springframework.web.servlet.resource.ResourceHttpRequestHandler#getResource(HttpServletRequest)` | `flint.web.servlet.resource.ResourceHttpRequestHandler.getResource` | [D-WEB-6](api-mapping.md#deviations) |  |
+| `org.springframework.web.servlet.resource.ResourceHttpRequestHandler#handleRequest(HttpServletRequest,HttpServletResponse)` | `flint.web.servlet.resource.ResourceHttpRequestHandler.handleRequest` | [D-WEB-6](api-mapping.md#deviations) |  |
+| `org.springframework.web.servlet.resource.ResourceHttpRequestHandler#setLocations(List)` | `flint.web.servlet.resource.ResourceHttpRequestHandler.setLocations` | [R10](api-mapping.md#r10-streams-and-collections), [D-WEB-6](api-mapping.md#deviations) |  |
+| `org.springframework.web.servlet.resource.ResourceResolver#resolveResource(HttpServletRequest,String,List,ResourceResolverChain)` | `flint.web.servlet.resource.ResourceResolver.resolveResource` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.servlet.resource.ResourceResolver#resolveUrlPath(String,List,ResourceResolverChain)` | `flint.web.servlet.resource.ResourceResolver.resolveUrlPath` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.servlet.resource.ResourceResolverChain#resolveResource(HttpServletRequest,String,List)` | `flint.web.servlet.resource.ResourceResolverChain.resolveResource` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.servlet.resource.ResourceResolverChain#resolveUrlPath(String,List)` | `flint.web.servlet.resource.ResourceResolverChain.resolveUrlPath` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
+
+#### org.springframework.web.util
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.web.util.WebUtils#findParameterValue(Map,String)` | `flint.web.util.WebUtils.findParameterValue` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.web.util.WebUtils#findParameterValue(ServletRequest,String)` | `flint.web.util.WebUtils.findParameterValue` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### org.springframework.web.util.pattern
 
@@ -11411,7 +11591,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.format.number | 27 | 0 |
 | org.springframework.format.number.money | 16 | 0 |
 | org.springframework.format.support | 30 | 0 |
-| org.springframework.http | 215 | 9 |
+| org.springframework.http | 134 | 9 |
 | org.springframework.http.client | 143 | 0 |
 | org.springframework.http.client.observation | 31 | 0 |
 | org.springframework.http.client.reactive | 0 | 107 |
@@ -11424,7 +11604,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.http.codec.smile | 0 | 13 |
 | org.springframework.http.codec.support | 0 | 10 |
 | org.springframework.http.codec.xml | 0 | 48 |
-| org.springframework.http.converter | 155 | 0 |
+| org.springframework.http.converter | 113 | 0 |
 | org.springframework.http.converter.cbor | 8 | 0 |
 | org.springframework.http.converter.feed | 13 | 0 |
 | org.springframework.http.converter.json | 215 | 0 |
@@ -11594,18 +11774,18 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.validation.beanvalidation | 82 | 0 |
 | org.springframework.validation.method | 69 | 0 |
 | org.springframework.validation.support | 7 | 0 |
-| org.springframework.web | 29 | 0 |
-| org.springframework.web.accept | 135 | 0 |
-| org.springframework.web.bind | 131 | 0 |
+| org.springframework.web | 25 | 0 |
+| org.springframework.web.accept | 95 | 0 |
+| org.springframework.web.bind | 109 | 0 |
 | org.springframework.web.bind.annotation | 93 | 0 |
 | org.springframework.web.bind.support | 124 | 0 |
 | org.springframework.web.client | 324 | 0 |
 | org.springframework.web.client.support | 34 | 0 |
-| org.springframework.web.context | 61 | 0 |
+| org.springframework.web.context | 50 | 0 |
 | org.springframework.web.context.annotation | 6 | 0 |
-| org.springframework.web.context.request | 128 | 0 |
+| org.springframework.web.context.request | 124 | 0 |
 | org.springframework.web.context.request.async | 106 | 0 |
-| org.springframework.web.context.support | 218 | 0 |
+| org.springframework.web.context.support | 181 | 0 |
 | org.springframework.web.cors | 65 | 0 |
 | org.springframework.web.cors.reactive | 0 | 31 |
 | org.springframework.web.filter | 177 | 0 |
@@ -11615,8 +11795,8 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.web.method | 37 | 0 |
 | org.springframework.web.method.annotation | 124 | 0 |
 | org.springframework.web.method.support | 32 | 0 |
-| org.springframework.web.multipart | 35 | 0 |
-| org.springframework.web.multipart.support | 81 | 0 |
+| org.springframework.web.multipart | 26 | 0 |
+| org.springframework.web.multipart.support | 75 | 0 |
 | org.springframework.web.reactive | 0 | 48 |
 | org.springframework.web.reactive.accept | 0 | 83 |
 | org.springframework.web.reactive.config | 0 | 188 |
@@ -11661,7 +11841,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.web.servlet.mvc.method | 62 | 0 |
 | org.springframework.web.servlet.mvc.method.annotation | 365 | 4 |
 | org.springframework.web.servlet.mvc.support | 44 | 0 |
-| org.springframework.web.servlet.resource | 186 | 0 |
+| org.springframework.web.servlet.resource | 147 | 0 |
 | org.springframework.web.servlet.support | 176 | 0 |
 | org.springframework.web.servlet.view | 255 | 0 |
 | org.springframework.web.servlet.view.document | 30 | 0 |
@@ -11692,7 +11872,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.web.socket.sockjs.transport | 0 | 45 |
 | org.springframework.web.socket.sockjs.transport.handler | 0 | 78 |
 | org.springframework.web.socket.sockjs.transport.session | 0 | 87 |
-| org.springframework.web.util | 359 | 0 |
+| org.springframework.web.util | 352 | 0 |
 | org.springframework.web.util.pattern | 45 | 0 |
 | org.thymeleaf | 153 | 0 |
 | org.thymeleaf.cache | 117 | 0 |
