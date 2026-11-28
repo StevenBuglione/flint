@@ -5538,7 +5538,7 @@
 "java.io.ByteArrayOutputStream#write(int)":{"d":"flint.java.io.ByteArrayOutputStream.write","status":"ported"},
 "java.io.File":{"status":"adapted","d":"flint.java.io.File","rules":["R8","R11","R26"],"note":"The pathname is a D UTF-8 string (R26). equals, hashCode and compareTo follow Java's UTF-16 code-unit rules. The remaining pathname operations stay deferred."},
 "java.io.File#compareTo(File)":{"d":"flint.java.io.File.compareTo","rules":["R8"],"status":"ported"},
-"java.io.File#equals(Object)":{"d":"flint.java.io.File.equals","status":"ported"},
+"java.io.File#equals(Object)":{"d":"flint.java.io.File.equals","rules":["R11"],"status":"adapted","note":"The other reference is recognised through its dynamic class info and its pathname read through the virtual toString, so no weak class-cast template is emitted in the first module object; a subclass that overrides toString is the one difference."},
 "java.io.File#hashCode()":{"d":"flint.java.io.File.hashCode","status":"ported"},
 "java.io.File#<init>(File,String)":{"status":"excluded","category":"deferred","phase":"2","reason":"The overload taking a File parent is pending."},
 "java.io.File#<init>(String)":{"status":"excluded","category":"deferred","phase":"2","reason":"Java normalizes the platform pathname. The existing constructor stores the supplied spelling. R26 covers null pathname strings."},
