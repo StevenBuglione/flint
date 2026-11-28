@@ -34,7 +34,7 @@ Overall: types 291/1269 (23%), members 2686/15189 (18%); 0 of the done elements 
 | `java.time.temporal` | sol-jdk-time-text | 3 / 16 | 69 / 169 | 41% |  |  | 3 |
 | `java.time.zone` | sol-jdk-time-text | 4 / 6 | 51 / 63 | 81% |  |  | 3 |
 | `java.util` | sol-jdk-core, sol-ai, sol-aop, sol-jdk-math-regex, sol-jdk-time-text (Locale) | 39 / 133 | 450 / 2216 | 20% |  | 320 | 12 |
-| `java.util.concurrent` | sol-jdk-concurrent-io, sol-observability | 20 / 79 | 108 / 1190 | 9% |  | 38 | 18 |
+| `java.util.concurrent` | sol-jdk-concurrent-io, sol-observability | 20 / 79 | 108 / 1190 | 9% |  | 37 | 18 |
 | `java.util.concurrent.atomic` | sol-observability | 4 / 16 | 51 / 319 | 16% |  |  | 1 |
 | `java.util.concurrent.locks` | sol-observability | 3 / 14 | 15 / 201 | 7% |  |  |  |
 | `java.util.function` | sol-context | 17 / 43 | 16 / 79 | 20% |  |  |  |

@@ -738,7 +738,6 @@
   "java.util.concurrent.CopyOnWriteArraySet#removeIf(Predicate)",
   "java.util.concurrent.CopyOnWriteArraySet#retainAll(Collection)",
   "java.util.concurrent.CopyOnWriteArraySet#size()",
-  "java.util.concurrent.CopyOnWriteArraySet#toArray()",
-  "java.util.concurrent.FutureTask#<init>(Runnable,V)"
+  "java.util.concurrent.CopyOnWriteArraySet#toArray()"
  ]
 }
