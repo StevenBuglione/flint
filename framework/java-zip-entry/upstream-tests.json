@@ -1,0 +1,24 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "upstream": "openjdk@21.0.13",
+  "module": "java-zip-entry",
+  "test_packages": [
+    ":java-zip-entry"
+  ],
+  "classes": {
+    "java/util/zip/ZipEntry/Clone.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: the reference case is not copied; this module's own tests cover the same behaviour.",
+      "covered_by": [
+        "framework/java-zip-entry/tests/zipentry_test.d"
+      ]
+    },
+    "java/util/zip/ZipEntry/Constructor.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: the reference case is not copied; this module's own tests cover the same behaviour.",
+      "covered_by": [
+        "framework/java-zip-entry/tests/zipentry_test.d"
+      ]
+    }
+  }
+}

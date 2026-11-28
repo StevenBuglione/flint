@@ -1,0 +1,10 @@
+{
+  "source": "closure/zipentry.d",
+  "leaves": [
+    "flint.java.lang",
+    "flint.java.nio.file.attribute.filetime",
+    "flint.java.time",
+    "flint.java.util.concurrent"
+  ],
+  "data": []
+}
