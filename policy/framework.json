@@ -3097,20 +3097,16 @@
   "ai-commons": {
    "directory": "ai/ai-commons",
    "module": "flint.ai.content",
-   "also": [
-    "flint.ai.document",
-    "flint.ai.evaluation",
-    "flint.ai.observation",
-    "flint.ai.observation.conventions",
-    "flint.ai.reader",
-    "flint.ai.template_",
-    "flint.ai.tokenizer",
-    "flint.ai.transformer",
-    "flint.ai.util"
-   ],
-   "repo": "ai",
-   "licence": "Apache-2.0",
-   "upstream": "spring-ai@v2.1.0",
+    "also": [
+     "flint.ai.observation",
+     "flint.ai.observation.conventions",
+     "flint.ai.template_",
+     "flint.ai.tokenizer",
+     "flint.ai.util"
+    ],
+    "repo": "ai",
+    "licence": "Apache-2.0",
+    "upstream": "spring-ai@v2.1.0",
    "dependencies": [
     "core",
     "engine-aot",
@@ -3130,6 +3126,46 @@
     "incremental_linked_bytes": 2048,
     "compiler_peak_rss_bytes": 536870912,
     "template_instances": 6440
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
+  "ai-document": {
+   "directory": "ai/ai-document",
+   "module": "flint.ai.document",
+   "also": [
+    "flint.ai.evaluation",
+    "flint.ai.reader",
+    "flint.ai.transformer"
+   ],
+   "repo": "ai",
+   "licence": "Apache-2.0",
+   "upstream": "spring-ai@v2.1.0",
+   "dependencies": [
+    "ai-commons",
+    "core",
+    "engine-aot",
+    "java",
+    "java-util"
+   ],
+   "bench": {
+    "fixture": "ai/ai-document/bench",
+    "baseline": "ai/ai-document/bench/baseline",
+    "edit_source": "ai/ai-document/source/flint/ai/document/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 1.4,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 8.4,
+    "ldc_incremental_seconds": 4.2,
+    "incremental_linked_bytes": 42644,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 3228
    },
    "provisional": [
     "dmd_cold_seconds",

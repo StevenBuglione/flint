@@ -7,6 +7,10 @@
       "repo": "ai",
       "version": "monorepo"
     },
+    "flint:ai-document": {
+      "repo": "ai",
+      "version": "monorepo"
+    },
     "flint:ai-model": {
       "repo": "ai",
       "version": "monorepo"
