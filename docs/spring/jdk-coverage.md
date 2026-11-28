@@ -7,7 +7,7 @@ Overall: types 296/1269 (23%), members 2772/15183 (18%); 0 of the done elements 
 | Package | Owners | Types done / in scope | Members done / in scope | Members % | By porter | Unconfirmed | Leaf only |
 |---|---|---|---|---|---|---|---|
 | `java.io` | sol-test | 11 / 69 | 22 / 734 | 3% |  | 2 | 2 |
-| `java.lang` | sol-framework, sol-boot, sol-jdk-math-regex (Character) | 27 / 118 | 493 / 1921 | 26% |  | 1 | 6 |
+| `java.lang` | sol-framework, sol-boot, sol-jdk-math-regex (Character) | 27 / 118 | 493 / 1921 | 26% |  | 1 | 5 |
 | `java.lang.annotation` | sol-framework | 8 / 12 | 18 / 31 | 58% |  |  |  |
 | `java.lang.ref` | sol-boot | 0 / 7 | 0 / 22 | 0% |  |  |  |
 | `java.math` | sol-jdk-math-regex | 2 / 4 | 43 / 173 | 25% |  | 1 |  |
@@ -64,7 +64,6 @@ Each is adapted R1 with a note naming its leaf module until the JDK aggregate re
 - `java.io.InterruptedIOException`: declared in `flint.java.io.interruptedioexception`
 - `java.io.UnsupportedEncodingException`: declared in `flint.java.io.unsupportedencodingexception`
 - `java.lang.Byte`: declared in `flint.java.lang.byte_`
-- `java.lang.Float`: declared in `flint.java.lang.float_`
 - `java.lang.Math`: declared in `flint.java.lang.math`
 - `java.lang.Number`: declared in `flint.java.lang.number`
 - `java.lang.Short`: declared in `flint.java.lang.short_`
