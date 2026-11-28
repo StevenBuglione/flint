@@ -1,0 +1,7 @@
+name "probe-java-nio-channels-spi"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"
+dependency "flint:java-nio-channels-spi" path="../../.."
+dependency "flint:java-nio-channels" path="../../.."
+dependency "flint:java" path="../../.."

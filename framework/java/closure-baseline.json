@@ -2641,6 +2641,30 @@
         "link|java-concurrent-copyonwrite-set|flint.java.util.concurrent.copyonwritearrayset|list|Oz|undeclared module records flint.java.util.timezone"
       ]
     },
+    "java-nio-channels-spi-module-records": {
+      "decision": "523bd5bd92ef255ad83efdaa4253b42197271e8a",
+      "reason": "Decision 523bd5bd (2026-11-28): a brand-new JDK leaf inherits the RTInfo/first-object module metadata records of the batch it lands in. AbstractInterruptibleChannel is a new separate package (churn-cut split) whose probe otherwise reports flint.java.character/sql/text.simpledateformat/time(.format)/util(.calendar/.date/.timezone) as undeclared; none of those are real imports (only flint.java.io, flint.java.lang and the java.nio.channels leaves are). Drop this whole group when the first-object/compile-scope model stops carrying module records.",
+      "violations": [
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|O3|undeclared module records flint.java.character",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|O3|undeclared module records flint.java.sql",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|O3|undeclared module records flint.java.text.simpledateformat",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|O3|undeclared module records flint.java.time",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|O3|undeclared module records flint.java.time.format",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|O3|undeclared module records flint.java.util",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|O3|undeclared module records flint.java.util.calendar",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|O3|undeclared module records flint.java.util.date",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|O3|undeclared module records flint.java.util.timezone",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|Oz|undeclared module records flint.java.character",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|Oz|undeclared module records flint.java.sql",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|Oz|undeclared module records flint.java.text.simpledateformat",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|Oz|undeclared module records flint.java.time",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|Oz|undeclared module records flint.java.time.format",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|Oz|undeclared module records flint.java.util",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|Oz|undeclared module records flint.java.util.calendar",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|Oz|undeclared module records flint.java.util.date",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|Oz|undeclared module records flint.java.util.timezone"
+      ]
+    },
     "batch-placement": {
       "decision": "ce92c623083ab32b193e292454c6b8b4cc70f63a",
       "reason": "Batch-scope LDC placement: a package's shared module references land in its first object, so sibling probes carry them. The v4.3 per-source compile scope that would have removed them was rolled back (decision ce92c6230); drop this whole group if per-source or per-source+LTO is adopted.",
@@ -2651,6 +2675,8 @@
         "link|java-concurrent-exec|flint.java.util.concurrent.executionexception|throw-catch|Oz|undeclared module records flint.java.util.concurrent.cancellationexception",
         "link|java-concurrent-exec|flint.java.util.concurrent.executor|dispatch|O3|undeclared module records flint.java.util.concurrent.cancellationexception",
         "link|java-concurrent-exec|flint.java.util.concurrent.executor|dispatch|Oz|undeclared module records flint.java.util.concurrent.cancellationexception",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|O3|undeclared module records flint.java.nio.channels.acceptpendingexception",
+        "link|java-nio-channels-spi|flint.java.nio.channels.spi.abstractinterruptiblechannel|probe|Oz|undeclared module records flint.java.nio.channels.acceptpendingexception",
         "link|java-nio-channels|flint.java.nio.channels.alreadyboundexception|throw|O3|undeclared module records flint.java.nio.channels.acceptpendingexception",
         "link|java-nio-channels|flint.java.nio.channels.alreadyboundexception|throw|Oz|undeclared module records flint.java.nio.channels.acceptpendingexception",
         "link|java-nio-channels|flint.java.nio.channels.alreadyconnectedexception|throw|O3|undeclared module records flint.java.nio.channels.acceptpendingexception",

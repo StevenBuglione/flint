@@ -1181,6 +1181,41 @@
     "template_instances": 625
    }
   },
+  "java-nio-channels-spi": {
+   "directory": "framework/java-nio-channels-spi",
+   "module": "flint.java.nio.channels.spi.abstractinterruptiblechannel",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "java",
+    "java-nio-channels"
+   ],
+   "bench": {
+    "fixture": "framework/java-nio-channels-spi/bench",
+    "baseline": "framework/java-nio-channels-spi/bench/baseline",
+    "edit_source": "framework/java-nio-channels-spi/source/flint/java/nio/channels/spi/abstractinterruptiblechannel.d"
+   },
+   "java_types": [
+    "java.nio.channels.spi.AbstractInterruptibleChannel"
+   ],
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ],
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "compiler_peak_rss_bytes": 536870912,
+    "incremental_linked_bytes": 7524,
+    "template_instances": 531
+   }
+  },
   "java-nio-numeric-buffers": {
    "directory": "framework/java-nio-numeric-buffers",
    "module": "flint.java.nio.intbuffer",
