@@ -4,15 +4,20 @@ module flint.java.util.concurrent.executorservice;
 import core.atomic : atomicLoad, atomicStore, cas;
 import core.lifetime : move;
 import flint.arena : ReactorError = Error, Status;
+import flint.conc : Deadline;
 import flint.conc.slot : ProcessSlot;
 import flint.engine.reactor : OffloadWork, Reactor, ReactorOptions, TaskContext;
 import flint.java.lang : IllegalArgumentException, NullPointerException, RuntimeException;
 import flint.java.lang.runnable : Runnable;
-import flint.java.util : ArrayList, List;
+import flint.java.util : ArrayList, Collection, List;
+import flint.java.util.concurrent : TimeUnit, toNanos;
 import flint.java.util.concurrent.callable : Callable;
+import flint.java.util.concurrent.cancellationexception : CancellationException;
+import flint.java.util.concurrent.executionexception : ExecutionException;
 import flint.java.util.concurrent.executor : Executor;
 import flint.java.util.concurrent.future : Future;
 import flint.java.util.concurrent.futuretask : FutureTask;
+import flint.java.util.concurrent.timeoutexception : TimeoutException;
 import flint.java.util.concurrent.internal.executoradmissions : Admission, ExecutorAdmissions, ExecutorClaim;
 import flint.java.util.concurrent.internal.executorrouting : ExecutorRoutes;
 import flint.java.util.concurrent.internal.managedoffload : ManagedOffloadResult, invokeManaged;
@@ -56,6 +61,123 @@ interface ExecutorService : Executor
         execute(future);
         return future;
     }
+
+    /// Execute every task and return its future once all have completed (R3, R9).
+    ///
+    /// Java's `invokeAll`: every future comes back in iteration order, and a task that failed or was cancelled
+    /// reports through its own future rather than from this call. Interruption is deferred until the `Thread`
+    /// façade lands, as it is for `Future.get`.
+    List!(Future!T) invokeAll(T)(Collection!(Callable!T) tasks)
+    {
+        if (tasks is null)
+            throw new NullPointerException;
+        auto futures = new ArrayList!(Future!T)();
+        bool done = false;
+        scope (exit)
+        {
+            if (!done)
+                foreach (i; 0 .. futures.size())
+                    futures.get(i).cancel(true);
+        }
+        for (auto iterator = tasks.iterator(); iterator.hasNext();)
+        {
+            auto future = new FutureTask!T(iterator.next());
+            futures.add(future);
+            execute(future);
+        }
+        foreach (i; 0 .. futures.size())
+        {
+            auto future = futures.get(i);
+            if (future.isDone())
+                continue;
+            try
+                future.get();
+            catch (CancellationException)
+            {
+            }
+            catch (ExecutionException)
+            {
+            }
+        }
+        done = true;
+        return futures;
+    }
+
+    /// Execute every task, waiting at most `timeout` of `unit` (R3, R9).
+    ///
+    /// As Java's timed `invokeAll`: an unfinished future is cancelled and returned, and a timeout is reported by
+    /// those futures rather than by throwing `TimeoutException`.
+    List!(Future!T) invokeAll(T)(Collection!(Callable!T) tasks, long timeout, TimeUnit unit)
+    {
+        if (tasks is null)
+            throw new NullPointerException;
+        const nanos = toNanos(unit, timeout);
+        auto futures = new ArrayList!(Future!T)();
+        bool done = false;
+        scope (exit)
+        {
+            if (!done)
+                foreach (i; 0 .. futures.size())
+                    futures.get(i).cancel(true);
+        }
+        for (auto iterator = tasks.iterator(); iterator.hasNext();)
+            futures.add(new FutureTask!T(iterator.next()));
+
+        // Java starts the deadline once the tasks are collected, then counts it down over submission and waiting.
+        const deadline = saturatingAdd(monotonicNow(), nanos);
+        const size = futures.size();
+        foreach (i; 0 .. size)
+        {
+            if (remainingNanos(deadline) <= 0)
+                return futures;
+            execute(cast(Runnable) futures.get(i));
+        }
+        foreach (i; 0 .. size)
+        {
+            auto future = futures.get(i);
+            if (future.isDone())
+                continue;
+            const remaining = remainingNanos(deadline);
+            if (remaining <= 0)
+                return futures;
+            try
+                future.get(remaining, TimeUnit.NANOSECONDS);
+            catch (CancellationException)
+            {
+            }
+            catch (ExecutionException)
+            {
+            }
+            catch (TimeoutException)
+            {
+                return futures;
+            }
+        }
+        done = true;
+        return futures;
+    }
+}
+
+private long monotonicNow()
+{
+    return Deadline.afterMillis(0).monotonicNanoseconds;
+}
+
+private long saturatingAdd(long value, long delta)
+{
+    const sum = value + delta;
+    if (delta > 0 && sum < value)
+        return long.max;
+    if (delta < 0 && sum > value)
+        return long.min;
+    return sum;
+}
+
+private long remainingNanos(long deadline)
+{
+    if (deadline == long.max)
+        return long.max;
+    return deadline - monotonicNow();
 }
 
 private shared ProcessSlot!ExecutorRoutes routeTable;
