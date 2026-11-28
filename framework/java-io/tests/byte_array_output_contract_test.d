@@ -134,3 +134,25 @@ unittest
     assertThrown!IndexOutOfBoundsException(output.write([cast(ubyte) 1], -1, 1));
     assert(output.size() == 0);
 }
+
+@("ByteArrayOutputStream toString decodes UTF-8 and replaces malformed input")
+unittest
+{
+    auto output = new ByteArrayOutputStream;
+    assert(output.toString() == "");
+
+    output.writeBytes(cast(const(ubyte)[]) "é😀");
+    assert(output.toString() == "é😀");
+
+    output.reset();
+    output.writeBytes([cast(ubyte) 'A', cast(ubyte) 0x80, cast(ubyte) 'B']);
+    assert(output.toString() == "A\uFFFDB");
+
+    output.reset();
+    output.writeBytes([cast(ubyte) 0xE2, cast(ubyte) 0x82]);
+    assert(output.toString() == "\uFFFD");
+
+    output.reset();
+    output.writeBytes(cast(const(ubyte)[]) "\xEF\xBF\xBD");
+    assert(output.toString() == "\uFFFD");
+}
