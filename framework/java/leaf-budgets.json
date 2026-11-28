@@ -4,6 +4,11 @@
     "template_instances": 69,
     "control": "tools/jdk-closure-controls/d-exception.d"
   },
+  "flint.java.lang.virtualmachineerror": {
+    "incremental_linked_bytes": 5360,
+    "template_instances": 44,
+    "control": "tools/jdk-closure-controls/d-exception.d"
+  },
   "flint.java.lang.illegalmonitorstateexception": {
     "incremental_linked_bytes": 951,
     "template_instances": 37,
