@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,232 | 831 | 0 | 1,957 | 13,401 |
+| framework | openjdk@21.0.13 | 2,235 | 835 | 0 | 1,957 | 13,394 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -214,6 +214,7 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.io.DataInput#readChar()` | `flint.java.io.DataInput.readChar` | Java char is D wchar, a 16-bit code unit. |
 | framework | `java.io.DataInputStream#readChar()` | `flint.java.io.DataInputStream.readChar` | Java char is D wchar, a 16-bit code unit. |
 | framework | `java.io.OutputStream` | `flint.java.io.OutputStream` | Implements Closeable and Flushable. |
+| framework | `java.io.SequenceInputStream#<init>(InputStream,InputStream)` | `flint.java.io.SequenceInputStream.this` | A null first stream is rejected during construction and a null second stream when it is reached, as Java's nextStream does. |
 | framework | `java.io.StringWriter#close()` | `flint.java.io.StringWriter.close` | Inherits the no-op close. Existing text and the ability to write survive repeated calls. |
 | framework | `java.io.StringWriter#flush()` | `flint.java.io.StringWriter.flush` | Inherits the no-op flush, preserving the stored text. |
 | framework | `java.lang.IllegalArgumentException#<init>(Throwable)` | `flint.java.lang.IllegalArgumentException.this` | A cause-specific toString override is not invoked. Flint derives the detail from the cause class name and message while retaining the original cause. |
@@ -2304,6 +2305,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.PushbackInputStream#transferTo(OutputStream)` | `flint.java.io.InputStream.transferTo` | [R1](api-mapping.md#r1-packages-and-names) | The inherited InputStream.transferTo is behaviourally identical. Java's override only avoids one copy, and its fast path tests the exact runtime class. |
 | `java.io.PushbackInputStream#unread(byte[])` | `flint.java.io.PushbackInputStream.unread` | [R26](api-mapping.md#r26-null-arrays) | A D ubyte slice; a null slice counts as empty under R26. |
 | `java.io.PushbackInputStream#unread(byte[],int,int)` | `flint.java.io.PushbackInputStream.unread` | [R26](api-mapping.md#r26-null-arrays) | A D ubyte slice; the range is checked before the buffer moves, as Java's arraycopy does. |
+| `java.io.SequenceInputStream` | `flint.java.io.SequenceInputStream` | [R1](api-mapping.md#r1-packages-and-names) | Declared in the flint.java.io aggregate. The Enumeration constructor is deferred until java.util.Enumeration is ported; the two-stream constructor, reads, close and transferTo are ported. A Flint stream is confined to one fiber, so Java's stream monitor notes do not apply. |
+| `java.io.SequenceInputStream#close()` | `flint.java.io.SequenceInputStream.close` | [R1](api-mapping.md#r1-packages-and-names) | Closes the current stream and every stream that follows. The first failure is rethrown; later failures are dropped because Flint's Throwable has no suppressed-exception API. |
+| `java.io.SequenceInputStream#read(byte[],int,int)` | `flint.java.io.SequenceInputStream.read` | [R26](api-mapping.md#r26-null-arrays) | A D ubyte slice; a null slice counts as empty under R26. A zero length returns zero after the in-stream check, as Java does. |
+| `java.io.SequenceInputStream#transferTo(OutputStream)` | `flint.java.io.SequenceInputStream.transferTo` | [R1](api-mapping.md#r1-packages-and-names) | Copies through the sequence and returns zero when it is already exhausted, before touching the sink. The interrupt check is omitted because flint.java has no Thread.interrupted yet. |
 | `java.io.UnsupportedEncodingException` | `flint.java.io.unsupportedencodingexception.UnsupportedEncodingException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions) |  |
 
 #### java.lang
@@ -11239,7 +11244,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 597 | 0 |
+| java.io | 590 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -12205,6 +12210,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.Reader#nullReader()` | 2 | Missing empty reader with explicit closed state. CharBuffer reads return zero for an open empty target and EOF for an open nonempty target, even when read-only. Transfer to a non-null writer returns zero while open. Both operations reject null before checking whether the reader is closed. |
 | framework | `java.io.Reader#read(CharBuffer)` | 2 | Missing UTF-16 transfer into the buffer's remaining window. Java rejects read-only targets before reading, reads directly into accessible arrays, and copies into other targets after a successful read. The position advances only by the returned count. |
 | framework | `java.io.Reader#transferTo(Writer)` | 2 | Missing transfer via virtual UTF-16 ranged reads and writes. Java rejects a null sink before reading and counts code units. Sink failures propagate after the source advances. Neither stream is flushed or closed. |
+| framework | `java.io.SequenceInputStream#<init>(Enumeration)` | 2 | Java takes a java.util.Enumeration of streams. Enumeration is not ported yet. |
 | framework | `java.io.StringWriter#<init>()` | 2 | The writer starts empty, but it has no mutable StringBuffer bound to the inherited lock or exposed through getBuffer. |
 | framework | `java.io.StringWriter#<init>(int)` | 2 | Missing constructor that sets the initial buffer capacity, accepts zero and rejects negative capacity. |
 | framework | `java.io.StringWriter#append(CharSequence)` | 2 | Java appends the text null for an absent sequence and returns StringWriter. The inherited D method accepts a plain slice and returns Writer. |
