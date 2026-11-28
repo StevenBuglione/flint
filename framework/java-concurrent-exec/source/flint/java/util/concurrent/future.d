@@ -3,6 +3,7 @@
 module flint.java.util.concurrent.future;
 
 import flint.java.lang : IllegalStateException;
+import flint.java.lang.runnable : Runnable;
 import flint.java.util.concurrent : TimeUnit;
 import flint.java.util.concurrent.executionexception : ExecutionException;
 
@@ -94,4 +95,9 @@ interface Future(V)
             return typeof(this).State.RUNNING;
         }
     }
+}
+
+/// Java's `RunnableFuture`: a `Future` that is also a `Runnable` (R1, R3).
+interface RunnableFuture(V) : Runnable, Future!V
+{
 }

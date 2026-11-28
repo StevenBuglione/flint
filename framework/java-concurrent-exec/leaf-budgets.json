@@ -18,6 +18,11 @@
     "template_instances": 270,
     "control": "framework/java-concurrent-exec/closure/future_provider.d"
   },
+  "flint.java.util.concurrent.futuretask": {
+    "incremental_linked_bytes": 13073,
+    "template_instances": 539,
+    "control": "framework/java-concurrent-exec/closure/futuretask_provider.d"
+  },
   "flint.java.util.concurrent.executor": {
     "incremental_linked_bytes": 4352,
     "template_instances": 286

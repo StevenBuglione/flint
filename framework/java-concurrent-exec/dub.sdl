@@ -5,7 +5,9 @@ targetType "library"
 sourcePaths "source"
 importPaths "source"
 dflags "-preview=dip1000"
+dependency "flint:conc" version="*"
 dependency "flint:java" version="*"
+dependency "flint:java-concurrent" version="*"
 
 configuration "library" {
     targetType "library"

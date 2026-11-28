@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,936 | 687 | 0 | 1,921 | 13,877 |
+| framework | openjdk@21.0.13 | 1,939 | 697 | 0 | 1,921 | 13,864 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2957,6 +2957,17 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.concurrent.Future.State#FAILED` | `flint.java.util.concurrent.future.FutureState.FAILED` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `java.util.concurrent.Future.State#RUNNING` | `flint.java.util.concurrent.future.FutureState.RUNNING` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `java.util.concurrent.Future.State#SUCCESS` | `flint.java.util.concurrent.future.FutureState.SUCCESS` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
+| `java.util.concurrent.FutureTask` | `flint.java.util.concurrent.futuretask.FutureTask` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | D generic class; import it from flint.java.util.concurrent.futuretask. |
+| `java.util.concurrent.FutureTask#<init>(Callable)` | `flint.java.util.concurrent.futuretask.FutureTask.this` | [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions) | A null callable raises NullPointerException. |
+| `java.util.concurrent.FutureTask#<init>(Runnable,Object)` | `flint.java.util.concurrent.futuretask.FutureTask.this` | [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions) | Same D name as the Callable constructor; a null runnable raises NullPointerException. |
+| `java.util.concurrent.FutureTask#cancel(boolean)` | `flint.java.util.concurrent.futuretask.FutureTask.cancel` | [R8](api-mapping.md#r8-exceptions) | Java thread interruption is deferred until the Thread façade lands; a cancelled running task stops publishing its result. |
+| `java.util.concurrent.FutureTask#exceptionNow()` | `flint.java.util.concurrent.futuretask.FutureTask.exceptionNow` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions) | Provided by `mixin template Future.Defaults` as R3 requires. |
+| `java.util.concurrent.FutureTask#get()` | `flint.java.util.concurrent.futuretask.FutureTask.get` | [R8](api-mapping.md#r8-exceptions) | D has no throws clause (D-8). InterruptedException is not ported yet, so a waiting get is not interruptible. |
+| `java.util.concurrent.FutureTask#get(long,TimeUnit)` | `flint.java.util.concurrent.futuretask.FutureTask.get` | [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions) | Same D name as the no-argument overload; TimeUnit is passed by value and cannot be null. |
+| `java.util.concurrent.FutureTask#resultNow()` | `flint.java.util.concurrent.futuretask.FutureTask.resultNow` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions) | Provided by `mixin template Future.Defaults` as R3 requires. |
+| `java.util.concurrent.FutureTask#state()` | `flint.java.util.concurrent.futuretask.FutureTask.state` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions), [R13](api-mapping.md#r13-nested-and-inner-classes) | Provided by `mixin template Future.Defaults`; returns the hoisted FutureState. |
+| `java.util.concurrent.RunnableFuture` | `flint.java.util.concurrent.future.RunnableFuture` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Declared in the Future leaf; import it from flint.java.util.concurrent.future. |
+| `java.util.concurrent.RunnableFuture#run()` | `flint.java.util.concurrent.future.RunnableFuture.run` | [R1](api-mapping.md#r1-packages-and-names) |  |
 | `java.util.concurrent.TimeUnit#convert(Duration)` | `flint.java.util.concurrent.convert` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
 | `java.util.concurrent.TimeUnit#convert(long,TimeUnit)` | `flint.java.util.concurrent.convert` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
 | `java.util.concurrent.TimeUnit#toDays(long)` | `flint.java.util.concurrent.toDays` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
@@ -11036,7 +11047,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
 | java.util | 1,899 | 0 |
-| java.util.concurrent | 1,214 | 0 |
+| java.util.concurrent | 1,201 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 89 | 0 |
@@ -12356,6 +12367,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.UUID#fromString(String)` | 2 | The Java UUID parser, including shortened hexadecimal fields, awaits Character radix conversion. |
 | framework | `java.util.UUID#nameUUIDFromBytes(byte[])` | 2 | Version 3 name-based UUIDs await the canonical Java MessageDigest MD5 provider. |
 | framework | `java.util.concurrent.ExecutionException#<init>(Throwable)` | 2 | The cause is retained, but a custom checked Throwable.toString override is bypassed when deriving the detail. Java invokes that override. |
+| framework | `java.util.concurrent.FutureTask#toString()` | 2 | D object.Object.toString is @system and no Java identity-hash helper is ported yet; the inherited D text stands. |
 | framework | `java.util.concurrent.atomic.AtomicReference#updateAndGet(UnaryOperator)` | 2 | The null callback check needs a separately linkable canonical NullPointerException (R8). The current constructor retains unrelated Java module records and the callback exceeds the AtomicReference leaf budget. |
 | framework | `java.util.function.BiConsumer#andThen(BiConsumer)` | 2 | The existing interface exposes accept and lacks Java's overridable composition default (R3). |
 | framework | `java.util.function.BiFunction#andThen(Function)` | 2 | The existing interface exposes apply and has no composition method. Java's default is overridable and rejects a null function before invocation (R3, R8). |
