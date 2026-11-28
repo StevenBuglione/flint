@@ -2,10 +2,12 @@
   "source": "closure/inheritable-threadlocal.d",
   "leaves": [
     "flint.java.lang",
-    "flint.java.lang.threadlocal",
     "flint.java.lang.internal.threadlocalbindings",
     "flint.java.lang.internal.threadlocalprovider",
+    "flint.java.lang.nullpointerexception",
+    "flint.java.lang.runtimeexception",
     "flint.java.lang.sys.threadtable",
+    "flint.java.lang.threadlocal",
     "flint.java.nativethreadlocal"
   ],
   "data": []

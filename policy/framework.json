@@ -475,14 +475,18 @@
    "module": "flint.java.nativethreadlocal",
    "also": [
     "flint.java.lang.sys.threadtable",
-    "flint.java.nativethreadidentity"
+    "flint.java.nativethreadidentity",
+    "flint.java.nativethreadlifecycle"
    ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
    "upstream": "Flint native Java thread ownership",
-   "dependencies": [],
+   "dependencies": [
+    "conc"
+   ],
    "unsafe": [
-    "flint.java.lang.sys.threadtable"
+    "flint.java.lang.sys.threadtable",
+    "flint.java.nativethreadlifecycle"
    ],
    "bench": {
     "fixture": "framework/java-sys/bench",

@@ -3,6 +3,8 @@
   "leaves": [
     "flint.java.lang",
     "flint.java.lang.internal.threadcontrol",
+    "flint.java.lang.nullpointerexception",
+    "flint.java.lang.runtimeexception",
     "flint.java.lang.sys.threadslot",
     "flint.java.nativethreadidentity"
   ],

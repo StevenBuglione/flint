@@ -159,7 +159,7 @@ name = "flint:java-sys"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = []
+dependencies = ["flint:conc"]
 
 [[package]]
 name = "flint:jdbc"

@@ -28,8 +28,9 @@
 // is a small cross-thread facade.
 module flint.java.lang.thread;
 
-import core.atomic : atomicExchange, atomicLoad, atomicOp, atomicStore;
+import core.atomic : atomicExchange, atomicLoad, atomicOp, atomicStore, cas;
 import core.sync.mutex : Mutex;
+import flint.java.lang.runnable : Runnable;
 
 @safe:
 
@@ -65,6 +66,7 @@ An interrupt between steps 1 and 4 either finds the installed sink or is seen by
 package(flint.java) final class ThreadState
 {
     private shared bool interrupted_;
+    private shared uint generation_;
     private Mutex gate;
     private ulong lastToken;
     private ulong activeToken;
@@ -90,12 +92,22 @@ package(flint.java) final class ThreadState
     /// Set the flag, then end the installed wait, if any. Java's `Thread.interrupt`.
     void interrupt() nothrow @nogc
     {
+        // Bump the word before reading the sink, so a waiter between its guard and its park sees the change.
+        atomicOp!"+="(generation_, 1);
         atomicStore(interrupted_, true);
         gate.lock_nothrow();
         const pending = sink;
         gate.unlock_nothrow();
         if (pending.wake !is null)
             pending.wake();
+    }
+
+    /// The word `interrupt` bumps before it calls the installed `wake`. A native or fiber waiter reads it before
+    /// its guarded condition and parks on it with the observed value, so an interrupt between the check and the
+    /// park is not lost.
+    package(flint.java) ref shared(uint) generation() nothrow @nogc
+    {
+        return generation_;
     }
 
     /// Install one wait. Returns its token, or zero when a wait is already installed.
@@ -129,20 +141,63 @@ package(flint.java) final class ThreadState
 Java's `Thread` over a logical thread: a reactor task fiber when `flint:java-fiber` installs its identity
 provider, and a native thread otherwise. `currentThread` returns the calling logical thread's one object.
 
-`start`, `join`, `sleep` and the deprecated suspension methods are not ported yet; this facade carries the
-identity and the interrupt state that `java.util.concurrent` needs.
+`start` runs `run` on a new OS thread, as Java's platform-thread `Thread` does. `join` and `sleep` wait on the
+calling logical thread's interrupt state, so `interrupt` ends them. The spawn, join and sleep primitives come
+from an installable provider (`flint:java-sys` installs the native fallback); `flint:java` itself never
+imports the reactor.
 +/
 class Thread
 {
+    /++ Java's thread lifecycle states. A logical thread this port cannot observe beyond its start and finish
+    reports `NEW`, `RUNNABLE` or `TERMINATED`; the three waiting states are declared for API compatibility. +/
+    enum State
+    {
+        NEW,
+        RUNNABLE,
+        BLOCKED,
+        WAITING,
+        TIMED_WAITING,
+        TERMINATED,
+    }
+
+    /++ Receives an exception that escapes `run`. Java's `Thread.UncaughtExceptionHandler`. +/
+    interface UncaughtExceptionHandler
+    {
+        /// Handle `error` thrown by `thread`'s `run`.
+        void uncaughtException(Thread thread, Throwable error);
+    }
+
     private ThreadState state_;
     private string name_;
     private long id_;
+    private Runnable target_;
+    private UncaughtExceptionHandler uncaughtHandler_;
+    private Throwable uncaught_;
+    private shared uint started_;
+    private shared uint alive_;
+    private shared uint joinGeneration_;
 
-    private this()
+    /// A thread with no task; a subclass overrides `run`.
+    this()
     {
         state_ = new ThreadState;
         id_ = atomicOp!"+="(nextThreadId, 1L) + 1;
         name_ = defaultName(id_);
+    }
+
+    /// A thread that runs `target.run()`; a null target runs nothing, as Java allows.
+    this(Runnable target)
+    {
+        this();
+        target_ = target;
+    }
+
+    /// A thread that runs `target.run()` and reports `name`; a null name keeps the default.
+    this(Runnable target, string name)
+    {
+        this(target);
+        if (name !is null)
+            name_ = name;
     }
 
     /// The calling logical thread's `Thread`; the same object on every call from that logical thread.
@@ -150,9 +205,12 @@ class Thread
     {
         import flint.java.lang.internal.threadcontrol : selectThreadIdentityProvider;
         import flint.java.lang.sys.threadslot : threadSlot;
+        import flint.java.nativethreadidentity : spawnedThreadIdentity;
 
         auto provider = selectThreadIdentityProvider(&nativeIdentity);
         auto existing = provider(false, null);
+        if (existing is null)
+            existing = spawnedThreadIdentity();
         if (existing !is null)
             return threadSlot!Thread(existing);
         return threadSlot!Thread(provider(true, new Thread()));
@@ -165,9 +223,94 @@ class Thread
     {
         import flint.java.lang.internal.threadcontrol : selectThreadIdentityProvider;
         import flint.java.lang.sys.threadslot : threadSlot;
+        import flint.java.nativethreadidentity : spawnedThreadIdentity;
 
         auto identity = selectThreadIdentityProvider(&nativeIdentity)(false, null);
+        if (identity is null)
+            identity = spawnedThreadIdentity();
         return identity is null ? null : threadSlot!Thread(identity).state_;
+    }
+
+    /// Java's `run`: run the target, if there is one. A subclass overrides this.
+    void run()
+    {
+        if (target_ !is null)
+            target_.run();
+    }
+
+    /// Start `run` on a new OS thread. Java's `start`: a second call, or a call after termination, throws
+    /// `IllegalThreadStateException`.
+    void start()()
+    {
+        import flint.java.lang.internal.threadlifecycle : selectThreadSpawner;
+
+        if (!cas(&started_, 0u, 1u))
+            throwIllegalThreadState();
+        atomicStore(alive_, 1u);
+        if (!selectThreadSpawner(&nativeSpawn!())(this, &dispatch!()))
+        {
+            atomicStore(alive_, 0u);
+            atomicStore(started_, 0u);
+            throwStartFailed();
+        }
+    }
+
+    /// Whether the thread has started and has not finished `run`. Java's `isAlive`.
+    final bool isAlive() nothrow @nogc
+    {
+        return atomicLoad(alive_) != 0;
+    }
+
+    /// The lifecycle state; see `State` for what this port can observe.
+    final State getState() nothrow @nogc
+    {
+        if (atomicLoad(started_) == 0)
+            return State.NEW;
+        return atomicLoad(alive_) != 0 ? State.RUNNABLE : State.TERMINATED;
+    }
+
+    /// Wait until this thread finishes. Java's `join`: a timeout of zero waits indefinitely, and an interrupt of
+    /// the calling thread throws `InterruptedException` after clearing its flag.
+    void join()()
+    {
+        joinNanos(0);
+    }
+
+    /// Wait at most `millis` milliseconds for this thread to finish.
+    void join()(long millis)
+    {
+        if (millis < 0)
+            throwNegativeTimeout();
+        joinNanos(millisToNanos(millis));
+    }
+
+    /// Wait at most `millis` milliseconds and `nanos` nanoseconds (0 to 999,999) for this thread to finish.
+    void join()(long millis, int nanos)
+    {
+        if (millis < 0)
+            throwNegativeTimeout();
+        if (nanos < 0 || nanos > 999_999)
+            throwNanosOutOfRange();
+        joinNanos(addNanos(millisToNanos(millis), nanos));
+    }
+
+    /// Sleep the calling logical thread. Java's `sleep`: a negative duration is an `IllegalArgumentException`,
+    /// and an interrupt throws `InterruptedException` after clearing the flag.
+    static void sleep()(long millis)
+    {
+        if (millis < 0)
+            throwNegativeTimeout();
+        sleepNanos(millisToNanos(millis));
+    }
+
+    /// Sleep `millis` milliseconds and `nanos` nanoseconds (0 to 999,999).
+    static void sleep()(long millis, int nanos)
+    {
+        if (millis < 0)
+            throwNegativeTimeout();
+        if (nanos < 0 || nanos > 999_999)
+            throwNanosOutOfRange();
+        sleepNanos(addNanos(millisToNanos(millis), nanos));
     }
 
     /// Set this logical thread's interrupt flag and end its installed wait, if any.
@@ -186,6 +329,35 @@ class Thread
     static bool interrupted()
     {
         return currentThread().state_.clearInterrupted();
+    }
+
+    /// This thread's own handler, or null to use the default. Java's `getUncaughtExceptionHandler`.
+    final UncaughtExceptionHandler getUncaughtExceptionHandler() nothrow @nogc
+    {
+        return uncaughtHandler_;
+    }
+
+    /// Set this thread's handler. Java's `setUncaughtExceptionHandler`.
+    final void setUncaughtExceptionHandler(UncaughtExceptionHandler handler) nothrow @nogc
+    {
+        uncaughtHandler_ = handler;
+    }
+
+    /// The process-wide handler used when a thread has none. Java's static getter.
+    static UncaughtExceptionHandler getDefaultUncaughtExceptionHandler()() nothrow @nogc
+    {
+        import flint.java.lang.sys.threadglobals : getDefaultUncaughtExceptionHandler;
+
+        return getDefaultUncaughtExceptionHandler();
+    }
+
+    /// Set the process-wide handler. Java's static setter. The pointer store is atomic on the supported targets
+    /// and Java does not order this setting against a thread that reads it.
+    static void setDefaultUncaughtExceptionHandler()(UncaughtExceptionHandler handler) nothrow @nogc
+    {
+        import flint.java.lang.sys.threadglobals : setDefaultUncaughtExceptionHandler;
+
+        setDefaultUncaughtExceptionHandler(handler);
     }
 
     /// Java's `threadId()`.
@@ -219,6 +391,137 @@ class Thread
     {
         return state_;
     }
+
+    /// The word a `join` parks on: `markTerminated` bumps it and the joiner's interrupt wakes it.
+    package(flint.java) ref shared(uint) joinWord() nothrow @nogc
+    {
+        return joinGeneration_;
+    }
+
+    /// The word `isAlive` reads and `markTerminated` clears; the native provider polls it while parking on
+    /// `joinWord`.
+    package(flint.java) ref shared(uint) aliveWord() nothrow @nogc
+    {
+        return alive_;
+    }
+
+    /// Record that `run` finished and wake every joiner. The provider calls this once, on the thread itself.
+    package(flint.java) void markTerminated() nothrow @nogc
+    {
+        atomicStore(alive_, 0u);
+        atomicOp!"+="(joinGeneration_, 1u);
+    }
+
+    /// The exception `run` threw that no handler took, or null. Flint has no `ThreadGroup` and no standard
+    /// stream, so the default handler keeps it here instead of printing it.
+    package(flint.java) Throwable uncaughtError() nothrow @nogc
+    {
+        return uncaught_;
+    }
+
+    // The provider's body: run the task, then hand any escaping exception to the handler.
+    private void dispatch()() @safe nothrow
+    {
+        try
+            run();
+        catch (Exception error)
+            dispatchUncaught!()(error);
+    }
+
+    private void dispatchUncaught()(Throwable error) @safe nothrow
+    {
+        uncaught_ = error;
+        import flint.java.lang.sys.threadglobals : getDefaultUncaughtExceptionHandler;
+
+        auto handler = uncaughtHandler_;
+        if (handler is null)
+            handler = getDefaultUncaughtExceptionHandler();
+        if (handler is null)
+            return;
+        try
+            handler.uncaughtException(this, error);
+        catch (Exception)
+        {
+        }
+    }
+
+    private void joinNanos()(long nanos)
+    {
+        import flint.java.lang.internal.threadlifecycle : selectThreadJoiner;
+
+        auto waiter = currentThreadState();
+        if (waiter !is null && waiter.isInterrupted())
+        {
+            waiter.clearInterrupted();
+            throwInterrupted();
+        }
+        selectThreadJoiner(&nativeJoin!())(this, waiter, nanos);
+        if (waiter !is null && waiter.clearInterrupted())
+            throwInterrupted();
+    }
+
+    private static void sleepNanos()(long nanos)
+    {
+        import flint.java.lang.internal.threadlifecycle : selectThreadSleeper;
+
+        if (nanos == 0)
+            return;
+        auto state = currentThreadState();
+        if (state is null)
+        {
+            selectThreadSleeper(&nativeSleep!())(null, nanos);
+            return;
+        }
+        if (state.isInterrupted())
+        {
+            state.clearInterrupted();
+            throwInterrupted();
+        }
+        selectThreadSleeper(&nativeSleep!())(state, nanos);
+        if (state.clearInterrupted())
+            throwInterrupted();
+    }
+}
+
+// The native fallback adapters erase the Java types for `flint:java-sys`, which cannot import this package.
+private bool nativeSpawn()(Thread owner, void delegate() @safe nothrow 
+        body) @safe
+{
+    import flint.java.nativethreadlifecycle : spawn = nativeThreadSpawn;
+
+    return spawn(owner, body, &owner.markTerminated, &owner.joinWord());
+}
+
+private void nativeJoin()(Thread target, ThreadState waiter, long timeoutNanos) @safe nothrow
+{
+    import flint.java.nativethreadlifecycle : InterruptWait, WakeDelegate, join = nativeThreadJoin;
+
+    InterruptWait wait;
+    if (waiter !is null)
+        wait = InterruptWait(() => waiter.isInterrupted(), &waiter.generation(),
+                (WakeDelegate wake) => waiter.install(InterruptSink(wake)), (ulong token) => waiter.retire(token));
+    join(&target.aliveWord(), &target.joinWord(), timeoutNanos, wait);
+}
+
+private void nativeSleep()(ThreadState state, long timeoutNanos) @safe nothrow
+{
+    import flint.java.nativethreadlifecycle : InterruptWait, WakeDelegate, sleep = nativeThreadSleep;
+
+    InterruptWait wait;
+    if (state !is null)
+        wait = InterruptWait(() => state.isInterrupted(), &state.generation(),
+                (WakeDelegate wake) => state.install(InterruptSink(wake)), (ulong token) => state.retire(token));
+    sleep(wait, timeoutNanos);
+}
+
+private static long millisToNanos(long millis) pure nothrow @nogc
+{
+    return millis > long.max / 1_000_000 ? long.max : millis * 1_000_000;
+}
+
+private static long addNanos(long base, int nanos) pure nothrow @nogc
+{
+    return base > long.max - nanos ? long.max : base + nanos;
 }
 
 // The native fallback: flint:java-sys keeps one identity per native thread. A fiber provider installed by
@@ -252,4 +555,44 @@ private noreturn throwNullPointerException()
     import flint.java.lang : NullPointerException;
 
     throw new NullPointerException();
+}
+
+private noreturn throwIllegalThreadState()()
+{
+    pragma(inline, false);
+    import flint.java.lang.runtimeexception : IllegalStateException;
+
+    throw new IllegalStateException();
+}
+
+private noreturn throwInterrupted()()
+{
+    pragma(inline, false);
+    import flint.java.lang.interruptedexception : InterruptedException;
+
+    throw new InterruptedException();
+}
+
+private noreturn throwNegativeTimeout()()
+{
+    pragma(inline, false);
+    import flint.java.lang.runtimeexception : IllegalArgumentException;
+
+    throw new IllegalArgumentException("timeout value is negative");
+}
+
+private noreturn throwNanosOutOfRange()()
+{
+    pragma(inline, false);
+    import flint.java.lang.runtimeexception : IllegalArgumentException;
+
+    throw new IllegalArgumentException("nanosecond timeout value out of range");
+}
+
+private noreturn throwStartFailed()()
+{
+    pragma(inline, false);
+    import flint.java.lang.runtimeexception : IllegalStateException;
+
+    throw new IllegalStateException("unable to create native thread");
 }

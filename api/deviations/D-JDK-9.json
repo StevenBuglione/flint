@@ -1,0 +1,5 @@
+{
+ "id": "D-JDK-9",
+ "deviation": "`Thread.start`, `Thread.join` and `Thread.sleep` are ported over an installable logical-thread provider: `flint:java-sys` starts a real OS thread per `Thread.start` and parks join and sleep on `flint.conc.park`. `Thread.start` on an already-started thread throws `IllegalStateException`, because the `IllegalThreadStateException` leaf is not ported yet; the default uncaught-exception handler keeps the exception on the `Thread` (`uncaughtError`) because Flint has no `ThreadGroup` or standard stream to print it; `getState` reports `NEW`, `RUNNABLE` and `TERMINATED` only; and `Thread.sleep` on a reactor fiber blocks the OS thread because no fiber sleeper provider is installed yet.",
+ "reason": "A thread started here is a Java platform thread, as Java's `Thread` is; `java.util.concurrent`'s waits keep using `currentThreadState` and reactor parking. The remaining items are the leaf exception and a fiber sleeper, both follow-ups."
+}

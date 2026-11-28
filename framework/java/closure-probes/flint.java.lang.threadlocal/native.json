@@ -4,9 +4,11 @@
     "flint.java.lang",
     "flint.java.lang.internal.threadlocalbindings",
     "flint.java.lang.internal.threadlocalprovider",
+    "flint.java.lang.nullpointerexception",
+    "flint.java.lang.runtimeexception",
     "flint.java.lang.sys.threadtable",
-    "flint.java.util.function_.supplier",
-    "flint.java.nativethreadlocal"
+    "flint.java.nativethreadlocal",
+    "flint.java.util.function_.supplier"
   ],
   "data": []
 }
