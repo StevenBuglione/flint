@@ -45,6 +45,48 @@ version (Posix)
         }
     }
 
+    @("File.length reports the native stat size for a directory, as Java does")
+    unittest
+    {
+        import std.conv : to;
+        import std.file : getSize, mkdir, rmdirRecurse, tempDir;
+        import std.path : buildPath;
+        import std.process : thisProcessID;
+
+        const root = buildPath(tempDir(), "flint-java-file-length-" ~ thisProcessID.to!string);
+        mkdir(root);
+        scope (exit)
+            rmdirRecurse(root);
+
+        const directory = new File(root);
+        assert(directory.exists() && directory.isDirectory());
+        assert(getSize(root) > 0); // a POSIX directory's stat size is nonzero
+        assert(directory.length() == cast(long) getSize(root));
+    }
+
+    @("File.lastModified reports Java's milliseconds, not whole seconds")
+    unittest
+    {
+        import core.time : msecs;
+        import std.conv : to;
+        import std.datetime : DateTime, SysTime, UTC;
+        import std.file : remove, setTimes, tempDir, write;
+        import std.path : buildPath;
+        import std.process : thisProcessID;
+
+        const path = buildPath(tempDir(), "flint-java-file-mtime-" ~ thisProcessID.to!string);
+        write(path, "x");
+        scope (exit)
+            remove(path);
+
+        const target = SysTime(DateTime(2021, 2, 3, 4, 5, 6), UTC()) + 123.msecs;
+        setTimes(path, target, target);
+
+        const actual = new File(path).lastModified();
+        assert(actual % 1000 == 123); // unlike the host helper, this keeps the sub-second part
+        assert(actual == 1_612_325_106_123L); // 2021-02-03T04:05:06.123Z as Unix milliseconds
+    }
+
     @("File makes a POSIX relative pathname absolute without canonicalizing it")
     unittest
     {

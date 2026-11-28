@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,317 | 886 | 0 | 1,957 | 13,261 |
+| framework | openjdk@21.0.13 | 2,319 | 886 | 0 | 1,957 | 13,259 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -225,6 +225,8 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.io.DataInput#readChar()` | `flint.java.io.DataInput.readChar` | Java char is D wchar, a 16-bit code unit. |
 | framework | `java.io.DataInputStream#readChar()` | `flint.java.io.DataInputStream.readChar` | Java char is D wchar, a 16-bit code unit. |
 | framework | `java.io.File#getAbsolutePath()` | `flint.java.io.File.getAbsolutePath` | An empty pathname resolves to the startup working directory. |
+| framework | `java.io.File#lastModified()` | `flint.java.io.File.lastModified` | Reports st_mtime*1000 + st_mtim_nsec/1_000_000 truncated to milliseconds with the timespec fields' floor semantics, so a pre-epoch time keeps its sub-second nanoseconds; 0 when the path does not exist. |
+| framework | `java.io.File#length()` | `flint.java.io.File.length` | The native stat size for every existing path, including a directory, as the pinned Linux Java reports; 0 when the path does not exist. |
 | framework | `java.io.File#toString()` | `flint.java.io.File.toString` | Calls the virtual getPath, so a subclass that overrides getPath is honoured. |
 | framework | `java.io.OutputStream` | `flint.java.io.OutputStream` | Implements Closeable and Flushable. |
 | framework | `java.io.OutputStreamWriter#<init>(OutputStream)` | `flint.java.io.OutputStreamWriter.this` | A null output stream is rejected during construction with NullPointerException, as Java's Writer lock constructor does. |
@@ -11384,7 +11386,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 455 | 0 |
+| java.io | 453 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -12279,8 +12281,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.File#exists()` | 2 | POSIX tests cover existing, absent and invalid paths. On Windows the Java implementation resolves reparse points before testing existence. The current metadata query uses the attributes of the reparse point itself. |
 | framework | `java.io.File#isDirectory()` | 2 | POSIX tests cover directories and followed links. On Windows the Java implementation tests the resolved reparse target and the current metadata query classifies the reparse point itself. |
 | framework | `java.io.File#isFile()` | 2 | POSIX tests cover regular files and followed links. On Windows the Java implementation tests the resolved reparse target and the current metadata query classifies the reparse point itself. |
-| framework | `java.io.File#lastModified()` | 2 | Java reports the modification time in milliseconds. The current method truncates to whole seconds before converting to milliseconds. |
-| framework | `java.io.File#length()` | 2 | The current method returns zero for all non-regular paths. The pinned Linux Java implementation returns the native size for a directory. |
 | framework | `java.io.FileInputStream` | 2 | The existing class derives from ByteArrayInputStream and retains a byte snapshot. Java derives directly from InputStream and owns a file descriptor until close. |
 | framework | `java.io.FileInputStream#<init>(File)` | 2 | The existing constructor checks the virtual isFile method and reads a byte snapshot. Java opens the pathname and owns the descriptor. The null File check required by R8 is pending. |
 | framework | `java.io.OutputStreamWriter#<init>(OutputStream,CharsetEncoder)` | 2 | Flint's Charset is a value naming one of six charsets and cannot create a CharsetEncoder; the writer chooses its encoding from the charset value. |

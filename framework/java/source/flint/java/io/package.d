@@ -3698,22 +3698,35 @@ class File
         return exists();
     }
 
-    /// The size in bytes; 0 when it does not exist.
+    /// The size in bytes, as Java's `File.length` reports the native `stat` size for every existing path including a
+    /// directory; 0 when it does not exist.
     long length() const
     {
         import flint.engine.aot.host : fileFacts;
 
         const facts = fileFacts(path_);
-        return facts.regular ? facts.size : 0;
+        return facts.exists ? facts.size : 0;
     }
 
-    /// Milliseconds since the epoch of the last modification; 0 when it does not exist.
+    /// Milliseconds since the epoch of the last modification, truncated to milliseconds as Java's `stat` conversion
+    /// does; 0 when it does not exist.
     long lastModified() const
     {
-        import flint.engine.aot.host : fileFacts, modifiedMillis;
+        import flint.engine.aot.host : fileFacts;
 
         const facts = fileFacts(path_);
-        return facts.exists ? modifiedMillis(facts) : 0;
+        if (!facts.exists)
+            return 0;
+        // `modifiedTicks` is 100 ns ticks with the `timespec` fields' floor semantics, so split it by floor: Java's
+        // `st_mtime * 1000 + st_mtim_nsec / 1_000_000` keeps a pre-epoch time's sub-second nanoseconds.
+        long seconds = facts.modifiedTicks / 10_000_000;
+        long remainder = facts.modifiedTicks % 10_000_000;
+        if (remainder < 0)
+        {
+            --seconds;
+            remainder += 10_000_000;
+        }
+        return seconds * 1000 + remainder / 10_000;
     }
 
     /// The path.
