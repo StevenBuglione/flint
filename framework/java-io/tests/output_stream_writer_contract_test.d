@@ -7,8 +7,7 @@ import flint.java.io : IOException, OutputStream, OutputStreamWriter, Writer;
 import std.exception : assertThrown;
 
 import flint.java.lang : NullPointerException;
-import flint.java.nio.charset : Charset, IllegalCharsetNameException, StandardCharsets,
-    UnsupportedCharsetException;
+import flint.java.nio.charset : Charset, IllegalCharsetNameException, StandardCharsets, UnsupportedCharsetException;
 
 @safe:
 
@@ -204,13 +203,13 @@ unittest
     auto littleOutput = new RecordingOutput;
     auto little = new OutputStreamWriter(littleOutput, StandardCharsets.UTF_16LE);
     little.write("Aé😀");
-    assert(littleOutput.bytes == le16("Aé") ~ cast(ubyte[]) [0x3D, 0xD8, 0x00, 0xDE]);
+    assert(littleOutput.bytes == le16("Aé") ~ cast(ubyte[])[0x3D, 0xD8, 0x00, 0xDE]);
     assert(little.getEncoding() == "UTF-16LE");
 
     auto bigOutput = new RecordingOutput;
     auto big = new OutputStreamWriter(bigOutput, StandardCharsets.UTF_16BE);
     big.write("Aé😀");
-    assert(bigOutput.bytes == be16("Aé") ~ cast(ubyte[]) [0xD8, 0x3D, 0xDE, 0x00]);
+    assert(bigOutput.bytes == be16("Aé") ~ cast(ubyte[])[0xD8, 0x3D, 0xDE, 0x00]);
     assert(big.getEncoding() == "UTF-16BE");
 }
 
@@ -223,7 +222,7 @@ unittest
     assert(output.bytes.length == 0); // an empty write emits neither text nor a mark
     writer.write("A");
     writer.write("é");
-    assert(output.bytes == cast(ubyte[]) [0xFE, 0xFF] ~ be16("Aé"));
+    assert(output.bytes == cast(ubyte[])[0xFE, 0xFF] ~ be16("Aé"));
     assert(writer.getEncoding() == "UTF-16");
 }
 
