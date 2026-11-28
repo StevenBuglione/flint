@@ -2109,6 +2109,41 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-jar-exception": {
+   "directory": "framework/java-jar-exception",
+   "module": "flint.java.util.jar.jarexception",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.util.jar.JarException"
+   ],
+   "dependencies": [
+    "java",
+    "java-zip-exception"
+   ],
+   "bench": {
+    "fixture": "framework/java-jar-exception/bench",
+    "baseline": "framework/java-jar-exception/bench/baseline",
+    "edit_source": "framework/java-jar-exception/source/flint/java/util/jar/jarexception.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 4264,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 480
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "jdbc": {
    "directory": "framework/jdbc",
    "module": "flint.jdbc",

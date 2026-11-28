@@ -1,0 +1,18 @@
+{
+  "source": "closure/jarexception.d",
+  "leaves": [
+    "flint.java.character",
+    "flint.java.io",
+    "flint.java.lang",
+    "flint.java.sql",
+    "flint.java.text.simpledateformat",
+    "flint.java.time",
+    "flint.java.time.format",
+    "flint.java.util",
+    "flint.java.util.calendar",
+    "flint.java.util.date",
+    "flint.java.util.timezone",
+    "flint.java.util.zip.zipexception"
+  ],
+  "data": []
+}

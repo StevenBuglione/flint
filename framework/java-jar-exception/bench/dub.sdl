@@ -1,0 +1,5 @@
+name "probe-java-jar-exception"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"
+dependency "flint:java-jar-exception" path="../../.."

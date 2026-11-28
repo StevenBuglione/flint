@@ -355,6 +355,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-jar-exception": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-lang-annotation": {
       "repo": "framework",
       "version": "monorepo"

@@ -8651,6 +8651,9 @@
 "java.util.jar.Manifest#equals(Object)":{"d":"flint.java.util.jar.Manifest.equals","status":"ported"},
 "java.util.jar.Manifest#hashCode()":{"d":"flint.java.util.jar.Manifest.hashCode","status":"ported"},
 "java.util.jar.Manifest#clone()":{"d":"flint.java.util.jar.Manifest.clone","status":"ported"},
+"java.util.jar.JarException":{"status":"adapted","d":"flint.java.util.jar.jarexception.JarException","rules":["R26"],"note":"An explicitly empty Java detail message is reported as absent."},
+"java.util.jar.JarException#<init>()":{"status":"excluded","category":"deferred","phase":"2","reason":"Java leaves the cause open to one later initCause call. The checked ZipException base lacks that API."},
+"java.util.jar.JarException#<init>(String)":{"status":"excluded","category":"deferred","phase":"2","reason":"Java leaves the cause open to one later initCause call. The checked ZipException base lacks that API and its R26 detail accessor normalization is pending."},
 
 "java.util.random.**":{"status":"excluded","category":"deferred","phase":"2"},
 "java.util.random.RandomGenerator":{"status":"ported","d":"flint.java.util.random.RandomGenerator"},
