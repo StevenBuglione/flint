@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,967 | 742 | 0 | 1,921 | 13,791 |
+| framework | openjdk@21.0.13 | 1,970 | 745 | 0 | 1,921 | 13,785 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -224,10 +224,12 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.util.DuplicateFormatFlagsException#getMessage()` | `flint.java.util.formatter.DuplicateFormatFlagsException.getMessage` | Inherits RuntimeException.getMessage; the duplicate flag is recorded in the constructor. |
 | framework | `java.util.FormatFlagsConversionMismatchException#getMessage()` | `flint.java.util.formatter.FormatFlagsConversionMismatchException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
 | framework | `java.util.IllegalFormatCodePointException#getMessage()` | `flint.java.util.formatter.IllegalFormatCodePointException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
+| framework | `java.util.IllegalFormatConversionException#getMessage()` | `flint.java.util.formatter.IllegalFormatConversionException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
 | framework | `java.util.IllegalFormatFlagsException#getMessage()` | `flint.java.util.formatter.IllegalFormatFlagsException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
 | framework | `java.util.IllegalFormatPrecisionException#getMessage()` | `flint.java.util.formatter.IllegalFormatPrecisionException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
 | framework | `java.util.IllegalFormatWidthException#getMessage()` | `flint.java.util.formatter.IllegalFormatWidthException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
 | framework | `java.util.MissingFormatWidthException#getMessage()` | `flint.java.util.formatter.MissingFormatWidthException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
+| framework | `java.util.UnknownFormatFlagsException#getMessage()` | `flint.java.util.formatter.UnknownFormatFlagsException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
 | framework | `java.util.regex.Pattern` | `flint.java.util.regex.Pattern` | Under R26, a null expression or input slice counts as empty text. Java throws NullPointerException. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)` | `flint.core.convert.support.DefaultConversionService.addDefaultConverters` | The package-private CharacterToNumberFactory is represented in the erased numeric converter for char and wchar code units. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()` | `flint.core.convert.support.DefaultConversionService.getSharedInstance` | Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4). |
@@ -2901,6 +2903,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.HexFormat#withSuffix(String)` | `flint.java.util.hexformat.HexFormat.withSuffix` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.IllegalFormatCodePointException` | `flint.java.util.formatter.IllegalFormatCodePointException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
 | `java.util.IllegalFormatConversionException` | `flint.java.util.formatter.IllegalFormatConversionException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
+| `java.util.IllegalFormatConversionException#getConversion()` | `flint.java.util.formatter.IllegalFormatConversionException.getConversion` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.util.IllegalFormatException` | `flint.java.util.formatter.IllegalFormatException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
 | `java.util.IllegalFormatFlagsException` | `flint.java.util.formatter.IllegalFormatFlagsException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. A null flag slice counts as empty under R26. |
 | `java.util.IllegalFormatFlagsException#<init>(String)` | `flint.java.util.formatter.IllegalFormatFlagsException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
@@ -2973,6 +2976,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.UUID#version()` | `flint.java.util.uuid.UUID.version_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `java.util.UnknownFormatConversionException` | `flint.java.util.formatter.UnknownFormatConversionException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. A null conversion slice counts as empty under R26. |
 | `java.util.UnknownFormatConversionException#<init>(String)` | `flint.java.util.formatter.UnknownFormatConversionException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.UnknownFormatFlagsException` | `flint.java.util.formatter.UnknownFormatFlagsException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. A null flag slice counts as empty under R26. |
+| `java.util.UnknownFormatFlagsException#<init>(String)` | `flint.java.util.formatter.UnknownFormatFlagsException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 
 #### java.util.concurrent
 
@@ -11092,7 +11097,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,841 | 0 |
+| java.util | 1,835 | 0 |
 | java.util.concurrent | 1,198 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |

@@ -227,13 +227,42 @@ class UnknownFormatConversionException : IllegalFormatException
     }
 }
 
+/// Java's `UnknownFormatFlagsException`: a flag the format specifier does not recognize.
+class UnknownFormatFlagsException : IllegalFormatException
+{
+    private string flags;
+
+    /// The unknown flags. A null slice counts as empty (R26).
+    this(string flags, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super("Flags = " ~ flags, file, line);
+        this.flags = flags;
+    }
+
+    /// The unknown flags.
+    string getFlags() const pure nothrow @nogc
+    {
+        return flags;
+    }
+}
+
 /// Java's `IllegalFormatConversionException`: a conversion that does not apply to the argument's type.
 class IllegalFormatConversionException : IllegalFormatException
 {
+    private wchar conversion;
+
     /// `conversion` given an argument of type `argumentType` (its Java name).
-    this(char conversion, string argumentType, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    this(wchar conversion, string argumentType, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        super([conversion].idup ~ " != " ~ argumentType, file, line);
+        const text = utf8(conversion);
+        super((text is null ? "\uFFFD" : text) ~ " != " ~ argumentType, file, line);
+        this.conversion = conversion;
+    }
+
+    /// The UTF-16 conversion unit.
+    wchar getConversion() const pure nothrow @nogc
+    {
+        return conversion;
     }
 }
 
