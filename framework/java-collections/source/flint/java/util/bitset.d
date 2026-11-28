@@ -84,13 +84,6 @@ class BitSet
         auto words = new ulong[(count + 7) >> 3];
         foreach (index; 0 .. count)
             words[index >> 3] |= cast(ulong)(cast(ubyte) bytes[index]) << ((index & 7) * 8);
-        version (BigEndian)
-        {
-            import core.bitop : bswap;
-
-            foreach (ref word; words)
-                word = bswap(word);
-        }
         return new BitSet(words);
     }
 
