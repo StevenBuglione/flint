@@ -379,6 +379,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-net-http-cookie": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-net-interface-address": {
       "repo": "framework",
       "version": "monorepo"
@@ -392,6 +396,14 @@
       "version": "monorepo"
     },
     "flint:java-net-spi": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
+    "flint:java-net-url": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
+    "flint:java-net-url-exception": {
       "repo": "framework",
       "version": "monorepo"
     },
@@ -432,6 +444,10 @@
       "version": "monorepo"
     },
     "flint:java-util": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
+    "flint:java-zip": {
       "repo": "framework",
       "version": "monorepo"
     },

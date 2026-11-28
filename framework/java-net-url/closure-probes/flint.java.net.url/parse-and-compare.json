@@ -1,0 +1,11 @@
+{
+  "source": "closure/url_parse.d",
+  "leaves": [
+    "flint.java.io",
+    "flint.java.lang",
+    "flint.java.lang.javaobject",
+    "flint.java.net.internal.ipv6literal",
+    "flint.java.net.malformedurlexception"
+  ],
+  "data": []
+}

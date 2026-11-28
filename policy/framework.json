@@ -569,7 +569,8 @@
    "also": [
     "flint.java.util.concurrent.cancellationexception",
     "flint.java.util.concurrent.completionexception",
-    "flint.java.util.concurrent.executor"
+    "flint.java.util.concurrent.executor",
+    "flint.java.util.concurrent.future"
    ]
   },
   "java-concurrent-sync": {
@@ -1201,6 +1202,41 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-net-http-cookie": {
+   "directory": "framework/java-net-http-cookie",
+   "module": "flint.java.net.httpcookie",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.net.HttpCookie"
+   ],
+   "dependencies": [
+    "engine-aot",
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-net-http-cookie/bench",
+    "baseline": "framework/java-net-http-cookie/bench/baseline",
+    "edit_source": "framework/java-net-http-cookie/source/flint/java/net/httpcookie.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 55405,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 898
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java-net-interface-address": {
    "directory": "framework/java-net-interface-address",
    "module": "flint.java.net.interfaceaddress",
@@ -1467,6 +1503,78 @@
    ]
   },
 
+  "java-net-url": {
+   "directory": "framework/java-net-url",
+   "module": "flint.java.net.url",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.net.URL"
+   ],
+   "dependencies": [
+    "engine-aot",
+    "java",
+    "java-net-url-exception"
+   ],
+   "bench": {
+    "fixture": "framework/java-net-url/bench",
+    "baseline": "framework/java-net-url/bench/baseline",
+    "edit_source": "framework/java-net-url/source/flint/java/net/url.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 32384,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 699
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
+
+  "java-net-url-exception": {
+   "directory": "framework/java-net-url-exception",
+   "module": "flint.java.net.malformedurlexception",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.net.MalformedURLException"
+   ],
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-net-url-exception/bench",
+    "baseline": "framework/java-net-url-exception/bench/baseline",
+    "edit_source": "framework/java-net-url-exception/source/flint/java/net/malformedurlexception.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 3402,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 480
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
+
   "java-regex": {
    "directory": "framework/java-regex",
    "module": "flint.java.util.regex",
@@ -1577,6 +1685,38 @@
     "incremental_linked_bytes": 31850,
     "compiler_peak_rss_bytes": 536870912,
     "template_instances": 1347
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
+  "java-zip": {
+   "directory": "framework/java-zip",
+   "module": "flint.java.util.zip",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [],
+   "unsafe": [
+    "flint.java.util.zip.ffi"
+   ],
+   "bench": {
+    "fixture": "framework/java-zip/bench",
+    "baseline": "framework/java-zip/bench/baseline",
+    "edit_source": "framework/java-zip/source/flint/java/util/zip/crc32.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 21437,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 63
    },
    "provisional": [
     "dmd_cold_seconds",

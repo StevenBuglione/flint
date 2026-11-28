@@ -1,0 +1,50 @@
+{
+  "schema": "flint.jdk-closure/1",
+  "probes": {
+    "flint.java.util.zip.adler32": {
+      "byte-updates": {
+        "source": "closure/adler32.d",
+        "leaves": [
+          "flint.java.util.zip.checksum",
+          "flint.java.util.zip.ffi.adler32"
+        ],
+        "data": []
+      }
+    },
+    "flint.java.util.zip.checksum": {
+      "custom-implementation": {
+        "source": "closure/checksum.d",
+        "leaves": [],
+        "data": []
+      }
+    },
+    "flint.java.util.zip.crc32": {
+      "byte-updates": {
+        "source": "closure/crc32.d",
+        "leaves": [
+          "flint.java.util.zip.checksum",
+          "flint.java.util.zip.ffi.zlib"
+        ],
+        "data": []
+      }
+    },
+    "flint.java.util.zip.crc32c": {
+      "byte-updates": {
+        "source": "closure/crc32c.d",
+        "leaves": [
+          "flint.java.util.zip.checksum"
+        ],
+        "data": [
+          "flint.java.util.zip.data.crc32c"
+        ]
+      }
+    },
+    "flint.java.util.zip.dataformatexception": {
+      "catch": {
+        "source": "closure/dataformatexception.d",
+        "leaves": [],
+        "data": []
+      }
+    }
+  }
+}
