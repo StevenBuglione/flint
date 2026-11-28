@@ -2,6 +2,7 @@ module flint.java.primitive_iterator_test;
 
 import flint.java.lang : NullPointerException;
 import flint.java.util : Iterator, NoSuchElementException;
+import flint.java.util.function_.consumer : Consumer;
 import flint.java.util.function_.doubleconsumer : DoubleConsumer;
 import flint.java.util.function_.intconsumer : IntConsumer;
 import flint.java.util.function_.longconsumer : LongConsumer;
@@ -155,4 +156,24 @@ unittest
     b.forEachRemaining((double value) { doubles ~= value; });
     assert(doubles == [1.5, 2.5]);
     assert(!b.hasNext());
+}
+
+@("PrimitiveIterator.OfInt keeps the canonical boxed Iterator.forEachRemaining in its overload set")
+unittest
+{
+    auto values = new Ints(4);
+    PrimitiveIterator!(int, IntConsumer).OfInt iterator = values;
+    assert(iterator.nextInt() == 1);
+
+    int sum;
+    iterator.forEachRemaining(Consumer!int.of((int value) { sum = sum * 10 + value; }));
+    assert(sum == 234);
+    assert(!iterator.hasNext());
+
+    // The same call through the canonical Iterator reference still resolves.
+    auto boxed = new Ints(2);
+    Iterator!int canonical = boxed;
+    int boxedSum;
+    canonical.forEachRemaining(Consumer!int.of((int value) { boxedSum += value; }));
+    assert(boxedSum == 3);
 }

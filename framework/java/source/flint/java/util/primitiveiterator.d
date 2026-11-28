@@ -48,6 +48,9 @@ interface PrimitiveIterator(T, TCons) : Iterator!T
     /// Perform `action` on each remaining element, in order, until none remain.
     void forEachRemaining(TCons action);
 
+    /// Keep the canonical boxed `forEachRemaining(Consumer!T)` in the overload set (R5).
+    alias forEachRemaining = Iterator!T.forEachRemaining;
+
     /// Java's `PrimitiveIterator.OfInt` (R13).
     alias OfInt = PrimitiveIteratorOfInt;
     /// Java's `PrimitiveIterator.OfLong` (R13).
