@@ -3,8 +3,24 @@
 module flint.java.io.string_writer_contract_test;
 
 import flint.java.io : StringWriter, Writer;
+import flint.java.lang : IllegalArgumentException;
+import std.exception : assertThrown;
 
 @safe:
+
+@("StringWriter accepts a capacity hint and rejects a negative size")
+unittest
+{
+    auto zero = new StringWriter(0);
+    zero.write("a");
+    assert(zero.toString() == "a");
+
+    auto sized = new StringWriter(64);
+    sized.write("b");
+    assert(sized.toString() == "b");
+
+    assertThrown!IllegalArgumentException(new StringWriter(-1));
+}
 
 @("StringWriter starts empty and returns stable text snapshots")
 unittest
