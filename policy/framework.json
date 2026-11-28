@@ -531,6 +531,38 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-collections-priorityqueue": {
+   "directory": "framework/java-collections-priorityqueue",
+   "module": "flint.java.util.priorityqueue",
+   "java_types": ["java.util.PriorityQueue"],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-collections-priorityqueue/bench",
+    "baseline": "framework/java-collections-priorityqueue/bench/baseline",
+    "edit_source": "framework/java-collections-priorityqueue/source/flint/java/util/priorityqueue.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 38003,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 704
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java-concurrent": {
    "directory": "framework/java-concurrent",
    "module": "flint.java.util.concurrent.callable",
