@@ -326,3 +326,26 @@ unittest
     auto outer = new PrintWriter(inner);
     assert(outer.checkError());
 }
+
+@("PrintWriter over an output stream honours an explicit charset and auto-flush")
+unittest
+{
+    import flint.java.nio.charset : Charset, StandardCharsets;
+
+    assertThrown!NullPointerException(new PrintWriter(cast(OutputStream) null, true, StandardCharsets.UTF_8));
+    assertThrown!NullPointerException(new PrintWriter(new ByteArrayOutputStream, true, Charset.init));
+
+    auto bytes = new ByteArrayOutputStream;
+    auto printer = new PrintWriter(bytes, true, StandardCharsets.UTF_16BE);
+    printer.print("a");
+    assert(bytes.toByteArray().length == 0); // buffered until the flush
+    printer.println();
+    ubyte[] expected;
+    foreach (dchar c; "a" ~ System.lineSeparator())
+    {
+        expected ~= cast(ubyte)(c >> 8);
+        expected ~= cast(ubyte)(c & 0xFF);
+    }
+    // UTF-16BE writes no byte-order mark; only the buffered text and the separator appear.
+    assert(bytes.toByteArray() == expected);
+}
