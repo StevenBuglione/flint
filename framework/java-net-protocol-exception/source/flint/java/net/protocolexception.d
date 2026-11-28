@@ -36,9 +36,9 @@ import flint.java.io : IOException;
 /// Thrown to indicate an error in the underlying protocol, such as a TCP error.
 class ProtocolException : IOException
 {
-    /// Constructs a `ProtocolException` with an optional detail message.
+    /// Java's `ProtocolException()` and `ProtocolException(String)`: the cause stays open to one `initCause`.
     this(string message = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        super(message, null, file, line);
+        super(message, file, line);
     }
 }

@@ -36,3 +36,16 @@ unittest
     }
     assert(caughtAsIo);
 }
+
+@("Java's cause lifecycle: the no-argument and message constructors keep the cause open")
+unittest
+{
+    auto root = new IOException("root cause");
+    auto unnamed = new ProtocolException();
+    unnamed.initCause(root);
+    assert(unnamed.getCause() is root);
+
+    auto named = new ProtocolException("detail");
+    named.initCause(root);
+    assert(named.getCause() is root);
+}

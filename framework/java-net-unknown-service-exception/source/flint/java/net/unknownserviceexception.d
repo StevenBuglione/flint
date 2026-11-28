@@ -36,9 +36,9 @@ import flint.java.io : IOException;
 /// Thrown to indicate that an unknown service exception has occurred.
 class UnknownServiceException : IOException
 {
-    /// Constructs an `UnknownServiceException` with an optional detail message.
+    /// Java's `UnknownServiceException()` and `(String)`: the cause stays open to one `initCause`.
     this(string message = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        super(message, null, file, line);
+        super(message, file, line);
     }
 }
