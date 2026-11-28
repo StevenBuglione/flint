@@ -6,7 +6,9 @@
         "source": "closure/biginteger.d",
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.nullpointerexception",
           "flint.java.lang.number",
+          "flint.java.lang.runtimeexception",
           "flint.java.math.internal.division",
           "flint.java.math.internal.floating",
           "flint.java.math.internal.limbs",
@@ -19,7 +21,7 @@
     "flint.java.math.roundingmode": {
       "lookup": {
         "source": "closure/roundingmode.d",
-        "leaves": ["flint.java.lang"],
+        "leaves": ["flint.java.lang", "flint.java.lang.runtimeexception"],
         "data": []
       }
     }

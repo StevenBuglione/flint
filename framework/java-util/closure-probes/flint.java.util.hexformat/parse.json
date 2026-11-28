@@ -1,5 +1,5 @@
 {
   "source": "closure/hexformat-parse.d",
-  "leaves": ["flint.java.lang"],
+  "leaves": ["flint.java.lang", "flint.java.lang.runtimeexception"],
   "data": []
 }

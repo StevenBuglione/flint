@@ -2,7 +2,9 @@
   "source": "closure/biginteger-division.d",
   "leaves": [
     "flint.java.lang",
+    "flint.java.lang.nullpointerexception",
     "flint.java.lang.number",
+    "flint.java.lang.runtimeexception",
     "flint.java.math.internal.division",
     "flint.java.math.internal.floating",
     "flint.java.math.internal.limbs",

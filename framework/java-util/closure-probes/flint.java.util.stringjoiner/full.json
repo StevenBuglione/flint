@@ -1,5 +1,5 @@
 {
   "source": "closure/stringjoiner.d",
-  "leaves": ["flint.java.lang"],
+  "leaves": ["flint.java.lang", "flint.java.lang.nullpointerexception", "flint.java.lang.runtimeexception"],
   "data": []
 }
