@@ -42,7 +42,7 @@ class IOException : Exception
     }
 
     /// Sets the cause once, as Java's `Throwable.initCause`.
-    Throwable initCause(Throwable cause)
+    final Throwable initCause(Throwable cause)
     {
         if (causeSet_)
             rejectCauseSet();
