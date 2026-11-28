@@ -1,0 +1,143 @@
+module flint.java.util.concurrent.scheduled_executor_service_test;
+
+import core.atomic : atomicLoad, atomicStore;
+import flint.conc : Deadline;
+import flint.conc.wait : waitUntil;
+import flint.java.lang : NullPointerException;
+import flint.java.lang.runnable : Runnable;
+import flint.java.util.concurrent : TimeUnit;
+import flint.java.util.concurrent.callable : Callable;
+import flint.java.util.concurrent.delayed : Delayed;
+import flint.java.util.concurrent.executorservice : ExecutorService;
+import flint.java.util.concurrent.rejectedexecutionexception : RejectedExecutionException;
+import flint.java.util.concurrent.scheduledexecutorservice : OffloadScheduledExecutorService, ScheduledExecutorService;
+import flint.java.util.concurrent.scheduledfuture : ScheduledFuture;
+import std.exception : assertThrown;
+
+@safe:
+
+private final class Value : Callable!int
+{
+    private int value;
+
+    this(int value)
+    {
+        this.value = value;
+    }
+
+    override int call()
+    {
+        return value;
+    }
+}
+
+private final class Flag : Runnable
+{
+    private shared bool ran;
+
+    override void run()
+    {
+        atomicStore(ran, true);
+    }
+
+    bool completed() nothrow @nogc
+    {
+        return atomicLoad(ran);
+    }
+}
+
+private void awaitTermination(ExecutorService service)
+{
+    const deadline = Deadline.afterMillis(2_000).monotonicNanoseconds;
+    while (!service.isTerminated())
+    {
+        assert(Deadline.afterMillis(0).monotonicNanoseconds < deadline, "executor did not terminate");
+        waitUntil(Deadline(Deadline.afterMillis(0).monotonicNanoseconds + 1_000_000));
+    }
+}
+
+@("one-shot schedule returns the callable's value after its delay")
+unittest
+{
+    ScheduledExecutorService service = new OffloadScheduledExecutorService;
+    auto future = service.schedule(new Value(42), 10, TimeUnit.MILLISECONDS);
+    assert(!future.isCancelled);
+    assert(future.get(5, TimeUnit.SECONDS) == 42);
+    assert(future.isDone);
+    assert(future.getDelay(TimeUnit.MILLISECONDS) <= 0);
+    service.shutdown();
+    awaitTermination(service);
+    assert(service.isShutdown);
+}
+
+@("the Runnable form completes with Java's null result")
+unittest
+{
+    auto service = new OffloadScheduledExecutorService;
+    auto flag = new Flag;
+    ScheduledFuture!Object future = service.schedule(flag, 0, TimeUnit.MILLISECONDS);
+    assert(future.get(5, TimeUnit.SECONDS) is null);
+    assert(flag.completed());
+    assert(future.isDone);
+    service.shutdownNow();
+    awaitTermination(service);
+}
+
+@("a null task is rejected as Java does")
+unittest
+{
+    ScheduledExecutorService service = new OffloadScheduledExecutorService;
+    assertThrown!NullPointerException(service.schedule(cast(Callable!int) null, 1, TimeUnit.SECONDS));
+    assertThrown!NullPointerException(service.schedule(cast(Runnable) null, 1, TimeUnit.SECONDS));
+    service.shutdownNow();
+}
+
+@("earlier deadlines order before later ones")
+unittest
+{
+    ScheduledExecutorService service = new OffloadScheduledExecutorService;
+    auto later = service.schedule(new Value(2), 2_000, TimeUnit.MILLISECONDS);
+    auto earlier = service.schedule(new Value(1), 1_000, TimeUnit.MILLISECONDS);
+    Delayed laterDelay = later;
+    Delayed earlierDelay = earlier;
+    assert(later.compareTo(earlier) > 0);
+    assert(earlier.compareTo(later) < 0);
+    assert(earlier.compareTo(earlier) == 0);
+    assert(laterDelay.getDelay(TimeUnit.NANOSECONDS) > earlierDelay.getDelay(TimeUnit.NANOSECONDS));
+    service.shutdownNow();
+    awaitTermination(service);
+}
+
+@("shutdownNow cancels and returns the pending task")
+unittest
+{
+    auto service = new OffloadScheduledExecutorService;
+    ScheduledFuture!int future = service.schedule(new Value(7), 1_000, TimeUnit.MILLISECONDS);
+    auto pending = service.shutdownNow();
+    assert(pending.size() == 1);
+    assert(pending.get(0) is cast(Runnable) future);
+    assert(future.isCancelled);
+    assert(service.isShutdown);
+    awaitTermination(service);
+    assert(service.isTerminated);
+}
+
+@("execute after shutdown is rejected")
+unittest
+{
+    auto service = new OffloadScheduledExecutorService;
+    service.shutdown();
+    awaitTermination(service);
+    assertThrown!RejectedExecutionException(service.schedule(new Value(1), 0, TimeUnit.MILLISECONDS));
+}
+
+@("inherited submit runs immediately through execute")
+unittest
+{
+    auto service = new OffloadScheduledExecutorService;
+    ExecutorService executor = service;
+    auto future = executor.submit(new Value(9));
+    assert(future.get(5, TimeUnit.SECONDS) == 9);
+    service.shutdown();
+    awaitTermination(service);
+}

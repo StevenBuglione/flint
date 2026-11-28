@@ -3,5 +3,10 @@
     "incremental_linked_bytes": 59537,
     "template_instances": 868,
     "control": "framework/java-concurrent-service/closure/executorservice_provider.d"
+  },
+  "flint.java.util.concurrent.scheduledexecutorservice": {
+    "incremental_linked_bytes": 16800,
+    "template_instances": 1085,
+    "control": "framework/java-concurrent-service/closure/scheduledexecutorservice_provider.d"
   }
 }
