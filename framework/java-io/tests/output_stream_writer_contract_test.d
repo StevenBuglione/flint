@@ -4,7 +4,17 @@ module flint.java.io.output_stream_writer_contract_test;
 
 import flint.java.io : OutputStream, OutputStreamWriter, Writer;
 
+import std.exception : assertThrown;
+
+import flint.java.lang : NullPointerException;
+
 @safe:
+
+@("OutputStreamWriter rejects a null output stream")
+unittest
+{
+    assertThrown!NullPointerException(new OutputStreamWriter(cast(OutputStream) null));
+}
 
 private final class RecordingOutput : OutputStream
 {
