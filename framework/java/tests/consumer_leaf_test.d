@@ -1,5 +1,6 @@
 module consumer_leaf_test;
 
+import flint.java.lang : NullPointerException;
 import flint.java.util.function_.consumer : Consumer;
 import flint.java.util.function_ : PackageConsumer = Consumer;
 
@@ -38,4 +39,15 @@ unittest
     catch (Exception error)
         received = error;
     assert(received is failure && !called);
+}
+
+unittest
+{
+    auto consumer = Consumer!int.of((int) {});
+    bool rejected;
+    try
+        consumer.andThen(null);
+    catch (NullPointerException)
+        rejected = true;
+    assert(rejected, "Java's Objects.requireNonNull rejects a null andThen argument eagerly");
 }

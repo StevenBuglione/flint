@@ -17,6 +17,10 @@ interface Consumer(T)
     /// First this consumer, then `after`.
     Consumer andThen()(Consumer after)
     {
+        import flint.java.lang : NullPointerException;
+
+        if (after is null)
+            throw new NullPointerException("after");
         auto self = this;
         return new DelegateConsumer!T((T t) { self.accept(t); after.accept(t); });
     }
