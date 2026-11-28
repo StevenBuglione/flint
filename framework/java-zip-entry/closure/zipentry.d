@@ -23,5 +23,5 @@ int main(string[] args)
     }
     entry.setExtra(null);
     entry.setComment("probe");
-    return local.getYear() + local.getMonthValue() + entry.getSize() + entry.hashCode();
+    return cast(int)(local.getYear() + local.getMonthValue() + entry.getSize() + entry.hashCode());
 }
