@@ -1,0 +1,8 @@
+{
+  "source": "closure/character_coding_exception.d",
+  "leaves": [
+    "flint.java.io",
+    "flint.java.lang"
+  ],
+  "data": []
+}

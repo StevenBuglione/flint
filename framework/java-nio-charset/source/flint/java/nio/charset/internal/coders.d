@@ -120,7 +120,9 @@ int grownCapacity(int n) pure nothrow @nogc
     const preferred = 2L * n + 1;
     if (preferred > 0 && preferred <= softMaxArrayLength)
         return cast(int) preferred;
-    const minimum = cast(long) n + (n + 1 < 1024 ? n + 1 : 1024);
+    // Compute in `long`: `n + 1` overflows int at the top of the range, where Java's `newLength` would throw OOME.
+    const minGrowth = n < 1023 ? cast(long) n + 1 : 1024L;
+    const minimum = cast(long) n + minGrowth;
     if (minimum <= softMaxArrayLength)
         return softMaxArrayLength;
     return minimum > int.max ? int.max : cast(int) minimum;

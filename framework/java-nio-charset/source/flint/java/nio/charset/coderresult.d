@@ -30,6 +30,10 @@
 module flint.java.nio.charset.coderresult;
 
 import flint.java.lang : IllegalArgumentException, UnsupportedOperationException;
+import flint.java.nio.bufferoverflowexception : BufferOverflowException;
+import flint.java.nio.bufferunderflowexception : BufferUnderflowException;
+import flint.java.nio.charset.malformedinputexception : MalformedInputException;
+import flint.java.nio.charset.unmappablecharacterexception : UnmappableCharacterException;
 
 @safe:
 
@@ -114,6 +118,22 @@ struct CoderResult
     static CoderResult unmappableForLength(int length) pure
     {
         return errorForLength(kindUnmappable, length);
+    }
+
+    /++
+    Throws the unchecked exception that matches this result, as Java's `throwException` does: a
+    `BufferUnderflowException` for underflow, a `BufferOverflowException` for overflow, a
+    `MalformedInputException` or `UnmappableCharacterException` carrying `length()` for an error.
+    +/
+    void throwException() const pure
+    {
+        if (kind == kindUnderflow)
+            throw new BufferUnderflowException;
+        if (kind == kindOverflow)
+            throw new BufferOverflowException;
+        if (kind == kindMalformed)
+            throw new MalformedInputException(errorLength);
+        throw new UnmappableCharacterException(errorLength);
     }
 
     private static CoderResult errorForLength(ubyte kind, int length) pure

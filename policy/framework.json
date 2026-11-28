@@ -1038,13 +1038,16 @@
    "directory": "framework/java-nio-charset",
    "module": "flint.java.nio.charset.coderresult",
    "also": [
+    "flint.java.nio.charset.charactercodingexception",
     "flint.java.nio.charset.charsetdecoder",
     "flint.java.nio.charset.charsetencoder",
     "flint.java.nio.charset.codermalfunctionerror",
     "flint.java.nio.charset.internal.coders",
     "flint.java.nio.charset.internal.decoders",
     "flint.java.nio.charset.internal.encoders",
-    "flint.java.nio.charset.spi.charsetprovider"
+    "flint.java.nio.charset.malformedinputexception",
+    "flint.java.nio.charset.spi.charsetprovider",
+    "flint.java.nio.charset.unmappablecharacterexception"
    ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
@@ -1061,10 +1064,13 @@
     "edit_source": "framework/java-nio-charset/source/flint/java/nio/charset/coderresult.d"
    },
    "java_types": [
+    "java.nio.charset.CharacterCodingException",
     "java.nio.charset.CharsetDecoder",
     "java.nio.charset.CharsetEncoder",
     "java.nio.charset.CoderMalfunctionError",
     "java.nio.charset.CoderResult",
+    "java.nio.charset.MalformedInputException",
+    "java.nio.charset.UnmappableCharacterException",
     "java.nio.charset.spi.CharsetProvider"
    ],
    "provisional": [

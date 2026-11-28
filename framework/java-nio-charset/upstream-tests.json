@@ -25,9 +25,9 @@
       ]
     },
     "java/nio/charset/CharsetDecoder/EmptyInput.java": {
-      "status": "deferred",
-      "phase": "2",
-      "reason": "blocked on fc-io-charset: CoderResult.throwException and decode(ByteBuffer)/encode(CharBuffer) (coordinator decision, 2026-11-27); whoever lands fc-io-charset turns these green"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. An original Flint test decodes an empty buffer with the standard decoders, checks the result is UNDERFLOW, and checks CoderResult.throwException turns it into BufferUnderflowException.",
+      "covered_by": "framework/java-nio-charset/tests/convenience_coders_test.d"
     },
     "java/nio/charset/CharsetDecoder/NaNinCtor.java": {
       "status": "excluded",
@@ -35,9 +35,9 @@
       "covered_by": "framework/java-nio-charset/tests/charset_coders_test.d"
     },
     "java/nio/charset/CharsetDecoder/XcodeOverflow.java": {
-      "status": "deferred",
-      "phase": "2",
-      "reason": "blocked on fc-io-charset: CoderResult.throwException and decode(ByteBuffer)/encode(CharBuffer) (coordinator decision, 2026-11-27); whoever lands fc-io-charset turns these green"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. An original Flint test checks the internal estimateCapacity and grownCapacity helpers at the int boundary: the estimate saturates at SOFT_MAX_ARRAY_LENGTH and the growth stays positive, so no negative array size is requested.",
+      "covered_by": "framework/java-nio-charset/tests/convenience_coders_test.d"
     },
     "java/nio/charset/CharsetEncoder/CanEncode.java": {
       "status": "excluded",
