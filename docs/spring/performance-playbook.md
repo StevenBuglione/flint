@@ -683,6 +683,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Read a parsed era as an ordinal and fold it into year-of-era resolution.** `G` reuses the existing text element and a one-byte `era` field (0 BC, 1 CE); printing indexes two-entry name tables and parsing matches the names, so the only new code is the ordinal. The proleptic year comes from the year-of-era and the era with integer arithmetic, and a derived year that disagrees with a parsed year reports Java's "Conflict found: Year ... differs from Year ...". The era also cross-checks against the resolved date through the existing conflict path. On venus (v4.2 toolchain) against the parent `42d27f532`, the Java module stays at 129,512 incremental linked bytes (O3 129,512, Oz 122,344) and DMD templates rise from 4,781 to 4,787 against the 7,350 cap (measured at `c77db98d1`).
 
+- **Pad a pattern letter with the existing pad element instead of a new printer-parser.** `p` only looks ahead from the pattern parser to the next letter run and calls `padNext`, so the padded value, text or fraction is the same element `appendPattern` already builds and `Pad(...)` prints, parses and reports its width error. The only new code is the lookahead, the run helper and an ASCII-letter predicate; no new parsing or printing table. On venus (v4.2 toolchain) against the parent `534559ed9`, the Java module stays at 129,512 incremental linked bytes (O3 129,512, Oz 122,344) and DMD templates rise from 4,787 to 4,789 against the 7,350 cap (measured at `6027badfc`, whose code is identical to this entry's commit).
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:

@@ -444,6 +444,32 @@ public class GoldenFormatterBuilder {
         // the non-ASCII prefix checks that the index is in UTF-16 units.
         recipe("s:\u00e9\u00e9|P:4|s:1", k("date"), "\u00e9\u00e9  1x", "\u00e9\u00e9  1",
                 "\u00e9\u00e9  12");
+        // The pad letter 'p': it pads the element of the next letter run to the number of p's, and a run with no
+        // letter after it is Java's error. The padded element keeps its own width and sign style, and a strict
+        // parse needs the whole pad width.
+        recipe("p:ppMM", k("date"), "03", "3", " 3", "003", "-3");
+        recipe("p:pM", k("date"), "3", " 3");
+        recipe("p:ppd", k("date"), "05", " 5");
+        recipe("p:pdd", k("date"), "05");
+        recipe("p:ppDDD", k("date"), "060");
+        recipe("p:ppuu", k("date"), "05", " 5");
+        recipe("p:puuuu", k("date"), "2024");
+        recipe("p:ppHH", k("time"), "10");
+        recipe("p:ppS", k("time"), ".5", "5", " 5");
+        recipe("p:ppA", k("time"), "5");
+        recipe("p:ppn", k("time"), "5");
+        recipe("p:ppg", k("date"), "5");
+        recipe("p:ppx", k("offset"), "+01:00");
+        recipe("p:ppqq", k("date"), "1");
+        recipe("p:pE", k("date"), "Tue");
+        recipe("p:ppGGGG", k("date"), "AD");
+        recipe("p:uuuu-MM-dd pppHH", k("dateTime"), "2024-03-05  10");
+        recipe("p:ppp", none);
+        recipe("p:p", none);
+        recipe("p:p:", none);
+        recipe("p:p'x'", none);
+        recipe("p:p[", none);
+        recipe("p:p]", none);
         // Clock-hour letters: k is the clock-hour-of-day (1-24, so midnight prints 24) and K the hour-of-am-pm
         // (0-11, combined with a). Both take one or two letters, and SMART accepts k's 0 as midnight.
         recipe("p:kk:mm", k("time"), "01:00", "24:00", "00:00", "23:59", "1:00", "001:00", "25:00");

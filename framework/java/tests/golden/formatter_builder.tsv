@@ -3450,6 +3450,361 @@ parse	s:\u00E9\u00E9|P:4|s:1	date	\u00E9\u00E9  1x	!Text '\u00E9\u00E9  1x' coul
 parse	s:\u00E9\u00E9|P:4|s:1	date	\u00E9\u00E9  1	!Text '\u00E9\u00E9  1' could not be parsed at index 2	2
 parse	s:\u00E9\u00E9|P:4|s:1	date	\u00E9\u00E9  12	!Text '\u00E9\u00E9  12' could not be parsed at index 6	6
 parse	s:\u00E9\u00E9|P:4|s:1	date	\u00E9\u00E9   1	!Text '\u00E9\u00E9   1' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO of type java.time.format.Parsed	0
+build	p:ppMM	-	-	Pad(Value(MonthOfYear,2),2)
+format	p:ppMM	date	2024-03-05	03
+format	p:ppMM	date	0001-12-31	12
+format	p:ppMM	date	+12345-06-07	06
+format	p:ppMM	time	10:15	!Unsupported field: MonthOfYear
+format	p:ppMM	time	10:15:30	!Unsupported field: MonthOfYear
+format	p:ppMM	time	10:15:30.123456789	!Unsupported field: MonthOfYear
+format	p:ppMM	time	00:00	!Unsupported field: MonthOfYear
+format	p:ppMM	dateTime	2024-03-05T10:15:30	03
+format	p:ppMM	dateTime	2024-03-05T00:00:00.000001	03
+format	p:ppMM	offset	2024-03-05T10:15:30+01:00	03
+format	p:ppMM	offset	2024-03-05T10:15:30Z	03
+format	p:ppMM	offset	2024-03-05T10:15:30.500-05:30:15	03
+format	p:ppMM	offset	2024-03-05T10:15:30+00:00:45	03
+format	p:ppMM	zoned	2024-03-05T10:15:30+02:00	03
+format	p:ppMM	zoned	2024-03-05T10:15:30Z[UTC]	03
+format	p:ppMM	instant	2024-03-05T10:15:30Z	!Unsupported field: MonthOfYear
+format	p:ppMM	instant	2024-03-05T10:15:30.120Z	!Unsupported field: MonthOfYear
+parse	p:ppMM	date	03	!Text '03' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:ppMM	date	3	!Text '3' could not be parsed at index 0	0
+parse	p:ppMM	date	 3	!Text ' 3' could not be parsed at index 1	1
+parse	p:ppMM	date	003	!Text '003' could not be parsed, unparsed text found at index 2	2
+parse	p:ppMM	date	-3	!Text '-3' could not be parsed at index 0	0
+parse	p:ppMM	date	12	!Text '12' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:ppMM	date	06	!Text '06' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:pM	-	-	Pad(Value(MonthOfYear),1)
+format	p:pM	date	2024-03-05	3
+format	p:pM	date	0001-12-31	!Cannot print as output of 2 characters exceeds pad width of 1
+format	p:pM	date	+12345-06-07	6
+format	p:pM	time	10:15	!Unsupported field: MonthOfYear
+format	p:pM	time	10:15:30	!Unsupported field: MonthOfYear
+format	p:pM	time	10:15:30.123456789	!Unsupported field: MonthOfYear
+format	p:pM	time	00:00	!Unsupported field: MonthOfYear
+format	p:pM	dateTime	2024-03-05T10:15:30	3
+format	p:pM	dateTime	2024-03-05T00:00:00.000001	3
+format	p:pM	offset	2024-03-05T10:15:30+01:00	3
+format	p:pM	offset	2024-03-05T10:15:30Z	3
+format	p:pM	offset	2024-03-05T10:15:30.500-05:30:15	3
+format	p:pM	offset	2024-03-05T10:15:30+00:00:45	3
+format	p:pM	zoned	2024-03-05T10:15:30+02:00	3
+format	p:pM	zoned	2024-03-05T10:15:30Z[UTC]	3
+format	p:pM	instant	2024-03-05T10:15:30Z	!Unsupported field: MonthOfYear
+format	p:pM	instant	2024-03-05T10:15:30.120Z	!Unsupported field: MonthOfYear
+parse	p:pM	date	3	!Text '3' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:pM	date	 3	!Text ' 3' could not be parsed at index 1	1
+parse	p:pM	date	6	!Text '6' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:ppd	-	-	Pad(Value(DayOfMonth),2)
+format	p:ppd	date	2024-03-05	 5
+format	p:ppd	date	0001-12-31	31
+format	p:ppd	date	+12345-06-07	 7
+format	p:ppd	time	10:15	!Unsupported field: DayOfMonth
+format	p:ppd	time	10:15:30	!Unsupported field: DayOfMonth
+format	p:ppd	time	10:15:30.123456789	!Unsupported field: DayOfMonth
+format	p:ppd	time	00:00	!Unsupported field: DayOfMonth
+format	p:ppd	dateTime	2024-03-05T10:15:30	 5
+format	p:ppd	dateTime	2024-03-05T00:00:00.000001	 5
+format	p:ppd	offset	2024-03-05T10:15:30+01:00	 5
+format	p:ppd	offset	2024-03-05T10:15:30Z	 5
+format	p:ppd	offset	2024-03-05T10:15:30.500-05:30:15	 5
+format	p:ppd	offset	2024-03-05T10:15:30+00:00:45	 5
+format	p:ppd	zoned	2024-03-05T10:15:30+02:00	 5
+format	p:ppd	zoned	2024-03-05T10:15:30Z[UTC]	 5
+format	p:ppd	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfMonth
+format	p:ppd	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfMonth
+parse	p:ppd	date	05	!Text '05' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:ppd	date	 5	!Text ' 5' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:ppd	date	31	!Text '31' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:ppd	date	 7	!Text ' 7' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:pdd	-	-	Pad(Value(DayOfMonth,2),1)
+format	p:pdd	date	2024-03-05	!Cannot print as output of 2 characters exceeds pad width of 1
+format	p:pdd	date	0001-12-31	!Cannot print as output of 2 characters exceeds pad width of 1
+format	p:pdd	date	+12345-06-07	!Cannot print as output of 2 characters exceeds pad width of 1
+format	p:pdd	time	10:15	!Unsupported field: DayOfMonth
+format	p:pdd	time	10:15:30	!Unsupported field: DayOfMonth
+format	p:pdd	time	10:15:30.123456789	!Unsupported field: DayOfMonth
+format	p:pdd	time	00:00	!Unsupported field: DayOfMonth
+format	p:pdd	dateTime	2024-03-05T10:15:30	!Cannot print as output of 2 characters exceeds pad width of 1
+format	p:pdd	dateTime	2024-03-05T00:00:00.000001	!Cannot print as output of 2 characters exceeds pad width of 1
+format	p:pdd	offset	2024-03-05T10:15:30+01:00	!Cannot print as output of 2 characters exceeds pad width of 1
+format	p:pdd	offset	2024-03-05T10:15:30Z	!Cannot print as output of 2 characters exceeds pad width of 1
+format	p:pdd	offset	2024-03-05T10:15:30.500-05:30:15	!Cannot print as output of 2 characters exceeds pad width of 1
+format	p:pdd	offset	2024-03-05T10:15:30+00:00:45	!Cannot print as output of 2 characters exceeds pad width of 1
+format	p:pdd	zoned	2024-03-05T10:15:30+02:00	!Cannot print as output of 2 characters exceeds pad width of 1
+format	p:pdd	zoned	2024-03-05T10:15:30Z[UTC]	!Cannot print as output of 2 characters exceeds pad width of 1
+format	p:pdd	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfMonth
+format	p:pdd	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfMonth
+parse	p:pdd	date	05	!Text '05' could not be parsed at index 0	0
+build	p:ppDDD	-	-	Pad(Value(DayOfYear,3),2)
+format	p:ppDDD	date	2024-03-05	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppDDD	date	0001-12-31	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppDDD	date	+12345-06-07	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppDDD	time	10:15	!Unsupported field: DayOfYear
+format	p:ppDDD	time	10:15:30	!Unsupported field: DayOfYear
+format	p:ppDDD	time	10:15:30.123456789	!Unsupported field: DayOfYear
+format	p:ppDDD	time	00:00	!Unsupported field: DayOfYear
+format	p:ppDDD	dateTime	2024-03-05T10:15:30	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppDDD	dateTime	2024-03-05T00:00:00.000001	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppDDD	offset	2024-03-05T10:15:30+01:00	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppDDD	offset	2024-03-05T10:15:30Z	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppDDD	offset	2024-03-05T10:15:30.500-05:30:15	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppDDD	offset	2024-03-05T10:15:30+00:00:45	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppDDD	zoned	2024-03-05T10:15:30+02:00	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppDDD	zoned	2024-03-05T10:15:30Z[UTC]	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppDDD	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfYear
+format	p:ppDDD	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfYear
+parse	p:ppDDD	date	060	!Text '060' could not be parsed at index 0	0
+build	p:ppuu	-	-	Pad(ReducedValue(Year,2,2,2000-01-01),2)
+format	p:ppuu	date	2024-03-05	24
+format	p:ppuu	date	0001-12-31	01
+format	p:ppuu	date	+12345-06-07	45
+format	p:ppuu	time	10:15	!Unsupported field: Year
+format	p:ppuu	time	10:15:30	!Unsupported field: Year
+format	p:ppuu	time	10:15:30.123456789	!Unsupported field: Year
+format	p:ppuu	time	00:00	!Unsupported field: Year
+format	p:ppuu	dateTime	2024-03-05T10:15:30	24
+format	p:ppuu	dateTime	2024-03-05T00:00:00.000001	24
+format	p:ppuu	offset	2024-03-05T10:15:30+01:00	24
+format	p:ppuu	offset	2024-03-05T10:15:30Z	24
+format	p:ppuu	offset	2024-03-05T10:15:30.500-05:30:15	24
+format	p:ppuu	offset	2024-03-05T10:15:30+00:00:45	24
+format	p:ppuu	zoned	2024-03-05T10:15:30+02:00	24
+format	p:ppuu	zoned	2024-03-05T10:15:30Z[UTC]	24
+format	p:ppuu	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:ppuu	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:ppuu	date	05	!Text '05' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:ppuu	date	 5	!Text ' 5' could not be parsed at index 1	1
+parse	p:ppuu	date	24	!Text '24' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:ppuu	date	01	!Text '01' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:ppuu	date	45	!Text '45' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:puuuu	-	-	Pad(Value(Year,4,19,EXCEEDS_PAD),1)
+format	p:puuuu	date	2024-03-05	!Cannot print as output of 4 characters exceeds pad width of 1
+format	p:puuuu	date	0001-12-31	!Cannot print as output of 4 characters exceeds pad width of 1
+format	p:puuuu	date	+12345-06-07	!Cannot print as output of 6 characters exceeds pad width of 1
+format	p:puuuu	time	10:15	!Unsupported field: Year
+format	p:puuuu	time	10:15:30	!Unsupported field: Year
+format	p:puuuu	time	10:15:30.123456789	!Unsupported field: Year
+format	p:puuuu	time	00:00	!Unsupported field: Year
+format	p:puuuu	dateTime	2024-03-05T10:15:30	!Cannot print as output of 4 characters exceeds pad width of 1
+format	p:puuuu	dateTime	2024-03-05T00:00:00.000001	!Cannot print as output of 4 characters exceeds pad width of 1
+format	p:puuuu	offset	2024-03-05T10:15:30+01:00	!Cannot print as output of 4 characters exceeds pad width of 1
+format	p:puuuu	offset	2024-03-05T10:15:30Z	!Cannot print as output of 4 characters exceeds pad width of 1
+format	p:puuuu	offset	2024-03-05T10:15:30.500-05:30:15	!Cannot print as output of 4 characters exceeds pad width of 1
+format	p:puuuu	offset	2024-03-05T10:15:30+00:00:45	!Cannot print as output of 4 characters exceeds pad width of 1
+format	p:puuuu	zoned	2024-03-05T10:15:30+02:00	!Cannot print as output of 4 characters exceeds pad width of 1
+format	p:puuuu	zoned	2024-03-05T10:15:30Z[UTC]	!Cannot print as output of 4 characters exceeds pad width of 1
+format	p:puuuu	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:puuuu	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:puuuu	date	2024	!Text '2024' could not be parsed at index 0	0
+build	p:ppHH	-	-	Pad(Value(HourOfDay,2),2)
+format	p:ppHH	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:ppHH	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:ppHH	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:ppHH	time	10:15	10
+format	p:ppHH	time	10:15:30	10
+format	p:ppHH	time	10:15:30.123456789	10
+format	p:ppHH	time	00:00	00
+format	p:ppHH	dateTime	2024-03-05T10:15:30	10
+format	p:ppHH	dateTime	2024-03-05T00:00:00.000001	00
+format	p:ppHH	offset	2024-03-05T10:15:30+01:00	10
+format	p:ppHH	offset	2024-03-05T10:15:30Z	10
+format	p:ppHH	offset	2024-03-05T10:15:30.500-05:30:15	10
+format	p:ppHH	offset	2024-03-05T10:15:30+00:00:45	10
+format	p:ppHH	zoned	2024-03-05T10:15:30+02:00	10
+format	p:ppHH	zoned	2024-03-05T10:15:30Z[UTC]	10
+format	p:ppHH	instant	2024-03-05T10:15:30Z	!Unsupported field: HourOfDay
+format	p:ppHH	instant	2024-03-05T10:15:30.120Z	!Unsupported field: HourOfDay
+parse	p:ppHH	time	10	10:00
+parse	p:ppHH	time	00	00:00
+build	p:ppS	-	-	Pad(Fraction(NanoOfSecond,1,1),2)
+format	p:ppS	date	2024-03-05	!Unsupported field: NanoOfSecond
+format	p:ppS	date	0001-12-31	!Unsupported field: NanoOfSecond
+format	p:ppS	date	+12345-06-07	!Unsupported field: NanoOfSecond
+format	p:ppS	time	10:15	 0
+format	p:ppS	time	10:15:30	 0
+format	p:ppS	time	10:15:30.123456789	 1
+format	p:ppS	time	00:00	 0
+format	p:ppS	dateTime	2024-03-05T10:15:30	 0
+format	p:ppS	dateTime	2024-03-05T00:00:00.000001	 0
+format	p:ppS	offset	2024-03-05T10:15:30+01:00	 0
+format	p:ppS	offset	2024-03-05T10:15:30Z	 0
+format	p:ppS	offset	2024-03-05T10:15:30.500-05:30:15	 5
+format	p:ppS	offset	2024-03-05T10:15:30+00:00:45	 0
+format	p:ppS	zoned	2024-03-05T10:15:30+02:00	 0
+format	p:ppS	zoned	2024-03-05T10:15:30Z[UTC]	 0
+format	p:ppS	instant	2024-03-05T10:15:30Z	 0
+format	p:ppS	instant	2024-03-05T10:15:30.120Z	 1
+parse	p:ppS	time	.5	!Text '.5' could not be parsed at index 0	0
+parse	p:ppS	time	5	!Text '5' could not be parsed at index 0	0
+parse	p:ppS	time	 5	!Text ' 5' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:ppS	time	 0	!Text ' 0' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:ppS	time	 1	!Text ' 1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:ppA	-	-	Pad(Value(MilliOfDay,1,19,NOT_NEGATIVE),2)
+format	p:ppA	date	2024-03-05	!Unsupported field: MilliOfDay
+format	p:ppA	date	0001-12-31	!Unsupported field: MilliOfDay
+format	p:ppA	date	+12345-06-07	!Unsupported field: MilliOfDay
+format	p:ppA	time	10:15	!Cannot print as output of 8 characters exceeds pad width of 2
+format	p:ppA	time	10:15:30	!Cannot print as output of 8 characters exceeds pad width of 2
+format	p:ppA	time	10:15:30.123456789	!Cannot print as output of 8 characters exceeds pad width of 2
+format	p:ppA	time	00:00	 0
+format	p:ppA	dateTime	2024-03-05T10:15:30	!Cannot print as output of 8 characters exceeds pad width of 2
+format	p:ppA	dateTime	2024-03-05T00:00:00.000001	 0
+format	p:ppA	offset	2024-03-05T10:15:30+01:00	!Cannot print as output of 8 characters exceeds pad width of 2
+format	p:ppA	offset	2024-03-05T10:15:30Z	!Cannot print as output of 8 characters exceeds pad width of 2
+format	p:ppA	offset	2024-03-05T10:15:30.500-05:30:15	!Cannot print as output of 8 characters exceeds pad width of 2
+format	p:ppA	offset	2024-03-05T10:15:30+00:00:45	!Cannot print as output of 8 characters exceeds pad width of 2
+format	p:ppA	zoned	2024-03-05T10:15:30+02:00	!Cannot print as output of 8 characters exceeds pad width of 2
+format	p:ppA	zoned	2024-03-05T10:15:30Z[UTC]	!Cannot print as output of 8 characters exceeds pad width of 2
+format	p:ppA	instant	2024-03-05T10:15:30Z	!Unsupported field: MilliOfDay
+format	p:ppA	instant	2024-03-05T10:15:30.120Z	!Unsupported field: MilliOfDay
+parse	p:ppA	time	5	!Text '5' could not be parsed at index 0	0
+parse	p:ppA	time	 0	00:00
+build	p:ppn	-	-	Pad(Value(NanoOfSecond,1,19,NOT_NEGATIVE),2)
+format	p:ppn	date	2024-03-05	!Unsupported field: NanoOfSecond
+format	p:ppn	date	0001-12-31	!Unsupported field: NanoOfSecond
+format	p:ppn	date	+12345-06-07	!Unsupported field: NanoOfSecond
+format	p:ppn	time	10:15	 0
+format	p:ppn	time	10:15:30	 0
+format	p:ppn	time	10:15:30.123456789	!Cannot print as output of 9 characters exceeds pad width of 2
+format	p:ppn	time	00:00	 0
+format	p:ppn	dateTime	2024-03-05T10:15:30	 0
+format	p:ppn	dateTime	2024-03-05T00:00:00.000001	!Cannot print as output of 4 characters exceeds pad width of 2
+format	p:ppn	offset	2024-03-05T10:15:30+01:00	 0
+format	p:ppn	offset	2024-03-05T10:15:30Z	 0
+format	p:ppn	offset	2024-03-05T10:15:30.500-05:30:15	!Cannot print as output of 9 characters exceeds pad width of 2
+format	p:ppn	offset	2024-03-05T10:15:30+00:00:45	 0
+format	p:ppn	zoned	2024-03-05T10:15:30+02:00	 0
+format	p:ppn	zoned	2024-03-05T10:15:30Z[UTC]	 0
+format	p:ppn	instant	2024-03-05T10:15:30Z	 0
+format	p:ppn	instant	2024-03-05T10:15:30.120Z	!Cannot print as output of 9 characters exceeds pad width of 2
+parse	p:ppn	time	5	!Text '5' could not be parsed at index 0	0
+parse	p:ppn	time	 0	!Text ' 0' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:ppg	-	-	Pad(Value(ModifiedJulianDay),2)
+format	p:ppg	date	2024-03-05	!Cannot print as output of 5 characters exceeds pad width of 2
+format	p:ppg	date	0001-12-31	!Cannot print as output of 7 characters exceeds pad width of 2
+format	p:ppg	date	+12345-06-07	!Cannot print as output of 7 characters exceeds pad width of 2
+format	p:ppg	time	10:15	!Unsupported field: EpochDay
+format	p:ppg	time	10:15:30	!Unsupported field: EpochDay
+format	p:ppg	time	10:15:30.123456789	!Unsupported field: EpochDay
+format	p:ppg	time	00:00	!Unsupported field: EpochDay
+format	p:ppg	dateTime	2024-03-05T10:15:30	!Cannot print as output of 5 characters exceeds pad width of 2
+format	p:ppg	dateTime	2024-03-05T00:00:00.000001	!Cannot print as output of 5 characters exceeds pad width of 2
+format	p:ppg	offset	2024-03-05T10:15:30+01:00	!Cannot print as output of 5 characters exceeds pad width of 2
+format	p:ppg	offset	2024-03-05T10:15:30Z	!Cannot print as output of 5 characters exceeds pad width of 2
+format	p:ppg	offset	2024-03-05T10:15:30.500-05:30:15	!Cannot print as output of 5 characters exceeds pad width of 2
+format	p:ppg	offset	2024-03-05T10:15:30+00:00:45	!Cannot print as output of 5 characters exceeds pad width of 2
+format	p:ppg	zoned	2024-03-05T10:15:30+02:00	!Cannot print as output of 5 characters exceeds pad width of 2
+format	p:ppg	zoned	2024-03-05T10:15:30Z[UTC]	!Cannot print as output of 5 characters exceeds pad width of 2
+format	p:ppg	instant	2024-03-05T10:15:30Z	!Unsupported field: EpochDay
+format	p:ppg	instant	2024-03-05T10:15:30.120Z	!Unsupported field: EpochDay
+parse	p:ppg	date	5	!Text '5' could not be parsed at index 0	0
+build	p:ppx	-	-	Pad(Offset(+HHmm,'+00'),2)
+format	p:ppx	date	2024-03-05	!Unsupported field: OffsetSeconds
+format	p:ppx	date	0001-12-31	!Unsupported field: OffsetSeconds
+format	p:ppx	date	+12345-06-07	!Unsupported field: OffsetSeconds
+format	p:ppx	time	10:15	!Unsupported field: OffsetSeconds
+format	p:ppx	time	10:15:30	!Unsupported field: OffsetSeconds
+format	p:ppx	time	10:15:30.123456789	!Unsupported field: OffsetSeconds
+format	p:ppx	time	00:00	!Unsupported field: OffsetSeconds
+format	p:ppx	dateTime	2024-03-05T10:15:30	!Unsupported field: OffsetSeconds
+format	p:ppx	dateTime	2024-03-05T00:00:00.000001	!Unsupported field: OffsetSeconds
+format	p:ppx	offset	2024-03-05T10:15:30+01:00	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppx	offset	2024-03-05T10:15:30Z	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppx	offset	2024-03-05T10:15:30.500-05:30:15	!Cannot print as output of 5 characters exceeds pad width of 2
+format	p:ppx	offset	2024-03-05T10:15:30+00:00:45	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppx	zoned	2024-03-05T10:15:30+02:00	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppx	zoned	2024-03-05T10:15:30Z[UTC]	!Cannot print as output of 3 characters exceeds pad width of 2
+format	p:ppx	instant	2024-03-05T10:15:30Z	!Unsupported field: OffsetSeconds
+format	p:ppx	instant	2024-03-05T10:15:30.120Z	!Unsupported field: OffsetSeconds
+parse	p:ppx	offset	+01:00	!Text '+01:00' could not be parsed at index 0	0
+build	p:ppqq	-	-	Pad(Value(QuarterOfYear,2),2)
+format	p:ppqq	date	2024-03-05	01
+format	p:ppqq	date	0001-12-31	04
+format	p:ppqq	date	+12345-06-07	02
+format	p:ppqq	time	10:15	!Unsupported field: QuarterOfYear
+format	p:ppqq	time	10:15:30	!Unsupported field: QuarterOfYear
+format	p:ppqq	time	10:15:30.123456789	!Unsupported field: QuarterOfYear
+format	p:ppqq	time	00:00	!Unsupported field: QuarterOfYear
+format	p:ppqq	dateTime	2024-03-05T10:15:30	01
+format	p:ppqq	dateTime	2024-03-05T00:00:00.000001	01
+format	p:ppqq	offset	2024-03-05T10:15:30+01:00	01
+format	p:ppqq	offset	2024-03-05T10:15:30Z	01
+format	p:ppqq	offset	2024-03-05T10:15:30.500-05:30:15	01
+format	p:ppqq	offset	2024-03-05T10:15:30+00:00:45	01
+format	p:ppqq	zoned	2024-03-05T10:15:30+02:00	01
+format	p:ppqq	zoned	2024-03-05T10:15:30Z[UTC]	01
+format	p:ppqq	instant	2024-03-05T10:15:30Z	!Unsupported field: QuarterOfYear
+format	p:ppqq	instant	2024-03-05T10:15:30.120Z	!Unsupported field: QuarterOfYear
+parse	p:ppqq	date	1	!Text '1' could not be parsed at index 0	0
+parse	p:ppqq	date	01	!Text '01' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:ppqq	date	04	!Text '04' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+parse	p:ppqq	date	02	!Text '02' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {?},ISO of type java.time.format.Parsed	0
+build	p:pE	-	-	Pad(Text(DayOfWeek,SHORT),1)
+format	p:pE	date	2024-03-05	!Cannot print as output of 3 characters exceeds pad width of 1
+format	p:pE	date	0001-12-31	!Cannot print as output of 3 characters exceeds pad width of 1
+format	p:pE	date	+12345-06-07	!Cannot print as output of 3 characters exceeds pad width of 1
+format	p:pE	time	10:15	!Unsupported field: DayOfWeek
+format	p:pE	time	10:15:30	!Unsupported field: DayOfWeek
+format	p:pE	time	10:15:30.123456789	!Unsupported field: DayOfWeek
+format	p:pE	time	00:00	!Unsupported field: DayOfWeek
+format	p:pE	dateTime	2024-03-05T10:15:30	!Cannot print as output of 3 characters exceeds pad width of 1
+format	p:pE	dateTime	2024-03-05T00:00:00.000001	!Cannot print as output of 3 characters exceeds pad width of 1
+format	p:pE	offset	2024-03-05T10:15:30+01:00	!Cannot print as output of 3 characters exceeds pad width of 1
+format	p:pE	offset	2024-03-05T10:15:30Z	!Cannot print as output of 3 characters exceeds pad width of 1
+format	p:pE	offset	2024-03-05T10:15:30.500-05:30:15	!Cannot print as output of 3 characters exceeds pad width of 1
+format	p:pE	offset	2024-03-05T10:15:30+00:00:45	!Cannot print as output of 3 characters exceeds pad width of 1
+format	p:pE	zoned	2024-03-05T10:15:30+02:00	!Cannot print as output of 3 characters exceeds pad width of 1
+format	p:pE	zoned	2024-03-05T10:15:30Z[UTC]	!Cannot print as output of 3 characters exceeds pad width of 1
+format	p:pE	instant	2024-03-05T10:15:30Z	!Unsupported field: DayOfWeek
+format	p:pE	instant	2024-03-05T10:15:30.120Z	!Unsupported field: DayOfWeek
+parse	p:pE	date	Tue	!Text 'Tue' could not be parsed at index 0	0
+build	p:ppGGGG	-	-	Pad(Text(Era),2)
+format	p:ppGGGG	date	2024-03-05	!Cannot print as output of 11 characters exceeds pad width of 2
+format	p:ppGGGG	date	0001-12-31	!Cannot print as output of 11 characters exceeds pad width of 2
+format	p:ppGGGG	date	+12345-06-07	!Cannot print as output of 11 characters exceeds pad width of 2
+format	p:ppGGGG	time	10:15	!Unsupported field: Era
+format	p:ppGGGG	time	10:15:30	!Unsupported field: Era
+format	p:ppGGGG	time	10:15:30.123456789	!Unsupported field: Era
+format	p:ppGGGG	time	00:00	!Unsupported field: Era
+format	p:ppGGGG	dateTime	2024-03-05T10:15:30	!Cannot print as output of 11 characters exceeds pad width of 2
+format	p:ppGGGG	dateTime	2024-03-05T00:00:00.000001	!Cannot print as output of 11 characters exceeds pad width of 2
+format	p:ppGGGG	offset	2024-03-05T10:15:30+01:00	!Cannot print as output of 11 characters exceeds pad width of 2
+format	p:ppGGGG	offset	2024-03-05T10:15:30Z	!Cannot print as output of 11 characters exceeds pad width of 2
+format	p:ppGGGG	offset	2024-03-05T10:15:30.500-05:30:15	!Cannot print as output of 11 characters exceeds pad width of 2
+format	p:ppGGGG	offset	2024-03-05T10:15:30+00:00:45	!Cannot print as output of 11 characters exceeds pad width of 2
+format	p:ppGGGG	zoned	2024-03-05T10:15:30+02:00	!Cannot print as output of 11 characters exceeds pad width of 2
+format	p:ppGGGG	zoned	2024-03-05T10:15:30Z[UTC]	!Cannot print as output of 11 characters exceeds pad width of 2
+format	p:ppGGGG	instant	2024-03-05T10:15:30Z	!Unsupported field: Era
+format	p:ppGGGG	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Era
+parse	p:ppGGGG	date	AD	!Text 'AD' could not be parsed at index 0	0
+build	p:uuuu-MM-dd pppHH	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)' 'Pad(Value(HourOfDay,2),3)
+format	p:uuuu-MM-dd pppHH	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd pppHH	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd pppHH	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd pppHH	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd pppHH	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd pppHH	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd pppHH	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd pppHH	dateTime	2024-03-05T10:15:30	2024-03-05  10
+format	p:uuuu-MM-dd pppHH	dateTime	2024-03-05T00:00:00.000001	2024-03-05  00
+format	p:uuuu-MM-dd pppHH	offset	2024-03-05T10:15:30+01:00	2024-03-05  10
+format	p:uuuu-MM-dd pppHH	offset	2024-03-05T10:15:30Z	2024-03-05  10
+format	p:uuuu-MM-dd pppHH	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05  10
+format	p:uuuu-MM-dd pppHH	offset	2024-03-05T10:15:30+00:00:45	2024-03-05  10
+format	p:uuuu-MM-dd pppHH	zoned	2024-03-05T10:15:30+02:00	2024-03-05  10
+format	p:uuuu-MM-dd pppHH	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05  10
+format	p:uuuu-MM-dd pppHH	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd pppHH	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd pppHH	dateTime	2024-03-05  10	2024-03-05T10:00
+parse	p:uuuu-MM-dd pppHH	dateTime	2024-03-05  00	2024-03-05T00:00
+build	p:ppp	-	-	!Pad letter 'p' must be followed by valid pad pattern: ppp
+build	p:p	-	-	!Pad letter 'p' must be followed by valid pad pattern: p
+build	p:p:	-	-	!Pad letter 'p' must be followed by valid pad pattern: p:
+build	p:p'x'	-	-	!Pad letter 'p' must be followed by valid pad pattern: p'x'
+build	p:p[	-	-	!Pad letter 'p' must be followed by valid pad pattern: p[
+build	p:p]	-	-	!Pad letter 'p' must be followed by valid pad pattern: p]
 build	p:kk:mm	-	-	Value(ClockHourOfDay,2)':'Value(MinuteOfHour,2)
 format	p:kk:mm	date	2024-03-05	!Unsupported field: ClockHourOfDay
 format	p:kk:mm	date	0001-12-31	!Unsupported field: ClockHourOfDay

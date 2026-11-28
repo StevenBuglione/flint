@@ -1603,10 +1603,28 @@ struct DateTimeFormatterBuilder
             elements_ ~= op(Op.padEnd);
     }
 
+    // Handles the run of `count` copies of the letter `pattern[i]`, or, for `p`, pads the next letter run and throws
+    // Java's error when no letter follows.
+    private void appendLetterRun(string pattern, ref size_t i, size_t count)
+    {
+        if (pattern[i] != 'p')
+        {
+            appendElement(letterElement(pattern[i], cast(int) count));
+            i += count;
+            return;
+        }
+        const next = i + count;
+        if (next >= pattern.length || !isAsciiLetter(pattern[next]))
+            throw new IllegalArgumentException("Pad letter 'p' must be followed by valid pad pattern: " ~ pattern);
+        padNext(cast(int) count);
+        i = next;
+    }
+
     /**
      * Appends the elements of `pattern`, as `DateTimeFormatter.ofPattern` describes: `u y D M L d E a h H k K m s S
-     * n VV X x Z G`, quoted text, `''` and `[ ]` optional sections. A `]` ends an optional section this builder
-     * started; one left open stays open. Other pattern letters throw `IllegalArgumentException`.
+     * n VV X x Z G`, `p` to pad the next letter, quoted text, `''` and `[ ]` optional sections. A `]` ends an
+     * optional section this builder started; one left open stays open. Other pattern letters throw
+     * `IllegalArgumentException`.
      */
     ref DateTimeFormatterBuilder appendPattern(string pattern) return
     {
@@ -1614,13 +1632,12 @@ struct DateTimeFormatterBuilder
         while (i < pattern.length)
         {
             const c = pattern[i];
-            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+            if (isAsciiLetter(c))
             {
                 size_t count = 1;
                 while (i + count < pattern.length && pattern[i + count] == c)
                     ++count;
-                appendElement(letterElement(c, cast(int) count));
-                i += count;
+                appendLetterRun(pattern, i, count);
             }
             else if (c == '\'')
             {
@@ -1825,6 +1842,12 @@ private string doubledQuotes(string text) pure nothrow
 private char asciiUpper(char c) pure nothrow @nogc
 {
     return c >= 'a' && c <= 'z' ? cast(char)(c - ('a' - 'A')) : c;
+}
+
+// Whether `c` is one of the ASCII letters a pattern reserves.
+private bool isAsciiLetter(char c) pure nothrow @nogc
+{
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
 
 private string describeNumber(const Element e) pure
