@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,182 | 797 | 0 | 1,957 | 13,485 |
+| framework | openjdk@21.0.13 | 2,245 | 822 | 0 | 1,957 | 13,397 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -221,6 +221,20 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.nio.file.InvalidPathException` | `flint.java.nio.file.InvalidPathException` | Null input and reason strings count as empty under R26. |
 | framework | `java.nio.file.Path` | `flint.java.nio.file.Path` | Lexical contract. Path inheritance from Comparable<Path>, Iterable<Path> and Watchable is deferred to Phase 2 with compareTo, iterator and register. Provider equality and hashing are also deferred to Phase 2. Null strings and an array of additional parts that is null count as empty under R26. |
 | framework | `java.time.zone.ZoneOffsetTransitionRule.TimeDefinition` | `flint.java.time.zone.zoneoffsettransitionrule.ZoneOffsetTransitionRule.TimeDefinition` | A null name counts as empty (R26). Java throws NullPointerException. |
+| framework | `java.util.ArrayDeque#peek()` | `flint.java.util.arraydeque.ArrayDeque.peek` | An empty deque yields T.init. |
+| framework | `java.util.ArrayDeque#peekFirst()` | `flint.java.util.arraydeque.ArrayDeque.peekFirst` | An empty deque yields T.init. |
+| framework | `java.util.ArrayDeque#peekLast()` | `flint.java.util.arraydeque.ArrayDeque.peekLast` | An empty deque yields T.init. |
+| framework | `java.util.ArrayDeque#poll()` | `flint.java.util.arraydeque.ArrayDeque.poll` | An empty deque yields T.init. |
+| framework | `java.util.ArrayDeque#pollFirst()` | `flint.java.util.arraydeque.ArrayDeque.pollFirst` | An empty deque yields T.init. |
+| framework | `java.util.ArrayDeque#pollLast()` | `flint.java.util.arraydeque.ArrayDeque.pollLast` | An empty deque yields T.init. |
+| framework | `java.util.Deque#peekFirst()` | `flint.java.util.deque.Deque.peekFirst` | An empty deque yields T.init. |
+| framework | `java.util.Deque#peekLast()` | `flint.java.util.deque.Deque.peekLast` | An empty deque yields T.init. |
+| framework | `java.util.Deque#pollFirst()` | `flint.java.util.deque.Deque.pollFirst` | An empty deque yields T.init. |
+| framework | `java.util.Deque#pollLast()` | `flint.java.util.deque.Deque.pollLast` | An empty deque yields T.init. |
+| framework | `java.util.PriorityQueue#peek()` | `flint.java.util.priorityqueue.PriorityQueue.peek` | An empty queue yields T.init. |
+| framework | `java.util.PriorityQueue#poll()` | `flint.java.util.priorityqueue.PriorityQueue.poll` | An empty queue yields T.init. |
+| framework | `java.util.Queue#peek()` | `flint.java.util.queue.Queue.peek` | An empty queue yields T.init, as Map.get does for a missing key. |
+| framework | `java.util.Queue#poll()` | `flint.java.util.queue.Queue.poll` | An empty queue yields T.init, as Map.get does for a missing key. |
 | framework | `java.util.regex.Pattern` | `flint.java.util.regex.Pattern` | Under R26, a null expression or input slice counts as empty text. Java throws NullPointerException. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)` | `flint.core.convert.support.DefaultConversionService.addDefaultConverters` | The package-private CharacterToNumberFactory is represented in the erased numeric converter for char and wchar code units. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()` | `flint.core.convert.support.DefaultConversionService.getSharedInstance` | Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4). |
@@ -2893,6 +2907,18 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.AbstractCollection#toArray()` | `flint.java.util.AbstractCollection.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.AbstractList#indexOf(Object)` | `flint.java.util.AbstractList.indexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.AbstractList#lastIndexOf(Object)` | `flint.java.util.AbstractList.lastIndexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.ArrayDeque` | `flint.java.util.arraydeque.ArrayDeque` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.arraydeque. The element type is the D template parameter; a null reference element throws NullPointerException as Java does, and a primitive element type has no null to reject. As in Java, equals and hashCode are identity. Cloneable's clone is ported; Spliterator and serialization are deferred. |
+| `java.util.ArrayDeque#addAll(Collection)` | `flint.java.util.arraydeque.ArrayDeque.addAll` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.ArrayDeque#clone()` | `flint.java.util.arraydeque.ArrayDeque.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.ArrayDeque#contains(Object)` | `flint.java.util.arraydeque.ArrayDeque.contains` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.ArrayDeque#forEach(Consumer)` | `flint.java.util.arraydeque.ArrayDeque.forEach` | [R7](api-mapping.md#r7-overloads) |  |
+| `java.util.ArrayDeque#remove(Object)` | `flint.java.util.arraydeque.ArrayDeque.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.ArrayDeque#removeAll(Collection)` | `flint.java.util.arraydeque.ArrayDeque.removeAll` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.ArrayDeque#removeFirstOccurrence(Object)` | `flint.java.util.arraydeque.ArrayDeque.removeFirstOccurrence` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.ArrayDeque#removeIf(Predicate)` | `flint.java.util.arraydeque.ArrayDeque.removeIf` | [R7](api-mapping.md#r7-overloads) |  |
+| `java.util.ArrayDeque#removeLastOccurrence(Object)` | `flint.java.util.arraydeque.ArrayDeque.removeLastOccurrence` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.ArrayDeque#retainAll(Collection)` | `flint.java.util.arraydeque.ArrayDeque.retainAll` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.ArrayDeque#toArray()` | `flint.java.util.arraydeque.ArrayDeque.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.ArrayList#toArray()` | `flint.java.util.ArrayList.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Arrays#toString(Object[])` | `flint.java.util.Arrays.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Base64` | `flint.java.util.base64.Base64` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import from flint.java.util.base64; flint.java.util does not re-export it until the JDK aggregate exists. Under R26, null byte-array and string slices behave as empty inputs. Java throws NullPointerException. |
@@ -2914,6 +2940,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Collection#remove(Object)` | `flint.java.util.Collection.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Collection#toArray()` | `flint.java.util.Collection.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Date#clone()` | `flint.java.util.Date.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Deque` | `flint.java.util.deque.Deque` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) | Import from flint.java.util.deque while the java.util aggregate is being split. Java 21 SequencedCollection is deferred, so Deque extends Queue only and declares reversed(). |
+| `java.util.Deque#removeFirstOccurrence(Object)` | `flint.java.util.deque.Deque.removeFirstOccurrence` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Deque#removeLastOccurrence(Object)` | `flint.java.util.deque.Deque.removeLastOccurrence` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Deque#reversed()` | `flint.java.util.deque.Deque.reversed` | [R10](api-mapping.md#r10-streams-and-collections) | Returns a live Deque view; SequencedCollection is deferred. |
 | `java.util.EnumSet` | `flint.java.util.enumset.EnumSet` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.enumset. Java's Class<E> token becomes the EnumSet!E template parameter (R4). AbstractSet is deferred to sol-jdk-core's collections design, so the class derives from AbstractCollection and Set and is reparented when AbstractSet lands. |
 | `java.util.EnumSet#allOf(Class)` | `flint.java.util.enumset.EnumSet.allOf` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `java.util.EnumSet#noneOf(Class)` | `flint.java.util.enumset.EnumSet.noneOf` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -2988,7 +3018,16 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Objects#toString(Object)` | `flint.java.util.Objects.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Objects#toString(Object,String)` | `flint.java.util.Objects.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Optional` | `flint.java.util.Optional` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.util.PriorityQueue` | `flint.java.util.priorityqueue.PriorityQueue` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.priorityqueue. The element type is the D template parameter; a null reference element throws NullPointerException as Java does, and a primitive element type has no null to reject. The ordering is the given Comparator or the elements' natural order (compareNatural). As in Java, equals and hashCode are identity. Unlike Java it extends AbstractCollection and Queue directly rather than the unported AbstractQueue, which only supplies defaults this class overrides. Spliterator, serialization and the SortedSet constructor are deferred. |
+| `java.util.PriorityQueue#contains(Object)` | `flint.java.util.priorityqueue.PriorityQueue.contains` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.PriorityQueue#forEach(Consumer)` | `flint.java.util.priorityqueue.PriorityQueue.forEach` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.PriorityQueue#remove(Object)` | `flint.java.util.priorityqueue.PriorityQueue.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.PriorityQueue#removeAll(Collection)` | `flint.java.util.priorityqueue.PriorityQueue.removeAll` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.PriorityQueue#removeIf(Predicate)` | `flint.java.util.priorityqueue.PriorityQueue.removeIf` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.PriorityQueue#retainAll(Collection)` | `flint.java.util.priorityqueue.PriorityQueue.retainAll` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.PriorityQueue#toArray()` | `flint.java.util.priorityqueue.PriorityQueue.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Properties#setProperty(String,String)` | `flint.java.util.Properties.setProperty` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Queue` | `flint.java.util.queue.Queue` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.queue while the java.util aggregate is being split. |
 | `java.util.Random#nextBytes(byte[])` | `flint.java.util.random.random.Random.nextBytes` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Set#of(E...)` | `flint.java.util.Set.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.SimpleTimeZone#clone()` | `flint.java.util.SimpleTimeZone.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -11266,7 +11305,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,860 | 0 |
+| java.util | 1,772 | 0 |
 | java.util.concurrent | 1,139 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -12534,6 +12573,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.temporal.ValueRange#checkValidIntValue(long,TemporalField)` | 2 | Requires TemporalField. |
 | framework | `java.time.temporal.ValueRange#checkValidValue(long,TemporalField)` | 2 | Requires TemporalField. |
 | framework | `java.util.AbstractList#subList(int,int)` | 2 | Java returns a backed range and invalidates it after structural modification of the parent. The current implementation returns a copy and throws IndexOutOfBoundsException for a reversed range. |
+| framework | `java.util.ArrayDeque#spliterator()` | 2 | Flint has no Spliterator in the collection contract; Collection.stream() derives a Stream from toArray(). |
+| framework | `java.util.ArrayDeque#toArray(T[])` | 2 | D's Collection.toArray() already returns a fresh T[]; the runtime-typed array copy of Java's toArray(T[]) has no D equivalent. |
 | framework | `java.util.Arrays#asList(T...)` | 2 | Java returns a fixed-size view backed by the supplied array. The current fixed-size copy loses writes in both directions. A null D array counts as empty under R26. |
 | framework | `java.util.Base64.Decoder#decode(ByteBuffer)` | 2 | Needs flint:java-util to depend on flint:java-nio-buffers for flint.java.nio.bytebuffer.ByteBuffer, which java-util does not import yet. |
 | framework | `java.util.Base64.Decoder#wrap(InputStream)` | 2 | The decoding InputStream needs java.io.InputStream, whose Closeable interface is pending. |
@@ -12598,6 +12639,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Optional#map(Function)` | 2 | Java rejects a null mapper even when the Optional is empty. Flint returns the empty value. |
 | framework | `java.util.Optional#of(T)` | 2 | Optional.of must keep empty string and array values present under R26. The current null check rejects zero-length D slices whose storage compares to null. |
 | framework | `java.util.Optional#or(Supplier)` | 2 | Java rejects a null supplier even when a value is present. Flint returns the present value. |
+| framework | `java.util.PriorityQueue#<init>(SortedSet)` | 2 | SortedSet is not ported, so the sorted-set constructor waits for the sorted-collection hierarchy. |
+| framework | `java.util.PriorityQueue#spliterator()` | 2 | Flint has no Spliterator in the collection contract; Collection.stream() derives a Stream from toArray(). |
+| framework | `java.util.PriorityQueue#toArray(T[])` | 2 | D's Collection.toArray() already returns a fresh T[]; the runtime-typed array copy of Java's toArray(T[]) has no D equivalent. |
 | framework | `java.util.Properties#load(InputStream)` | 2 | The legacy byte-stream overload treats the input as UTF-8. Java Properties.load(InputStream) decodes ISO-8859-1 and leaves the stream open. |
 | framework | `java.util.Random` | 2 | The seeded constructor and core generator methods (setSeed, next, nextBytes, nextInt, nextLong, nextBoolean, nextFloat, nextDouble) are available. The default constructor, bounded draws, nextGaussian, RandomGenerator interface and streams are deferred. |
 | framework | `java.util.Scanner#<init>(Readable)` | 2 | The Readable constructor awaits the interface's cross-package placement. Its method takes a java.nio CharBuffer. Revisit after the compile-scope decision on 2026-11-27. |
