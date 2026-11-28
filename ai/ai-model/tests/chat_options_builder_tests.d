@@ -169,3 +169,54 @@ unittest
     assert(mutated.getTemperature().get() == 0.7);
     assert(mutated.getStopSequences().size() == 1 && mutated.getStopSequences().get(0) == "stop1");
 }
+
+@("clone copies every setting and leaves the original independent")
+unittest
+{
+    auto builder = ChatOptions.builder().model(ModelName("gpt-4")).maxTokens(Count(100))
+        .temperature(Ratio(0.7)).stopSequences(StopSequences.of("stop1"));
+
+    auto copy = builder.clone();
+    copy.model(ModelName("gpt-5")).maxTokens(Count(200)).stopSequences(StopSequences.of("stop2"));
+
+    ChatOptions original = builder.build();
+    ChatOptions cloned = copy.build();
+    assert(original.getModel().get() == "gpt-4");
+    assert(original.getMaxTokens().get() == 100);
+    assert(original.getTemperature().get() == 0.7);
+    assert(original.getStopSequences().size() == 1 && original.getStopSequences().get(0) == "stop1");
+    assert(cloned.getModel().get() == "gpt-5");
+    assert(cloned.getMaxTokens().get() == 200);
+    assert(cloned.getTemperature().get() == 0.7);
+    assert(cloned.getStopSequences().size() == 1 && cloned.getStopSequences().get(0) == "stop2");
+}
+
+@("combineWith keeps this builder's values and appends the other's stop sequences")
+unittest
+{
+    auto builder = ChatOptions.builder().model(ModelName("gpt-4")).temperature(Ratio(0.7))
+        .stopSequences(StopSequences.of("left"));
+    auto other = ChatOptions.builder().model(ModelName("gpt-5")).maxTokens(Count(100))
+        .stopSequences(StopSequences.of("right"));
+
+    assert(builder.combineWith(other) is builder);
+    ChatOptions combined = builder.build();
+    assert(combined.getModel().get() == "gpt-5");
+    assert(combined.getTemperature().get() == 0.7);
+    assert(combined.getMaxTokens().get() == 100);
+    assert(combined.getStopSequences().size() == 2);
+    assert(combined.getStopSequences().get(0) == "left");
+    assert(combined.getStopSequences().get(1) == "right");
+}
+
+@("combineWith copies stop sequences when this builder has none")
+unittest
+{
+    auto builder = ChatOptions.builder().model(ModelName("gpt-4"));
+    auto other = ChatOptions.builder().stopSequences(StopSequences.of("only"));
+
+    builder.combineWith(other);
+    ChatOptions combined = builder.build();
+    assert(combined.getModel().get() == "gpt-4");
+    assert(combined.getStopSequences().size() == 1 && combined.getStopSequences().get(0) == "only");
+}
