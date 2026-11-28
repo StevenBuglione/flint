@@ -75,19 +75,25 @@ class MissingRequestValueException : ServletRequestBindingException
 {
     private bool missingAfterConversion;
 
-    ///
-    this(string message, bool missingAfterConversion = false)
+    /// With a message only.
+    this(string msg)
     {
-        super(message);
+        this(msg, false);
+    }
+
+    /// With a message and the post-conversion flag.
+    this(string msg, bool missingAfterConversion)
+    {
+        super(msg);
         this.missingAfterConversion = missingAfterConversion;
         // The base built the body before the flag was set; a subclass's status may depend on it.
         getBody().setStatus(getStatusCode().value());
     }
 
     /// ditto, with a message code.
-    protected this(string message, bool missingAfterConversion, string messageDetailCode, Any[] arguments)
+    protected this(string msg, bool missingAfterConversion, string messageDetailCode, Any[] messageDetailArguments)
     {
-        super(message, null, messageDetailCode, arguments);
+        super(msg, null, messageDetailCode, messageDetailArguments);
         this.missingAfterConversion = missingAfterConversion;
         getBody().setStatus(getStatusCode().value());
     }

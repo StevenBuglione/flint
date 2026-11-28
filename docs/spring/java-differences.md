@@ -182,7 +182,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | ai | spring-ai@v2.1.0 | 229 | 365 | 0 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,656 | 1,555 | 0 | 4,870 | 29,753 |
+| framework | spring-framework@v7.1.0 | 3,655 | 1,556 | 0 | 4,870 | 29,753 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
@@ -4939,6 +4939,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.web.accept.ContentNegotiationManager#<init>(Collection)` | `flint.web.accept.ContentNegotiationManager` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+
+#### org.springframework.web.bind
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.web.bind.MissingRequestValueException#<init>(String,boolean,String,Object[])` | `flint.web.bind.MissingRequestValueException` | [R23](api-mapping.md#r23-object-typed-values), [R26](api-mapping.md#r26-null-arrays) | The nullable detail code stays a plain string under R26; the Java Object[] arguments become an Any[] slice (R23). |
 
 #### org.springframework.web.bind.annotation
 
