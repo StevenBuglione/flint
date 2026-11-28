@@ -1,0 +1,5 @@
+Flint Java Concurrency Copy-on-Write
+Copyright 2026 The Flint authors
+
+The Java SE types in this package are adapted from OpenJDK 21.0.13.
+Their source retains the original OpenJDK file notices.
