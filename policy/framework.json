@@ -1459,7 +1459,43 @@
     "ldc_incremental_seconds",
     "compiler_peak_rss_bytes"
    ]
-  },  "java-net-spi": {
+  },  "java-net-socket-timeout-exception": {
+   "directory": "framework/java-net-socket-timeout-exception",
+   "module": "flint.java.net.sockettimeoutexception",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.net.SocketTimeoutException"
+   ],
+   "dependencies": [
+    "java",
+    "java-io"
+   ],
+   "bench": {
+    "fixture": "framework/java-net-socket-timeout-exception/bench",
+    "baseline": "framework/java-net-socket-timeout-exception/bench/baseline",
+    "edit_source": "framework/java-net-socket-timeout-exception/source/flint/java/net/sockettimeoutexception.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 4018,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 480
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
+
+  "java-net-spi": {
    "directory": "framework/java-net-spi",
    "module": "flint.java.net.spi.inetaddressresolver",
    "also": [
