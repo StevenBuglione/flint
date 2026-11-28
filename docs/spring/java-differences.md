@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,285 | 887 | 0 | 1,957 | 13,292 |
+| framework | openjdk@21.0.13 | 2,289 | 887 | 0 | 1,957 | 13,288 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -228,10 +228,14 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.io.File#toString()` | `flint.java.io.File.toString` | Calls the virtual getPath, so a subclass that overrides getPath is honoured. |
 | framework | `java.io.OutputStream` | `flint.java.io.OutputStream` | Implements Closeable and Flushable. |
 | framework | `java.io.OutputStreamWriter#<init>(OutputStream)` | `flint.java.io.OutputStreamWriter.this` | A null output stream is rejected during construction with NullPointerException, as Java's Writer lock constructor does. |
+| framework | `java.io.OutputStreamWriter#<init>(OutputStream,Charset)` | `flint.java.io.OutputStreamWriter.this` | A null stream, or a Charset that names none (Charset.init, Java's null), is rejected with NullPointerException. The writer encodes in the named charset; an unrepresentable code point writes '?' and a lone surrogate reaches it as U+FFFD (R14). |
+| framework | `java.io.OutputStreamWriter#<init>(OutputStream,String)` | `flint.java.io.OutputStreamWriter.this` | Resolves the name or alias through Charset.forName, so an unknown name throws UnsupportedCharsetException and an empty one IllegalCharsetNameException; getEncoding then returns that name. |
 | framework | `java.io.OutputStreamWriter#close()` | `flint.java.io.OutputStreamWriter.close` | Flushes the sink, closes it once even when that flush fails, and rejects later writes and flushes with IOException "Stream closed". The UTF-8 write is eager, so there is no encoder buffer to drain. |
 | framework | `java.io.OutputStreamWriter#flush()` | `flint.java.io.OutputStreamWriter.flush` | Forwards to the sink and rejects use after close with IOException "Stream closed". |
+| framework | `java.io.OutputStreamWriter#getEncoding()` | `flint.java.io.OutputStreamWriter.getEncoding` | Returns the name the stream was created with, as Java returns its historical name; a Charset constructor returns the canonical name. |
 | framework | `java.io.PrintWriter#<init>(OutputStream)` | `flint.java.io.PrintWriter.this` | Wraps a BufferedWriter around a UTF-8 OutputStreamWriter, as Java buffers the encoded text; the null stream is rejected. Flint's default charset is UTF-8 and it has no PrintStream, so no sink charset is inherited. |
 | framework | `java.io.PrintWriter#<init>(OutputStream,boolean)` | `flint.java.io.PrintWriter.this` | The buffered UTF-8 output-stream sink with selectable auto-flush; println flushes it after the separator and a null stream is rejected. |
+| framework | `java.io.PrintWriter#<init>(OutputStream,boolean,Charset)` | `flint.java.io.PrintWriter.this` | Wraps a BufferedWriter around an OutputStreamWriter built with the charset; println flushes it after the separator when auto-flush is on. A null stream, or a charset that names none, is rejected. |
 | framework | `java.io.PrintWriter#<init>(Writer)` | `flint.java.io.PrintWriter.this` | A null writer is rejected during construction with NullPointerException. |
 | framework | `java.io.PrintWriter#<init>(Writer,boolean)` | `flint.java.io.PrintWriter.this` | A null writer is rejected and auto-flush is stored; println flushes the target after the separator. |
 | framework | `java.io.PrintWriter#checkError()` | `flint.java.io.PrintWriter.checkError` | Flushes while open, then returns the local error state or a nested PrintWriter's error. There is no PrintStream sink error to consult. |
@@ -2356,8 +2360,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.InterruptedIOException#<init>(String)` | `flint.java.io.interruptedioexception.InterruptedIOException.this` | [R26](api-mapping.md#r26-null-arrays) | An empty message means no detail (R26). The cause stays open for one initCause call. |
 | `java.io.OutputStream#write(byte[])` | `flint.java.io.OutputStream.write` | [R26](api-mapping.md#r26-null-arrays) | Unsigned D slices preserve the byte payload. A null slice counts as an empty array. |
 | `java.io.OutputStream#write(byte[],int,int)` | `flint.java.io.OutputStream.write` | [R26](api-mapping.md#r26-null-arrays) |  |
-| `java.io.OutputStreamWriter#write(String,int,int)` | `flint.java.io.OutputStreamWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's UTF-16 range adapter and encodes the result as UTF-8; a split surrogate pair encodes U+FFFD for each lone half (R14). A null string is empty (R26). |
-| `java.io.OutputStreamWriter#write(char[],int,int)` | `flint.java.io.OutputStreamWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's concrete UTF-16 adapter and encodes the range as UTF-8; a lone half encodes U+FFFD (R14) and a null array is empty (R26). |
+| `java.io.OutputStreamWriter#write(String,int,int)` | `flint.java.io.OutputStreamWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's UTF-16 range adapter and encodes the result in the writer's charset; a split surrogate pair encodes U+FFFD for each lone half (R14). A null string is empty (R26). |
+| `java.io.OutputStreamWriter#write(char[],int,int)` | `flint.java.io.OutputStreamWriter.write` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Inherits Writer's concrete UTF-16 adapter and encodes the range in the writer's charset; a lone half encodes U+FFFD (R14) and a null array is empty (R26). |
 | `java.io.OutputStreamWriter#write(int)` | `flint.java.io.OutputStreamWriter.write` | [R14](api-mapping.md#r14-strings-and-text) | Inherits Writer's single-character write; a lone surrogate encodes U+FFFD (R14). |
 | `java.io.PrintWriter#append(char)` | `flint.java.io.PrintWriter.append` | [R14](api-mapping.md#r14-strings-and-text) | One UTF-16 code unit through the single-character write (R14); a checked failure is recorded and the writer is returned. |
 | `java.io.PrintWriter#out` | `flint.java.io.PrintWriter.out_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Java's protected out takes the trailing underscore because out is a D keyword (R19). It is the underlying writer and is cleared after a successful close. |
@@ -11333,7 +11337,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 488 | 0 |
+| java.io | 484 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -12230,8 +12234,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.File#length()` | 2 | The current method returns zero for all non-regular paths. The pinned Linux Java implementation returns the native size for a directory. |
 | framework | `java.io.FileInputStream` | 2 | The existing class derives from ByteArrayInputStream and retains a byte snapshot. Java derives directly from InputStream and owns a file descriptor until close. |
 | framework | `java.io.FileInputStream#<init>(File)` | 2 | The existing constructor checks the virtual isFile method and reads a byte snapshot. Java opens the pathname and owns the descriptor. The null File check required by R8 is pending. |
+| framework | `java.io.OutputStreamWriter#<init>(OutputStream,CharsetEncoder)` | 2 | Flint's Charset is a value naming one of six charsets and cannot create a CharsetEncoder; the writer chooses its encoding from the charset value. |
 | framework | `java.io.PrintWriter#<init>(File)` | 2 | The existing type has no File constructor. |
-| framework | `java.io.PrintWriter#<init>(OutputStream,boolean,Charset)` | 2 | Missing buffered output-stream constructor with selectable auto-flush and explicit charset. |
 | framework | `java.io.PrintWriter#append(CharSequence)` | 2 | Java appends literal null for an absent character sequence. The existing UTF-8 slice treats it as empty. The distinct nullable text contract needs R5. |
 | framework | `java.io.PrintWriter#append(CharSequence,int,int)` | 2 | Missing UTF-16 subsequence append through the virtual whole-sequence overload. Java selects from the text null when the sequence is absent. |
 | framework | `java.io.PrintWriter#format(Locale,String,Object[])` | 2 | Missing explicit-locale formatting and writer return. Java disables localization for a null locale, honors auto-flush, records checked sink errors, and restores interruption for InterruptedIOException. |
