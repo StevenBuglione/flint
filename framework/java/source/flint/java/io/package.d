@@ -1939,9 +1939,13 @@ class OutputStreamWriter : Writer
 {
     private OutputStream output;
 
-    /// A writer over `output`.
-    this(OutputStream output) pure nothrow @nogc
+    /// A writer over `output`. A null stream is rejected, as Java's lock constructor does.
+    this(OutputStream output)
     {
+        import flint.java.lang : NullPointerException;
+
+        if (output is null)
+            throw new NullPointerException("out");
         this.output = output;
     }
 
@@ -1968,15 +1972,23 @@ class PrintWriter : Writer
 {
     private Writer target;
 
-    /// A print writer over `target`.
-    this(Writer target) pure nothrow @nogc
+    /// A print writer over `target`. A null writer is rejected.
+    this(Writer target)
     {
+        import flint.java.lang : NullPointerException;
+
+        if (target is null)
+            throw new NullPointerException("out");
         this.target = target;
     }
 
-    /// A print writer over `output`, encoding UTF-8.
-    this(OutputStream output) pure nothrow
+    /// A print writer over `output`, encoding UTF-8. A null stream is rejected.
+    this(OutputStream output)
     {
+        import flint.java.lang : NullPointerException;
+
+        if (output is null)
+            throw new NullPointerException("out");
         target = new OutputStreamWriter(output);
     }
 
