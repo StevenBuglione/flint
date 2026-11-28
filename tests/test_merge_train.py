@@ -227,6 +227,35 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         merged = json.loads(git(self.work, 'show', f'origin/main:{path}'))
         self.assertEqual(set(merged), {'flint.java.io.closeable', 'flint.java.lang.number', 'flint.java.util.uuid'})
 
+    def test_two_lanes_adding_different_closure_baseline_violations_both_land(self):
+        # sol-framework and sol-boot, 2026-11-28: each added its own leaf's rows to framework/java/closure-baseline.json.
+        path = 'framework/java/closure-baseline.json'
+        base = {'schema': 'flint.jdk-closure-baseline/1', 'source_commit': 'abc',
+                'violations': ['import|java|flint.java.lang|std.conv'], 'groups': {}}
+        (self.work / 'framework' / 'java').mkdir(parents=True, exist_ok=True)
+        (self.work / path).write_text(json.dumps(base, indent=2) + '\n')
+        (self.work / 'tools').mkdir(exist_ok=True)
+        (self.work / 'tools' / 'api_differences.py').write_text('')
+        git(self.work, 'checkout', '-q', 'origin/main')
+        git(self.work, 'add', '.')
+        git(self.work, 'commit', '-q', '-m', 'closure baseline')
+        git(self.work, 'push', '-q', 'origin', 'HEAD:main')
+        git(self.work, 'fetch', '-q', 'origin')
+        error_row = 'link|java|flint.java.lang.error|error-leaf|O3|undeclared module records flint.java.time'
+        thread_row = 'link|java|flint.java.lang.threadlocal|native|O3|undeclared module records flint.java.time'
+        for role, row in (('sol-a', error_row), ('sol-b', thread_row)):
+            grown = json.loads(json.dumps(base))
+            grown['violations'] = sorted(grown['violations'] + [row])
+            self.lane(role, {path: json.dumps(grown, indent=2) + '\n'})
+        self.hold_slot()
+        result = self.train.run('runner')
+        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-b'], []))
+        text = git(self.work, 'show', f'origin/main:{path}')
+        merged = json.loads(text)
+        self.assertEqual(merged['violations'],
+                         sorted(base['violations'] + [error_row, thread_row]))
+        self.assertTrue(text.splitlines()[1].startswith('  "schema"'), text[:80])  # indent 2 kept
+
     def test_json_indent_follows_the_file(self):
         self.assertEqual(merge_train.json_indent('{\n  "a": 1\n}\n'), 2)
         self.assertEqual(merge_train.json_indent('{\n "a": 1\n}\n'), 1)

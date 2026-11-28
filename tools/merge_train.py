@@ -78,7 +78,11 @@ SET_FILES = ('api/jdk-unconfirmed.json', 'api/kind-baseline.json', 'api/dependen
              'api/jdk-leaf-types.json',
              # The upstream-tests ratchet: sorted per-module lists of deferred classes, shrink-only (sol-jackson,
              # 2026-11-26: two lanes removing adjacent rows conflicted).
-             'policy/upstream-tests-baseline.json')
+             'policy/upstream-tests-baseline.json',
+             # The JDK link-closure baseline: unique sorted violation rows plus per-leaf groups. Two lanes each
+             # adding their own leaf's rows conflicted in the same sorted position (sol-framework and sol-boot,
+             # 2026-11-28).
+             'framework/java/closure-baseline.json')
 # Per-package JSON maps keyed by entry, merged as sets wherever they live: the JDK packages' leaf budgets (sol-ai and
 # sol-aop, 2026-11-27 05:43Z: two lanes adding different leaves conflicted in framework/java/leaf-budgets.json).
 SET_NAMES = ('leaf-budgets.json',)
