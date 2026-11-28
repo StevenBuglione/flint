@@ -4,6 +4,8 @@ module flint.java.io.interrupted_io_exception_test;
 
 import flint.java.io : IOException;
 import flint.java.io.interruptedioexception : InterruptedIOException;
+import flint.java.lang : IllegalStateException;
+import std.exception : assertThrown;
 
 @safe:
 
@@ -20,11 +22,21 @@ unittest
     assert(nullMessage.getMessage() is null);
 
     const empty = new InterruptedIOException("");
-    assert(empty.getMessage() !is null && empty.getMessage().length == 0);
+    assert(empty.getMessage() is null);
 
     auto interrupted = new InterruptedIOException("interrupted");
     assert(interrupted.getMessage() == "interrupted");
     assert(interrupted.getCause() is null && interrupted.bytesTransferred == 0);
     interrupted.bytesTransferred = -7;
     assert(interrupted.bytesTransferred == -7);
+}
+
+@("InterruptedIOException's cause stays open for one initCause call")
+unittest
+{
+    auto cause = new IOException("inner");
+    auto failure = new InterruptedIOException("interrupted");
+    assert(failure.initCause(cause) is failure);
+    assert(failure.getCause() is cause);
+    assertThrown!IllegalStateException(failure.initCause(new IOException("again")));
 }
