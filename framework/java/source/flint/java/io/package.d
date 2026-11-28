@@ -429,6 +429,237 @@ class FilterInputStream : InputStream
     }
 }
 
+/// Copy `length` bytes between possibly overlapping byte arrays, as `System.arraycopy` does.
+private void copyRange(scope ubyte[] destination, size_t destinationOffset, scope const(ubyte)[] source,
+        size_t sourceOffset, size_t length) @safe
+{
+    if (destinationOffset < sourceOffset)
+        foreach (index; 0 .. length)
+            destination[destinationOffset + index] = source[sourceOffset + index];
+    else
+        foreach_reverse (index; 0 .. length)
+            destination[destinationOffset + index] = source[sourceOffset + index];
+}
+
+/// Java's `BufferedInputStream`: buffered reads with mark and reset.
+class BufferedInputStream : FilterInputStream
+{
+    private enum int defaultBufferSize = 8192;
+
+    /// The internal buffer. Null once the stream is closed.
+    protected ubyte[] buf;
+
+    /// One past the last valid byte in the buffer.
+    protected int count;
+
+    /// The index of the next byte to read.
+    protected int pos;
+
+    /// The buffer index of the last mark, or -1.
+    protected int markpos = -1;
+
+    /// The read-ahead allowed after a mark.
+    protected int marklimit;
+
+    private int initialSize;
+
+    /// Wrap `input` with the default buffer size.
+    this(InputStream input)
+    {
+        this(input, defaultBufferSize);
+    }
+
+    /// Wrap `input` with a buffer of `size` bytes.
+    this(InputStream input, int size)
+    {
+        super(input);
+        if (size <= 0)
+        {
+            import flint.java.lang : IllegalArgumentException;
+
+            throw new IllegalArgumentException("Buffer size <= 0");
+        }
+        initialSize = size;
+        buf = new ubyte[size];
+    }
+
+    alias read = FilterInputStream.read;
+
+    private void ensureOpen()
+    {
+        if (buf is null)
+            throw new IOException("Stream closed");
+    }
+
+    private InputStream getInIfOpen()
+    {
+        InputStream input = in_;
+        if (input is null)
+            throw new IOException("Stream closed");
+        return input;
+    }
+
+    private void fill()
+    {
+        if (buf is null)
+            throw new IOException("Stream closed");
+        if (markpos == -1)
+            pos = 0;
+        else if (pos >= buf.length)
+        {
+            if (markpos > 0)
+            {
+                const sz = pos - markpos;
+                copyRange(buf, 0, buf, markpos, sz);
+                pos = sz;
+                markpos = 0;
+            }
+            else if (marklimit <= cast(int) buf.length)
+            {
+                markpos = -1;
+                pos = 0;
+            }
+            else
+            {
+                int nsz = pos + (pos > 1 ? pos : 1);
+                if (nsz < 0)
+                    nsz = int.max;
+                if (nsz > marklimit)
+                    nsz = marklimit;
+                ubyte[] grown = new ubyte[nsz];
+                copyRange(grown, 0, buf, 0, pos);
+                buf = grown;
+            }
+        }
+        count = pos;
+        const room = cast(int)(buf.length - pos);
+        const n = getInIfOpen().read(buf, pos, room);
+        if (n > 0)
+            count = n + pos;
+    }
+
+    /// The next byte as 0..255, or -1 at the end.
+    override int read()
+    {
+        ensureOpen();
+        if (pos >= count)
+        {
+            fill();
+            if (pos >= count)
+                return -1;
+        }
+        return buf[pos++] & 0xFF;
+    }
+
+    private int read1(scope ubyte[] b, int off, int len)
+    {
+        ensureOpen();
+        int avail = count - pos;
+        if (avail <= 0)
+        {
+            const size = cast(int) buf.length > initialSize ? cast(int) buf.length : initialSize;
+            if (len >= size && markpos == -1)
+                return getInIfOpen().read(b, off, len);
+            fill();
+            avail = count - pos;
+            if (avail <= 0)
+                return -1;
+        }
+        const cnt = avail < len ? avail : len;
+        copyRange(b, off, buf, pos, cnt);
+        pos += cnt;
+        return cnt;
+    }
+
+    /// Read into the requested region, refilling the buffer as needed.
+    override int read(scope ubyte[] b, int off, int len)
+    {
+        ensureOpen();
+        checkReadRange(b.length, off, len);
+        if (len == 0)
+            return 0;
+
+        int n = 0;
+        for (;;)
+        {
+            const nread = read1(b, off + n, len - n);
+            if (nread <= 0)
+                return n == 0 ? nread : n;
+            n += nread;
+            if (n >= len)
+                return n;
+            InputStream input = in_;
+            if (input !is null && input.available() <= 0)
+                return n;
+        }
+    }
+
+    /// Consume at most `n` bytes.
+    override long skip(long n)
+    {
+        ensureOpen();
+        if (n <= 0)
+            return 0;
+        long avail = count - pos;
+        if (avail <= 0)
+        {
+            if (markpos == -1)
+                return getInIfOpen().skip(n);
+            fill();
+            avail = count - pos;
+            if (avail <= 0)
+                return 0;
+        }
+        const skipped = avail < n ? avail : n;
+        pos += cast(int) skipped;
+        return skipped;
+    }
+
+    /// The buffered bytes plus the wrapped stream's estimate.
+    override int available()
+    {
+        const n = count - pos;
+        const avail = getInIfOpen().available();
+        return n > (int.max - avail) ? int.max : n + avail;
+    }
+
+    /// Remember the current position.
+    override void mark(int readLimit)
+    {
+        marklimit = readLimit;
+        markpos = pos;
+    }
+
+    /// Return to the last mark.
+    override void reset()
+    {
+        ensureOpen();
+        if (markpos < 0)
+            throw new IOException("Resetting to invalid mark");
+        pos = markpos;
+    }
+
+    /// Marks are supported.
+    override bool markSupported()
+    {
+        return true;
+    }
+
+    /// Close the wrapped stream once; later operations report a closed stream.
+    override void close()
+    {
+        ubyte[] buffer = buf;
+        buf = null;
+        if (buffer !is null)
+        {
+            InputStream input = in_;
+            in_ = null;
+            if (input !is null)
+                input.close();
+        }
+    }
+}
+
 /// Java's `OutputStream`: a sink of bytes.
 abstract class OutputStream : Closeable, Flushable
 {
@@ -585,6 +816,105 @@ class FilterOutputStream : OutputStream
             throw flushFailure;
         }
         out_.close();
+    }
+}
+
+/// Java's `BufferedOutputStream`: buffered writes to a wrapped stream.
+class BufferedOutputStream : FilterOutputStream
+{
+    private enum int defaultInitialBufferSize = 512;
+    private enum int defaultMaxBufferSize = 8192;
+
+    /// The internal buffer.
+    protected ubyte[] buf;
+
+    /// The number of valid bytes in the buffer.
+    protected int count;
+
+    private int maxBufSize;
+
+    /// Wrap `output` with the default buffer size.
+    this(OutputStream output)
+    {
+        this(output, defaultMaxBufferSize, defaultMaxBufferSize);
+    }
+
+    /// Wrap `output` with a buffer of `size` bytes.
+    this(OutputStream output, int size)
+    {
+        this(output, size, size);
+    }
+
+    private this(OutputStream output, int initialSize, int maxSize)
+    {
+        super(output);
+        if (initialSize <= 0)
+        {
+            import flint.java.lang : IllegalArgumentException;
+
+            throw new IllegalArgumentException("Buffer size <= 0");
+        }
+        buf = new ubyte[initialSize];
+        maxBufSize = maxSize;
+    }
+
+    alias write = FilterOutputStream.write;
+
+    private void flushBuffer()
+    {
+        if (count > 0)
+        {
+            out_.write(buf, 0, count);
+            count = 0;
+        }
+    }
+
+    private void growIfNeeded(int length)
+    {
+        int neededSize = count + length + 1;
+        if (neededSize < 0)
+            neededSize = int.max;
+        const bufSize = cast(int) buf.length;
+        if (neededSize > bufSize && bufSize < maxBufSize)
+        {
+            const newSize = neededSize < maxBufSize ? neededSize : maxBufSize;
+            ubyte[] grown = new ubyte[newSize];
+            copyRange(grown, 0, buf, 0, buf.length);
+            buf = grown;
+        }
+    }
+
+    /// Buffer one byte, flushing the buffer first when it is full.
+    override void write(int value)
+    {
+        growIfNeeded(1);
+        if (count >= buf.length)
+            flushBuffer();
+        buf[count++] = cast(ubyte) value;
+    }
+
+    /// Buffer bytes, or pass a large write straight through after flushing.
+    override void write(scope const(ubyte)[] b, int off, int len)
+    {
+        if (len >= maxBufSize)
+        {
+            flushBuffer();
+            out_.write(b, off, len);
+            return;
+        }
+        growIfNeeded(len);
+        if (len > cast(int)(buf.length - count))
+            flushBuffer();
+        byteWriteEnd(b.length, off, len);
+        copyRange(buf, count, b, off, len);
+        count += len;
+    }
+
+    /// Flush the buffer, then the wrapped stream.
+    override void flush()
+    {
+        flushBuffer();
+        out_.flush();
     }
 }
 
