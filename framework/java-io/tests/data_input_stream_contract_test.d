@@ -157,6 +157,36 @@ unittest
     assert(buffer == [ubyte(7), ubyte(6)]);
 }
 
+@("DataInputStream readLine returns lines and pushes back a trailing byte")
+unittest
+{
+    auto lines = over([0x61, 0x62, 0x63, 0x0A, 0x0A]);
+    assert(lines.readLine() == "abc");
+    assert(lines.readLine() == "");
+    assert(lines.readLine() is null);
+
+    auto carriage = over([0x61, 0x0D, 0x62]);
+    assert(carriage.readLine() == "a");
+    assert(carriage.read() == 0x62);
+    assert(carriage.read() == -1);
+
+    auto crlf = over([0x61, 0x0D, 0x0A, 0x62]);
+    assert(crlf.readLine() == "a");
+    assert(crlf.readLine() == "b");
+    assert(crlf.readLine() is null);
+
+    auto loneCr = over([0x0D]);
+    assert(loneCr.readLine() == "");
+    assert(loneCr.readLine() is null);
+
+    auto noTerminator = over([0x61, 0x62]);
+    assert(noTerminator.readLine() == "ab");
+    assert(noTerminator.readLine() is null);
+
+    auto highByte = over([0xFF]);
+    assert(highByte.readLine() == "\u00FF");
+}
+
 @("DataInputStream readUTF round-trips modified UTF-8")
 unittest
 {
