@@ -7,6 +7,7 @@
   "java.lang.Byte": "flint.java.lang.byte_",
   "java.lang.Float": "flint.java.lang.float_",
   "java.lang.Math": "flint.java.lang.math",
+  "java.lang.NegativeArraySizeException": "flint.java.lang.negativearraysizeexception",
   "java.lang.Number": "flint.java.lang.number",
   "java.lang.Short": "flint.java.lang.short_",
   "java.lang.StrictMath": "flint.java.lang.strictmath",
