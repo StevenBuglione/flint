@@ -469,6 +469,7 @@
   "java-collections": {
    "directory": "framework/java-collections",
    "module": "flint.java.util.bitset",
+   "also": ["flint.java.util.enumset"],
    "java_types": ["java.util.BitSet", "java.util.EnumSet"],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
