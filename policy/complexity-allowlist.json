@@ -163,6 +163,51 @@
     "file": "pgjdbc/src/main/java/org/postgresql/jdbc/TypeInfoCache.java",
     "method": "getDisplaySize"
    }
+  },
+  {
+   "file": "framework/java/source/flint/java/net/package.d",
+   "function": "equals",
+   "upstream": {
+    "project": "openjdk",
+    "file": "src/java.base/share/classes/java/net/URI.java",
+    "method": "equals"
+   }
+  },
+  {
+   "file": "framework/java/source/flint/java/net/package.d",
+   "function": "compareTo",
+   "upstream": {
+    "project": "openjdk",
+    "file": "src/java.base/share/classes/java/net/URI.java",
+    "method": "compareTo"
+   }
+  },
+  {
+   "file": "framework/java/source/flint/java/net/package.d",
+   "function": "scanIPv4Address",
+   "upstream": {
+    "project": "openjdk",
+    "file": "src/java.base/share/classes/java/net/URI.java",
+    "method": "Parser.scanIPv4Address"
+   }
+  },
+  {
+   "file": "framework/java/source/flint/java/net/package.d",
+   "function": "percentNormalizedComparison",
+   "upstream": {
+    "project": "openjdk",
+    "file": "src/java.base/share/classes/java/net/URI.java",
+    "method": "percentNormalizedComparison"
+   }
+  },
+  {
+   "file": "framework/java/source/flint/java/net/package.d",
+   "function": "removeDots",
+   "upstream": {
+    "project": "openjdk",
+    "file": "src/java.base/share/classes/java/net/URI.java",
+    "method": "Parser.removeDots"
+   }
   }
  ]
 }
